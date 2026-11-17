@@ -603,6 +603,18 @@ describe('the events trigger (ARCH §6.4)', () => {
     expect(await centerFor('e1_created')).toEqual(['lee', 'pat', 'sam']);
   });
 
+  it("tells no one about an event made after it started, and still posts its card if asked (#17)", async () => {
+    const today = dateInZone(Date.now(), CHI);
+    const yesterday = dateInZone(Date.now() - DAY, CHI);
+    await writeEvent('p1', oneOff(-3_600_000));
+    await writeEvent('p2', oneOff(-DAY, { allDay: true, startDate: yesterday, endDate: yesterday }));
+    // All day today is still ahead; so is anything later.
+    await writeEvent('t1', oneOff(-60_000, { allDay: true, startDate: today, endDate: today }));
+    await writeEvent('f1', oneOff(3 * DAY));
+    expect((await sends('eventCreated')).sort()).toEqual(['f1_created', 't1_created']);
+    expect((await eventData('p1'))?.messageId).toBe('p1');
+  });
+
   it("tells everyone about a move, a member's own old Not going on a team included, and moves the RSVPs", async () => {
     const data = oneOff(3 * DAY, { messageId: 'e1' });
     await writeEvent('e1', data);

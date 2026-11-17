@@ -15,7 +15,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$EventDraft {
 
- String get timeZone; EventType get type;/// Left blank on a game, it becomes "vs. Opponent" (see [effectiveTitle]).
+ String get timeZone; EventType get type;/// Left blank, a game becomes "vs. Opponent" and a Practice, Meeting
+/// or Social its type's name (see [effectiveTitle]).
  String get title; String get description; String get locationName; String get locationAddress; bool get allDay;/// Empty on a duplicate until picked (SCHED-3 Duplicate).
  DateTime? get date;/// An all-day event's last day; null means the same day as [date].
  DateTime? get endDate; int get startMinutes; int get endMinutes; String get opponent; HomeAway? get homeAway; int? get arriveMinutesBefore; bool get rsvpEnabled;/// A deadline picked as a day and time. See [deadline].
@@ -264,12 +265,13 @@ return $default(_that.timeZone,_that.type,_that.title,_that.description,_that.lo
 
 
 class _EventDraft extends EventDraft {
-  const _EventDraft({required this.timeZone, this.type = EventType.practice, this.title = '', this.description = '', this.locationName = '', this.locationAddress = '', this.allDay = false, this.date, this.endDate, this.startMinutes = 18 * 60, this.endMinutes = 19 * 60 + 30, this.opponent = '', this.homeAway, this.arriveMinutesBefore, this.rsvpEnabled = true, this.rsvpDeadline, this.deadlineDaysBefore, this.deadlineMinutes,  List<int> reminderOffsets = const <int>[], this.notifyTeam = true, this.postToChat = false, this.repeat, this.seriesFrom, this.countBefore = 0}): _reminderOffsets = reminderOffsets,super._();
+  const _EventDraft({required this.timeZone, this.type = EventType.practice, this.title = '', this.description = '', this.locationName = '', this.locationAddress = '', this.allDay = false, this.date, this.endDate, this.startMinutes = defaultStartMinutes, this.endMinutes = 19 * 60 + 30, this.opponent = '', this.homeAway, this.arriveMinutesBefore, this.rsvpEnabled = true, this.rsvpDeadline, this.deadlineDaysBefore, this.deadlineMinutes,  List<int> reminderOffsets = const <int>[], this.notifyTeam = true, this.postToChat = false, this.repeat, this.seriesFrom, this.countBefore = 0}): _reminderOffsets = reminderOffsets,super._();
   
 
 @override final  String timeZone;
 @override@JsonKey() final  EventType type;
-/// Left blank on a game, it becomes "vs. Opponent" (see [effectiveTitle]).
+/// Left blank, a game becomes "vs. Opponent" and a Practice, Meeting
+/// or Social its type's name (see [effectiveTitle]).
 @override@JsonKey() final  String title;
 @override@JsonKey() final  String description;
 @override@JsonKey() final  String locationName;

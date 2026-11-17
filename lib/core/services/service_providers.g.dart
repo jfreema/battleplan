@@ -155,6 +155,61 @@ final class LinkOpenerProvider
 
 String _$linkOpenerHash() => r'd1c40125c94c381ce2a5ef98e9f84a1350effc35';
 
+/// What time it is: the device's clock, which tests set, as for the event
+/// form's first day and its past check (SCHED-3, #17).
+
+@ProviderFor(clock)
+final clockProvider = ClockProvider._();
+
+/// What time it is: the device's clock, which tests set, as for the event
+/// form's first day and its past check (SCHED-3, #17).
+
+final class ClockProvider
+    extends
+        $FunctionalProvider<
+          DateTime Function(),
+          DateTime Function(),
+          DateTime Function()
+        >
+    with $Provider<DateTime Function()> {
+  /// What time it is: the device's clock, which tests set, as for the event
+  /// form's first day and its past check (SCHED-3, #17).
+  ClockProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'clockProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$clockHash();
+
+  @$internal
+  @override
+  $ProviderElement<DateTime Function()> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  DateTime Function() create(Ref ref) {
+    return clock(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(DateTime Function() value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<DateTime Function()>(value),
+    );
+  }
+}
+
+String _$clockHash() => r'3f65ad34ac6fcd532de9004042bdf2ed2bd85b13';
+
 /// The device's time zone and the list to pick from.
 
 @ProviderFor(timeZones)

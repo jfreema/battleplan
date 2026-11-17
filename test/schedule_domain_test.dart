@@ -286,7 +286,130 @@ void main() {
       );
       expect(game.effectiveTitle, '@ Eagles');
       expect(game.copyWith(title: 'Final').effectiveTitle, 'Final');
-      expect(game.copyWith(type: EventType.practice).effectiveTitle, isEmpty);
+      // Turned into a practice, it's "Practice" (#17).
+      expect(
+        game.copyWith(type: EventType.practice).effectiveTitle,
+        'Practice',
+      );
+    });
+
+    test('a Practice, Meeting or Social left untitled is its type, and '
+        'Other still needs a title (#17)', () {
+      const blank = EventDraft(timeZone: 'America/Chicago');
+      final l10n = AppLocalizationsEn();
+      for (final (type, title) in [
+        (EventType.practice, 'Practice'),
+        (EventType.meeting, 'Meeting'),
+        (EventType.social, 'Social'),
+        (EventType.other, ''),
+        // No opponent yet: nothing to title it with.
+        (EventType.game, ''),
+      ]) {
+        final d = blank.copyWith(type: type, date: DateTime.utc(2026, 12));
+        expect(d.effectiveTitle, title, reason: '$type');
+        expect(d.autoTitle, title, reason: '$type');
+        // As the schedule writes the type.
+        if (title.isNotEmpty) expect(typeLabel(l10n, type), title);
+        expect(
+          d.problemAt(DateTime.utc(2026, 11)),
+          title.isEmpty ? DraftProblem.title : isNull,
+          reason: '$type',
+        );
+        // Saved with it, so the schedule and notifications have it too.
+        expect(d.template.title, title, reason: '$type');
+      }
+      // Typed wins.
+      expect(blank.copyWith(title: ' Scrimmage ').effectiveTitle, 'Scrimmage');
+    });
+
+    test('an event titled as its type stays untitled when edited or '
+        'duplicated, so its title follows the type (#17)', () {
+      Event event(EventType type, String title) => Event(
+        id: const EventId('e1'),
+        groupId: const GroupId('a'),
+        type: type,
+        title: title,
+        startAt: DateTime.utc(2026, 11, 17),
+        endAt: DateTime.utc(2026, 11, 17, 1, 30),
+        timeZone: 'America/Chicago',
+        createdBy: 'coach',
+      );
+      final practice = EventDraft.fromEvent(
+        event(EventType.practice, 'Practice'),
+      );
+      expect(practice.title, '');
+      expect(
+        practice.copyWith(type: EventType.meeting).effectiveTitle,
+        'Meeting',
+      );
+      // A practice named anything else keeps its name.
+      expect(
+        EventDraft.fromEvent(event(EventType.practice, 'Meeting')).title,
+        'Meeting',
+      );
+      expect(
+        EventDraft.fromEvent(event(EventType.other, 'Other')).title,
+        'Other',
+      );
+    });
+
+    test('a new event starts today, or tomorrow once 6 PM has come in the '
+        "team's zone, whatever the phone's (#17)", () {
+      DateTime at(String zone, int day, int h, int m) =>
+          ZonedTime.instantOf(zone, DateTime.utc(2026, 11, day), h * 60 + m);
+      const chicago = 'America/Chicago';
+      DateTime start(String zone, DateTime now) =>
+          upcomingDay(zone, now, startMinutes: defaultStartMinutes);
+      expect(
+        start(chicago, at(chicago, 16, 17, 59)),
+        DateTime.utc(2026, 11, 16),
+      );
+      expect(
+        start(chicago, at(chicago, 16, 18, 0)),
+        DateTime.utc(2026, 11, 17),
+      );
+      expect(
+        start(chicago, at(chicago, 16, 23, 59)),
+        DateTime.utc(2026, 11, 17),
+      );
+      // Just after midnight it's today again.
+      expect(start(chicago, at(chicago, 17, 0, 5)), DateTime.utc(2026, 11, 17));
+      // A Tokyo team at 6 PM there: tomorrow there, though it's still the
+      // morning of the 16th in Chicago (and the 16th in UTC, where these
+      // tests run).
+      const tokyo = 'Asia/Tokyo';
+      final tokyoEvening = at(tokyo, 16, 18, 0);
+      expect(tokyoEvening.toUtc().day, 16);
+      expect(start(tokyo, tokyoEvening), DateTime.utc(2026, 11, 17));
+      expect(start(tokyo, at(tokyo, 16, 17, 59)), DateTime.utc(2026, 11, 16));
+      // All day: today.
+      expect(
+        upcomingDay(chicago, at(chicago, 16, 23, 0)),
+        DateTime.utc(2026, 11, 16),
+      );
+    });
+
+    test('an event starting before now is in the past; all day, only a day '
+        'before today (#17)', () {
+      const chicago = 'America/Chicago';
+      final now = ZonedTime.instantOf(
+        chicago,
+        DateTime.utc(2026, 11, 16),
+        18 * 60 + 30,
+      );
+      final d = EventDraft(timeZone: chicago, date: DateTime.utc(2026, 11, 16));
+      // 6 PM today, half an hour ago.
+      expect(d.startsBefore(now), isTrue);
+      expect(d.copyWith(startMinutes: 19 * 60).startsBefore(now), isFalse);
+      expect(d.copyWith(allDay: true).startsBefore(now), isFalse);
+      expect(
+        d
+            .copyWith(allDay: true, date: DateTime.utc(2026, 11, 15))
+            .startsBefore(now),
+        isTrue,
+      );
+      // No date yet (a duplicate): nothing to say.
+      expect(const EventDraft(timeZone: chicago).startsBefore(now), isFalse);
     });
 
     test('times: end at or before the start is the next day; all day is '
@@ -313,7 +436,12 @@ void main() {
         date: DateTime.utc(2026, 10, 13),
       );
       expect(ok.problemAt(now), isNull);
-      expect(ok.copyWith(title: ' ').problemAt(now), DraftProblem.title);
+      // A blank Practice is "Practice" now (#17); an Other still needs one.
+      expect(ok.copyWith(title: ' ').problemAt(now), isNull);
+      expect(
+        ok.copyWith(title: ' ', type: EventType.other).problemAt(now),
+        DraftProblem.title,
+      );
       expect(ok.copyWith(date: null).problemAt(now), DraftProblem.date);
       expect(
         ok.copyWith(rsvpDeadline: DateTime.utc(2026, 10, 14)).problemAt(now),

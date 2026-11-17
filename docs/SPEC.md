@@ -789,14 +789,16 @@ Players that others answer for never get accounts, and every account belongs to 
 - **SCHED-3 · MVP · Create an event.** The **+** button, if you're allowed.
   - **Type:** Game, Practice, Meeting, Social, or Other.
   - **Basics:**
-    - Title. For games it fills itself in as "vs. Opponent" or "@ Opponent".
-    - Date; start and end time, or all-day; time zone, defaulting to the team's.
+    - Title. Left blank, a game fills itself in as "vs. Opponent" or "@ Opponent", and a Practice, Meeting or Social is saved as its type ("Practice"); the field shows that in grey before Save, following the type picked. Only Other needs one typed (#17, 2026-11-16: Practice, Meeting and Social always needed one, and Save said so out of sight).
+    - Date; start and end time, or all-day; time zone, defaulting to the team's. A new event starts today at 6 PM in the team's time zone, or **tomorrow** at 6 PM once it's 6 PM there, so one made in the evening isn't already over (#17).
     - Location (name and address, with Open in Maps).
     - Notes.
   - **Game fields:** opponent, home or away, arrival time ("Arrive 30 min early").
   - **RSVP:** on or off (default on), with an optional deadline.
   - **Reminders:** defaults from Admin settings. **No reminders** (picked while no time is, and the default for new teams) or any of 15 min, 1 h, 2 h, 1 day, 2 days, or 1 week before; tapping No reminders clears the times picked. Admin settings' Default event reminders offers the same No reminders choice (owner's request 2026-11-08: "make sure it's possible to set events to have no reminders and to have it set to no reminders as a default").
-  - **Notify team** (default on) and **Post to chat** (default off). An event goes in the chat only when its creator checks Post to chat, since the schedule and Notify team already cover it (owner's request 2026-11-10: "events dont need to go to the chat by default. that makes it too cluttered and redundant. only put event info in the chat when the user explicitly checks the “notify team in chat” option, or something similar to that."). Builds of the app from before then still start it checked.
+  - **Counters** (0/100 and the like) show under a field only once its text reaches 80% of the limit (#17).
+  - **Saving.** When something keeps it from saving (a title for Other, a date, a deadline after the start, the repeat settings, or text over a limit), Save scrolls to the first field with the problem, puts the cursor there, and says what's wrong in a message screen readers hear. A **new** event (or a duplicate) whose start has already passed (all day: a day before today) asks first: "This is in the past. Save anyway?" with **Save anyway** and **Change date**, which goes to the date and opens its picker. Past events stay allowed, as for last season's games; editing one, as to fix last week's notes, doesn't ask.
+  - **Notify team** (default on) and **Post to chat** (default off). The team isn't notified about an event made after it started: the server leaves out the "new event" push however the box is set, while Post to chat still posts its card (#17). An event goes in the chat only when its creator checks Post to chat, since the schedule and Notify team already cover it (owner's request 2026-11-10: "events dont need to go to the chat by default. that makes it too cluttered and redundant. only put event info in the chat when the user explicitly checks the “notify team in chat” option, or something similar to that."). Builds of the app from before then still start it checked.
   - **Repeat:** doesn't repeat (default), or:
     - **Daily**, every N days, for tournaments and camps.
     - **Weekly** on selected days, every N weeks, for practices.

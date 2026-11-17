@@ -9,6 +9,7 @@ import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/services/time_zone_names.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
+import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
@@ -23,6 +24,8 @@ import 'package:battleplan/features/schedule/domain/recurrence.dart';
 import 'package:battleplan/features/schedule/presentation/event_actions.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_format.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -81,8 +84,9 @@ class EventFormRoute extends ConsumerWidget {
   }
 }
 
-/// New, edit, and Duplicate (SCHED-3, SCHED-6): type, title (games fill
-/// in "vs. Opponent"), date, times or all day, time zone, place, notes,
+/// New, edit, and Duplicate (SCHED-3, SCHED-6): type, title (left blank,
+/// a game is "vs. Opponent" and a Practice, Meeting or Social its type's
+/// name), date, times or all day, time zone, place, notes,
 /// game fields, RSVPs and deadline, reminders, Notify team, Post to chat,
 /// and Repeat with its dates, which a tap skips.
 class EventFormScreen extends ConsumerStatefulWidget {
@@ -113,7 +117,19 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
   final _place = TextEditingController();
   final _address = TextEditingController();
   final _opponent = TextEditingController();
+
+  // One per field Save can find a problem with: Save scrolls to the first
+  // and puts the cursor there (#17, 2026-11-16: only the date did, and a
+  // missing title was marked off screen).
+  final _titleFocus = FocusNode();
+  final _notesFocus = FocusNode();
+  final _placeFocus = FocusNode();
+  final _addressFocus = FocusNode();
+  final _opponentFocus = FocusNode();
   final _dateFocus = FocusNode();
+  final _deadlineFocus = FocusNode();
+  final _remindersFocus = FocusNode();
+  final _repeatFocus = FocusNode();
   bool _saving = false;
   bool _tried = false;
 
@@ -148,10 +164,15 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
         );
       }
     } else {
-      final now = ZonedTime.wallClock(group.timeZone, DateTime.now());
+      // Today at 6 PM in the team's zone, or tomorrow once it's 6 PM
+      // there, so it isn't over before it's saved (#17).
       _draft = EventDraft(
         timeZone: group.timeZone,
-        date: DateTime.utc(now.year, now.month, now.day),
+        date: upcomingDay(
+          group.timeZone,
+          ref.read(clockProvider)(),
+          startMinutes: defaultStartMinutes,
+        ),
         reminderOffsets: group.settings.defaultReminderOffsets,
       );
     }
@@ -174,7 +195,19 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
     for (final c in [_title, _notes, _place, _address, _opponent]) {
       c.dispose();
     }
-    _dateFocus.dispose();
+    for (final f in [
+      _titleFocus,
+      _notesFocus,
+      _placeFocus,
+      _addressFocus,
+      _opponentFocus,
+      _dateFocus,
+      _deadlineFocus,
+      _remindersFocus,
+      _repeatFocus,
+    ]) {
+      f.dispose();
+    }
     super.dispose();
   }
 
@@ -226,6 +259,21 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
     return picked == null ? null : _utcDay(picked);
   }
 
+  /// Picks the event's date, opening on the day it has, or on a duplicate
+  /// without one the first day its time is still ahead.
+  Future<void> _pickStartDate() async {
+    final d = _current;
+    final day = await _pickDate(
+      d.date ??
+          upcomingDay(
+            d.timeZone,
+            ref.read(clockProvider)(),
+            startMinutes: d.allDay ? null : d.startMinutes,
+          ),
+    );
+    if (day != null) _set((d) => d.copyWith(date: day));
+  }
+
   Future<int?> _pickTime(int minutes) async {
     final t = await showTimePicker(
       context: context,
@@ -267,15 +315,101 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
     if (picked != null) _set((d) => d.copyWith(timeZone: picked));
   }
 
+  /// The field with [problem]: for a place or address too long, whichever
+  /// it is.
+  FocusNode _focusFor(DraftProblem problem, EventDraft d) => switch (problem) {
+    DraftProblem.title => _titleFocus,
+    DraftProblem.notes => _notesFocus,
+    DraftProblem.location =>
+      tooLong(d.locationName, Limits.locationNameMax)
+          ? _placeFocus
+          : _addressFocus,
+    DraftProblem.opponent => _opponentFocus,
+    DraftProblem.date => _dateFocus,
+    DraftProblem.deadline => _deadlineFocus,
+    DraftProblem.reminders => _remindersFocus,
+    DraftProblem.repeat => _repeatFocus,
+  };
+
+  /// Scrolls [field] into view, a little below the top, and puts the
+  /// cursor (or the focus) there.
+  Future<void> _goTo(FocusNode field) async {
+    final target = field.context;
+    if (target != null && target.mounted) {
+      await Scrollable.ensureVisible(
+        target,
+        alignment: 0.2,
+        duration: Motion.of(context, Motion.normal),
+        curve: Curves.easeOutCubic,
+      );
+    }
+    if (mounted) field.requestFocus();
+  }
+
+  /// Says [message] where a screen reader wouldn't hear the snackbar: iOS
+  /// and macOS read live regions only now and then (Android and the web
+  /// read the snackbar's).
+  void _announce(String message) {
+    final apple =
+        defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.macOS;
+    if (kIsWeb || !apple) return;
+    unawaited(
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        message,
+        Directionality.of(context),
+      ),
+    );
+  }
+
+  /// "This is in the past. Save anyway?" (#17): true to save, false to
+  /// change the date, null when dismissed.
+  Future<bool?> _askPast(AppLocalizations l10n) => showCardDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(l10n.eventPastTitle),
+      content: Text(l10n.eventPastMessage),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: Text(l10n.eventPastChange),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(true),
+          child: Text(l10n.eventPastSave),
+        ),
+      ],
+    ),
+  );
+
   Future<void> _save() async {
     final l10n = AppLocalizations.of(context);
     final draft = _current;
+    final now = ref.read(clockProvider)();
     setState(() => _tried = true);
-    final problem = draft.problemAt(DateTime.now());
+    final problem = draft.problemAt(now);
     if (problem != null) {
-      showAppSnackBar(context, _problemText(l10n, problem));
-      if (problem == DraftProblem.date) _dateFocus.requestFocus();
+      // The message stays, and Save goes to the field (#17).
+      final message = _problemText(l10n, problem);
+      showAppSnackBar(context, message);
+      _announce(message);
+      unawaited(_goTo(_focusFor(problem, draft)));
       return;
+    }
+    // A new event that has already started goes straight under Past, with
+    // no reminders and no notification (the server sends none, #17): ask
+    // first. Past events are allowed, as for last season's; editing one
+    // (fixing last week's notes) doesn't ask.
+    if (_isNew && draft.startsBefore(now)) {
+      final save = await _askPast(l10n);
+      if (!mounted || save != true) {
+        if (save == false && mounted) {
+          await _goTo(_dateFocus);
+          if (mounted) await _pickStartDate();
+        }
+        return;
+      }
     }
     final group = widget.group;
     if (_isNew && group.storageFull) {
@@ -412,350 +546,380 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
         body: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 640),
-            child: ListView(
+            // Every field stays built, scrolled away or not, so Save can
+            // scroll to any of them (#17): a list lets go of what's far
+            // off screen, and a field it let go of can't be found.
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(Space.lg),
-              children: [
-                if (_saving) const LinearProgressIndicator(),
-                Wrap(
-                  spacing: Space.sm,
-                  runSpacing: Space.xs,
-                  children: [
-                    for (final t in EventType.values)
-                      ChoiceChip(
-                        avatar: Icon(typeIcon(t), size: 18),
-                        label: Text(typeLabel(l10n, t)),
-                        selected: d.type == t,
-                        onSelected: (_) => _set((d) => d.copyWith(type: t)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (_saving) const LinearProgressIndicator(),
+                  Wrap(
+                    spacing: Space.sm,
+                    runSpacing: Space.xs,
+                    children: [
+                      for (final t in EventType.values)
+                        ChoiceChip(
+                          avatar: Icon(typeIcon(t), size: 18),
+                          label: Text(typeLabel(l10n, t)),
+                          selected: d.type == t,
+                          onSelected: (_) => _set((d) => d.copyWith(type: t)),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: Space.lg),
+                  if (d.isGame) ...[
+                    TextField(
+                      controller: _opponent,
+                      focusNode: _opponentFocus,
+                      maxLength: Limits.opponentMax,
+                      buildCounter: _nearLimit,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: InputDecoration(
+                        labelText: l10n.eventOpponent,
+                        border: const OutlineInputBorder(),
                       ),
+                      onChanged: (_) => setState(() {}),
+                    ),
+                    const SizedBox(height: Space.sm),
+                    SegmentedButton<HomeAway>(
+                      emptySelectionAllowed: true,
+                      segments: [
+                        ButtonSegment(
+                          value: HomeAway.home,
+                          label: Text(l10n.eventHome),
+                        ),
+                        ButtonSegment(
+                          value: HomeAway.away,
+                          label: Text(l10n.eventAway),
+                        ),
+                      ],
+                      selected: {?d.homeAway},
+                      onSelectionChanged: (s) => _set(
+                        (d) => d.copyWith(homeAway: s.isEmpty ? null : s.first),
+                      ),
+                    ),
+                    const SizedBox(height: Space.md),
                   ],
-                ),
-                const SizedBox(height: Space.lg),
-                if (d.isGame) ...[
                   TextField(
-                    controller: _opponent,
-                    maxLength: Limits.opponentMax,
+                    controller: _title,
+                    focusNode: _titleFocus,
+                    maxLength: Limits.eventTitleMax,
+                    buildCounter: _nearLimit,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: InputDecoration(
+                      labelText: l10n.eventTitle,
+                      border: const OutlineInputBorder(),
+                      // What a blank title saves as, shown in the field so
+                      // it's seen before Save, and following the type: "vs.
+                      // Eagles", "Practice" (SCHED-3, #17). The label sits
+                      // above it.
+                      hintText: d.autoTitle.isEmpty ? null : d.autoTitle,
+                      floatingLabelBehavior: d.autoTitle.isEmpty
+                          ? null
+                          : FloatingLabelBehavior.always,
+                      errorText: _tried && d.effectiveTitle.isEmpty
+                          ? l10n.eventProblemTitle
+                          : null,
+                    ),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                  section(l10n.eventWhen),
+                  Focus(
+                    focusNode: _dateFocus,
+                    child: Builder(
+                      builder: (context) {
+                        final focused = Focus.of(context).hasFocus;
+                        return ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(AppIcons.event),
+                          title: Text(
+                            missingDate
+                                ? l10n.eventPickDate
+                                : dayLabel(l10n, d.date!),
+                            style: missingDate && (_tried || focused)
+                                ? TextStyle(color: scheme.error)
+                                : null,
+                          ),
+                          subtitle: Text(l10n.eventDate),
+                          selected: focused,
+                          trailing: const Icon(AppIcons.edit),
+                          onTap: () => unawaited(_pickStartDate()),
+                        );
+                      },
+                    ),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(l10n.eventAllDay),
+                    value: d.allDay,
+                    onChanged: (v) => _set((d) => d.copyWith(allDay: v)),
+                  ),
+                  // A series event is one day; "This event" can move it but
+                  // not stretch it.
+                  if (d.allDay && !_repeats(d) && !_seriesEdit)
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(AppIcons.event),
+                      title: Text(
+                        d.endDate == null
+                            ? l10n.eventSameDay
+                            : dayLabel(l10n, d.endDate!),
+                      ),
+                      subtitle: Text(l10n.eventLastDay),
+                      trailing: const Icon(AppIcons.edit),
+                      onTap: () async {
+                        final day = await _pickDate(d.lastDay);
+                        if (day != null) {
+                          _set(
+                            (d) =>
+                                d.copyWith(endDate: day == d.date ? null : day),
+                          );
+                        }
+                      },
+                    ),
+                  if (!d.allDay) ...[
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(AppIcons.time),
+                      title: Text(_clock(d.startMinutes)),
+                      subtitle: Text(l10n.eventStarts),
+                      trailing: const Icon(AppIcons.edit),
+                      onTap: () async {
+                        final m = await _pickTime(d.startMinutes);
+                        if (m != null) {
+                          // Keep the length when the start moves.
+                          final length =
+                              (d.endMinutes - d.startMinutes) % (24 * 60);
+                          _set(
+                            (d) => d.copyWith(
+                              startMinutes: m,
+                              endMinutes: (m + length) % (24 * 60),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(AppIcons.time),
+                      title: Text(_clock(d.endMinutes)),
+                      subtitle: Text(
+                        d.endMinutes <= d.startMinutes
+                            ? '${l10n.eventEnds} · ${l10n.eventEndsNextDay}'
+                            : l10n.eventEnds,
+                      ),
+                      trailing: const Icon(AppIcons.edit),
+                      onTap: () async {
+                        final m = await _pickTime(d.endMinutes);
+                        if (m != null) _set((d) => d.copyWith(endMinutes: m));
+                      },
+                    ),
+                  ],
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(AppIcons.timeZone),
+                    title: Text(TimeZoneNames.label(d.timeZone)),
+                    subtitle: Text(l10n.eventTimeZone),
+                    trailing: const Icon(AppIcons.edit),
+                    onTap: () => unawaited(_pickTimeZone()),
+                  ),
+                  if (d.isGame)
+                    DropdownButtonFormField<int?>(
+                      initialValue: d.arriveMinutesBefore,
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        labelText: l10n.eventArriveEarly,
+                        border: const OutlineInputBorder(),
+                      ),
+                      items: [
+                        DropdownMenuItem(child: Text(l10n.eventArriveNone)),
+                        for (final m in const [10, 15, 20, 30, 45, 60, 90, 120])
+                          DropdownMenuItem(
+                            value: m,
+                            child: Text(l10n.eventArrive(m)),
+                          ),
+                      ],
+                      onChanged: (m) =>
+                          _set((d) => d.copyWith(arriveMinutesBefore: m)),
+                    ),
+                  if (_canRepeat) _repeatSection(context, d),
+                  section(l10n.eventWhere),
+                  TextField(
+                    controller: _place,
+                    focusNode: _placeFocus,
+                    maxLength: Limits.locationNameMax,
+                    buildCounter: _nearLimit,
                     textCapitalization: TextCapitalization.words,
                     decoration: InputDecoration(
-                      labelText: l10n.eventOpponent,
+                      labelText: l10n.eventPlace,
                       border: const OutlineInputBorder(),
                     ),
                     onChanged: (_) => setState(() {}),
                   ),
                   const SizedBox(height: Space.sm),
-                  SegmentedButton<HomeAway>(
-                    emptySelectionAllowed: true,
-                    segments: [
-                      ButtonSegment(
-                        value: HomeAway.home,
-                        label: Text(l10n.eventHome),
-                      ),
-                      ButtonSegment(
-                        value: HomeAway.away,
-                        label: Text(l10n.eventAway),
-                      ),
-                    ],
-                    selected: {?d.homeAway},
-                    onSelectionChanged: (s) => _set(
-                      (d) => d.copyWith(homeAway: s.isEmpty ? null : s.first),
-                    ),
-                  ),
-                  const SizedBox(height: Space.md),
-                ],
-                TextField(
-                  controller: _title,
-                  maxLength: Limits.eventTitleMax,
-                  textCapitalization: TextCapitalization.sentences,
-                  decoration: InputDecoration(
-                    labelText: l10n.eventTitle,
-                    border: const OutlineInputBorder(),
-                    // Left blank, a game is "vs. Eagles" (SCHED-3).
-                    hintText: d.isGame && d.effectiveTitle.isNotEmpty
-                        ? autoGameTitle(d.opponent, d.homeAway)
-                        : null,
-                    errorText: _tried && d.effectiveTitle.isEmpty
-                        ? l10n.eventProblemTitle
-                        : null,
-                  ),
-                  onChanged: (_) => setState(() {}),
-                ),
-                section(l10n.eventWhen),
-                Focus(
-                  focusNode: _dateFocus,
-                  child: Builder(
-                    builder: (context) {
-                      final focused = Focus.of(context).hasFocus;
-                      return ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const Icon(AppIcons.event),
-                        title: Text(
-                          missingDate
-                              ? l10n.eventPickDate
-                              : dayLabel(l10n, d.date!),
-                          style: missingDate && (_tried || focused)
-                              ? TextStyle(color: scheme.error)
-                              : null,
-                        ),
-                        subtitle: Text(l10n.eventDate),
-                        selected: focused,
-                        trailing: const Icon(AppIcons.edit),
-                        onTap: () async {
-                          final day = await _pickDate(d.date);
-                          if (day != null) {
-                            _set((d) => d.copyWith(date: day));
-                          }
-                        },
-                      );
-                    },
-                  ),
-                ),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(l10n.eventAllDay),
-                  value: d.allDay,
-                  onChanged: (v) => _set((d) => d.copyWith(allDay: v)),
-                ),
-                // A series event is one day; "This event" can move it but
-                // not stretch it.
-                if (d.allDay && !_repeats(d) && !_seriesEdit)
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(AppIcons.event),
-                    title: Text(
-                      d.endDate == null
-                          ? l10n.eventSameDay
-                          : dayLabel(l10n, d.endDate!),
-                    ),
-                    subtitle: Text(l10n.eventLastDay),
-                    trailing: const Icon(AppIcons.edit),
-                    onTap: () async {
-                      final day = await _pickDate(d.lastDay);
-                      if (day != null) {
-                        _set(
-                          (d) =>
-                              d.copyWith(endDate: day == d.date ? null : day),
-                        );
-                      }
-                    },
-                  ),
-                if (!d.allDay) ...[
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(AppIcons.time),
-                    title: Text(_clock(d.startMinutes)),
-                    subtitle: Text(l10n.eventStarts),
-                    trailing: const Icon(AppIcons.edit),
-                    onTap: () async {
-                      final m = await _pickTime(d.startMinutes);
-                      if (m != null) {
-                        // Keep the length when the start moves.
-                        final length =
-                            (d.endMinutes - d.startMinutes) % (24 * 60);
-                        _set(
-                          (d) => d.copyWith(
-                            startMinutes: m,
-                            endMinutes: (m + length) % (24 * 60),
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(AppIcons.time),
-                    title: Text(_clock(d.endMinutes)),
-                    subtitle: Text(
-                      d.endMinutes <= d.startMinutes
-                          ? '${l10n.eventEnds} · ${l10n.eventEndsNextDay}'
-                          : l10n.eventEnds,
-                    ),
-                    trailing: const Icon(AppIcons.edit),
-                    onTap: () async {
-                      final m = await _pickTime(d.endMinutes);
-                      if (m != null) _set((d) => d.copyWith(endMinutes: m));
-                    },
-                  ),
-                ],
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(AppIcons.timeZone),
-                  title: Text(TimeZoneNames.label(d.timeZone)),
-                  subtitle: Text(l10n.eventTimeZone),
-                  trailing: const Icon(AppIcons.edit),
-                  onTap: () => unawaited(_pickTimeZone()),
-                ),
-                if (d.isGame)
-                  DropdownButtonFormField<int?>(
-                    initialValue: d.arriveMinutesBefore,
-                    isExpanded: true,
+                  TextField(
+                    controller: _address,
+                    focusNode: _addressFocus,
+                    maxLength: Limits.locationAddressMax,
+                    buildCounter: _nearLimit,
                     decoration: InputDecoration(
-                      labelText: l10n.eventArriveEarly,
+                      labelText: l10n.eventAddress,
+                      border: const OutlineInputBorder(),
+                      suffixIcon: d.location == null
+                          ? null
+                          : IconButton(
+                              tooltip: l10n.eventOpenInMaps,
+                              icon: const Icon(AppIcons.directions),
+                              onPressed: () =>
+                                  unawaited(openDirections(ref, d.location!)),
+                            ),
+                    ),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                  const SizedBox(height: Space.sm),
+                  TextField(
+                    controller: _notes,
+                    focusNode: _notesFocus,
+                    minLines: 2,
+                    maxLines: 6,
+                    maxLength: Limits.eventNotesMax,
+                    buildCounter: _nearLimit,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: InputDecoration(
+                      labelText: l10n.eventNotes,
                       border: const OutlineInputBorder(),
                     ),
-                    items: [
-                      DropdownMenuItem(child: Text(l10n.eventArriveNone)),
-                      for (final m in const [10, 15, 20, 30, 45, 60, 90, 120])
-                        DropdownMenuItem(
-                          value: m,
-                          child: Text(l10n.eventArrive(m)),
-                        ),
-                    ],
-                    onChanged: (m) =>
-                        _set((d) => d.copyWith(arriveMinutesBefore: m)),
+                    onChanged: (_) => setState(() {}),
                   ),
-                if (_canRepeat) _repeatSection(context, d),
-                section(l10n.eventWhere),
-                TextField(
-                  controller: _place,
-                  maxLength: Limits.locationNameMax,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: InputDecoration(
-                    labelText: l10n.eventPlace,
-                    border: const OutlineInputBorder(),
-                  ),
-                  onChanged: (_) => setState(() {}),
-                ),
-                const SizedBox(height: Space.sm),
-                TextField(
-                  controller: _address,
-                  maxLength: Limits.locationAddressMax,
-                  decoration: InputDecoration(
-                    labelText: l10n.eventAddress,
-                    border: const OutlineInputBorder(),
-                    suffixIcon: d.location == null
-                        ? null
-                        : IconButton(
-                            tooltip: l10n.eventOpenInMaps,
-                            icon: const Icon(AppIcons.directions),
-                            onPressed: () =>
-                                unawaited(openDirections(ref, d.location!)),
-                          ),
-                  ),
-                  onChanged: (_) => setState(() {}),
-                ),
-                const SizedBox(height: Space.sm),
-                TextField(
-                  controller: _notes,
-                  minLines: 2,
-                  maxLines: 6,
-                  maxLength: Limits.eventNotesMax,
-                  textCapitalization: TextCapitalization.sentences,
-                  decoration: InputDecoration(
-                    labelText: l10n.eventNotes,
-                    border: const OutlineInputBorder(),
-                  ),
-                  onChanged: (_) => setState(() {}),
-                ),
-                section(l10n.eventRsvpTitle),
-                CheckboxListTile(
-                  contentPadding: EdgeInsets.zero,
-                  controlAffinity: ListTileControlAffinity.leading,
-                  title: Text(l10n.eventTakeRsvps),
-                  value: d.rsvpEnabled,
-                  onChanged: (v) =>
-                      _set((d) => d.copyWith(rsvpEnabled: v ?? false)),
-                ),
-                // Series events have no deadline (ARCH §6.2).
-                if (d.rsvpEnabled && d.repeat == null && !_seriesEdit)
-                  ListTile(
+                  section(l10n.eventRsvpTitle),
+                  CheckboxListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: const Icon(AppIcons.rsvp),
-                    title: Text(
-                      deadline == null
-                          ? (d.deadlineDaysBefore != null
-                                ? l10n.eventDeadlineAfterDate
-                                : l10n.eventNoDeadline)
-                          : '${dayLabel(l10n, ZonedTime.wallClock(d.timeZone, deadline))} '
-                                '${timeIn(l10n, deadline, d.timeZone)}',
-                      style:
-                          _tried &&
-                              d.problemAt(DateTime.now()) ==
-                                  DraftProblem.deadline
-                          ? TextStyle(color: scheme.error)
-                          : null,
-                    ),
-                    subtitle: Text(l10n.eventRsvpDeadline),
-                    trailing:
-                        d.rsvpDeadline == null && d.deadlineDaysBefore == null
-                        ? const Icon(AppIcons.edit)
-                        : IconButton(
-                            tooltip: l10n.eventClearDeadline,
-                            icon: const Icon(AppIcons.close),
-                            onPressed: () => _set(
-                              (d) => d.copyWith(
-                                rsvpDeadline: null,
-                                deadlineDaysBefore: null,
-                                deadlineMinutes: null,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    title: Text(l10n.eventTakeRsvps),
+                    value: d.rsvpEnabled,
+                    onChanged: (v) =>
+                        _set((d) => d.copyWith(rsvpEnabled: v ?? false)),
+                  ),
+                  // Series events have no deadline (ARCH §6.2).
+                  if (d.rsvpEnabled && d.repeat == null && !_seriesEdit)
+                    ListTile(
+                      focusNode: _deadlineFocus,
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(AppIcons.rsvp),
+                      title: Text(
+                        deadline == null
+                            ? (d.deadlineDaysBefore != null
+                                  ? l10n.eventDeadlineAfterDate
+                                  : l10n.eventNoDeadline)
+                            : '${dayLabel(l10n, ZonedTime.wallClock(d.timeZone, deadline))} '
+                                  '${timeIn(l10n, deadline, d.timeZone)}',
+                        style:
+                            _tried &&
+                                d.problemAt(ref.read(clockProvider)()) ==
+                                    DraftProblem.deadline
+                            ? TextStyle(color: scheme.error)
+                            : null,
+                      ),
+                      subtitle: Text(l10n.eventRsvpDeadline),
+                      trailing:
+                          d.rsvpDeadline == null && d.deadlineDaysBefore == null
+                          ? const Icon(AppIcons.edit)
+                          : IconButton(
+                              tooltip: l10n.eventClearDeadline,
+                              icon: const Icon(AppIcons.close),
+                              onPressed: () => _set(
+                                (d) => d.copyWith(
+                                  rsvpDeadline: null,
+                                  deadlineDaysBefore: null,
+                                  deadlineMinutes: null,
+                                ),
                               ),
                             ),
-                          ),
-                    onTap: () => unawaited(_pickDeadline()),
-                  ),
-                section(l10n.eventReminders),
-                Wrap(
-                  spacing: Space.sm,
-                  runSpacing: Space.xs,
-                  children: [
-                    // None is a choice of its own (owner's request
-                    // 2026-11-08), picked while no time is.
-                    FilterChip(
-                      label: Text(l10n.reminderNone),
-                      selected: d.reminderOffsets.isEmpty,
-                      onSelected: (_) =>
-                          _set((d) => d.copyWith(reminderOffsets: const [])),
+                      onTap: () => unawaited(_pickDeadline()),
                     ),
-                    for (final m in reminderChoicesFor(allDay: d.allDay))
+                  section(l10n.eventReminders),
+                  Wrap(
+                    spacing: Space.sm,
+                    runSpacing: Space.xs,
+                    children: [
+                      // None is a choice of its own (owner's request
+                      // 2026-11-08), picked while no time is.
                       FilterChip(
-                        label: Text(reminderLabel(l10n, m)),
-                        selected: d.reminderOffsets.contains(m),
-                        onSelected: (on) => _set(
-                          (d) => d.copyWith(
-                            reminderOffsets: on
-                                ? [...d.reminderOffsets, m]
-                                : [
-                                    for (final o in d.reminderOffsets)
-                                      if (o != m) o,
-                                  ],
+                        focusNode: _remindersFocus,
+                        label: Text(l10n.reminderNone),
+                        selected: d.reminderOffsets.isEmpty,
+                        onSelected: (_) =>
+                            _set((d) => d.copyWith(reminderOffsets: const [])),
+                      ),
+                      for (final m in reminderChoicesFor(allDay: d.allDay))
+                        FilterChip(
+                          label: Text(reminderLabel(l10n, m)),
+                          selected: d.reminderOffsets.contains(m),
+                          onSelected: (on) => _set(
+                            (d) => d.copyWith(
+                              reminderOffsets: on
+                                  ? [...d.reminderOffsets, m]
+                                  : [
+                                      for (final o in d.reminderOffsets)
+                                        if (o != m) o,
+                                    ],
+                            ),
                           ),
                         ),
-                      ),
+                    ],
+                  ),
+                  Text(
+                    d.allDay
+                        ? l10n.eventRemindersAllDayHelp
+                        : l10n.eventRemindersHelp,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                  // Read once, when the event is made (ARCH §6.4).
+                  if (_isNew) ...[
+                    const SizedBox(height: Space.md),
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      title: Text(l10n.eventNotifyTeam),
+                      value: d.notifyTeam,
+                      onChanged: (v) =>
+                          _set((d) => d.copyWith(notifyTeam: v ?? false)),
+                    ),
+                    // Starts unchecked: the event goes in the chat only when
+                    // asked (owner's request 2026-11-10, EventDraft).
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      title: Text(l10n.eventPostToChat),
+                      value: d.postToChat,
+                      onChanged: (v) =>
+                          _set((d) => d.copyWith(postToChat: v ?? false)),
+                    ),
                   ],
-                ),
-                Text(
-                  d.allDay
-                      ? l10n.eventRemindersAllDayHelp
-                      : l10n.eventRemindersHelp,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-                // Read once, when the event is made (ARCH §6.4).
-                if (_isNew) ...[
-                  const SizedBox(height: Space.md),
-                  CheckboxListTile(
-                    contentPadding: EdgeInsets.zero,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    title: Text(l10n.eventNotifyTeam),
-                    value: d.notifyTeam,
-                    onChanged: (v) =>
-                        _set((d) => d.copyWith(notifyTeam: v ?? false)),
-                  ),
-                  // Starts unchecked: the event goes in the chat only when
-                  // asked (owner's request 2026-11-10, EventDraft).
-                  CheckboxListTile(
-                    contentPadding: EdgeInsets.zero,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    title: Text(l10n.eventPostToChat),
-                    value: d.postToChat,
-                    onChanged: (v) =>
-                        _set((d) => d.copyWith(postToChat: v ?? false)),
-                  ),
                 ],
-              ],
+              ),
             ),
           ),
         ),
       ),
     );
+  }
+
+  /// A field's counter, only once its text is 80% of its limit (#17,
+  /// 2026-11-16: "0/100", "0/200" and "0/2000" sat under empty fields on
+  /// a long form). Null hides it and the room it takes.
+  Widget? _nearLimit(
+    BuildContext context, {
+    required int currentLength,
+    required bool isFocused,
+    required int? maxLength,
+  }) {
+    if (maxLength == null || currentLength < maxLength * 0.8) return null;
+    return Text('$currentLength/$maxLength');
   }
 
   /// Multi-day all-day events don't repeat; a repeating one is one day.
@@ -785,6 +949,7 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
         const SizedBox(height: Space.md),
         DropdownButtonFormField<RepeatFreq?>(
           key: ValueKey('repeat-${r?.freq}'),
+          focusNode: _repeatFocus,
           initialValue: repeatValue,
           isExpanded: true,
           decoration: InputDecoration(

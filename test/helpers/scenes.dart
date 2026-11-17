@@ -20,6 +20,7 @@ import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/polls/domain/poll.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/domain/rsvp.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -485,6 +486,7 @@ Future<void> pumpTeam(
   List<GuardianLink>? links,
   List<GuardianRequest> requests = const [],
   FakeNotificationRepository? notifications,
+  List<Override> overrides = const [],
 }) async {
   final events = FakeEventRepository(sceneEvents);
   final rsvps = FakeRsvpRepository(events)
@@ -536,6 +538,7 @@ Future<void> pumpTeam(
       ),
     ),
     size: size,
+    overrides: overrides,
   );
 }
 

@@ -28,6 +28,7 @@ import {
   eventCreatedBody,
   eventNeedsFollowUp,
   eventView,
+  startedBefore,
   nextReminderAtMs,
   reminderTimes,
   reminderBody,
@@ -420,6 +421,28 @@ describe('events trigger early exit (ARCH §6.4)', () => {
     const series = { ...base, seriesId: 's1' };
     expect(eventNeedsFollowUp(undefined, series)).toBe(false);
     expect(eventNeedsFollowUp(series, { ...series, title: 'Scrimmage' })).toBe(false);
+  });
+});
+
+describe('events made after they started (#17)', () => {
+  const chicago = (date: string, time: string) => wallTimeToMs(date, time, 'America/Chicago');
+  const now = chicago('2026-11-16', '18:30');
+  const timed = (start: number) => eventView({ title: 'Practice', startAt: Timestamp.fromMillis(start), timeZone: 'America/Chicago' });
+  const allDay = (date: string) =>
+    eventView({ title: 'Tournament', allDay: true, startDate: date, startAt: Timestamp.fromMillis(chicago(date, '00:00')), timeZone: 'America/Chicago' });
+
+  it('counts a timed event as started once its start has passed', () => {
+    expect(startedBefore(timed(chicago('2026-11-16', '18:00')), now)).toBe(true);
+    expect(startedBefore(timed(chicago('2026-11-16', '18:30')), now)).toBe(false);
+    expect(startedBefore(timed(chicago('2026-11-17', '18:00')), now)).toBe(false);
+  });
+
+  it("counts an all-day event as started only on a day before today in its zone", () => {
+    expect(startedBefore(allDay('2026-11-15'), now)).toBe(true);
+    // Today is still ahead all day, though its midnight has passed.
+    expect(startedBefore(allDay('2026-11-16'), now)).toBe(false);
+    // 11:30 PM in Chicago is already the 17th in UTC: the event's zone decides.
+    expect(startedBefore(allDay('2026-11-16'), chicago('2026-11-16', '23:30'))).toBe(false);
   });
 });
 

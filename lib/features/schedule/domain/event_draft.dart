@@ -17,7 +17,8 @@ abstract class EventDraft with _$EventDraft {
     required String timeZone,
     @Default(EventType.practice) EventType type,
 
-    /// Left blank on a game, it becomes "vs. Opponent" (see [effectiveTitle]).
+    /// Left blank, a game becomes "vs. Opponent" and a Practice, Meeting
+    /// or Social its type's name (see [effectiveTitle]).
     @Default('') String title,
     @Default('') String description,
     @Default('') String locationName,
@@ -29,7 +30,7 @@ abstract class EventDraft with _$EventDraft {
 
     /// An all-day event's last day; null means the same day as [date].
     DateTime? endDate,
-    @Default(18 * 60) int startMinutes,
+    @Default(defaultStartMinutes) int startMinutes,
     @Default(19 * 60 + 30) int endMinutes,
     @Default('') String opponent,
     HomeAway? homeAway,
@@ -88,13 +89,14 @@ abstract class EventDraft with _$EventDraft {
     final deadlineDay = deadline == null
         ? null
         : DateTime.utc(deadline.year, deadline.month, deadline.day);
-    // A game titled as it would title itself stays automatic, so changing
-    // the opponent changes the title ("duplicate last week's game, change
-    // the date and opponent", SCHED-3 acceptance).
-    final autoTitle =
-        event.isGame &&
-        event.title.trim() ==
-            autoGameTitle(event.opponent ?? '', event.homeAway);
+    // An event titled as it would title itself stays automatic, so
+    // changing the opponent changes a game's title ("duplicate last week's
+    // game, change the date and opponent", SCHED-3 acceptance), and
+    // changing a "Practice" to a Meeting makes it "Meeting".
+    final auto = event.isGame
+        ? autoGameTitle(event.opponent ?? '', event.homeAway)
+        : autoTypeTitle(event.type);
+    final autoTitle = auto.isNotEmpty && event.title.trim() == auto;
     return EventDraft(
       timeZone: event.timeZone,
       type: event.type,
@@ -131,13 +133,18 @@ abstract class EventDraft with _$EventDraft {
 
   bool get isGame => type == EventType.game;
 
-  /// The title as saved: what was typed, or "vs. Eagles" / "@ Eagles" for a
-  /// game left blank.
+  /// The title as saved: what was typed, or else [autoTitle].
   String get effectiveTitle {
     final typed = title.trim();
-    if (typed.isNotEmpty || !isGame) return typed;
-    return autoGameTitle(opponent, homeAway);
+    return typed.isNotEmpty ? typed : autoTitle;
   }
+
+  /// What a blank title saves as, which the Title field shows as its hint:
+  /// "vs. Eagles" / "@ Eagles" for a game with an opponent, the type's
+  /// name for a Practice, Meeting or Social (#17), and nothing for Other,
+  /// which needs one typed.
+  String get autoTitle =>
+      isGame ? autoGameTitle(opponent, homeAway) : autoTypeTitle(type);
 
   /// The RSVP deadline as saved: the one picked, or on a duplicate the
   /// original's, as far before this date. Null without either.
@@ -159,6 +166,16 @@ abstract class EventDraft with _$EventDraft {
 
   /// The last day of an all-day event.
   DateTime? get lastDay => endDate ?? date;
+
+  /// Whether it starts before [now], so it would go straight under Past:
+  /// a timed event whose start has passed, or an all-day one on a day
+  /// before today in [timeZone]. Saving a new one asks first (#17).
+  bool startsBefore(DateTime now) {
+    final day = date;
+    if (day == null) return false;
+    if (allDay) return day.isBefore(upcomingDay(timeZone, now));
+    return startAt!.isBefore(now);
+  }
 
   /// When it starts: the time in [timeZone] on [date], or midnight there
   /// for all-day events. Null until a date is picked.
@@ -276,6 +293,23 @@ abstract class EventDraft with _$EventDraft {
     }
     return null;
   }
+}
+
+/// When a new event starts unless changed: 6 PM (SCHED-3).
+const int defaultStartMinutes = 18 * 60;
+
+/// The first day an event at [startMinutes] in [timeZone] is still ahead
+/// at [now]: today there, or tomorrow once that time has come. Without
+/// [startMinutes] (all day), today. A new event starts on it, so one made
+/// in the evening isn't over before it's saved (#17, 2026-11-16: after
+/// 6 PM a new event opened on today, already past).
+DateTime upcomingDay(String timeZone, DateTime now, {int? startMinutes}) {
+  final w = ZonedTime.wallClock(timeZone, now);
+  final today = DateTime.utc(w.year, w.month, w.day);
+  if (startMinutes == null || w.hour * 60 + w.minute < startMinutes) {
+    return today;
+  }
+  return addDays(today, 1);
 }
 
 /// Why an event can't be saved yet; the form marks that field.

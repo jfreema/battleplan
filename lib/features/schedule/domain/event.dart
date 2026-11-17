@@ -154,3 +154,16 @@ String autoGameTitle(String opponent, HomeAway? homeAway) {
   if (o.isEmpty) return '';
   return homeAway == HomeAway.away ? '@ $o' : 'vs. $o';
 }
+
+/// The title a Practice, Meeting or Social left blank saves with: its
+/// type's name, as the schedule writes it (SCHED-3; #17, 2026-11-16: until
+/// then Save asked for a title, and said so out of sight). A game titles
+/// itself from its opponent ([autoGameTitle]); Other still needs one
+/// typed, so it's empty. Saved as text, so in English, as the type names
+/// are.
+String autoTypeTitle(EventType type) => switch (type) {
+  EventType.practice => 'Practice',
+  EventType.meeting => 'Meeting',
+  EventType.social => 'Social',
+  EventType.game || EventType.other => '',
+};

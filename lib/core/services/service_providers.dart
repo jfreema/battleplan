@@ -29,6 +29,11 @@ PhotoDrops photoDrops(Ref ref) => const NoPhotoDrops();
 @Riverpod(keepAlive: true)
 LinkOpener linkOpener(Ref ref) => const NoopLinkOpener();
 
+/// What time it is: the device's clock, which tests set, as for the event
+/// form's first day and its past check (SCHED-3, #17).
+@Riverpod(keepAlive: true)
+DateTime Function() clock(Ref ref) => DateTime.now;
+
 /// The device's time zone and the list to pick from.
 @Riverpod(keepAlive: true)
 TimeZones timeZones(Ref ref) => const FixedTimeZones();

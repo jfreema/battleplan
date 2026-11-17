@@ -7,6 +7,7 @@ import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
@@ -19,6 +20,7 @@ import 'package:battleplan/features/schedule/domain/recurrence.dart';
 import 'package:battleplan/features/schedule/domain/rsvp.dart';
 import 'package:battleplan/features/schedule/domain/schedule_rules.dart';
 import 'package:battleplan/features/schedule/presentation/event_details_screen.dart';
+import 'package:battleplan/features/schedule/presentation/event_form_screen.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -98,6 +100,9 @@ void main() {
     // player, and whether an admin marked them a coach (PLAYER-3).
     HereFor? hereFor,
     bool? isCoach,
+    // What time the form thinks it is (#17); the device's by default.
+    DateTime Function()? clock,
+    Size size = const Size(400, 1600),
   }) async {
     final eventRepo = FakeEventRepository(events);
     final rsvps = FakeRsvpRepository(eventRepo);
@@ -131,6 +136,8 @@ void main() {
       playerRepo: players,
       calendar: calendar,
       messageRepo: messages,
+      overrides: [if (clock != null) clockProvider.overrideWithValue(clock)],
+      size: size,
     );
     if (tapSchedule) {
       await tester.tap(find.text('Schedule'));
@@ -765,7 +772,13 @@ void main() {
     testWidgets('weekly practices with a skipped date make one series', (
       tester,
     ) async {
-      final rsvps = await openSchedule(tester, role: MemberRole.admin);
+      // In the morning, so the new event starts today (from 6 PM it's
+      // tomorrow, #17).
+      final rsvps = await openSchedule(
+        tester,
+        role: MemberRole.admin,
+        clock: () => ZonedTime.instantOf(zone, today(), 10 * 60),
+      );
       await tester.tap(find.byTooltip('New event'));
       await tester.pumpAndSettle();
       await tester.enterText(
@@ -810,6 +823,190 @@ void main() {
       await tester.tap(find.byTooltip('Cancel'));
       await tester.pumpAndSettle();
       expect(find.text('Discard this event?'), findsOneWidget);
+    });
+
+    // #17: a save that doesn't fail out of sight.
+    TextField field(WidgetTester tester, String label) =>
+        tester.widget<TextField>(find.widgetWithText(TextField, label));
+
+    /// Whether [label]'s field is on screen.
+    bool onScreen(WidgetTester tester, String label) {
+      final found = find.widgetWithText(TextField, label);
+      // Scrolled far enough away, the list lets it go.
+      if (found.evaluate().isEmpty) return false;
+      final rect = tester.getRect(found);
+      final size = tester.view.physicalSize / tester.view.devicePixelRatio;
+      return rect.top >= 0 && rect.bottom <= size.height;
+    }
+
+    testWidgets('a Practice, Meeting or Social left untitled saves as its '
+        'type, which the Title field shows, following the type (#17)', (
+      tester,
+    ) async {
+      final rsvps = await openSchedule(tester, role: MemberRole.admin);
+      await tester.tap(find.byTooltip('New event'));
+      await tester.pumpAndSettle();
+      expect(field(tester, 'Title').decoration?.hintText, 'Practice');
+      await tester.tap(find.text('Meeting'));
+      await tester.pumpAndSettle();
+      expect(field(tester, 'Title').decoration?.hintText, 'Meeting');
+      // Other still needs one: no hint, and Save says so.
+      await tester.tap(find.text('Other'));
+      await tester.pumpAndSettle();
+      expect(field(tester, 'Title').decoration?.hintText, isNull);
+      await tester.tap(find.text('Social'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(rsvps.events.events.values.single.title, 'Social');
+    });
+
+    testWidgets('Save goes to the field with the problem: it scrolls there, '
+        'puts the cursor in it, and says what is wrong (#17)', (tester) async {
+      // A phone, where the form is two and a half screens long.
+      final rsvps = await openSchedule(
+        tester,
+        role: MemberRole.admin,
+        size: const Size(390, 844),
+      );
+      await tester.tap(find.byTooltip('New event'));
+      await tester.pumpAndSettle();
+      // The form's own list, outside its fields' scrolling.
+      final form = find
+          .descendant(
+            of: find.byType(EventFormScreen),
+            matching: find.byType(Scrollable),
+          )
+          .first;
+      await tester.tap(find.text('Other'));
+      await tester.pumpAndSettle();
+      // Down at Notify team, the title is out of sight.
+      await tester.scrollUntilVisible(
+        find.text('Notify team'),
+        300,
+        scrollable: form,
+      );
+      expect(onScreen(tester, 'Title'), isFalse);
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(
+          of: find.byType(SnackBar),
+          matching: find.text('Add a title'),
+        ),
+        findsOneWidget,
+      );
+      expect(onScreen(tester, 'Title'), isTrue);
+      expect(field(tester, 'Title').focusNode?.hasFocus, isTrue);
+      await tester.enterText(find.widgetWithText(TextField, 'Title'), 'Fun');
+      // Too long, as an old event or a paste could be: each field in turn.
+      for (final (label, max) in [
+        ('Place', Limits.locationNameMax),
+        ('Address', Limits.locationAddressMax),
+        ('Notes', Limits.eventNotesMax),
+      ]) {
+        await tester.scrollUntilVisible(
+          find.text('Title'),
+          -300,
+          scrollable: form,
+        );
+        field(tester, label).controller!.text = 'x' * (max + 1);
+        await tester.tap(find.text('Save'));
+        await tester.pumpAndSettle();
+        expect(onScreen(tester, label), isTrue, reason: label);
+        expect(field(tester, label).focusNode?.hasFocus, isTrue, reason: label);
+        field(tester, label).controller!.text = '';
+      }
+      expect(rsvps.events.calls, isEmpty);
+    });
+
+    testWidgets('fields show no counter until they are 80% full (#17)', (
+      tester,
+    ) async {
+      await openSchedule(tester, role: MemberRole.admin);
+      await tester.tap(find.byTooltip('New event'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining(RegExp(r'^\d+/\d+$')), findsNothing);
+      const max = Limits.eventTitleMax;
+      final title = find.widgetWithText(TextField, 'Title');
+      await tester.enterText(title, 'x' * (max * 0.8 - 1).ceil());
+      await tester.pump();
+      expect(find.textContaining(RegExp(r'^\d+/\d+$')), findsNothing);
+      await tester.enterText(title, 'x' * (max * 0.8).ceil());
+      await tester.pump();
+      expect(find.text('${(max * 0.8).ceil()}/$max'), findsOneWidget);
+    });
+
+    testWidgets("from 6 PM in the team's zone a new event starts tomorrow "
+        '(#17)', (tester) async {
+      final now = ZonedTime.instantOf(zone, today(), 18 * 60);
+      final rsvps = await openSchedule(
+        tester,
+        role: MemberRole.admin,
+        clock: () => now,
+      );
+      await tester.tap(find.byTooltip('New event'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      // Not in the past, so nothing to ask.
+      expect(find.text('This is in the past. Save anyway?'), findsNothing);
+      expect(
+        rsvps.events.events.values.single.startAt,
+        ZonedTime.instantOf(zone, addDays(today(), 1), 18 * 60),
+      );
+    });
+
+    testWidgets('saving a new event that has already started asks first, '
+        "and editing a past one doesn't (#17)", (tester) async {
+      // The form opens at 10 AM and is saved at 8 PM, after today's 6 PM.
+      var now = ZonedTime.instantOf(zone, today(), 10 * 60);
+      final rsvps = await openSchedule(
+        tester,
+        role: MemberRole.admin,
+        clock: () => now,
+        events: [event('old', days: -7, title: 'Scrimmage')],
+      );
+      await tester.tap(find.byTooltip('New event'));
+      await tester.pumpAndSettle();
+      now = ZonedTime.instantOf(zone, today(), 20 * 60);
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(find.text('This is in the past. Save anyway?'), findsOneWidget);
+      // Change date goes to the date, and opens its picker.
+      await tester.tap(find.text('Change date'));
+      await tester.pumpAndSettle();
+      expect(find.byType(DatePickerDialog), findsOneWidget);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(DatePickerDialog),
+          matching: find.text('Cancel'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(rsvps.events.calls, isEmpty);
+      // Past events are allowed: Save anyway saves it.
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Save anyway'));
+      await tester.pumpAndSettle();
+      expect(rsvps.events.calls, ['create']);
+
+      // Fixing last week's notes asks nothing.
+      unawaited(
+        GoRouter.of(tester.element(find.byType(Navigator).first))
+            .push('/g/a/schedule/e/old/edit'),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Edit event'), findsOneWidget);
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Notes'),
+        'Bring water',
+      );
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(find.text('This is in the past. Save anyway?'), findsNothing);
+      expect(rsvps.events.calls, ['create', 'update old']);
     });
 
     testWidgets('Duplicate copies all but the date, which must be picked', (

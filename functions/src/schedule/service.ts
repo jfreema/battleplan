@@ -752,10 +752,21 @@ export async function refreshRsvpStartTimes(startAtById: Map<string, Timestamp>)
 }
 
 /**
+ * Whether [e] had started by [nowMs]: a timed event whose start has
+ * passed, or an all-day one on a day before today in its zone (#17).
+ */
+export function startedBefore(e: EventView, nowMs: number): boolean {
+  if (!e.allDay) return e.startMs < nowMs;
+  const first = e.startDate ?? dateInZone(e.startMs, e.timeZone);
+  return first < dateInZone(nowMs, e.timeZone);
+}
+
+/**
  * events written → the follow-up for one-off events (ARCH §6.4): on
  * create, the chat card only when postToChat is true (the app's Post to
  * chat, off unless checked: owner's request 2026-11-10) and eventCreated
- * unless notifyTeam is false; on a time or place change or a cancel,
+ * unless notifyTeam is false or the event had already started (#17); on
+ * a time or place change or a cancel,
  * eventChanged to everyone but Not going; on any change, nextReminderAt;
  * on delete, the RSVPs and the assignments (SCHED-15). The card stays when
  * an event is deleted; the app shows it as deleted.
@@ -782,7 +793,11 @@ export async function followUpEventWrite(
       await postEventCard({ messageId: eventId, groupId, authorId: author, text: eventCardText(view), eventId, seriesId: null });
       updates.messageId = eventId;
     }
-    if (after.notifyTeam !== false && !view.canceled) {
+    // An event made after it started went straight under Past: telling
+    // the whole team about it is noise (#17, 2026-11-16: after 6 PM the
+    // app's new event opened on today, already over, with Notify team on).
+    // The server decides, so every app version agrees.
+    if (after.notifyTeam !== false && !view.canceled && !startedBefore(view, nowMs)) {
       await trySend(async () => ({
         kind: 'eventCreated',
         groupId,
