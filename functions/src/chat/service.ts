@@ -1,6 +1,7 @@
 // Chat domain service: owns messages, and the team's pinned messages.
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { HttpsError } from 'firebase-functions/v2/https';
+import { logger } from 'firebase-functions/v2';
 import { isDeepStrictEqual } from 'node:util';
 import { db, storage } from '../shared/admin.js';
 import { forEachPage } from '../shared/batch.js';
@@ -10,6 +11,8 @@ import { removeTargetNotifications, trySend } from '../notify/service.js';
 import { deletePoll, pollCreatedBody } from '../polls/service.js';
 import { maskStrongLanguage } from '../safety/strong_language.js';
 import { searchWordsOf } from './search_words.js';
+
+const DAY_MS = 86_400_000;
 
 export const DELETED_USER_NAME = 'Deleted user';
 
@@ -322,6 +325,84 @@ export async function photosOfMessages(groupId: string, messageIds: string[]): P
     }
   }
   return out;
+}
+
+/**
+ * Which files under a team's messages folder are orphans (dailyCleanup,
+ * #26): older than [cutoffMs] (a tray still being written in, or a send
+ * on its way, is left alone), and either their message isn't in the chat
+ * (never sent: a tray put away, or a send that failed and was dropped) or
+ * it doesn't show them (a photo taken out of the tray before Send). [shown]
+ * maps each live message ID to the paths it shows ([photosOfMessages]).
+ */
+export function orphanMessageFiles(
+  groupId: string,
+  files: { name: string; timeCreated?: unknown }[],
+  shown: Map<string, string[]>,
+  cutoffMs: number,
+): string[] {
+  const prefix = `groups/${groupId}/messages/`;
+  return files
+    .filter((f) => {
+      if (!f.name.startsWith(prefix)) return false;
+      const created = typeof f.timeCreated === 'string' ? Date.parse(f.timeCreated) : NaN;
+      if (Number.isNaN(created) || created > cutoffMs) return false;
+      const messageId = f.name.slice(prefix.length).split('/')[0];
+      if (!messageId) return false;
+      return !(shown.get(messageId) ?? []).includes(f.name);
+    })
+    .map((f) => f.name);
+}
+
+/**
+ * Deletes one team's orphan chat photos (dailyCleanup, #26): photos wait in
+ * the tray above the message box and upload before Send, so one taken out,
+ * or a tray never sent, would otherwise hold the team's space for good.
+ * Returns how many went.
+ */
+export async function removeOrphanMessageFiles(groupId: string, now = Date.now()): Promise<number> {
+  const prefix = `groups/${groupId}/messages/`;
+  const [found] = await storage().bucket().getFiles({ prefix });
+  if (!found.length) return 0;
+  const ids = found
+    .map((f) => f.name.slice(prefix.length).split('/')[0])
+    .filter((id) => id !== '' && id !== '.' && id !== '..' && !/^__.*__$/.test(id) && Buffer.byteLength(id) <= 1500);
+  const photos = await photosOfMessages(groupId, ids);
+  const shown = new Map([...photos].map(([id, p]) => [id, p.paths]));
+  const orphans = orphanMessageFiles(
+    groupId,
+    found.map((f) => ({ name: f.name, timeCreated: f.metadata.timeCreated })),
+    shown,
+    now - DAY_MS,
+  );
+  for (const name of orphans) {
+    await storage().bucket().file(name).delete({ ignoreNotFound: true });
+  }
+  if (orphans.length) logger.info('orphan_message_files_removed', { groupId, count: orphans.length });
+  return orphans.length;
+}
+
+/**
+ * Removes orphan chat photos from every team, a page of teams at a time
+ * (ARCH §6.4 dailyCleanup). One team's failure doesn't stop the rest.
+ */
+export async function removeAllOrphanMessageFiles(now = Date.now()): Promise<number> {
+  let removed = 0;
+  let last: FirebaseFirestore.QueryDocumentSnapshot | undefined;
+  for (;;) {
+    let page = db().collection(Collections.groups).orderBy('__name__').select().limit(200);
+    if (last) page = page.startAfter(last);
+    const snap = await page.get();
+    for (const team of snap.docs) {
+      removed += await removeOrphanMessageFiles(team.id, now).catch((e) => {
+        logger.error('orphan_message_cleanup_failed', { groupId: team.id, error: String(e) });
+        return 0;
+      });
+    }
+    if (snap.size < 200) break;
+    last = snap.docs[snap.docs.length - 1];
+  }
+  return removed;
 }
 
 /**

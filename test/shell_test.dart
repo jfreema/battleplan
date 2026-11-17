@@ -869,8 +869,8 @@ void main() {
   });
 
   group('web parity (SPEC §4.2)', () {
-    testWidgets('pasted or dropped photos send to the chat, with a hint '
-        'while dragging', (tester) async {
+    testWidgets('pasted or dropped photos go to the tray above the box, with '
+        'a hint while dragging, and send with Send (#26)', (tester) async {
       final repo = FakeMessageRepository();
       final drops = FakePhotoDrops();
       await pumpApp(
@@ -884,7 +884,10 @@ void main() {
       drops.drag(on: true);
       await tester.pump();
       await tester.pump();
-      expect(find.text('Drop photos to send them to the team'), findsOneWidget);
+      expect(
+        find.text('Drop photos to add them to your message'),
+        findsOneWidget,
+      );
       drops
         ..drag(on: false)
         ..drop([
@@ -892,7 +895,16 @@ void main() {
           (bytes: tinyPng, contentType: 'image/png'),
         ]);
       await tester.pumpAndSettle();
-      expect(find.text('Drop photos to send them to the team'), findsNothing);
+      expect(
+        find.text('Drop photos to add them to your message'),
+        findsNothing,
+      );
+      expect(repo.photoBatches, isEmpty);
+      expect(find.byTooltip('Remove photo 2'), findsOneWidget);
+      await tester.tap(find.byTooltip('Send'));
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pumpAndSettle();
       expect(repo.photoBatches, [2]);
 
       // Not while another tab is showing.

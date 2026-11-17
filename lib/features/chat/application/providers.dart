@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
@@ -121,6 +122,125 @@ abstract class OutgoingPhotos with _$OutgoingPhotos {
     /// by itself (CHAT-4).
     @Default(false) bool waiting,
   }) = _OutgoingPhotos;
+}
+
+/// A photo in the tray above the message box (CHAT-3, #26): picked, taken,
+/// pasted, or dropped, waiting for Send, and uploading meanwhile.
+@freezed
+abstract class TrayPhoto with _$TrayPhoto {
+  const factory({
+    required int key,
+    required NewPhoto photo,
+
+    /// 0 to 1 as it uploads.
+    @Default(0) double progress,
+    @Default(false) bool uploaded,
+
+    /// Its upload failed (offline, say); Send uploads it again.
+    @Default(false) bool failed,
+  }) = _TrayPhoto;
+}
+
+/// What the tray sends (#26): the message its photos were uploaded for,
+/// the photos, and their uploads, in order.
+typedef PreparedPhotos = ({
+  String messageId,
+  List<NewPhoto> photos,
+  List<Future<Attachment>> uploads,
+});
+
+/// The photos waiting above [groupId]'s message box (CHAT-3, #26): nothing
+/// goes to the team until Send, with the box's text as the caption, so a
+/// wrong photo can come out first. Each starts uploading as it's added, so
+/// Send is quick; one taken out, or a tray never sent, leaves its file for
+/// the daily cleanup (ARCH §6.4). Up to 10.
+@riverpod
+class PhotoTray extends _$PhotoTray {
+  /// The message the tray's photos are uploaded for, made with the first.
+  String? _messageId;
+  int _next = 0;
+  final Map<int, Future<Attachment>> _uploads = {};
+
+  @override
+  List<TrayPhoto> build(GroupId groupId) => const [];
+
+  /// How many more fit: a message holds 10.
+  int get room => Limits.messageAttachmentsMax - state.length;
+
+  /// Adds [photos], as many as fit, and starts uploading each. Returns how
+  /// many didn't fit.
+  int add(List<NewPhoto> photos) {
+    final fits = photos.take(math.max(0, room)).toList();
+    if (fits.isEmpty) return photos.length;
+    final repo = ref.read(messageRepositoryProvider);
+    final id = _messageId ??= repo.newPhotoMessageId();
+    final added = [
+      for (final photo in fits) TrayPhoto(key: _next++, photo: photo),
+    ];
+    // In the tray first, so its upload's progress has somewhere to go.
+    state = [...state, ...added];
+    for (final t in added) {
+      final key = t.key;
+      final upload = repo.uploadPhoto(
+        groupId,
+        id,
+        '$key',
+        t.photo,
+        onProgress: (p) => _update(key, (t) => t.copyWith(progress: p)),
+      );
+      _uploads[key] = upload;
+      unawaited(
+        upload.then(
+          (_) => _update(key, (t) => t.copyWith(uploaded: true, progress: 1)),
+          onError: (Object _) => _update(key, (t) => t.copyWith(failed: true)),
+        ),
+      );
+    }
+    return photos.length - fits.length;
+  }
+
+  /// Takes the photo [key] out; it's never sent.
+  void remove(int key) {
+    // Its upload carries on to the end; nothing waits for it.
+    _uploads.remove(key)?.ignore();
+    state = [
+      for (final t in state)
+        if (t.key != key) t,
+    ];
+    if (state.isEmpty) _messageId = null;
+  }
+
+  /// Empties the tray for Send: its message, photos, and uploads. A photo
+  /// whose upload failed uploads again, into the same message. Null when
+  /// it's empty.
+  PreparedPhotos? take() {
+    final id = _messageId;
+    if (id == null || state.isEmpty) return null;
+    final repo = ref.read(messageRepositoryProvider);
+    final prepared = (
+      messageId: id,
+      photos: [for (final t in state) t.photo],
+      uploads: [
+        for (final t in state)
+          if (t.failed)
+            repo.uploadPhoto(groupId, id, '${t.key}r', t.photo)
+          else
+            _uploads[t.key]!,
+      ],
+    );
+    state = const [];
+    _uploads.clear();
+    _messageId = null;
+    return prepared;
+  }
+
+  void _update(int key, TrayPhoto Function(TrayPhoto) f) {
+    if (!ref.mounted) return;
+    state = [
+      for (final t in state)
+        if (t.key == key) f(t) else t,
+    ];
+  }
 }
 
 /// A team's unread message count for the switcher and the Chat tab, up to
@@ -439,13 +559,20 @@ class ChatMessages extends _$ChatMessages {
 
   int _nextOutgoing = 0;
 
+  /// Uploads already under way from the tray (#26), by outgoing item: used
+  /// on its first try; a retry uploads the photos again.
+  final Map<int, PreparedPhotos> _prepared = {};
+
   /// Uploads photos, then posts them as one message (CHAT-3). The chat shows
   /// them with progress meanwhile; a failed upload stays with Retry.
   /// [playId] posts a play's picture that opens that saved play (BOARD-5).
+  /// [prepared] is the tray's (#26): its uploads started while the caption
+  /// was typed, so it posts as soon as they're done.
   Future<void> sendPhotos(
     List<NewPhoto> photos, {
     String caption = '',
     String? playId,
+    PreparedPhotos? prepared,
   }) {
     if (photos.isEmpty) return Future.value();
     final item = OutgoingPhotos(
@@ -454,6 +581,7 @@ class ChatMessages extends _$ChatMessages {
       caption: _filtered(caption.trim()),
       playId: playId,
     );
+    if (prepared != null) _prepared[item.id] = prepared;
     state = state.copyWith(outgoing: [...state.outgoing, item]);
     return _upload(item);
   }
@@ -510,12 +638,33 @@ class ChatMessages extends _$ChatMessages {
       return;
     }
     try {
-      final uploaded = await repo.uploadPhotos(
-        groupId,
-        item.photos,
-        onProgress: (p) =>
-            _updateOutgoing(item.id, (o) => o.copyWith(progress: p)),
-      );
+      // The tray's uploads, once: if any failed, a retry starts over.
+      final prepared = _prepared.remove(item.id);
+      final UploadedPhotos uploaded;
+      if (prepared != null) {
+        var done = 0;
+        uploaded = (
+          messageId: prepared.messageId,
+          attachments: await Future.wait([
+            for (final upload in prepared.uploads)
+              upload.then((a) {
+                done++;
+                _updateOutgoing(
+                  item.id,
+                  (o) => o.copyWith(progress: done / prepared.uploads.length),
+                );
+                return a;
+              }),
+          ]),
+        );
+      } else {
+        uploaded = await repo.uploadPhotos(
+          groupId,
+          item.photos,
+          onProgress: (p) =>
+              _updateOutgoing(item.id, (o) => o.copyWith(progress: p)),
+        );
+      }
       await _enqueue(
         () => repo.sendPhotos(
           groupId,

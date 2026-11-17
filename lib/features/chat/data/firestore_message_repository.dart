@@ -301,43 +301,63 @@ class FirestoreMessageRepository implements MessageRepository {
     List<NewPhoto> photos, {
     void Function(double progress)? onProgress,
   }) async {
-    final id = _db.collection(Collections.messages).doc().id;
+    final id = newPhotoMessageId();
     final total = photos.fold<int>(0, (n, p) => n + p.bytes.length);
     final sent = List<int>.filled(photos.length, 0);
     void report() => onProgress?.call(
       total == 0 ? 1 : sent.fold<int>(0, (a, b) => a + b) / total,
     );
+    final attachments = await Future.wait([
+      for (final (i, photo) in photos.indexed)
+        uploadPhoto(
+          groupId,
+          id,
+          '$i',
+          photo,
+          onProgress: (p) {
+            sent[i] = (p * photo.bytes.length).round();
+            report();
+          },
+        ),
+    ]);
+    return (messageId: id, attachments: attachments);
+  }
+
+  @override
+  String newPhotoMessageId() => _db.collection(Collections.messages).doc().id;
+
+  @override
+  Future<Attachment> uploadPhoto(
+    GroupId groupId,
+    String messageId,
+    String name,
+    NewPhoto photo, {
+    void Function(double progress)? onProgress,
+  }) async {
+    final path = 'groups/${groupId.value}/messages/$messageId/$name.jpg';
     try {
       // Storage rules check membership, image type, size, and the quota.
-      final attachments = await Future.wait([
-        for (final (i, photo) in photos.indexed)
-          () async {
-            final path = 'groups/${groupId.value}/messages/$id/$i.jpg';
-            final task = _storage
-                .ref(path)
-                .putData(
-                  photo.bytes,
-                  SettableMetadata(contentType: photo.contentType),
-                );
-            final progress = task.snapshotEvents.listen((e) {
-              sent[i] = e.bytesTransferred;
-              report();
-            });
-            await task;
-            await progress.cancel();
-            sent[i] = photo.bytes.length;
-            report();
-            final size = await _dimensions(photo.bytes);
-            return Attachment(
-              path: path,
-              contentType: photo.contentType,
-              width: size.width,
-              height: size.height,
-              size: photo.bytes.length,
-            );
-          }(),
-      ]);
-      return (messageId: id, attachments: attachments);
+      final task = _storage
+          .ref(path)
+          .putData(
+            photo.bytes,
+            SettableMetadata(contentType: photo.contentType),
+          );
+      final total = photo.bytes.length;
+      final progress = task.snapshotEvents.listen(
+        (e) => onProgress?.call(total == 0 ? 1 : e.bytesTransferred / total),
+      );
+      await task;
+      await progress.cancel();
+      onProgress?.call(1);
+      final size = await _dimensions(photo.bytes);
+      return Attachment(
+        path: path,
+        contentType: photo.contentType,
+        width: size.width,
+        height: size.height,
+        size: photo.bytes.length,
+      );
     } on FirebaseException catch (e) {
       throw switch (e.code) {
         'unauthorized' || 'permission-denied' => PermissionDenied(e.code),

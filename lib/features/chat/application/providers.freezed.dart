@@ -1258,6 +1258,286 @@ as bool,
 }
 
 /// @nodoc
+mixin _$TrayPhoto {
+
+ int get key; NewPhoto get photo;/// 0 to 1 as it uploads.
+ double get progress; bool get uploaded;/// Its upload failed (offline, say); Send uploads it again.
+ bool get failed;
+/// Create a copy of TrayPhoto
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$TrayPhotoCopyWith<TrayPhoto> get copyWith => _$TrayPhotoCopyWithImpl<TrayPhoto>(this as TrayPhoto, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as TrayPhoto;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TrayPhoto&&(identical(other.key, _this.key) || other.key == _this.key)&&(identical(other.photo, _this.photo) || other.photo == _this.photo)&&(identical(other.progress, _this.progress) || other.progress == _this.progress)&&(identical(other.uploaded, _this.uploaded) || other.uploaded == _this.uploaded)&&(identical(other.failed, _this.failed) || other.failed == _this.failed));
+}
+
+
+@override
+int get hashCode {
+  final _this = this as TrayPhoto;
+  return Object.hash(runtimeType,_this.key,_this.photo,_this.progress,_this.uploaded,_this.failed);
+}
+
+@override
+String toString() {
+  final _this = this as TrayPhoto;
+  return 'TrayPhoto(key: ${_this.key}, photo: ${_this.photo}, progress: ${_this.progress}, uploaded: ${_this.uploaded}, failed: ${_this.failed})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $TrayPhotoCopyWith<$Res>  {
+  factory $TrayPhotoCopyWith(TrayPhoto value, $Res Function(TrayPhoto) _then) = _$TrayPhotoCopyWithImpl;
+@useResult
+$Res call({
+ int key, NewPhoto photo, double progress, bool uploaded, bool failed
+});
+
+
+
+
+}
+/// @nodoc
+class _$TrayPhotoCopyWithImpl<$Res>
+    implements $TrayPhotoCopyWith<$Res> {
+  _$TrayPhotoCopyWithImpl(this._self, this._then);
+
+  final TrayPhoto _self;
+  final $Res Function(TrayPhoto) _then;
+
+/// Create a copy of TrayPhoto
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? key = null,Object? photo = null,Object? progress = null,Object? uploaded = null,Object? failed = null,}) {
+  return _then(TrayPhoto(
+key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
+as int,photo: null == photo ? _self.photo : photo // ignore: cast_nullable_to_non_nullable
+as NewPhoto,progress: null == progress ? _self.progress : progress // ignore: cast_nullable_to_non_nullable
+as double,uploaded: null == uploaded ? _self.uploaded : uploaded // ignore: cast_nullable_to_non_nullable
+as bool,failed: null == failed ? _self.failed : failed // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [TrayPhoto].
+extension TrayPhotoPatterns on TrayPhoto {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _TrayPhoto value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _TrayPhoto() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _TrayPhoto value)  $default,){
+final _that = this;
+switch (_that) {
+case _TrayPhoto():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _TrayPhoto value)?  $default,){
+final _that = this;
+switch (_that) {
+case _TrayPhoto() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int key,  NewPhoto photo,  double progress,  bool uploaded,  bool failed)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _TrayPhoto() when $default != null:
+return $default(_that.key,_that.photo,_that.progress,_that.uploaded,_that.failed);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int key,  NewPhoto photo,  double progress,  bool uploaded,  bool failed)  $default,) {final _that = this;
+switch (_that) {
+case _TrayPhoto():
+return $default(_that.key,_that.photo,_that.progress,_that.uploaded,_that.failed);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int key,  NewPhoto photo,  double progress,  bool uploaded,  bool failed)?  $default,) {final _that = this;
+switch (_that) {
+case _TrayPhoto() when $default != null:
+return $default(_that.key,_that.photo,_that.progress,_that.uploaded,_that.failed);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _TrayPhoto implements TrayPhoto {
+  const _TrayPhoto({required this.key, required this.photo, this.progress = 0, this.uploaded = false, this.failed = false});
+  
+
+@override final  int key;
+@override final  NewPhoto photo;
+/// 0 to 1 as it uploads.
+@override@JsonKey() final  double progress;
+@override@JsonKey() final  bool uploaded;
+/// Its upload failed (offline, say); Send uploads it again.
+@override@JsonKey() final  bool failed;
+
+/// Create a copy of TrayPhoto
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$TrayPhotoCopyWith<_TrayPhoto> get copyWith => __$TrayPhotoCopyWithImpl<_TrayPhoto>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _TrayPhoto&&(identical(other.key, key) || other.key == key)&&(identical(other.photo, photo) || other.photo == photo)&&(identical(other.progress, progress) || other.progress == progress)&&(identical(other.uploaded, uploaded) || other.uploaded == uploaded)&&(identical(other.failed, failed) || other.failed == failed));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,key,photo,progress,uploaded,failed);
+}
+
+@override
+String toString() {
+    return 'TrayPhoto(key: $key, photo: $photo, progress: $progress, uploaded: $uploaded, failed: $failed)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$TrayPhotoCopyWith<$Res> implements $TrayPhotoCopyWith<$Res> {
+  factory _$TrayPhotoCopyWith(_TrayPhoto value, $Res Function(_TrayPhoto) _then) = __$TrayPhotoCopyWithImpl;
+@override @useResult
+$Res call({
+ int key, NewPhoto photo, double progress, bool uploaded, bool failed
+});
+
+
+
+
+}
+/// @nodoc
+class __$TrayPhotoCopyWithImpl<$Res>
+    implements _$TrayPhotoCopyWith<$Res> {
+  __$TrayPhotoCopyWithImpl(this._self, this._then);
+
+  final _TrayPhoto _self;
+  final $Res Function(_TrayPhoto) _then;
+
+/// Create a copy of TrayPhoto
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? key = null,Object? photo = null,Object? progress = null,Object? uploaded = null,Object? failed = null,}) {
+  return _then(_TrayPhoto(
+key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
+as int,photo: null == photo ? _self.photo : photo // ignore: cast_nullable_to_non_nullable
+as NewPhoto,progress: null == progress ? _self.progress : progress // ignore: cast_nullable_to_non_nullable
+as double,uploaded: null == uploaded ? _self.uploaded : uploaded // ignore: cast_nullable_to_non_nullable
+as bool,failed: null == failed ? _self.failed : failed // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+
+}
+
+/// @nodoc
 mixin _$TeamPhotosState {
 
 /// Every photo loaded so far, newest first.

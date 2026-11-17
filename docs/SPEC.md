@@ -691,9 +691,10 @@ Players that others answer for never get accounts, and every account belongs to 
   - Multi-line text up to 4,000 characters, with a counter near the limit, and a Send button.
   - A 46 px rounded field with the **+** inside its left edge and the hint "Message Thunder U14…", beside a round coral Send button on a lip.
   - The **+** menu: Photo library, Camera (phones), Create poll.
-  - On web, Enter sends, Shift+Enter adds a line, and images can be pasted or dragged in.
+  - On web, Enter sends, Shift+Enter adds a line, and images can be pasted or dragged in; they wait in the tray above the box until Send (CHAT-3).
 - **CHAT-3 · MVP · Photos.**
   - Up to 10 per message, resized before upload, with progress shown on each photo.
+  - **A preview before sending** (#26, owner's go 2026-11-16): photos from the library, the camera, or pasted or dropped on the web wait in a tray above the message box, nothing reaching the team until **Send**: 72 px thumbnails, each with an **X** to take it out ("Remove photo 2"), and a tile to add more from the library until there are 10 (more say "A message holds up to 10 photos."). The box's hint becomes "Add a caption…": what's typed goes with them as their caption, and Send works with no caption too. Taking the last one out leaves the box as it was. They start uploading as they're added, with a ring on each until it's up, so Send is quick; one whose upload failed (offline, say) is marked and uploads again on Send. Before, a picked photo went to every family at once, and deleting it left "This message was deleted." after the push had gone out. A photo taken out, or a tray never sent, has its upload deleted by the daily cleanup after a day (ARCH §6.4).
   - Shown as a grid. Tap for a full-screen viewer with pinch-zoom, swipe between photos, save/download, and share.
 - **CHAT-4 · MVP · Delivery states.**
   - Each message shows sending, sent, or failed (tap to retry or delete).

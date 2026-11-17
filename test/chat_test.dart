@@ -452,6 +452,8 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Photo library'));
       await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Send'));
+      await tester.pumpAndSettle();
       expect(repo.photoBatches, isEmpty);
       expect(find.text('Waiting for a connection…'), findsOneWidget);
 
@@ -466,9 +468,8 @@ void main() {
     });
   });
 
-  testWidgets('photos pasted or dragged in send as one message (CHAT-2)', (
-    tester,
-  ) async {
+  testWidgets('photos pasted or dragged in wait in the tray, then send as '
+      'one message (CHAT-2, #26)', (tester) async {
     final drops = FakePhotoDrops();
     final repo = FakeMessageRepository();
     await openChat(
@@ -480,6 +481,10 @@ void main() {
       (bytes: tinyPng, contentType: 'image/jpeg'),
       (bytes: tinyPng, contentType: 'image/jpeg'),
     ]);
+    await tester.pumpAndSettle();
+    expect(repo.photoBatches, isEmpty);
+    expect(find.byTooltip('Remove photo 2'), findsOneWidget);
+    await tester.tap(find.byTooltip('Send'));
     await tester.pumpAndSettle();
     await tester.pump(const Duration(seconds: 2));
     await tester.pumpAndSettle();

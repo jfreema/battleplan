@@ -109,6 +109,137 @@ final class ChatQueueStoreProvider
 
 String _$chatQueueStoreHash() => r'51e07b24d2eaf254bea5b403006d8f3e266cd263';
 
+/// The photos waiting above [groupId]'s message box (CHAT-3, #26): nothing
+/// goes to the team until Send, with the box's text as the caption, so a
+/// wrong photo can come out first. Each starts uploading as it's added, so
+/// Send is quick; one taken out, or a tray never sent, leaves its file for
+/// the daily cleanup (ARCH §6.4). Up to 10.
+
+@ProviderFor(PhotoTray)
+final photoTrayProvider = PhotoTrayFamily._();
+
+/// The photos waiting above [groupId]'s message box (CHAT-3, #26): nothing
+/// goes to the team until Send, with the box's text as the caption, so a
+/// wrong photo can come out first. Each starts uploading as it's added, so
+/// Send is quick; one taken out, or a tray never sent, leaves its file for
+/// the daily cleanup (ARCH §6.4). Up to 10.
+final class PhotoTrayProvider
+    extends $NotifierProvider<PhotoTray, List<TrayPhoto>> {
+  /// The photos waiting above [groupId]'s message box (CHAT-3, #26): nothing
+  /// goes to the team until Send, with the box's text as the caption, so a
+  /// wrong photo can come out first. Each starts uploading as it's added, so
+  /// Send is quick; one taken out, or a tray never sent, leaves its file for
+  /// the daily cleanup (ARCH §6.4). Up to 10.
+  PhotoTrayProvider._({
+    required PhotoTrayFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'photoTrayProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$photoTrayHash();
+
+  @override
+  String toString() {
+    return r'photoTrayProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  PhotoTray create() => PhotoTray();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<TrayPhoto> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<TrayPhoto>>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PhotoTrayProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$photoTrayHash() => r'ee9d388784d97f2a1a458f85a20fa040a738a14c';
+
+/// The photos waiting above [groupId]'s message box (CHAT-3, #26): nothing
+/// goes to the team until Send, with the box's text as the caption, so a
+/// wrong photo can come out first. Each starts uploading as it's added, so
+/// Send is quick; one taken out, or a tray never sent, leaves its file for
+/// the daily cleanup (ARCH §6.4). Up to 10.
+
+final class PhotoTrayFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          PhotoTray,
+          List<TrayPhoto>,
+          List<TrayPhoto>,
+          List<TrayPhoto>,
+          GroupId
+        > {
+  PhotoTrayFamily._()
+    : super(
+        retry: null,
+        name: r'photoTrayProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The photos waiting above [groupId]'s message box (CHAT-3, #26): nothing
+  /// goes to the team until Send, with the box's text as the caption, so a
+  /// wrong photo can come out first. Each starts uploading as it's added, so
+  /// Send is quick; one taken out, or a tray never sent, leaves its file for
+  /// the daily cleanup (ARCH §6.4). Up to 10.
+
+  PhotoTrayProvider call(GroupId groupId) =>
+      PhotoTrayProvider._(argument: groupId, from: this);
+
+  @override
+  String toString() => r'photoTrayProvider';
+}
+
+/// The photos waiting above [groupId]'s message box (CHAT-3, #26): nothing
+/// goes to the team until Send, with the box's text as the caption, so a
+/// wrong photo can come out first. Each starts uploading as it's added, so
+/// Send is quick; one taken out, or a tray never sent, leaves its file for
+/// the daily cleanup (ARCH §6.4). Up to 10.
+
+abstract class _$PhotoTray extends $Notifier<List<TrayPhoto>> {
+  late final _$args = ref.$arg as GroupId;
+  GroupId get groupId => _$args;
+
+  List<TrayPhoto> build(GroupId groupId);
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<List<TrayPhoto>, List<TrayPhoto>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<List<TrayPhoto>, List<TrayPhoto>>,
+              List<TrayPhoto>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, () => build(_$args));
+  }
+}
+
 /// A team's unread message count for the switcher and the Chat tab, up to
 /// 100 (CHAT-9). It only queries when the team's last message is newer
 /// than the person's read marker, so a read team costs nothing.
@@ -337,7 +468,7 @@ final class ChatMessagesProvider
   }
 }
 
-String _$chatMessagesHash() => r'd932423a75631aa4c0d0bd2730e36e8d871d4905';
+String _$chatMessagesHash() => r'6067f4a1ef1ce1ec67835e940f607066d4b9290e';
 
 /// One team's chat: the live newest page plus any older pages loaded by
 /// scrolling up, merged by message ID (ARCH §5.3). Messages that slide out

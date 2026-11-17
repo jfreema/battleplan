@@ -94,6 +94,22 @@ abstract interface class MessageRepository {
     void Function(double progress)? onProgress,
   });
 
+  /// A new message's ID, for photos uploaded before it's sent (#26).
+  String newPhotoMessageId();
+
+  /// Uploads one photo for the message [messageId] that isn't sent yet, as
+  /// `<name>.jpg` in its folder (CHAT-3, #26): photos in the tray upload
+  /// while the caption is typed, so Send is quick. [onProgress] gets 0 to
+  /// 1. A photo taken out of the tray, or a tray never sent, leaves its
+  /// file behind for the daily cleanup.
+  Future<Attachment> uploadPhoto(
+    GroupId groupId,
+    String messageId,
+    String name,
+    NewPhoto photo, {
+    void Function(double progress)? onProgress,
+  });
+
   /// Posts uploaded photos as one message, with an optional caption.
   /// [playId] makes it a posted play, whose picture opens that saved play
   /// (BOARD-5).

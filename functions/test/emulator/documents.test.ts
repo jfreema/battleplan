@@ -8,6 +8,7 @@ import { Timestamp } from 'firebase-admin/firestore';
 import type { TokenMessage } from 'firebase-admin/messaging';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { anonymizeUploader, removeAllOrphanDocumentFiles } from '../../src/documents/service.js';
+import { removeAllOrphanMessageFiles } from '../../src/chat/service.js';
 import { onDocumentCreated, onDocumentDeleted } from '../../src/documents/triggers.js';
 import { auditDocumentDeleted, auditEventDeleted } from '../../src/audit/triggers.js';
 import { reportContent, resolveReport } from '../../src/safety/handlers.js';
@@ -244,6 +245,37 @@ describe('uploads whose document was never created (dailyCleanup)', () => {
     expect(await fileExists(`groups/${G}/documents/d1/retry.pdf`)).toBe(false);
     expect(await fileExists(`groups/${G}/documents/never/a.pdf`)).toBe(false);
     expect(await fileExists(`groups/${G}/messages/m1/0.jpg`)).toBe(true);
+  });
+});
+
+describe('chat photos no message shows (dailyCleanup, #26)', () => {
+  it('removes them after a day, and keeps every photo a message shows', async () => {
+    // Sent with its first photo; the second was taken out of the tray.
+    await file(`groups/${G}/messages/m1/0.jpg`, 4, 'image/jpeg');
+    await file(`groups/${G}/messages/m1/1.jpg`, 4, 'image/jpeg');
+    // A tray never sent.
+    await file(`groups/${G}/messages/never/0.jpg`, 4, 'image/jpeg');
+    await file(`groups/${G}/documents/d1/Fall roster.pdf`);
+    await docRef('d1').set(fileDoc('d1'));
+    await db()
+      .collection(Collections.messages)
+      .doc('m1')
+      .set({
+        groupId: G,
+        authorName: 'Pat',
+        type: 'image',
+        attachments: [{ path: `groups/${G}/messages/m1/0.jpg`, contentType: 'image/jpeg' }],
+      });
+
+    // Files just uploaded are left alone: Send may be on its way.
+    expect(await removeAllOrphanMessageFiles()).toBe(0);
+    expect(await fileExists(`groups/${G}/messages/never/0.jpg`)).toBe(true);
+
+    expect(await removeAllOrphanMessageFiles(Date.now() + 2 * DAY)).toBe(2);
+    expect(await fileExists(`groups/${G}/messages/m1/0.jpg`)).toBe(true);
+    expect(await fileExists(`groups/${G}/messages/m1/1.jpg`)).toBe(false);
+    expect(await fileExists(`groups/${G}/messages/never/0.jpg`)).toBe(false);
+    expect(await fileExists(`groups/${G}/documents/d1/Fall roster.pdf`)).toBe(true);
   });
 });
 

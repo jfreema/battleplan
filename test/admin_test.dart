@@ -1313,8 +1313,12 @@ void main() {
       await tester.tap(find.text('Photo library'));
       await tester.pumpAndSettle();
       expect(find.text(tooBig), findsOneWidget);
-      expect(messages.photoBatches, [1]);
+      // It waits above the box until Send (#26), once the message has gone
+      // from over it.
       await snackBarGone();
+      await tester.tap(find.byTooltip('Send'));
+      await tester.pumpAndSettle();
+      expect(messages.photoBatches, [1]);
 
       // Documents.
       await tester.tap(find.text('Documents'));

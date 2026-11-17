@@ -25,6 +25,7 @@ import 'package:battleplan/features/chat/presentation/chat_search_screen.dart'
     show ChatSearchButton, openChatSearch;
 import 'package:battleplan/features/chat/presentation/composer.dart';
 import 'package:battleplan/features/chat/presentation/message_tile.dart';
+import 'package:battleplan/features/chat/presentation/photo_tray.dart';
 import 'package:battleplan/features/chat/presentation/quote_block.dart';
 import 'package:battleplan/features/chat/presentation/sprinkles.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
@@ -301,13 +302,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
-  /// Pasted or dropped photos (CHAT-2) send as picked ones do (CHAT-3),
-  /// within the upload limit and not into full storage (STORE-4).
+  /// Pasted or dropped photos (CHAT-2) wait in the tray as picked ones do
+  /// (CHAT-3, #26), within the upload limit and not into full storage
+  /// (STORE-4).
   void _onDropped(List<PickedPhoto> photos) {
     if (!_takesDrops) return;
-    final controller = ref.read(chatMessagesProvider(widget.groupId).notifier);
-    unawaited(_sendPicked(photos, controller));
-    _scrollToBottomSoon();
+    unawaited(_addToTray(photos));
   }
 
   @override
@@ -568,6 +568,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final messages = chat.messages;
     final controller = ref.read(chatMessagesProvider(widget.groupId).notifier);
     final picker = ref.watch(photoPickerProvider);
+    // Photos waiting above the box for Send (CHAT-3, #26).
+    final tray = ref.watch(photoTrayProvider(widget.groupId));
     // Nobody to @mention in a conversation for two. The team's names are
     // read once someone types @ (CHAT-14), not kept live.
     final candidates = direct || !_mentionsWanted
@@ -980,6 +982,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             announcing: _announcing && isAdmin,
             onCancelAnnouncement: () => setState(() => _announcing = false),
             onSend: (text) {
+              // Photos waiting: they go, the text as their caption (#26).
+              if (tray.isNotEmpty) {
+                _sendTray(text, controller);
+                return;
+              }
               // Whom it names, from the names in the text (CHAT-14).
               final named = mentionsIn(
                 text,
@@ -1005,10 +1012,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               });
               _scrollToBottomSoon();
             },
-            onPickPhotos: () => unawaited(_pickPhotos(picker, controller)),
+            onPickPhotos: () => unawaited(_pickPhotos(picker)),
             onTakePhoto: picker.canUseCamera
-                ? () => unawaited(_takePhoto(picker, controller))
+                ? () => unawaited(_takePhoto(picker))
                 : null,
+            // What's waiting to go (#26); the box's text is its caption.
+            hasAttachments: tray.isNotEmpty,
+            tray: tray.isEmpty
+                ? null
+                : PhotoTrayStrip(
+                    photos: tray,
+                    onRemove: ref
+                        .read(photoTrayProvider(widget.groupId).notifier)
+                        .remove,
+                    onAddMore: storageFull
+                        ? null
+                        : () => unawaited(_pickPhotos(picker)),
+                  ),
             // Polls (POLL-1) for admins, and for members if the team allows
             // it (TEAM-5). Full storage doesn't stop them (STORE-4).
             onCreatePoll: !direct && (isAdmin || group.membersCanCreatePolls)
@@ -1043,21 +1063,37 @@ extension on _ChatScreenState {
     ];
   }
 
-  Future<void> _pickPhotos(PhotoPicker picker, ChatMessages controller) =>
-      _sendPicked(picker.pickChatPhotos(), controller);
+  Future<void> _pickPhotos(PhotoPicker picker) {
+    final room = ref.read(photoTrayProvider(widget.groupId).notifier).room;
+    return _addToTray(picker.pickChatPhotos(limit: math.max(1, room)));
+  }
 
-  /// Sends picked, pasted, or dropped photos, up to 10 (CHAT-3).
-  Future<void> _sendPicked(
-    FutureOr<List<PickedPhoto>> picked,
-    ChatMessages controller,
-  ) async {
-    final photos = _withinLimit((await picked).take(10).toList());
-    if (photos.isEmpty || _fullAfterPicking()) return;
-    await controller
-        .sendPhotos([
-          for (final p in photos) (bytes: p.bytes, contentType: p.contentType),
-        ])
-        .catchError((Object _) {});
+  /// Picked, taken, pasted, or dropped photos wait in the tray above the
+  /// box (CHAT-3, #26), uploading meanwhile, until Send: nothing reaches
+  /// the team before. Up to 10 in a message; more say so.
+  Future<void> _addToTray(FutureOr<List<PickedPhoto>> picked) async {
+    final photos = _withinLimit(await picked);
+    if (photos.isEmpty || !mounted || _fullAfterPicking()) return;
+    final left = ref.read(photoTrayProvider(widget.groupId).notifier).add([
+      for (final p in photos) (bytes: p.bytes, contentType: p.contentType),
+    ]);
+    if (left > 0 && mounted) {
+      showAppSnackBar(context, AppLocalizations.of(context).trayFull);
+    }
+  }
+
+  /// Sends the tray's photos as one message, [caption] with them (#26).
+  void _sendTray(String caption, ChatMessages controller) {
+    final prepared = ref
+        .read(photoTrayProvider(widget.groupId).notifier)
+        .take();
+    if (prepared == null) return;
+    unawaited(
+      controller
+          .sendPhotos(prepared.photos, caption: caption, prepared: prepared)
+          .catchError((Object _) {}),
+    );
+    _scrollToBottomSoon();
   }
 
   Future<void> _createPoll(ChatMessages controller) async {
@@ -1069,12 +1105,10 @@ extension on _ChatScreenState {
     });
   }
 
-  Future<void> _takePhoto(PhotoPicker picker, ChatMessages controller) async {
+  Future<void> _takePhoto(PhotoPicker picker) async {
     final p = await picker.takeChatPhoto();
-    if (p == null || _withinLimit([p]).isEmpty || _fullAfterPicking()) return;
-    await controller
-        .sendPhotos([(bytes: p.bytes, contentType: p.contentType)])
-        .catchError((Object _) {});
+    if (p == null) return;
+    await _addToTray([p]);
   }
 }
 

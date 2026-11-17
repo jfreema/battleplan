@@ -1898,6 +1898,39 @@ class FakeMessageRepository implements MessageRepository {
     );
   }
 
+  int _photoMessages = 0;
+
+  @override
+  String newPhotoMessageId() => 'tray${_photoMessages++}';
+
+  /// Each photo uploaded ahead of its message (#26): its path.
+  final List<String> preUploads = [];
+
+  /// Set to hold the next photo uploads until [releaseUploads].
+  Completer<void>? holdUploads;
+
+  void releaseUploads() => holdUploads?.complete();
+
+  @override
+  Future<Attachment> uploadPhoto(
+    GroupId groupId,
+    String messageId,
+    String name,
+    NewPhoto photo, {
+    void Function(double progress)? onProgress,
+  }) async {
+    onProgress?.call(0.2);
+    if (holdUploads case final hold?) await hold.future;
+    if (failUploads > 0) {
+      failUploads--;
+      throw const Offline('upload');
+    }
+    final path = 'groups/${groupId.value}/messages/$messageId/$name.jpg';
+    preUploads.add(path);
+    onProgress?.call(1);
+    return Attachment(path: path, size: photo.bytes.length);
+  }
+
   @override
   Future<void> sendPhotos(
     GroupId groupId,
@@ -2176,11 +2209,14 @@ class FakePhotoPicker implements PhotoPicker {
     return photos.take(limit).toList();
   }
 
-  @override
-  Future<PickedPhoto?> takeChatPhoto() async => null;
+  /// What the camera takes; with one, the camera is offered.
+  PickedPhoto? cameraPhoto;
 
   @override
-  bool get canUseCamera => false;
+  Future<PickedPhoto?> takeChatPhoto() async => cameraPhoto;
+
+  @override
+  bool get canUseCamera => cameraPhoto != null;
 }
 
 /// Blocks and reports in memory.

@@ -38,8 +38,17 @@ class Composer extends StatefulWidget {
     this.onAnnounce,
     this.announcing = false,
     this.onCancelAnnouncement,
+    this.tray,
+    this.hasAttachments = false,
     super.key,
   });
+
+  /// The photos waiting to go, above the box (CHAT-3, #26).
+  final Widget? tray;
+
+  /// Photos are waiting: Send works with no text, the text being their
+  /// caption, and the hint says so.
+  final bool hasAttachments;
 
   /// Names the team in the hint, "Message Thunder U14…" (SPEC §5.4).
   final String teamName;
@@ -203,7 +212,11 @@ class _ComposerState extends State<Composer> {
 
   void _send() {
     final text = _text.text.trim();
-    if (text.isEmpty || text.length > Limits.messageTextMax) return;
+    // Waiting photos go with no caption too.
+    if ((text.isEmpty && !widget.hasAttachments) ||
+        text.length > Limits.messageTextMax) {
+      return;
+    }
     Haptics.light();
     widget.onSend(text);
     _text.clear();
@@ -218,9 +231,12 @@ class _ComposerState extends State<Composer> {
     final l10n = AppLocalizations.of(context);
     final length = _text.text.length;
     final canSend =
-        _text.text.trim().isNotEmpty && length <= Limits.messageTextMax;
+        (_text.text.trim().isNotEmpty || widget.hasAttachments) &&
+        length <= Limits.messageTextMax;
     final replying = widget.replyingTo;
-    final hint = widget.announcing
+    final hint = widget.hasAttachments
+        ? l10n.photoCaptionHint
+        : widget.announcing
         ? l10n.announcementHint
         : widget.teamName.trim().isEmpty
         ? l10n.messageHint
@@ -445,6 +461,8 @@ class _ComposerState extends State<Composer> {
               ],
             ),
           ),
+        if (widget.tray case final tray?)
+          Padding(padding: const EdgeInsets.only(top: 6), child: tray),
         box,
       ],
     );

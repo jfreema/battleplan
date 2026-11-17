@@ -2152,6 +2152,10 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Photo library'));
       await tester.pumpAndSettle();
+      // They wait above the box until Send (#26).
+      expect(repo.photoBatches, isEmpty);
+      await tester.tap(find.byTooltip('Send'));
+      await tester.pumpAndSettle();
       expect(repo.photoBatches, [2]);
       expect(find.byType(GridView), findsOneWidget);
     });
@@ -2607,7 +2611,8 @@ void main() {
 
     testWidgets('Retry on a failed photo waits while storage is full '
         '(STORE-4)', (tester) async {
-      final repo = FakeMessageRepository()..failUploads = 1;
+      // The tray's upload fails, and so does its second try on Send.
+      final repo = FakeMessageRepository()..failUploads = 2;
       Group using(int mb) => testGroup('a', 'Thunder').copyWith(
         storageBytes: mb * bytesPerMb,
         storageQuotaBytes: 500 * bytesPerMb,
@@ -2629,6 +2634,8 @@ void main() {
       await tester.tap(find.byTooltip('Add photos or a poll'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Photo library'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Send'));
       await tester.pumpAndSettle();
       expect(find.text('Retry'), findsOneWidget);
 

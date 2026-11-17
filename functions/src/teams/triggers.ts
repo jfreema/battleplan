@@ -3,7 +3,7 @@ import { onObjectDeleted, onObjectFinalized } from 'firebase-functions/v2/storag
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onDocumentUpdatedWithAuthContext } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
-import { postRenamedLine, renamedLine } from '../chat/service.js';
+import { postRenamedLine, removeAllOrphanMessageFiles, renamedLine } from '../chat/service.js';
 import { addStorageBytes, enforceUploadLimit, groupIdFromPath, reconcileAllStorage, updateStorageAlert } from './storage.js';
 import { removeAllOrphanDocumentFiles } from '../documents/service.js';
 import { pruneDevices } from '../notify/service.js';
@@ -62,7 +62,7 @@ export const onGroupFileRemoved = onObjectDeleted(async (event) => {
 /**
  * Daily housekeeping (ARCH §6.4 scheduled jobs): prunes devices that
  * stopped checking in, removes document uploads whose document was never
- * created, then recomputes every team's storage total from the bucket and
+ * created and chat photos no message shows, then recomputes every team's storage total from the bucket and
  * updates its warning, and last reminds super admins of reports open more
  * than 12 hours (SAFE-4). Expiring invites joins it with its feature.
  */
@@ -79,6 +79,13 @@ export const dailyCleanup = onSchedule({ schedule: 'every day 04:00', timeZone: 
     logger.error('orphan_document_cleanup_failed', { error: String(e) });
     return 0;
   });
+  // CHAT-3 (#26): photos wait in the tray and upload before Send, so one
+  // taken out, or a tray never sent, is gone after a day. Before the
+  // recount too.
+  const orphanMessageFiles = await removeAllOrphanMessageFiles().catch((e) => {
+    logger.error('orphan_message_cleanup_failed', { error: String(e) });
+    return 0;
+  });
   const teams = await reconcileAllStorage();
   // SAFE-4: super admins get one email while any report has been open more
   // than 12 hours, so none passes 24 hours unseen.
@@ -86,7 +93,7 @@ export const dailyCleanup = onSchedule({ schedule: 'every day 04:00', timeZone: 
     logger.error('report_reminder_failed', { error: String(e) });
     return 0;
   });
-  logger.info('daily_cleanup', { devicesPruned, orphanDocumentFiles, teamsReconciled: teams, reportsWaiting });
+  logger.info('daily_cleanup', { devicesPruned, orphanDocumentFiles, orphanMessageFiles, teamsReconciled: teams, reportsWaiting });
 });
 
 /**
