@@ -9,7 +9,6 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
-import 'package:battleplan/core/widgets/button_spinner.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/info_tag.dart';
@@ -22,6 +21,7 @@ import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
 import 'package:battleplan/features/groups/presentation/leave_team.dart';
+import 'package:battleplan/features/groups/presentation/roster_requests.dart';
 import 'package:battleplan/features/groups/presentation/team_card.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
@@ -178,8 +178,9 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
               ),
             );
           }
-          String? nameOf(String? uid) =>
-              members.where((m) => m.uid.value == uid).firstOrNull?.displayName;
+          Membership? memberOf(String? uid) =>
+              members.where((m) => m.uid.value == uid).firstOrNull;
+          String? nameOf(String? uid) => memberOf(uid)?.displayName;
           // A claim from someone no longer on the team isn't shown (TEAM-8):
           // the server drops it when they leave.
           final claims = requests
@@ -276,25 +277,35 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
               ),
               if (toDecide.isNotEmpty || claims.isNotEmpty) ...[
                 _Section(title: l10n.playerRequestsTitle),
+                // One plain sentence each, oldest first (PLAYER-4, #23).
+                // Keyed, so a row's spinner stays with its request when a
+                // decided one above it leaves the list.
                 card([
-                  // Keyed, so a row's spinner stays with its request when
-                  // a decided one above it leaves the list.
-                  for (final p in toDecide)
-                    _PendingPlayerRow(
-                      key: ValueKey('player ${p.id.value}'),
-                      player: p,
-                      who: nameOf(p.proposedBy),
-                    ),
-                  for (final r in claims)
-                    _RequestRow(
-                      key: ValueKey('claim ${r.playerId.value} ${r.uid.value}'),
-                      request: r,
-                      who: nameOf(r.uid.value),
-                      player: players
-                          .where((p) => p.id == r.playerId)
-                          .firstOrNull
-                          ?.label,
-                    ),
+                  for (final r in _oldestFirst([
+                    for (final p in toDecide)
+                      RosterRequest.player(
+                        pending: p,
+                        requester: memberOf(p.proposedBy),
+                        requesterName:
+                            nameOf(p.proposedBy) ?? l10n.formerMember,
+                      ),
+                    for (final r in claims)
+                      RosterRequest.claim(
+                        claim: r,
+                        claimed: players
+                            .where((p) => p.id == r.playerId)
+                            .firstOrNull,
+                        requester: memberOf(r.uid.value),
+                        requesterName: nameOf(r.uid.value) ?? l10n.formerMember,
+                        linked: [
+                          for (final l in links)
+                            if (l.playerId == r.playerId)
+                              if (nameOf(l.uid.value) case final name?)
+                                (name: name, relation: l.relation),
+                        ],
+                      ),
+                  ]))
+                    RequestTile(key: ValueKey(r.key), request: r),
                 ]),
               ],
               // Not linked to a player yet: the way to "Who are you here
@@ -481,8 +492,8 @@ class _PlayerRow extends StatelessWidget {
 }
 
 /// A member's photo, or initials when they have none (TEAM-3).
-class _MemberAvatar extends ConsumerWidget {
-  const new({required this.member, this.size = 40});
+class MemberAvatar extends ConsumerWidget {
+  const new({required this.member, this.size = 40, super.key});
 
   final Membership member;
   final double size;
@@ -503,173 +514,18 @@ class _MemberAvatar extends ConsumerWidget {
   }
 }
 
-/// Approve and Decline, with what went wrong said in a snackbar. Once one
-/// is tapped, both are off and the tapped one spins until the server
-/// answers (PLAYER-4): a cold start can take several seconds, and taps
-/// meanwhile used to send the decision again.
-class _Decision extends StatefulWidget {
-  const new({required this.decide});
-
-  final Future<void> Function({required bool approve}) decide;
-
-  @override
-  State<_Decision> createState() => _DecisionState();
-}
-
-class _DecisionState extends State<_Decision> {
-  /// The decision on its way: true for Approve, false for Decline, null
-  /// when there's none.
-  bool? _deciding;
-
-  Future<void> _send({required bool approve}) async {
-    // Checked as well as the buttons being off, for two taps in one frame.
-    if (_deciding != null) return;
-    setState(() => _deciding = approve);
-    try {
-      await widget.decide(approve: approve);
-    } finally {
-      // A decided row usually goes from the list first; one that failed
-      // stays, with both buttons back.
-      if (mounted) setState(() => _deciding = null);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final busy = _deciding != null;
-    return Wrap(
-      children: [
-        TextButton(
-          onPressed: busy ? null : () => unawaited(_send(approve: false)),
-          child: _deciding == false
-              ? const ButtonSpinner()
-              : Text(l10n.decline),
-        ),
-        FilledButton(
-          onPressed: busy ? null : () => unawaited(_send(approve: true)),
-          child: _deciding == true ? const ButtonSpinner() : Text(l10n.approve),
-        ),
-      ],
-    );
-  }
-}
-
-/// Runs an admin's decision on [who]'s request (PLAYER-4), saying what
-/// [action] returns, or why it failed. The row is gone once decided, so
-/// the snackbar goes through the screen's messenger.
-Future<void> _decide(
-  BuildContext context,
-  Future<String?> Function() action, {
-  required String who,
-}) async {
-  final l10n = AppLocalizations.of(context);
-  final messenger = ScaffoldMessenger.of(context);
-  void say(String message) => messenger
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text(message)));
-  try {
-    if (await action() case final note?) say(note);
-  } on AppFailure catch (e) {
-    say(decisionFailure(l10n, e, who: who));
-  }
-}
-
-/// Why an admin's approval failed (PLAYER-3, PLAYER-4): [who] is a player
-/// on the team already, someone already is this player, the player's
-/// guardians are full, or the roster is.
-String decisionFailure(
-  AppLocalizations l10n,
-  AppFailure e, {
-  required String who,
-}) => switch (e) {
-  InvalidInput(message: 'already-a-player') => l10n.approveAlreadyAPlayer(who),
-  InvalidInput(message: 'player-already-claimed') =>
-    l10n.approvePlayerAlreadyClaimed,
-  InvalidInput(message: 'too-many-guardians') => l10n.claimLimitReached,
-  InvalidInput(message: 'too-many-players') => l10n.tooManyPlayers(
-    Limits.playersPerGroupMax,
-  ),
-  _ => l10n.errorGuardianRequest,
-};
-
-/// A member's new player waiting for approval: "Emma Rodriguez #7", "Added
-/// by Maria Rodriguez as their parent or guardian", with Approve and
-/// Decline (PLAYER-4). Declining deletes it.
-class _PendingPlayerRow extends ConsumerWidget {
-  const new({required this.player, this.who, super.key});
-
-  final Player player;
-  final String? who;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final name = who ?? l10n.formerMember;
-    return ListTile(
-      title: Text(
-        player.jerseyNumber?.isNotEmpty ?? false
-            ? '${player.displayName} #${player.jerseyNumber}'
-            : player.displayName,
-      ),
-      subtitle: Text(
-        player.proposedRelation == PlayerRelation.self
-            ? l10n.pendingPlayerSelf(name)
-            : l10n.pendingPlayerGuardian(name),
-      ),
-      trailing: _Decision(
-        decide: ({required approve}) => _decide(context, () async {
-          final linked = await ref
-              .read(playerRepositoryProvider)
-              .resolvePendingPlayer(
-                player.groupId,
-                player.id,
-                approve: approve,
-              );
-          // Added, but its member couldn't be linked to it: say so, so
-          // nobody thinks they're on it (PLAYER-4).
-          return approve && !linked && player.proposedBy != null
-              ? l10n.pendingPlayerNotLinked(player.displayName, name)
-              : null;
-        }, who: name),
-      ),
-    );
-  }
-}
-
-/// A claim: "Maria Rodriguez: parent or guardian of Emma #7", or "Jared
-/// Freeman says they're Jared #12", with Approve and Decline (PLAYER-4).
-class _RequestRow extends ConsumerWidget {
-  const new({required this.request, this.who, this.player, super.key});
-
-  final GuardianRequest request;
-  final String? who;
-  final String? player;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    return ListTile(
-      title: Text(
-        request.relation == PlayerRelation.self
-            ? l10n.claimSelfFor(who ?? '…', player ?? '…')
-            : l10n.claimGuardianFor(who ?? '…', player ?? '…'),
-      ),
-      trailing: _Decision(
-        decide: ({required approve}) => _decide(context, () async {
-          await ref
-              .read(playerRepositoryProvider)
-              .resolvePlayerClaim(
-                request.groupId,
-                request.playerId,
-                request.uid,
-                approve: approve,
-              );
-          return null;
-        }, who: who ?? l10n.formerMember),
-      ),
-    );
-  }
+/// [requests] by when they were asked, oldest first; ones read without a
+/// time keep their order, after the rest.
+List<RosterRequest> _oldestFirst(List<RosterRequest> requests) {
+  final indexed = requests.indexed.toList()
+    ..sort((a, b) {
+      final (x, y) = (a.$2.at, b.$2.at);
+      if (x != null && y != null && x != y) return x.compareTo(y);
+      if (x == null && y != null) return 1;
+      if (x != null && y == null) return -1;
+      return a.$1.compareTo(b.$1);
+    });
+  return [for (final (_, r) in indexed) r];
 }
 
 class _Section extends StatelessWidget {
@@ -742,7 +598,7 @@ class _MemberRow extends StatelessWidget {
       if (member.pending) l10n.notJoinedYet,
     ];
     return ListTile(
-      leading: _MemberAvatar(member: member),
+      leading: MemberAvatar(member: member),
       title: Text(member.displayName),
       subtitle: details.isEmpty ? null : Text(details.join(' · ')),
       trailing: badge == null ? null : InfoTag(text: badge),
@@ -848,7 +704,7 @@ class MemberCard extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _MemberAvatar(member: member, size: 72),
+            MemberAvatar(member: member, size: 72),
             const SizedBox(height: Space.md),
             Text(
               member.displayName,

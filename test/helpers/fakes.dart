@@ -1510,9 +1510,17 @@ class FakePlayerRepository implements PlayerRepository {
     String? jerseyNumber,
     String? walkUpSong,
   }) async {
+    if (updateFailure case final failure?) throw failure;
     calls.add('update ${id.value} $name');
     walkUpSongs[id.value] = walkUpSong;
+    jerseyNumbers[id.value] = jerseyNumber;
   }
+
+  /// Set to refuse the next edits, as the server would.
+  AppFailure? updateFailure;
+
+  /// The number each player was last saved with.
+  final Map<String, String?> jerseyNumbers = {};
 
   /// The walk-up song each player was last saved with (PLAYER-2).
   final Map<String, String?> walkUpSongs = {};

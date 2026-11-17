@@ -28,6 +28,7 @@ import 'package:battleplan/features/groups/presentation/shell_parts.dart';
 import 'package:battleplan/features/groups/presentation/team_switcher.dart';
 import 'package:battleplan/features/notifications/application/providers.dart';
 import 'package:battleplan/features/notifications/notifications.dart';
+import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -260,6 +261,12 @@ class _TeamShellState extends ConsumerState<TeamShell> {
     final unread = viewing
         ? 0
         : ref.watch(unreadCountProvider(groupId)).value ?? 0;
+    // The Team tab shows its admins how many roster requests wait for one
+    // of them (PLAYER-4, #23): nobody else, and not a super admin viewing.
+    final teamTab = destinations.length - 1;
+    final requests = viewing
+        ? 0
+        : ref.watch(pendingRequestCountProvider(groupId));
     // The count sits at the tab icon's top right.
     Widget tabIcon(int index, Widget icon) => switch (index) {
       0 when unread > 0 => unreadBadge(
@@ -268,8 +275,14 @@ class _TeamShellState extends ConsumerState<TeamShell> {
         offset: const Offset(4, -4),
         child: icon,
       ),
-      // Only Chat counts; Schedule's waiting RSVPs were too noisy (owner's
-      // request, 2026-10-15).
+      _ when index == teamTab && requests > 0 => unreadBadge(
+        context,
+        label: unreadLabel(requests),
+        offset: const Offset(4, -4),
+        child: icon,
+      ),
+      // Schedule doesn't count: its waiting RSVPs were too noisy (owner's
+      // request, 2026-10-15). Requests need an admin; RSVPs don't.
       _ => icon,
     };
 
@@ -313,7 +326,11 @@ class _TeamShellState extends ConsumerState<TeamShell> {
           icon: tabIcon(i, icon(selected: false)),
           selectedIcon: tabIcon(i, icon(selected: true)),
           label: label,
-          badge: i == 0 && unread > 0 ? l10n.unreadCount(unread) : null,
+          badge: i == 0 && unread > 0
+              ? l10n.unreadCount(unread)
+              : i == teamTab && requests > 0
+              ? l10n.requestsWaitingBadge(requests)
+              : null,
         ),
     ];
     // The shown tab for the branch that's open; Plays in a group shows as

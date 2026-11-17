@@ -20,6 +20,7 @@ import 'package:battleplan/features/groups/presentation/color_scheme_screen.dart
 import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
 import 'package:battleplan/features/groups/presentation/team_switcher.dart';
 import 'package:battleplan/features/notifications/notifications.dart';
+import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/schedule/schedule.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -233,6 +234,9 @@ class _TeamCard extends ConsumerWidget {
         ? ref.watch(unreadCountProvider(group.id)).value
         : null;
     final kind = group.isGroup ? l10n.kindGroup : l10n.kindTeam;
+    // Roster requests waiting for me, an admin (PLAYER-4, #23): seen from
+    // Teams without opening the team.
+    final requests = ref.watch(pendingRequestCountProvider(group.id));
     final Widget? unread = !team.hasUnread
         ? null
         : count != null && count > 0
@@ -284,91 +288,148 @@ class _TeamCard extends ConsumerWidget {
             radius: BorderRadius.circular(18),
             child: GumdropSurface(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
-                child: Row(
+                // The requests button's own 48 px has room below its line.
+                padding: EdgeInsets.fromLTRB(12, 12, 8, requests > 0 ? 0 : 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // The card says the name.
-                    ExcludeSemantics(child: GroupBadge(group: group, size: 48)),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.baseline,
-                            textBaseline: TextBaseline.alphabetic,
+                    Row(
+                      children: [
+                        // The card says the name.
+                        ExcludeSemantics(
+                          child: GroupBadge(group: group, size: 48),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Flexible(
-                                child: Text(
-                                  group.name,
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.baseline,
+                                textBaseline: TextBaseline.alphabetic,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      group.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontFamily: AppFonts.body,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 18,
+                                        height: 22 / 18,
+                                        color: c.textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    kind.toUpperCase(),
+                                    semanticsLabel: kind,
+                                    style: style.label(
+                                      TextStyle(
+                                        fontSize: 13,
+                                        height: 16 / 13,
+                                        letterSpacing: 13 * 0.1,
+                                        fontWeight: FontWeight.w600,
+                                        color: c.textMuted,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (preview != null)
+                                Text(
+                                  preview,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontFamily: AppFonts.body,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 18,
-                                    height: 22 / 18,
-                                    color: c.textPrimary,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                kind.toUpperCase(),
-                                semanticsLabel: kind,
-                                style: style.label(
-                                  TextStyle(
-                                    fontSize: 13,
-                                    height: 16 / 13,
-                                    letterSpacing: 13 * 0.1,
                                     fontWeight: FontWeight.w600,
+                                    fontSize: 15,
+                                    height: 19 / 15,
+                                    letterSpacing: -0.2,
                                     color: c.textMuted,
                                   ),
                                 ),
-                              ),
                             ],
                           ),
-                          if (preview != null)
-                            Text(
-                              preview,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontFamily: AppFonts.body,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 15,
-                                height: 19 / 15,
-                                letterSpacing: -0.2,
-                                color: c.textMuted,
-                              ),
-                            ),
+                        ),
+                        const SizedBox(width: 12),
+                        if (muted) ...[
+                          Icon(
+                            AppIcons.muted,
+                            size: 18,
+                            color: c.textMuted,
+                            semanticLabel: l10n.teamMutedLabel,
+                          ),
+                          const SizedBox(width: 6),
                         ],
-                      ),
+                        if (unread != null) ...[
+                          unread,
+                          const SizedBox(width: 8),
+                        ],
+                        Icon(
+                          AppIcons.chevronRight,
+                          size: 20,
+                          weight: 700,
+                          color: c.textMuted,
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    if (muted) ...[
-                      Icon(
-                        AppIcons.muted,
-                        size: 18,
-                        color: c.textMuted,
-                        semanticLabel: l10n.teamMutedLabel,
+                    if (requests > 0)
+                      Padding(
+                        // Under the name, past the badge.
+                        padding: const EdgeInsets.only(left: 60 - 8),
+                        child: _RequestsButton(
+                          count: requests,
+                          onTap: () => context.go('/g/${group.id.value}/team'),
+                        ),
                       ),
-                      const SizedBox(width: 6),
-                    ],
-                    if (unread != null) ...[unread, const SizedBox(width: 8)],
-                    Icon(
-                      AppIcons.chevronRight,
-                      size: 20,
-                      weight: 700,
-                      color: c.textMuted,
-                    ),
                   ],
                 ),
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// "2 requests waiting" on a team's card, for its admins (PLAYER-4, #23):
+/// coral, the color of "do this" (SPEC §7.2), and its own 48 px button,
+/// which opens the team's Team tab, where they're decided. The rest of
+/// the card still opens the team where I left it.
+class _RequestsButton extends StatelessWidget {
+  const new({required this.count, required this.onTap});
+
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = GumdropColors.of(context);
+    return Semantics(
+      container: true,
+      child: TextButton.icon(
+        style: TextButton.styleFrom(
+          foregroundColor: c.you.text,
+          minimumSize: const Size(48, 48),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          shape: const StadiumBorder(),
+          textStyle: const TextStyle(
+            fontFamily: AppFonts.body,
+            fontWeight: FontWeight.w800,
+            fontSize: 15,
+            height: 19 / 15,
+          ),
+        ),
+        onPressed: onTap,
+        icon: const Icon(AppIcons.invite, size: 20),
+        label: Text(l10n.requestsWaiting(count)),
       ),
     );
   }

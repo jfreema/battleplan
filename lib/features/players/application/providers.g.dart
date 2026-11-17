@@ -490,6 +490,113 @@ final class PendingGuardianRequestsFamily extends $Family
   String toString() => r'pendingGuardianRequestsProvider';
 }
 
+/// How many requests wait for [groupId]'s admins (PLAYER-4, #23): its
+/// pending players and claims, for the Team tab's count and the Teams
+/// card's line. Zero for everyone else, a super admin viewing the team
+/// included, and on a group, which has no players (TEAM-14), so nobody
+/// else's app listens.
+
+@ProviderFor(pendingRequestCount)
+final pendingRequestCountProvider = PendingRequestCountFamily._();
+
+/// How many requests wait for [groupId]'s admins (PLAYER-4, #23): its
+/// pending players and claims, for the Team tab's count and the Teams
+/// card's line. Zero for everyone else, a super admin viewing the team
+/// included, and on a group, which has no players (TEAM-14), so nobody
+/// else's app listens.
+
+final class PendingRequestCountProvider
+    extends $FunctionalProvider<int, int, int>
+    with $Provider<int> {
+  /// How many requests wait for [groupId]'s admins (PLAYER-4, #23): its
+  /// pending players and claims, for the Team tab's count and the Teams
+  /// card's line. Zero for everyone else, a super admin viewing the team
+  /// included, and on a group, which has no players (TEAM-14), so nobody
+  /// else's app listens.
+  PendingRequestCountProvider._({
+    required PendingRequestCountFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'pendingRequestCountProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$pendingRequestCountHash();
+
+  @override
+  String toString() {
+    return r'pendingRequestCountProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  int create(Ref ref) {
+    final argument = this.argument as GroupId;
+    return pendingRequestCount(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(int value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<int>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PendingRequestCountProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$pendingRequestCountHash() =>
+    r'ad9b00d6d50806572abffabbb35a156de4d56888';
+
+/// How many requests wait for [groupId]'s admins (PLAYER-4, #23): its
+/// pending players and claims, for the Team tab's count and the Teams
+/// card's line. Zero for everyone else, a super admin viewing the team
+/// included, and on a group, which has no players (TEAM-14), so nobody
+/// else's app listens.
+
+final class PendingRequestCountFamily extends $Family
+    with $FunctionalFamilyOverride<int, GroupId> {
+  PendingRequestCountFamily._()
+    : super(
+        retry: null,
+        name: r'pendingRequestCountProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// How many requests wait for [groupId]'s admins (PLAYER-4, #23): its
+  /// pending players and claims, for the Team tab's count and the Teams
+  /// card's line. Zero for everyone else, a super admin viewing the team
+  /// included, and on a group, which has no players (TEAM-14), so nobody
+  /// else's app listens.
+
+  PendingRequestCountProvider call(GroupId groupId) =>
+      PendingRequestCountProvider._(argument: groupId, from: this);
+
+  @override
+  String toString() => r'pendingRequestCountProvider';
+}
+
 /// The signed-in person's own claims on a team (PLAYER-3).
 
 @ProviderFor(myGuardianRequests)

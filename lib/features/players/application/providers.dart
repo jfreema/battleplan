@@ -65,6 +65,26 @@ Stream<List<GuardianRequest>> pendingGuardianRequests(
   GroupId groupId,
 ) => ref.watch(playerRepositoryProvider).watchPendingRequests(groupId);
 
+/// How many requests wait for [groupId]'s admins (PLAYER-4, #23): its
+/// pending players and claims, for the Team tab's count and the Teams
+/// card's line. Zero for everyone else, a super admin viewing the team
+/// included, and on a group, which has no players (TEAM-14), so nobody
+/// else's app listens.
+@riverpod
+int pendingRequestCount(Ref ref, GroupId groupId) {
+  final admin = ref.watch(
+    myMembershipProvider(groupId).select((m) => m?.isAdmin ?? false),
+  );
+  if (!admin) return 0;
+  final hasPlayers = ref.watch(
+    groupProvider(groupId).select((g) => g.value?.hasPlayers ?? false),
+  );
+  if (!hasPlayers) return 0;
+  final players = ref.watch(pendingPlayersProvider(groupId)).value;
+  final claims = ref.watch(pendingGuardianRequestsProvider(groupId)).value;
+  return (players?.length ?? 0) + (claims?.length ?? 0);
+}
+
 /// The signed-in person's own claims on a team (PLAYER-3).
 @riverpod
 Stream<List<GuardianRequest>> myGuardianRequests(Ref ref, GroupId groupId) {

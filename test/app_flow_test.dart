@@ -16,6 +16,7 @@ import 'package:battleplan/features/chat/presentation/reactions.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/invite.dart';
 import 'package:battleplan/features/groups/domain/media.dart';
+import 'package:battleplan/features/groups/presentation/roster_requests.dart';
 import 'package:battleplan/features/groups/presentation/roster_screen.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/players/domain/player_repository.dart';
@@ -1392,21 +1393,27 @@ void main() {
       );
       await openRoster(tester);
       expect(find.text('Waiting for approval'), findsOneWidget);
-      expect(find.text('Noah Park #4'), findsOneWidget);
+      // One plain sentence each (#23).
       expect(
-        find.text('Added by Pat Lee as their parent or guardian'),
+        find.text(
+          "Pat Lee wants to add Noah Park #4 to the roster, as Noah's parent "
+          'or guardian.',
+        ),
         findsOneWidget,
       );
       expect(
-        find.text('Pat Lee: parent or guardian of Emma #7'),
+        find.text("Pat Lee says they're a parent or guardian of Emma #7."),
         findsOneWidget,
       );
-      expect(find.text("Emma Rodriguez says they're Emma #7"), findsOneWidget);
+      expect(
+        find.text("Emma Rodriguez says they're Emma #7 on the roster."),
+        findsOneWidget,
+      );
       // Admins add players and pasted lists.
       expect(find.byTooltip('Add players'), findsOneWidget);
       await tester.tap(find.widgetWithText(FilledButton, 'Approve').first);
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(TextButton, 'Decline').at(1));
+      await tester.tap(find.widgetWithText(OutlinedButton, 'Decline').at(1));
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(FilledButton, 'Approve').last);
       await tester.pumpAndSettle();
@@ -1456,8 +1463,8 @@ void main() {
       );
       await openRoster(tester);
       final claimRow = find.ancestor(
-        of: find.text('Pat Lee: parent or guardian of Emma #7'),
-        matching: find.byType(ListTile),
+        of: find.text("Pat Lee says they're a parent or guardian of Emma #7."),
+        matching: find.byType(RequestTile),
       );
       Finder inClaim(Finder f) => find.descendant(of: claimRow, matching: f);
       await tester.tap(inClaim(find.widgetWithText(FilledButton, 'Approve')));
@@ -1469,8 +1476,8 @@ void main() {
       );
       expect(spinning, findsOneWidget);
       expect(tester.widget<FilledButton>(spinning).onPressed, isNull);
-      final decline = inClaim(find.widgetWithText(TextButton, 'Decline'));
-      expect(tester.widget<TextButton>(decline).onPressed, isNull);
+      final decline = inClaim(find.widgetWithText(OutlinedButton, 'Decline'));
+      expect(tester.widget<OutlinedButton>(decline).onPressed, isNull);
       await tester.tap(spinning, warnIfMissed: false);
       await tester.tap(decline, warnIfMissed: false);
       await tester.pump();

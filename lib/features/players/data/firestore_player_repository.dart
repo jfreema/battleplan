@@ -161,6 +161,10 @@ class FirestorePlayerRepository implements PlayerRepository {
                           .data()['status']] ??
                       GuardianRequestStatus.pending,
                   relation: relationFromFirestore(d.data()['relation']),
+                  createdAt: switch (d.data()['createdAt']) {
+                    final Timestamp t => t.toDate(),
+                    _ => null,
+                  },
                 ),
             ],
           );

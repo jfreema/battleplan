@@ -864,7 +864,9 @@ as String?,
 /// @nodoc
 mixin _$GuardianRequest {
 
- PlayerId get playerId; GroupId get groupId; UserId get uid; GuardianRequestStatus get status; PlayerRelation get relation;
+ PlayerId get playerId; GroupId get groupId; UserId get uid; GuardianRequestStatus get status; PlayerRelation get relation;/// When it was asked, so admins see the oldest first (#23). Null on
+/// records read without it.
+ DateTime? get createdAt;
 /// Create a copy of GuardianRequest
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -876,20 +878,20 @@ $GuardianRequestCopyWith<GuardianRequest> get copyWith => _$GuardianRequestCopyW
 @override
 bool operator ==(Object other) {
   final _this = this as GuardianRequest;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is GuardianRequest&&(identical(other.playerId, _this.playerId) || other.playerId == _this.playerId)&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.uid, _this.uid) || other.uid == _this.uid)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.relation, _this.relation) || other.relation == _this.relation));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GuardianRequest&&(identical(other.playerId, _this.playerId) || other.playerId == _this.playerId)&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.uid, _this.uid) || other.uid == _this.uid)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.relation, _this.relation) || other.relation == _this.relation)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt));
 }
 
 
 @override
 int get hashCode {
   final _this = this as GuardianRequest;
-  return Object.hash(runtimeType,_this.playerId,_this.groupId,_this.uid,_this.status,_this.relation);
+  return Object.hash(runtimeType,_this.playerId,_this.groupId,_this.uid,_this.status,_this.relation,_this.createdAt);
 }
 
 @override
 String toString() {
   final _this = this as GuardianRequest;
-  return 'GuardianRequest(playerId: ${_this.playerId}, groupId: ${_this.groupId}, uid: ${_this.uid}, status: ${_this.status}, relation: ${_this.relation})';
+  return 'GuardianRequest(playerId: ${_this.playerId}, groupId: ${_this.groupId}, uid: ${_this.uid}, status: ${_this.status}, relation: ${_this.relation}, createdAt: ${_this.createdAt})';
 }
 
 
@@ -900,7 +902,7 @@ abstract mixin class $GuardianRequestCopyWith<$Res>  {
   factory $GuardianRequestCopyWith(GuardianRequest value, $Res Function(GuardianRequest) _then) = _$GuardianRequestCopyWithImpl;
 @useResult
 $Res call({
- PlayerId playerId, GroupId groupId, UserId uid, GuardianRequestStatus status, PlayerRelation relation
+ PlayerId playerId, GroupId groupId, UserId uid, GuardianRequestStatus status, PlayerRelation relation, DateTime? createdAt
 });
 
 
@@ -917,14 +919,15 @@ class _$GuardianRequestCopyWithImpl<$Res>
 
 /// Create a copy of GuardianRequest
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? playerId = null,Object? groupId = null,Object? uid = null,Object? status = null,Object? relation = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? playerId = null,Object? groupId = null,Object? uid = null,Object? status = null,Object? relation = null,Object? createdAt = freezed,}) {
   return _then(GuardianRequest(
 playerId: null == playerId ? _self.playerId : playerId // ignore: cast_nullable_to_non_nullable
 as PlayerId,groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
 as GroupId,uid: null == uid ? _self.uid : uid // ignore: cast_nullable_to_non_nullable
 as UserId,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as GuardianRequestStatus,relation: null == relation ? _self.relation : relation // ignore: cast_nullable_to_non_nullable
-as PlayerRelation,
+as PlayerRelation,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 
@@ -1009,10 +1012,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( PlayerId playerId,  GroupId groupId,  UserId uid,  GuardianRequestStatus status,  PlayerRelation relation)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( PlayerId playerId,  GroupId groupId,  UserId uid,  GuardianRequestStatus status,  PlayerRelation relation,  DateTime? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _GuardianRequest() when $default != null:
-return $default(_that.playerId,_that.groupId,_that.uid,_that.status,_that.relation);case _:
+return $default(_that.playerId,_that.groupId,_that.uid,_that.status,_that.relation,_that.createdAt);case _:
   return orElse();
 
 }
@@ -1030,10 +1033,10 @@ return $default(_that.playerId,_that.groupId,_that.uid,_that.status,_that.relati
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( PlayerId playerId,  GroupId groupId,  UserId uid,  GuardianRequestStatus status,  PlayerRelation relation)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( PlayerId playerId,  GroupId groupId,  UserId uid,  GuardianRequestStatus status,  PlayerRelation relation,  DateTime? createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _GuardianRequest():
-return $default(_that.playerId,_that.groupId,_that.uid,_that.status,_that.relation);case _:
+return $default(_that.playerId,_that.groupId,_that.uid,_that.status,_that.relation,_that.createdAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1050,10 +1053,10 @@ return $default(_that.playerId,_that.groupId,_that.uid,_that.status,_that.relati
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( PlayerId playerId,  GroupId groupId,  UserId uid,  GuardianRequestStatus status,  PlayerRelation relation)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( PlayerId playerId,  GroupId groupId,  UserId uid,  GuardianRequestStatus status,  PlayerRelation relation,  DateTime? createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _GuardianRequest() when $default != null:
-return $default(_that.playerId,_that.groupId,_that.uid,_that.status,_that.relation);case _:
+return $default(_that.playerId,_that.groupId,_that.uid,_that.status,_that.relation,_that.createdAt);case _:
   return null;
 
 }
@@ -1065,7 +1068,7 @@ return $default(_that.playerId,_that.groupId,_that.uid,_that.status,_that.relati
 
 
 class _GuardianRequest implements GuardianRequest {
-  const _GuardianRequest({required this.playerId, required this.groupId, required this.uid, required this.status, this.relation = PlayerRelation.guardian});
+  const _GuardianRequest({required this.playerId, required this.groupId, required this.uid, required this.status, this.relation = PlayerRelation.guardian, this.createdAt});
   
 
 @override final  PlayerId playerId;
@@ -1073,6 +1076,9 @@ class _GuardianRequest implements GuardianRequest {
 @override final  UserId uid;
 @override final  GuardianRequestStatus status;
 @override@JsonKey() final  PlayerRelation relation;
+/// When it was asked, so admins see the oldest first (#23). Null on
+/// records read without it.
+@override final  DateTime? createdAt;
 
 /// Create a copy of GuardianRequest
 /// with the given fields replaced by the non-null parameter values.
@@ -1084,18 +1090,18 @@ _$GuardianRequestCopyWith<_GuardianRequest> get copyWith => __$GuardianRequestCo
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _GuardianRequest&&(identical(other.playerId, playerId) || other.playerId == playerId)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.uid, uid) || other.uid == uid)&&(identical(other.status, status) || other.status == status)&&(identical(other.relation, relation) || other.relation == relation));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _GuardianRequest&&(identical(other.playerId, playerId) || other.playerId == playerId)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.uid, uid) || other.uid == uid)&&(identical(other.status, status) || other.status == status)&&(identical(other.relation, relation) || other.relation == relation)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,playerId,groupId,uid,status,relation);
+    return Object.hash(runtimeType,playerId,groupId,uid,status,relation,createdAt);
 }
 
 @override
 String toString() {
-    return 'GuardianRequest(playerId: $playerId, groupId: $groupId, uid: $uid, status: $status, relation: $relation)';
+    return 'GuardianRequest(playerId: $playerId, groupId: $groupId, uid: $uid, status: $status, relation: $relation, createdAt: $createdAt)';
 }
 
 
@@ -1106,7 +1112,7 @@ abstract mixin class _$GuardianRequestCopyWith<$Res> implements $GuardianRequest
   factory _$GuardianRequestCopyWith(_GuardianRequest value, $Res Function(_GuardianRequest) _then) = __$GuardianRequestCopyWithImpl;
 @override @useResult
 $Res call({
- PlayerId playerId, GroupId groupId, UserId uid, GuardianRequestStatus status, PlayerRelation relation
+ PlayerId playerId, GroupId groupId, UserId uid, GuardianRequestStatus status, PlayerRelation relation, DateTime? createdAt
 });
 
 
@@ -1123,14 +1129,15 @@ class __$GuardianRequestCopyWithImpl<$Res>
 
 /// Create a copy of GuardianRequest
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? playerId = null,Object? groupId = null,Object? uid = null,Object? status = null,Object? relation = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? playerId = null,Object? groupId = null,Object? uid = null,Object? status = null,Object? relation = null,Object? createdAt = freezed,}) {
   return _then(_GuardianRequest(
 playerId: null == playerId ? _self.playerId : playerId // ignore: cast_nullable_to_non_nullable
 as PlayerId,groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
 as GroupId,uid: null == uid ? _self.uid : uid // ignore: cast_nullable_to_non_nullable
 as UserId,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as GuardianRequestStatus,relation: null == relation ? _self.relation : relation // ignore: cast_nullable_to_non_nullable
-as PlayerRelation,
+as PlayerRelation,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 

@@ -12,8 +12,8 @@ part of 'team_setup.dart';
 /// done of its steps, or null where it doesn't show. Only the team's admins
 /// see it (the owner and admins, not members, and not a super admin
 /// viewing the team), only on a team made since the card shipped and in
-/// its first 30 days ([Group.inSetupWindow]), and only until they put it
-/// away ([Membership.setupClosed]).
+/// its first 30 days (`Group.inSetupWindow`), and only until they put it
+/// away (`Membership.setupClosed`).
 ///
 /// Its own file, so groups' providers don't import the schedule's, which
 /// import them.
@@ -25,8 +25,8 @@ final teamSetupProvider = TeamSetupFamily._();
 /// done of its steps, or null where it doesn't show. Only the team's admins
 /// see it (the owner and admins, not members, and not a super admin
 /// viewing the team), only on a team made since the card shipped and in
-/// its first 30 days ([Group.inSetupWindow]), and only until they put it
-/// away ([Membership.setupClosed]).
+/// its first 30 days (`Group.inSetupWindow`), and only until they put it
+/// away (`Membership.setupClosed`).
 ///
 /// Its own file, so groups' providers don't import the schedule's, which
 /// import them.
@@ -38,8 +38,8 @@ final class TeamSetupProvider
   /// done of its steps, or null where it doesn't show. Only the team's admins
   /// see it (the owner and admins, not members, and not a super admin
   /// viewing the team), only on a team made since the card shipped and in
-  /// its first 30 days ([Group.inSetupWindow]), and only until they put it
-  /// away ([Membership.setupClosed]).
+  /// its first 30 days (`Group.inSetupWindow`), and only until they put it
+  /// away (`Membership.setupClosed`).
   ///
   /// Its own file, so groups' providers don't import the schedule's, which
   /// import them.
@@ -100,8 +100,8 @@ String _$teamSetupHash() => r'fae3928b2429cad544c1e7abf0d25318e601d1c8';
 /// done of its steps, or null where it doesn't show. Only the team's admins
 /// see it (the owner and admins, not members, and not a super admin
 /// viewing the team), only on a team made since the card shipped and in
-/// its first 30 days ([Group.inSetupWindow]), and only until they put it
-/// away ([Membership.setupClosed]).
+/// its first 30 days (`Group.inSetupWindow`), and only until they put it
+/// away (`Membership.setupClosed`).
 ///
 /// Its own file, so groups' providers don't import the schedule's, which
 /// import them.
@@ -121,8 +121,8 @@ final class TeamSetupFamily extends $Family
   /// done of its steps, or null where it doesn't show. Only the team's admins
   /// see it (the owner and admins, not members, and not a super admin
   /// viewing the team), only on a team made since the card shipped and in
-  /// its first 30 days ([Group.inSetupWindow]), and only until they put it
-  /// away ([Membership.setupClosed]).
+  /// its first 30 days (`Group.inSetupWindow`), and only until they put it
+  /// away (`Membership.setupClosed`).
   ///
   /// Its own file, so groups' providers don't import the schedule's, which
   /// import them.

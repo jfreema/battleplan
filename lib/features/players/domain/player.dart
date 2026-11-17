@@ -135,6 +135,10 @@ abstract class GuardianRequest with _$GuardianRequest {
     required UserId uid,
     required GuardianRequestStatus status,
     @Default(PlayerRelation.guardian) PlayerRelation relation,
+
+    /// When it was asked, so admins see the oldest first (#23). Null on
+    /// records read without it.
+    DateTime? createdAt,
   }) = _GuardianRequest;
 }
 
