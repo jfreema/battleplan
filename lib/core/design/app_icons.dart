@@ -20,6 +20,11 @@ abstract final class AppIcons {
   static const IconData signOut = Symbols.logout_rounded;
   static const IconData add = Symbols.add_rounded;
   static const IconData group = Symbols.groups_rounded;
+
+  /// Teams, all my teams, the top of the app: the home tab and the links
+  /// back to it. Not [group], the three people a team's Team tab has, so
+  /// Teams and Team never look alike (#18, 2026-11-16).
+  static const IconData teams = Symbols.home_rounded;
   static const IconData roster = Symbols.group_rounded;
   static const IconData invite = Symbols.person_add_rounded;
   static const IconData leave = Symbols.exit_to_app_rounded;

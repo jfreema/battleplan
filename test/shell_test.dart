@@ -1173,6 +1173,134 @@ void main() {
       }
     });
 
+    // #18: a clear way back to Teams.
+    testWidgets("Teams and a team's Team tab never share an icon", (
+      tester,
+    ) async {
+      await scenes.pumpTeam(tester, scheme: TeamScheme.army);
+      Finder inBar(IconData icon) => find.descendant(
+        of: find.byType(OpenFieldTabBar),
+        matching: find.byIcon(icon),
+      );
+      await scenes.goTo(tester, '/teams');
+      expect(AppIcons.teams, isNot(AppIcons.group));
+      expect(inBar(AppIcons.teams), findsOneWidget);
+      expect(inBar(AppIcons.group), findsNothing);
+      await scenes.goTo(tester, '/g/a/chat');
+      expect(inBar(AppIcons.group), findsOneWidget);
+      expect(inBar(AppIcons.teams), findsNothing);
+    });
+
+    testWidgets("on a wide screen a team's rail has Teams and Profile, "
+        'which go there and are buttons, not tabs; the arrow says '
+        '"Teams"', (tester) async {
+      final handle = tester.ensureSemantics();
+      String path() =>
+          GoRouter.of(tester.element(find.byType(Scaffold).first))
+              .state
+              .uri
+              .path;
+      Finder rail(Pattern label) => find.descendant(
+        of: find.byType(OpenFieldRail),
+        matching: find.bySemanticsLabel(label),
+      );
+      for (final (label, to) in [
+        ('Teams', '/teams'),
+        ('Profile', '/profile'),
+      ]) {
+        await scenes.pumpTeam(
+          tester,
+          scheme: TeamScheme.army,
+          size: scenes.wideSize,
+        );
+        await scenes.goTo(tester, '/g/a/chat');
+        // Plain buttons: no "Tab 6 of 7", no selected state.
+        expect(rail(label), findsOneWidget, reason: label);
+        expect(rail(RegExp('^$label, Tab')), findsNothing, reason: label);
+        await tester.tap(rail(label));
+        await tester.pumpAndSettle();
+        expect(path(), to);
+      }
+      await scenes.goTo(tester, '/g/a/chat');
+      // "‹ Teams" by the arrow, said once.
+      expect(
+        find.descendant(
+          of: find.byType(BackChevron),
+          matching: find.text('Teams'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.bySemanticsLabel('Back to Teams'), findsOneWidget);
+      expect(find.bySemanticsLabel(RegExp('Teams, Teams')), findsNothing);
+      handle.dispose();
+    });
+
+    testWidgets('on a phone the arrow stays alone, and still says "Back to '
+        'Teams"', (tester) async {
+      final handle = tester.ensureSemantics();
+      await scenes.pumpTeam(tester, scheme: TeamScheme.army);
+      await scenes.goTo(tester, '/g/a/chat');
+      expect(
+        find.descendant(
+          of: find.byType(BackChevron),
+          matching: find.text('Teams'),
+        ),
+        findsNothing,
+      );
+      expect(find.byType(OpenFieldRail), findsNothing);
+      expect(find.bySemanticsLabel('Back to Teams'), findsOneWidget);
+      handle.dispose();
+    });
+
+    testWidgets("Android's Back in a team goes to Teams, after closing a "
+        "sheet, a page on top or a tab's own page; on Profile it goes to "
+        'Teams', (tester) async {
+      String path() =>
+          GoRouter.of(tester.element(find.byType(Scaffold).first))
+              .state
+              .uri
+              .path;
+      Future<void> back() async {
+        expect(await tester.binding.handlePopRoute(), isTrue);
+        await tester.pumpAndSettle();
+      }
+
+      await scenes.pumpTeam(tester, scheme: TeamScheme.army);
+      await scenes.goTo(tester, '/g/a/schedule');
+      await back();
+      expect(path(), '/teams');
+
+      // A sheet over the team closes first.
+      await scenes.goTo(tester, '/g/a/chat');
+      showModalBottomSheet<void>(
+        context: tester.element(find.byType(Scaffold).last),
+        builder: (_) => const Text('A sheet'),
+      );
+      await tester.pumpAndSettle();
+      await back();
+      expect(find.text('A sheet'), findsNothing);
+      expect(path(), '/g/a/chat');
+
+      // A page on top: back to the team, then out.
+      await scenes.pushTo(tester, '/g/a/info');
+      await back();
+      expect(path(), '/g/a/chat');
+      await back();
+      expect(path(), '/teams');
+
+      // Saved plays, a tab's own page: back to Plays, then out.
+      await scenes.goTo(tester, '/g/a/plays/saved');
+      await back();
+      expect(path(), '/g/a/plays');
+      await back();
+      expect(path(), '/teams');
+
+      // Profile goes to Teams, as Android's bottom bars do.
+      await scenes.goTo(tester, '/profile');
+      await back();
+      expect(path(), '/teams');
+    });
+
     testWidgets("Android's Back goes up too, rather than closing the app, and "
         'leaves a dialog or a page on top alone', (tester) async {
       String path() =>

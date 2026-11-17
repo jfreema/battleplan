@@ -31,7 +31,7 @@ class HomeShell extends ConsumerWidget {
     final superAdmin = watchSuperAdmin(ref);
     final tabs = <OpenFieldTab>[
       for (final (icon, label) in [
-        (AppIcons.group, l10n.tabTeams),
+        (AppIcons.teams, l10n.tabTeams),
         (AppIcons.person, l10n.tabProfile),
       ])
         (
@@ -42,39 +42,47 @@ class HomeShell extends ConsumerWidget {
         ),
     ];
     void select(int i) => context.go(paths[i]);
+    // Back on Profile goes to Teams, the first tab, as Android's bottom
+    // bars do (#18); on Teams it leaves the app.
+    Widget back(Widget shell) =>
+        tab == 0 ? shell : ShellBack(to: paths[0], child: shell);
     // No app bar here, so the status bar's icons are set for the scheme
     // here.
     if (MediaQuery.sizeOf(context).width >= Breakpoints.wide) {
       return SchemeStatusBar(
-        child: Scaffold(
-          body: Row(
-            children: [
-              OpenFieldRail(
-                tabs: tabs,
-                selectedIndex: tab,
-                onSelect: select,
-                links: [
-                  if (superAdmin)
-                    (
-                      icon: AppIcons.admin,
-                      label: l10n.adminPanel,
-                      onTap: () => openAdminPanel(context),
-                    ),
-                ],
-              ),
-              Expanded(child: child),
-            ],
+        child: back(
+          Scaffold(
+            body: Row(
+              children: [
+                OpenFieldRail(
+                  tabs: tabs,
+                  selectedIndex: tab,
+                  onSelect: select,
+                  links: [
+                    if (superAdmin)
+                      (
+                        icon: AppIcons.admin,
+                        label: l10n.adminPanel,
+                        onTap: () => openAdminPanel(context),
+                      ),
+                  ],
+                ),
+                Expanded(child: child),
+              ],
+            ),
           ),
         ),
       );
     }
     return SchemeStatusBar(
-      child: Scaffold(
-        body: child,
-        bottomNavigationBar: OpenFieldTabBar(
-          tabs: tabs,
-          selectedIndex: tab,
-          onSelect: select,
+      child: back(
+        Scaffold(
+          body: child,
+          bottomNavigationBar: OpenFieldTabBar(
+            tabs: tabs,
+            selectedIndex: tab,
+            onSelect: select,
+          ),
         ),
       ),
     );

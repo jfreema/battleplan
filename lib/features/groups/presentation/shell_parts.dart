@@ -3,6 +3,8 @@ import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/core/widgets/team_switcher_button.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
+import 'package:flutter/foundation.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// The stencil eyebrow over the team name (SPEC §7.3): what the tab is
@@ -310,4 +312,30 @@ class _Tab extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Android's Back from a team, or from Profile, goes [to] Teams, as the
+/// header's arrow does (#18, 2026-11-16): Teams opens a team with `go`, so
+/// the team is the only page, and Back closed the app. What's over it
+/// closes first, as the router does it: a sheet or dialog, a page opened
+/// on top, or a tab's own page (Saved plays). While viewing a team as a
+/// super admin, it goes where the banner's Done does. The web's Back
+/// follows the browser's history, and iOS has no system Back.
+class ShellBack extends StatelessWidget {
+  const new({required this.to, required this.child, super.key});
+
+  final String to;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => BackButtonListener(
+    onBackButtonPressed: () {
+      final router = GoRouter.of(context);
+      final showing = ModalRoute.of(context)?.isCurrent ?? false;
+      if (!showing || router.canPop()) return SynchronousFuture(false);
+      router.go(to);
+      return SynchronousFuture(true);
+    },
+    child: child,
+  );
 }

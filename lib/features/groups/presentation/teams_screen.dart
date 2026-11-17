@@ -392,7 +392,7 @@ class _Welcome extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(AppIcons.group, size: 64, color: c.textMutedOnPage),
+          Icon(AppIcons.teams, size: 64, color: c.textMutedOnPage),
           const SizedBox(height: Space.lg),
           Text(
             l10n.welcomeTitle,

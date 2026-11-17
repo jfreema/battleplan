@@ -24,9 +24,9 @@ class BackChevron extends StatelessWidget {
   /// The screen it goes back to, or null for the chevron alone.
   final String? label;
 
-  /// For the chevron alone: what screen readers hear and the tooltip says
-  /// in place of "Back" ("Back to Teams"), so where it goes is said, not
-  /// only shown.
+  /// What screen readers hear and the tooltip says in place of "Back" and
+  /// the [label] ("Back to Teams"), so where it goes is said whole, and
+  /// said once beside a label that shows it ("‹ Teams", #18).
   final String? semanticLabel;
 
   /// What a tap does; pops the route when null, as [BackButton] does.
@@ -89,7 +89,11 @@ class BackChevron extends StatelessWidget {
     final dot = showDot ? dotLabel : null;
     // "Back to Teams, news in your other teams": said in full, and shown
     // on hover and long press, so the dot never has to be guessed at.
-    final said = [semanticLabel ?? back, ?text, ?dot].join(', ');
+    final said = [
+      semanticLabel ?? back,
+      if (semanticLabel == null) ?text,
+      ?dot,
+    ].join(', ');
     final icon = Icon(
       AppIcons.chevronLeft,
       size: 28,
@@ -105,7 +109,7 @@ class BackChevron extends StatelessWidget {
       excludeSemantics: true,
       onTap: press,
       child: Tooltip(
-        message: text == null ? said : back,
+        message: text == null || semanticLabel != null ? said : back,
         child: FocusRingInk(
           onTap: press,
           radius: BorderRadius.circular(24),

@@ -283,6 +283,7 @@ class _TeamShellState extends ConsumerState<TeamShell> {
             tabIndex: navigationShell.currentIndex,
             isGroup: team?.group.isGroup ?? false,
             showBack: !widget.inTab,
+            backLabel: wide ? l10n.tabTeams : null,
             onOpenSwitcher: (anchor) => _openSwitcher(context, anchor: anchor),
           );
     // Under the header: "Viewing as super admin", or the storage warning.
@@ -335,9 +336,24 @@ class _TeamShellState extends ConsumerState<TeamShell> {
                 tabs: tabs,
                 selectedIndex: selected,
                 onSelect: (i) => _openBranch(branches[i]),
-                // The header's Admin panel button, for super admins, is
-                // here on wide screens (SPEC §5.5).
+                // The way out of the team, in sight (#18, 2026-11-16: only
+                // the header's small arrow led out, unlabeled): Teams and
+                // Profile, as the home rail has them, then the header's
+                // Admin panel button, for super admins, which is here on
+                // wide screens (SPEC §5.5). Plain buttons, not tabs, at the
+                // rail's foot, apart from the tabs (looked at with a
+                // hairline above them too: cleaner without).
                 links: [
+                  (
+                    icon: AppIcons.teams,
+                    label: l10n.tabTeams,
+                    onTap: () => context.go('/teams'),
+                  ),
+                  (
+                    icon: AppIcons.person,
+                    label: l10n.tabProfile,
+                    onTap: () => context.go('/profile'),
+                  ),
                   if (superAdmin)
                     (
                       icon: AppIcons.admin,
@@ -406,7 +422,10 @@ class _TeamShellState extends ConsumerState<TeamShell> {
     // Asks for notification permission once the person is in a team
     // (NOTIF-1); viewing someone else's team doesn't count.
     return SchemeStatusBar(
-      child: viewing ? shell : NotificationPrePrompt(child: shell),
+      child: ShellBack(
+        to: viewing ? '/admin/teams/${groupId.value}' : '/teams',
+        child: viewing ? shell : NotificationPrePrompt(child: shell),
+      ),
     );
   }
 }
@@ -425,10 +444,16 @@ class _TeamHeader extends StatelessWidget {
     required this.isGroup,
     required this.showBack,
     required this.onOpenSwitcher,
+    this.backLabel,
   });
 
   final GroupId groupId;
   final MyTeam? team;
+
+  /// "Teams" beside the arrow on wide screens, where there's room for it,
+  /// as every other back names where it goes (#18). Phones keep the arrow
+  /// alone: the team's name needs the room for its two lines (#13).
+  final String? backLabel;
   final GlobalKey switcherKey;
 
   /// The dot on the arrow back to Teams: news in my other teams, unread
@@ -463,6 +488,7 @@ class _TeamHeader extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 3),
                 child: BackChevron(
                   onPressed: () => context.go('/teams'),
+                  label: backLabel,
                   semanticLabel: l10n.backToTeams,
                   showDot: showBackDot,
                   dotLabel: l10n.newsInOtherTeams,
