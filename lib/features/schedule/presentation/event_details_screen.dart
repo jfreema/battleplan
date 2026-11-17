@@ -190,15 +190,18 @@ class EventDetailsScreen extends ConsumerWidget {
                     value: _Action.emailRsvp,
                     child: Text(l10n.eventEmailRsvp),
                   ),
+                // The risky ones apart, under a line, in the warning red
+                // (#35); both still ask first.
+                if (canManage) const PopupMenuDivider(),
                 if (canManage && !event.isCanceled)
                   PopupMenuItem(
                     value: _Action.cancel,
-                    child: Text(l10n.eventCancel),
+                    child: _Danger(l10n.eventCancel),
                   ),
                 if (canManage)
                   PopupMenuItem(
                     value: _Action.delete,
-                    child: Text(l10n.eventDelete),
+                    child: _Danger(l10n.eventDelete),
                   ),
               ],
             ),
@@ -324,7 +327,10 @@ class _Details extends ConsumerWidget {
         : ref.watch(eventSeriesProvider(event.seriesId!)).value;
 
     // When the reminders go: an all-day event's as the days before, at 6 PM.
-    final reminders = event.allDay
+    // None once it's over: they've all gone, or never will (#35).
+    final reminders = event.endedBefore(DateTime.now())
+        ? const <int>[]
+        : event.allDay
         ? allDayReminders(event.reminderOffsets)
         : event.reminderOffsets;
     final otherZone = otherZoneLine(l10n, event, zone);
@@ -476,6 +482,8 @@ class _Hero extends StatelessWidget {
               ),
               if (event.isCanceled)
                 const CanceledBadge()
+              else if (event.endedBefore(DateTime.now()))
+                const _EndedBadge()
               else if (soon != null) ...[
                 Icon(AppIcons.time, size: 16, color: c.tangerine.text),
                 const SizedBox(width: 5),
@@ -591,6 +599,44 @@ class _Hero extends StatelessWidget {
     final days = dayOf(event, zone).difference(today).inDays;
     if (days < 0 || days > 14) return null;
     return l10n.eventInDays(days);
+  }
+}
+
+/// A menu item's words in the warning red (§7.2), as the menu draws it.
+class _Danger extends StatelessWidget {
+  const new(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Text(
+    text,
+    style: TextStyle(color: GumdropColors.of(context).cherry.text),
+  );
+}
+
+/// "Ended" on the page of an event that's over (SCHED-4, #35): a quiet
+/// pill in the well's color, so a past event never passes for an upcoming
+/// one. Canceled wins over it.
+class _EndedBadge extends StatelessWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = GumdropColors.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+      decoration: BoxDecoration(
+        color: c.well,
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: c.outline),
+      ),
+      child: Text(
+        AppLocalizations.of(context).eventEnded,
+        style: Theme.of(context).textTheme.labelSmall
+            ?.copyWith(color: c.textOnPage, letterSpacing: 0.4),
+      ),
+    );
   }
 }
 
@@ -833,7 +879,11 @@ class _RsvpSection extends ConsumerWidget {
                   child: Semantics(
                     header: true,
                     child: Text(
-                      l10n.eventWhosGoing,
+                      // On an event that's over, what people said, not who
+                      // is going (#35).
+                      event.endedBefore(DateTime.now())
+                          ? l10n.eventWhoSaidGoing
+                          : l10n.eventWhosGoing,
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontSize: 25,
                         height: 30 / 25,

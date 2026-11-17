@@ -86,6 +86,9 @@ abstract class Event with _$Event {
 
   /// Started before [now]; Past lists these (SCHED-1).
   bool startedBefore(DateTime now) => startAt.isBefore(now);
+
+  /// Over at [now]: its event page says Ended (SCHED-4, #35).
+  bool endedBefore(DateTime now) => !endAt.isAfter(now);
 }
 
 /// Where an event is. Either part may be empty, not both.
