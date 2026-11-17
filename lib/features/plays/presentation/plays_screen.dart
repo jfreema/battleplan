@@ -59,9 +59,14 @@ PlayDraft draftFor(NewPlayChoice choice) {
 /// change first, with a picture of each. Everyone on the team opens them;
 /// coaches save them from the whiteboard.
 class SavedPlaysScreen extends ConsumerWidget {
-  const new({required this.groupId, super.key});
+  const new({required this.groupId, this.tabRoot = false, super.key});
 
   final GroupId groupId;
+
+  /// The Plays tab's own page, for those who can't edit plays (#31): the
+  /// team's header already names the tab, so the list starts at the top,
+  /// with no back row or second title of its own.
+  final bool tabRoot;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -100,6 +105,7 @@ class SavedPlaysScreen extends ConsumerWidget {
         },
       );
     }
+    if (tabRoot) return Scaffold(body: body);
     return GumdropScaffold(
       title: canEdit ? l10n.playsSaved : l10n.tabPlays,
       body: body,

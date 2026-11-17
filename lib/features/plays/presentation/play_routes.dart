@@ -31,7 +31,7 @@ class PlaysRoute extends ConsumerWidget {
       );
     }
     if (!canEditPlays(group, me, superAdmin: superAdmin)) {
-      return SavedPlaysScreen(groupId: groupId);
+      return SavedPlaysScreen(groupId: groupId, tabRoot: true);
     }
     // A play put on the whiteboard makes a new editor, with it.
     final revision = ref.watch(whiteboardRevisionProvider);

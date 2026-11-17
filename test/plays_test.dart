@@ -12,6 +12,7 @@ import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/plays_icon.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/chat/presentation/composer.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/groups/presentation/shell_parts.dart';
 import 'package:battleplan/features/plays/data/firestore_play_repository.dart';
 import 'package:battleplan/features/plays/data/prefs_whiteboard_store.dart';
@@ -636,6 +637,49 @@ void main() {
       // Shared, not saved to the phone.
       expect(saver.saved, isEmpty);
       expect(find.widgetWithText(OutlinedButton, 'Share'), findsOneWidget);
+    });
+
+    // #31: the tab's first page starts with the list, under the team's
+    // header, with no back row or second "Plays" title of its own.
+    for (final withPlays in [true, false]) {
+      testWidgets("a member's Plays tab is the list alone "
+          '(${withPlays ? 'a play' : 'none yet'})', (tester) async {
+        final repo = FakePlayRepository([if (withPlays) saved]);
+        await pumpApp(
+          tester,
+          auth: FakeAuthRepository(user: coach),
+          groups: team,
+          memberships: [testMembership('a', 'coach')],
+          playRepo: repo,
+        );
+        await tester.tap(find.text('Plays'));
+        await tester.pumpAndSettle();
+        expect(find.byType(GumdropScaffold), findsNothing);
+        expect(find.byType(PageTitle), findsNothing);
+        // "Plays" is the tab's label only.
+        expect(find.text('Plays'), findsOneWidget);
+        expect(
+          find.text(
+            repo.plays.isEmpty
+                ? "No plays yet. Your coaches' plays will show up here."
+                : 'Bunt defense',
+          ),
+          findsOneWidget,
+        );
+      });
+    }
+
+    testWidgets("a coach's saved plays keep their title and way back", (
+      tester,
+    ) async {
+      await open(
+        tester,
+        role: MemberRole.admin,
+        plays: FakePlayRepository([saved]),
+        path: '/g/a/plays/saved',
+      );
+      expect(find.widgetWithText(PageTitle, 'Saved plays'), findsOneWidget);
+      expect(find.text('Bunt defense'), findsOneWidget);
     });
 
     testWidgets('a member views a play step by step, without edit tools', (

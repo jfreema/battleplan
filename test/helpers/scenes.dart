@@ -486,6 +486,7 @@ Future<void> pumpTeam(
   List<GuardianLink>? links,
   List<GuardianRequest> requests = const [],
   FakeNotificationRepository? notifications,
+  FakePlayRepository? plays,
   List<Override> overrides = const [],
 }) async {
   final events = FakeEventRepository(sceneEvents);
@@ -526,6 +527,7 @@ Future<void> pumpTeam(
     duesRepo: dues ?? sceneDues(),
     notifications: notifications,
     documentRepo: FakeDocumentRepository(sceneDocuments),
+    playRepo: plays,
     admin: FakeAdminRepository(
       totalsValue: const AdminTotals(
         users: 1284,
