@@ -281,6 +281,7 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
     final group = ref.watch(groupProvider(widget.groupId)).value;
     if (group == null) {
       return GumdropScaffold(
+        maxWidth: 560,
         title: l10n.teamAdmin,
         body: const SizedBox.shrink(),
       );
@@ -355,6 +356,7 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
     );
 
     return GumdropScaffold(
+      maxWidth: 560,
       title: group.isGroup ? l10n.groupAdmin : l10n.teamAdmin,
       backLabel: backLabelFrom(
         context,

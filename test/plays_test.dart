@@ -5,6 +5,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
@@ -735,6 +736,14 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Bunt defense'));
       await tester.pumpAndSettle();
+      // The app's dots, as every menu has (#14).
+      expect(
+        find.descendant(
+          of: find.byTooltip('More'),
+          matching: find.byIcon(AppIcons.more),
+        ),
+        findsOneWidget,
+      );
       await tester.tap(find.byTooltip('More'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Put on the whiteboard'));
@@ -883,6 +892,14 @@ void main() {
         role: MemberRole.owner,
         plays: plays,
         path: '/g/a/plays/p9/edit',
+      );
+      // The app's dots, as every menu has (#14).
+      expect(
+        find.descendant(
+          of: find.byTooltip('More'),
+          matching: find.byIcon(AppIcons.more),
+        ),
+        findsOneWidget,
       );
       await tester.tap(find.byTooltip('More'));
       await tester.pumpAndSettle();

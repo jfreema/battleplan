@@ -79,6 +79,7 @@ class _NotificationSettingsScreenState
     // The app's frame and Settings' rows, so the page reads as part of
     // Settings (#14, 2026-11-16; it had a plain bar and its own margins).
     return GumdropScaffold(
+      maxWidth: 560,
       title: l10n.notificationSettings,
       backLabel: backLabelFrom(context, l10n.settings),
       body: PageList(

@@ -131,6 +131,7 @@ class YourScheduleScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return GumdropScaffold(
+      maxWidth: Breakpoints.contentMax,
       title: l10n.yourSchedule,
       backLabel: l10n.tabTeams,
       body: Center(

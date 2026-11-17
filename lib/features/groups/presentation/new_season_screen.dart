@@ -113,6 +113,7 @@ class _NewSeasonScreenState extends ConsumerState<NewSeasonScreen> {
     final group = ref.watch(groupProvider(widget.groupId)).value;
     if (group == null) {
       return GumdropScaffold(
+        maxWidth: 520,
         title: l10n.newSeason,
         body: const SizedBox.shrink(),
       );
@@ -163,6 +164,7 @@ class _NewSeasonScreenState extends ConsumerState<NewSeasonScreen> {
     );
 
     return GumdropScaffold(
+      maxWidth: 520,
       title: l10n.newSeason,
       backLabel: l10n.teamAdmin,
       body: Center(

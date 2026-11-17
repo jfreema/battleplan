@@ -93,6 +93,7 @@ class _CalendarLinkState extends ConsumerState<CalendarLinkScreen> {
     );
     if (ref.watch(myMembershipProvider(widget.groupId)) == null) {
       return GumdropScaffold(
+        maxWidth: 560,
         title: l10n.calendarLinkTitle,
         backLabel: back,
         body: EmptyState(icon: AppIcons.group, message: l10n.notAMember),
@@ -182,6 +183,7 @@ class _CalendarLinkState extends ConsumerState<CalendarLinkScreen> {
     // The app's frame and its 20 px margins (#14, 2026-11-16; it had a
     // plain bar).
     return GumdropScaffold(
+      maxWidth: 560,
       title: l10n.calendarLinkTitle,
       backLabel: back,
       body: PageList(

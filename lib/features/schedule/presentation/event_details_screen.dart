@@ -739,8 +739,11 @@ class _RsvpSection extends ConsumerWidget {
               children: [
                 Text(l10n.rsvpAddPlayersFirst, style: muted),
                 TextButton(
-                  onPressed: () =>
-                      context.push('/g/${group.id.value}/players/add'),
+                  // Add players goes back here, by the event's name (#14).
+                  onPressed: () => context.push(
+                    '/g/${group.id.value}/players/add',
+                    extra: BackLabel(event.title),
+                  ),
                   child: Text(l10n.rsvpAddPlayersAction),
                 ),
               ],

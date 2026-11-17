@@ -31,11 +31,11 @@ class MessagesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final chats = ref.watch(myDirectChatsProvider);
-    return Scaffold(
-      appBar: AppBar(
-        leading: upButton(context),
-        title: Text(l10n.messagesTitle),
-      ),
+    // The app's frame (#14, 2026-11-16; it had a plain bar), back to the
+    // team whose header opened it, or to Teams.
+    return GumdropScaffold(
+      title: l10n.messagesTitle,
+      backLabel: backLabelFrom(context, l10n.tabTeams),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: null,
         onPressed: () async {

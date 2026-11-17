@@ -39,6 +39,7 @@ class TeamNotificationsScreen extends ConsumerWidget {
     );
     if (membership == null) {
       return GumdropScaffold(
+        maxWidth: 560,
         title: l10n.teamNotificationsMenu,
         backLabel: back,
         body: EmptyState(icon: AppIcons.group, message: l10n.notAMember),
@@ -93,6 +94,7 @@ class TeamNotificationsScreen extends ConsumerWidget {
     // The app's frame and Team settings' rows (#14, 2026-11-16; it had a
     // plain bar with the team's name under it).
     return GumdropScaffold(
+      maxWidth: 560,
       title: l10n.teamNotificationsMenu,
       backLabel: back,
       body: PageList(

@@ -665,16 +665,24 @@ GoRouter router(Ref ref) {
               ),
             ],
           ),
+          // Side panels on wide screens, like the other settings pages
+          // (SPEC §5.5; full screen until #14, 2026-11-16).
           GoRoute(
             path: 'invite',
-            builder: (_, state) => InviteScreen(
-              groupId: GroupId(state.pathParameters['groupId']!),
+            pageBuilder: (_, state) => PanelPage(
+              key: state.pageKey,
+              child: InviteScreen(
+                groupId: GroupId(state.pathParameters['groupId']!),
+              ),
             ),
             routes: [
               GoRoute(
                 path: 'email',
-                builder: (_, state) => EmailInvitesScreen(
-                  groupId: GroupId(state.pathParameters['groupId']!),
+                pageBuilder: (_, state) => PanelPage(
+                  key: state.pageKey,
+                  child: EmailInvitesScreen(
+                    groupId: GroupId(state.pathParameters['groupId']!),
+                  ),
                 ),
               ),
             ],
@@ -704,8 +712,12 @@ GoRouter router(Ref ref) {
           ),
           GoRoute(
             path: 'media',
-            builder: (_, state) =>
-                MediaScreen(groupId: GroupId(state.pathParameters['groupId']!)),
+            pageBuilder: (_, state) => PanelPage(
+              key: state.pageKey,
+              child: MediaScreen(
+                groupId: GroupId(state.pathParameters['groupId']!),
+              ),
+            ),
           ),
           // Start a new season (TEAM-16), from Admin settings' owner actions.
           GoRoute(
@@ -716,21 +728,30 @@ GoRouter router(Ref ref) {
           ),
           GoRoute(
             path: 'members/add',
-            builder: (_, state) => AddMembersScreen(
-              groupId: GroupId(state.pathParameters['groupId']!),
+            pageBuilder: (_, state) => PanelPage(
+              key: state.pageKey,
+              child: AddMembersScreen(
+                groupId: GroupId(state.pathParameters['groupId']!),
+              ),
             ),
           ),
           GoRoute(
             path: 'reports',
-            builder: (_, state) => ReportsScreen(
-              groupId: GroupId(state.pathParameters['groupId']!),
+            pageBuilder: (_, state) => PanelPage(
+              key: state.pageKey,
+              child: ReportsScreen(
+                groupId: GroupId(state.pathParameters['groupId']!),
+              ),
             ),
           ),
           // Bringing events over from another app (SPEC §6.15).
           GoRoute(
             path: 'import',
-            builder: (_, state) => ImportScreen(
-              groupId: GroupId(state.pathParameters['groupId']!),
+            pageBuilder: (_, state) => PanelPage(
+              key: state.pageKey,
+              child: ImportScreen(
+                groupId: GroupId(state.pathParameters['groupId']!),
+              ),
             ),
           ),
           // Dues (DUES-1 to DUES-3): everyone's for admins, my own for

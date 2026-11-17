@@ -1,5 +1,6 @@
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -55,11 +56,21 @@ class _EnterCodeScreenState extends State<EnterCodeScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final error = _error;
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.joinTeam)),
-      body: Center(
+    // The app's frame (#14, 2026-11-16; it had a plain bar), back to
+    // Teams or the team whose switcher opened it.
+    return GumdropScaffold(
+      maxWidth: 460,
+      title: l10n.joinTeam,
+      backLabel: openerLabel(context),
+      body: Align(
+        alignment: Alignment.topCenter,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(Space.xl),
+          padding: const EdgeInsets.fromLTRB(
+            Space.page,
+            14,
+            Space.page,
+            Space.xl,
+          ),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
             child: Column(

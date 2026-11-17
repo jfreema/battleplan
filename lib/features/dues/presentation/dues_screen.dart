@@ -98,6 +98,7 @@ class DuesScreen extends ConsumerWidget {
     );
 
     return GumdropScaffold(
+      maxWidth: 560,
       title: l10n.duesTitle,
       // Opened from the Team tab's card (SPEC §5.3).
       backLabel: backLabelFrom(
@@ -843,6 +844,7 @@ class DueDetailScreen extends ConsumerWidget {
     final canEdit = isDuesAdmin(ref, groupId) && !archived;
     final totals = dueTotals(charges);
     return GumdropScaffold(
+      maxWidth: 560,
       title: due?.title ?? l10n.duesTitle,
       // Dues, or Who owes what when opened from there.
       backLabel: backLabelFrom(context, l10n.duesTitle),
@@ -850,6 +852,9 @@ class DueDetailScreen extends ConsumerWidget {
         if (due != null && canEdit)
           PopupMenuButton<String>(
             tooltip: l10n.eventMoreActions,
+            // The app's dots, as every other menu has, not the platform's
+            // (#14).
+            icon: const Icon(AppIcons.more),
             onSelected: (v) => v == 'edit'
                 ? unawaited(
                     context.push('/g/${groupId.value}/dues/$dueId/edit'),
@@ -1295,6 +1300,7 @@ class _NewDueScreenState extends ConsumerState<NewDueScreen> {
           ? const SkeletonList()
           : Center(child: DuesQuiet(l10n.duesNotFound));
       return GumdropScaffold(
+        maxWidth: 560,
         title: _isEdit ? l10n.duesEdit : l10n.duesNew,
         backLabel: back,
         body: body,
@@ -1304,6 +1310,7 @@ class _NewDueScreenState extends ConsumerState<NewDueScreen> {
     final everyoneAsync = _isEdit ? null : _everyone(ref, group);
     final everyone = everyoneAsync?.list;
     return GumdropScaffold(
+      maxWidth: 560,
       title: _isEdit ? l10n.duesEdit : l10n.duesNew,
       backLabel: back,
       body: Align(

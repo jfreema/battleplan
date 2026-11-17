@@ -7,6 +7,7 @@ import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/chat/presentation/photo_grid.dart';
 import 'package:battleplan/features/chat/presentation/photo_viewer.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -47,14 +48,15 @@ class TeamPhotosScreen extends ConsumerWidget {
     } else {
       body = LayoutBuilder(
         builder: (context, constraints) {
-          final gutter = Space.gutter(constraints.maxWidth);
+          // 20 px, the title's margin (SPEC §7.3).
+          const gutter = Space.page;
           final width = constraints.maxWidth - 2 * gutter;
           final columns = (width / _minTile).floor().clamp(3, 8);
           const gap = 3.0;
           final tile = (width - gap * (columns - 1)) / columns;
           final more = !state.reachedEnd;
           return GridView.builder(
-            padding: EdgeInsets.fromLTRB(gutter, Space.sm, gutter, Space.xxl),
+            padding: const EdgeInsets.fromLTRB(gutter, 14, gutter, Space.xxl),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: columns,
               mainAxisSpacing: gap,
@@ -115,8 +117,11 @@ class TeamPhotosScreen extends ConsumerWidget {
         },
       );
     }
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.photosTitle)),
+    // The app's frame (#14, 2026-11-16; it had a plain bar), back to
+    // Documents, where Team photos is.
+    return GumdropScaffold(
+      title: l10n.photosTitle,
+      backLabel: backLabelFrom(context, l10n.tabDocuments),
       body: body,
     );
   }

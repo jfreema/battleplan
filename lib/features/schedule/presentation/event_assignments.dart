@@ -172,8 +172,9 @@ class EventAssignmentsScreen extends ConsumerWidget {
     final event = async.value;
     final group = ref.watch(groupProvider(groupId)).value;
     if (event == null || group == null) {
-      return Scaffold(
-        appBar: AppBar(),
+      return GumdropScaffold(
+        maxWidth: 720,
+        title: l10n.assignmentsTitle,
         body: async.isLoading || group == null
             ? const SkeletonList()
             : EmptyState(icon: AppIcons.event, message: l10n.eventNotFound),
@@ -192,22 +193,35 @@ class EventAssignmentsScreen extends ConsumerWidget {
     final myUid = me?.uid.value;
     final c = GumdropColors.of(context);
     final text = Theme.of(context).textTheme;
-    final gutter = Space.gutter(MediaQuery.sizeOf(context).width);
     final full = list.length >= Limits.assignmentsPerEventMax;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.assignmentsTitle)),
+    // The app's frame (#14, 2026-11-16; it had a plain bar), back to the
+    // event by its name. From a link, with no event under it, the event's
+    // name is on the page instead.
+    final fromEvent = ModalRoute.of(context)?.impliesAppBarDismissal ?? false;
+    return GumdropScaffold(
+      maxWidth: 720,
+      title: l10n.assignmentsTitle,
+      backLabel: backLabelFrom(context, event.title),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 720),
           child: ListView(
-            padding: EdgeInsets.fromLTRB(gutter, Space.sm, gutter, Space.xxl),
+            // 20 px, the title's margin (SPEC §7.3).
+            padding: const EdgeInsets.fromLTRB(
+              Space.page,
+              14,
+              Space.page,
+              Space.xxl,
+            ),
             children: [
-              Text(
-                event.title,
-                style: text.titleMedium?.copyWith(color: c.textOnPage),
-              ),
-              const SizedBox(height: Space.xs),
+              if (!fromEvent) ...[
+                Text(
+                  event.title,
+                  style: text.titleMedium?.copyWith(color: c.textOnPage),
+                ),
+                const SizedBox(height: Space.xs),
+              ],
               Text(
                 list.isEmpty
                     ? (canManage

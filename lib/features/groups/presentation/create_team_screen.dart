@@ -167,7 +167,10 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
     final error = _error;
     final c = GumdropColors.of(context);
     return GumdropScaffold(
+      maxWidth: 520,
       title: _kind == GroupKind.group ? l10n.createGroupTitle : l10n.createTeam,
+      // Back to Teams, or the team whose switcher opened it (#14).
+      backLabel: openerLabel(context),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),

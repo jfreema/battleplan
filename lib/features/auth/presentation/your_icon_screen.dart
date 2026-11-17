@@ -67,6 +67,7 @@ class _YourIconScreenState extends ConsumerState<YourIconScreen> {
     final hasPhoto = profile?.photoPath != null;
 
     return GumdropScaffold(
+      maxWidth: 560,
       title: l10n.yourIcon,
       backLabel: l10n.profile,
       body: profile == null

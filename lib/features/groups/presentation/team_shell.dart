@@ -122,19 +122,21 @@ class _TeamShellState extends ConsumerState<TeamShell> {
     BuildContext context, {
     BuildContext? anchor,
   }) async {
+    final here = BackLabel(ref.read(groupProvider(groupId)).value?.name);
     final selected = await showAdaptiveSheet<GroupId>(
       context,
       anchor: anchor ?? _switcherKey.currentContext,
       builder: (sheetContext) => TeamSwitcherList(
         currentGroupId: groupId,
         onSelect: (id) => Navigator.of(sheetContext).pop(id),
+        // Create and Join go back to this team, by name (#14).
         onCreate: (kind) {
           Navigator.of(sheetContext).pop();
-          unawaited(context.push(createPath(kind)));
+          unawaited(context.push(createPath(kind), extra: here));
         },
         onJoinTeam: () {
           Navigator.of(sheetContext).pop();
-          unawaited(context.push('/join'));
+          unawaited(context.push('/join', extra: here));
         },
       ),
     );
@@ -489,8 +491,9 @@ class _TeamHeader extends StatelessWidget {
             ),
             // The God admin panel in one tap, for super admins (ADMIN).
             const _Low(child: AdminPanelButton()),
-            // Direct conversations, with how many are unread (CHAT-19).
-            const _Low(child: MessagesButton()),
+            // Direct conversations, with how many are unread (CHAT-19);
+            // they go back to this team, by name (#14).
+            _Low(child: MessagesButton(backLabel: group?.name)),
             // This team's unread notification-center items (NOTIF-11).
             _Low(child: NotificationBell(groupId: groupId)),
             _Low(child: _TeamSettingsButton(group: group)),

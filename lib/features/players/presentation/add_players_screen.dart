@@ -25,6 +25,9 @@ import 'package:material_ui/material_ui.dart';
 /// later by claiming the player (PLAYER-3). Members add a player with how
 /// they're linked ("I am this player" or their parent or guardian),
 /// pending until an admin approves it.
+/// The page's margins: 20 px, the title's (SPEC §7.3), and 14 under it.
+const _padding = EdgeInsets.fromLTRB(Space.page, 14, Space.page, Space.xl);
+
 class AddPlayersScreen extends ConsumerStatefulWidget {
   const new({required this.groupId, super.key});
 
@@ -159,6 +162,9 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    // The app's frame (#14, 2026-11-16; it had a plain bar), back to the
+    // Team tab, or to the event whose RSVP section opened it.
+    final back = backLabelFrom(context, l10n.tabTeam);
     final teamAdmin =
         ref.watch(myMembershipProvider(widget.groupId))?.isAdmin ?? false;
     final superAdmin = ref.watch(authUserProvider).value?.isSuperAdmin ?? false;
@@ -180,13 +186,15 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
                 ref.watch(myPendingPlayersProvider(widget.groupId)).value ??
                 const [],
           );
-      return Scaffold(
-        appBar: AppBar(leading: upButton(context), title: Text(l10n.addPlayer)),
+      return GumdropScaffold(
+        maxWidth: 560,
+        title: l10n.addPlayer,
+        backLabel: back,
         body: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 560),
             child: ListView(
-              padding: const EdgeInsets.all(Space.xl),
+              padding: _padding,
               children: [
                 ProposePlayerForm(
                   canBeSelf: canBeSelf,
@@ -202,13 +210,15 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
     final parsed = parsePastedRoster(_paste.text);
     // Up to 200 lines (PLAYER-1).
     final tooManyLines = parsed.lines > Limits.pastedRosterLinesMax;
-    return Scaffold(
-      appBar: AppBar(leading: upButton(context), title: Text(l10n.addPlayers)),
+    return GumdropScaffold(
+      maxWidth: 560,
+      title: l10n.addPlayers,
+      backLabel: back,
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
           child: ListView(
-            padding: const EdgeInsets.all(Space.xl),
+            padding: _padding,
             children: [
               SegmentedButton<bool>(
                 segments: [

@@ -41,6 +41,7 @@ class SettingsScreen extends ConsumerWidget {
     const headingGap = SizedBox(height: 10);
 
     return GumdropScaffold(
+      maxWidth: 560,
       title: l10n.settings,
       backLabel: l10n.profile,
       body: Center(

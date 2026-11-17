@@ -21,6 +21,7 @@ class BlockedPeopleScreen extends ConsumerWidget {
     // The app's frame and Settings' rows, so the page reads as part of
     // Settings (#14, 2026-11-16).
     return GumdropScaffold(
+      maxWidth: 560,
       title: l10n.blockedPeople,
       backLabel: backLabelFrom(context, l10n.settings),
       body: blocked.isEmpty

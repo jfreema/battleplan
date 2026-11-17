@@ -54,23 +54,27 @@ class TeamsScreen extends ConsumerWidget {
       );
     }
 
+    // Join and Create go back here, to Teams (#14).
+    final back = BackLabel(l10n.tabTeams);
     final joinOrCreate = PageRows(
       children: [
         PageRow(
           icon: AppIcons.qr,
           title: l10n.joinTeam,
-          onTap: () => unawaited(context.push('/join')),
+          onTap: () => unawaited(context.push('/join', extra: back)),
         ),
         PageRow(
           icon: AppIcons.add,
           title: l10n.createTeam,
-          onTap: () => unawaited(context.push(createPath(GroupKind.team))),
+          onTap: () =>
+              unawaited(context.push(createPath(GroupKind.team), extra: back)),
         ),
         // A basic group (TEAM-14), below teams.
         PageRow(
           icon: AppIcons.group,
           title: l10n.createGroupTitle,
-          onTap: () => unawaited(context.push(createPath(GroupKind.group))),
+          onTap: () =>
+              unawaited(context.push(createPath(GroupKind.group), extra: back)),
         ),
       ],
     );

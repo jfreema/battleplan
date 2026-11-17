@@ -454,6 +454,14 @@ void main() {
     await go(tester, '/g/a/dues');
     expect(find.text(r'0 of 2 paid · $90 left'), findsOneWidget);
     await go(tester, '/g/a/dues/d0');
+    // The app's dots, as every menu has (#14), not the platform's.
+    expect(
+      find.descendant(
+        of: find.byTooltip('More actions'),
+        matching: find.byIcon(AppIcons.more),
+      ),
+      findsOneWidget,
+    );
     await tester.tap(find.byTooltip('More actions'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Delete due'));

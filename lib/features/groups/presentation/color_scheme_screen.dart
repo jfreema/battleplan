@@ -108,6 +108,7 @@ class ColorSchemeScreen extends ConsumerWidget {
     }
 
     return GumdropScaffold(
+      maxWidth: 560,
       title: title,
       backLabel: id == null
           ? l10n.tabTeams

@@ -45,6 +45,7 @@ class TeamInfoScreen extends ConsumerWidget {
     );
 
     return GumdropScaffold(
+      maxWidth: 560,
       title: isGroup ? l10n.groupSettings : l10n.teamSettings,
       // "‹ Thunder": the arrow goes back into the team (#14; it was the
       // chevron alone).

@@ -76,6 +76,7 @@ class DuesPeopleScreen extends ConsumerWidget {
       );
     }
     return GumdropScaffold(
+      maxWidth: 560,
       title: l10n.duesWhoOwesWhat,
       backLabel: l10n.duesTitle,
       body: body,

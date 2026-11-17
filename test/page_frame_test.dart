@@ -6,7 +6,10 @@
 // the phone is a wide one so the small title has room.
 
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/widgets/team_switcher_button.dart';
+import 'package:battleplan/features/chat/presentation/messages_button.dart';
 import 'package:battleplan/features/groups/groups.dart';
+import 'package:battleplan/features/groups/presentation/teams_screen.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -144,6 +147,130 @@ void main() {
     expect(find.widgetWithText(PageTitle, 'RSVP history'), findsOneWidget);
     expect(find.bySemanticsLabel('Back, Mia'), findsOneWidget);
     handle.dispose();
+  });
+
+  // Step 6: the rest of the pages opened on top.
+  testWidgets('Messages goes back to the team that opened it, by name, or '
+      'to Teams', (tester) async {
+    final handle = tester.ensureSemantics();
+    await pumpTeam(tester, scheme: TeamScheme.army);
+    await tester.tap(find.byType(MessagesButton));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(PageTitle, 'Messages'), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel('Back, Thunder U14'));
+    await tester.pumpAndSettle();
+    await goTo(tester, '/teams');
+    await tester.tap(
+      find.descendant(
+        of: find.byType(TeamsScreen),
+        matching: find.byType(MessagesButton),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(PageTitle, 'Messages'), findsOneWidget);
+    expect(find.bySemanticsLabel('Back, Teams'), findsOneWidget);
+    handle.dispose();
+  });
+
+  testWidgets('Join and Create go back to Teams, or to the team whose '
+      'switcher opened them', (tester) async {
+    final handle = tester.ensureSemantics();
+    for (final (row, title) in [
+      ('Join a Team or Group', 'Join a Team or Group'),
+      ('Create a Team', 'Create a Team'),
+    ]) {
+      await pumpTeam(tester, scheme: TeamScheme.army);
+      await goTo(tester, '/teams');
+      await scrollToTeamsRows(tester);
+      await tester.tap(find.text(row).last);
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(PageTitle, title), findsOneWidget);
+      expect(find.bySemanticsLabel('Back, Teams'), findsOneWidget);
+
+      await pumpTeam(tester, scheme: TeamScheme.army);
+      await tester.tap(find.byType(TeamSwitcherButton));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(row).last);
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(PageTitle, title), findsOneWidget);
+      expect(find.bySemanticsLabel('Back, Thunder U14'), findsOneWidget);
+    }
+    handle.dispose();
+  });
+
+  testWidgets('Add players goes back to the Team tab, Team photos to '
+      'Documents, and Assignments to its event, by name', (tester) async {
+    final handle = tester.ensureSemantics();
+    for (final (from, route, title, back) in [
+      ('/g/a/team', '/g/a/players/add', 'Add players', 'Back, Team'),
+      ('/g/a/documents', '/g/a/documents/photos', 'Photos', 'Back, Documents'),
+      (
+        '/g/a/schedule/e/e1',
+        '/g/a/schedule/e/e1/assignments',
+        'Assignments',
+        'Back, vs. Eagles',
+      ),
+    ]) {
+      await pumpTeam(tester, scheme: TeamScheme.army);
+      await goTo(tester, from);
+      await pushTo(tester, route);
+      expect(find.widgetWithText(PageTitle, title), findsOneWidget);
+      expect(find.bySemanticsLabel(back), findsOneWidget, reason: route);
+    }
+    // The back row names the event, so the page doesn't again.
+    expect(find.text('vs. Eagles'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('vs. Eagles'),
+      ),
+      findsOneWidget,
+    );
+    handle.dispose();
+  });
+
+  testWidgets('Assignments opened from a link names its event on the page, '
+      'with nothing under it to name', (tester) async {
+    await pumpTeam(tester, scheme: TeamScheme.army);
+    await goTo(tester, '/g/a/schedule/e/e1/assignments');
+    expect(find.widgetWithText(PageTitle, 'Assignments'), findsOneWidget);
+    expect(find.text('vs. Eagles'), findsOneWidget);
+  });
+
+  testWidgets("on wide screens Invite's pages, Media, Reports and Import "
+      'open as side panels, like the other settings pages', (tester) async {
+    for (final (from, route, title) in [
+      ('/g/a/team', '/g/a/invite', 'Invite'),
+      ('/g/a/team', '/g/a/invite/email', 'Email invites'),
+      ('/g/a/team', '/g/a/members/add', 'Add people by email'),
+      ('/g/a/info', '/g/a/media', 'Media'),
+      ('/g/a/info', '/g/a/reports', 'Reports'),
+      ('/g/a/info', '/g/a/import', 'Import'),
+    ]) {
+      await pumpTeam(tester, scheme: TeamScheme.army, size: wideSize);
+      await goTo(tester, from);
+      await pushTo(tester, route);
+      final page = find.widgetWithText(PageTitle, title);
+      expect(page, findsOneWidget, reason: route);
+      // A panel over the screen it came from, which shows around it.
+      expect(ModalRoute.of(tester.element(page))!.opaque, isFalse);
+    }
+  });
+
+  testWidgets("on a wide screen the big title lines up with the page's "
+      "column, not the window's edge", (tester) async {
+    await pumpTeam(tester, scheme: TeamScheme.army, size: wideSize);
+    await goTo(tester, '/profile');
+    await pushTo(tester, '/settings');
+    await pushTo(tester, '/settings/notifications');
+    final title = find.widgetWithText(PageTitle, 'Notifications');
+    final column = find.descendant(
+      of: find.byType(PageList),
+      matching: find.byType(ListView),
+    );
+    // Both have the 20 px margin inside, so their edges meet.
+    expect(tester.getTopLeft(title).dx, tester.getTopLeft(column).dx);
+    expect(tester.getSize(title).width, tester.getSize(column).width);
   });
 
   testWidgets('the small title stays out where it would crowd the back '

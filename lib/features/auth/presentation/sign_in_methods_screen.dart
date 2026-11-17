@@ -146,6 +146,7 @@ class _SignInMethodsScreenState extends ConsumerState<SignInMethodsScreen> {
     // The app's frame and Settings' rows, so the page reads as part of
     // Settings (#14, 2026-11-16).
     return GumdropScaffold(
+      maxWidth: 560,
       title: l10n.signInMethods,
       backLabel: backLabelFrom(context, l10n.settings),
       body: PageList(

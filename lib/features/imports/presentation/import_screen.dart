@@ -123,6 +123,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       // The app's frame (#14, 2026-11-16; it had a plain bar). Opened
       // from Team settings.
       child: GumdropScaffold(
+        maxWidth: 560,
         title: l10n.importTitle,
         backLabel: backLabelFrom(
           context,

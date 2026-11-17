@@ -95,6 +95,7 @@ class _EmailInvitesScreenState extends ConsumerState<EmailInvitesScreen> {
     // The app's frame, back to Invite (#14, 2026-11-16; it had a plain
     // bar).
     return GumdropScaffold(
+      maxWidth: 560,
       title: l10n.emailInvites,
       backLabel: backLabelFrom(context, l10n.inviteMenu),
       body: Center(

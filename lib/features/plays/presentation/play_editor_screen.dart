@@ -753,6 +753,8 @@ class _MoreButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => PopupMenuButton<VoidCallback>(
     tooltip: AppLocalizations.of(context).playMore,
+    // The app's dots, not the platform's (#14).
+    icon: const Icon(AppIcons.more),
     onSelected: (action) => action(),
     itemBuilder: (_) => [
       for (final a in actions)

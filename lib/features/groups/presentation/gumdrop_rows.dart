@@ -42,6 +42,7 @@ class GumdropScaffold extends StatefulWidget {
     this.actions,
     this.bottomNavigationBar,
     this.floatingActionButton,
+    this.maxWidth,
     super.key,
   });
 
@@ -51,6 +52,13 @@ class GumdropScaffold extends StatefulWidget {
   final List<Widget>? actions;
   final Widget? bottomNavigationBar;
   final Widget? floatingActionButton;
+
+  /// The width of the [body]'s centered column, its margins included, for
+  /// a body that keeps to one (560 for most, as [PageList]): the big
+  /// title sits in a column as wide, centered, so on a wide screen or in a
+  /// side panel it lines up with the page instead of standing at the
+  /// edge (#14, 2026-11-16). Null for a body as wide as the screen.
+  final double? maxWidth;
 
   @override
   State<GumdropScaffold> createState() => _GumdropScaffoldState();
@@ -138,7 +146,21 @@ class _GumdropScaffoldState extends State<GumdropScaffold> {
       body: NestedScrollView(
         controller: _outer,
         headerSliverBuilder: (context, _) => [
-          SliverToBoxAdapter(child: PageTitle(widget.title, key: _title)),
+          SliverToBoxAdapter(
+            child: switch (widget.maxWidth) {
+              final max? => Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: max),
+                  // The column's whole width, the title at its left edge.
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: PageTitle(widget.title, key: _title),
+                  ),
+                ),
+              ),
+              null => PageTitle(widget.title, key: _title),
+            },
+          ),
         ],
         // The page's list scrolls with the title on every platform, the
         // web and desktop included, which don't take a primary scroll

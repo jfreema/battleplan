@@ -123,6 +123,7 @@ class _AddMembersScreenState extends ConsumerState<AddMembersScreen> {
     // The app's frame, back to Invite (#14, 2026-11-16; it had a plain
     // bar). The admin panel opens it too, and says so.
     return GumdropScaffold(
+      maxWidth: 560,
       title: l10n.addByEmail,
       backLabel: backLabelFrom(context, l10n.inviteMenu),
       body: Center(

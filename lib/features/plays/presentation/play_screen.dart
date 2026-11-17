@@ -275,6 +275,8 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
             ),
             PopupMenuButton<String>(
               tooltip: l10n.playMore,
+              // The app's dots, not the platform's (#14).
+              icon: const Icon(AppIcons.more),
               onSelected: (v) => unawaited(switch (v) {
                 'board' => _toWhiteboard(play),
                 'copy' => _duplicate(play),

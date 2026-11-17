@@ -74,6 +74,7 @@ class MediaScreen extends ConsumerWidget {
     );
     if (membership != null && !membership.isAdmin && !superAdmin) {
       return GumdropScaffold(
+        maxWidth: 560,
         title: l10n.mediaMenu,
         backLabel: back,
         body: EmptyState(icon: AppIcons.media, message: l10n.notAllowed),
@@ -112,6 +113,7 @@ class MediaScreen extends ConsumerWidget {
     // The app's frame, with its 20 px margins (#14, 2026-11-16; it had a
     // plain bar).
     return GumdropScaffold(
+      maxWidth: 560,
       title: l10n.mediaMenu,
       backLabel: back,
       body: Center(
