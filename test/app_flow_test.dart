@@ -247,10 +247,10 @@ void main() {
     expect(find.widgetWithText(TextField, 'Patricia Lee'), findsOneWidget);
   });
 
-  testWidgets('signing out from Settings starts over at sign-in: the next '
-      'person in goes to their teams, not Settings', (tester) async {
+  testWidgets('signing out from Profile starts over at sign-in: the next '
+      'person in goes to their teams, not Profile', (tester) async {
     await pumpApp(tester, auth: FakeAuthRepository(user: coach));
-    GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/settings');
+    GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/profile');
     await tester.pumpAndSettle();
     final signOut = find.text('Sign out');
     await tester.ensureVisible(signOut);

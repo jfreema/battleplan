@@ -56,11 +56,11 @@ void main() {
   });
 
   // Step 3: they had a plain bar, a smaller title and narrower margins.
-  testWidgets("Settings' three pages are on the frame and go back to "
-      'Settings', (tester) async {
+  testWidgets("Settings' pages are on the frame and go back to Settings", (
+    tester,
+  ) async {
     final handle = tester.ensureSemantics();
     for (final (route, title) in [
-      ('/settings/notifications', 'Notifications'),
       ('/settings/sign-in-methods', 'Sign-in methods'),
       ('/settings/blocked', 'Blocked people'),
     ]) {
@@ -74,6 +74,23 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.widgetWithText(PageTitle, 'Settings'), findsOneWidget);
     }
+    handle.dispose();
+  });
+
+  // Notification settings moved from Settings to Profile (#28).
+  testWidgets('Notification settings is on the frame and goes back to '
+      'Profile', (tester) async {
+    final handle = tester.ensureSemantics();
+    await pumpTeam(tester, scheme: TeamScheme.army);
+    await goTo(tester, '/profile');
+    await pushTo(tester, '/settings/notifications');
+    expect(
+      find.widgetWithText(PageTitle, 'Notification settings'),
+      findsOneWidget,
+    );
+    await tester.tap(find.bySemanticsLabel('Back, Profile'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TopLevelBar, 'Profile'), findsOneWidget);
     handle.dispose();
   });
 
@@ -106,9 +123,8 @@ void main() {
       'to', (tester) async {
     final handle = tester.ensureSemantics();
     await pumpTeam(tester, scheme: TeamScheme.army);
-    // Settings' Notifications lists every team's.
+    // Notification settings lists every team's.
     await goTo(tester, '/profile');
-    await pushTo(tester, '/settings');
     await pushTo(tester, '/settings/notifications');
     await tester.scrollUntilVisible(
       find.text('Thunder U14'),
@@ -121,7 +137,10 @@ void main() {
       find.widgetWithText(PageTitle, 'Notifications for this team'),
       findsOneWidget,
     );
-    expect(find.bySemanticsLabel('Back, Notifications'), findsOneWidget);
+    expect(
+      find.bySemanticsLabel('Back, Notification settings'),
+      findsOneWidget,
+    );
     handle.dispose();
   });
 
@@ -261,9 +280,8 @@ void main() {
       "column, not the window's edge", (tester) async {
     await pumpTeam(tester, scheme: TeamScheme.army, size: wideSize);
     await goTo(tester, '/profile');
-    await pushTo(tester, '/settings');
     await pushTo(tester, '/settings/notifications');
-    final title = find.widgetWithText(PageTitle, 'Notifications');
+    final title = find.widgetWithText(PageTitle, 'Notification settings');
     final column = find.descendant(
       of: find.byType(PageList),
       matching: find.byType(ListView),

@@ -97,9 +97,8 @@ void main() {
   }
 
   Future<void> openNotificationSettings(WidgetTester tester) async {
+    // On Profile (#28).
     await openProfile(tester);
-    await tester.tap(find.text('Settings'));
-    await tester.pumpAndSettle();
     await tester.tap(find.text('Notifications'));
     await tester.pumpAndSettle();
   }
@@ -210,7 +209,9 @@ void main() {
         devices: devices,
       );
       expect(devices.docs, isNotEmpty);
-      await openAppSettings(tester);
+      // Sign out is on Profile (#28).
+      await tester.tap(find.text('Profile'));
+      await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
         find.text('Sign out'),
         100,
@@ -234,7 +235,9 @@ void main() {
         devices: FakeDeviceRepository(log: log),
       );
       expect(log, ['device register $installId']);
-      await openAppSettings(tester);
+      // Sign out is on Profile (#28).
+      await tester.tap(find.text('Profile'));
+      await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
         find.text('Sign out'),
         100,
@@ -292,7 +295,9 @@ void main() {
         push: push,
         devices: FakeDeviceRepository(),
       );
-      await openAppSettings(tester);
+      // Sign out is on Profile (#28).
+      await tester.tap(find.text('Profile'));
+      await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
         find.text('Sign out'),
         100,
@@ -543,7 +548,8 @@ void main() {
         devices: devices,
         prefs: FakeLocalPrefs()..pushPrePromptShown = true,
       );
-      await openAppSettings(tester);
+      await tester.tap(find.text('Profile'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Notifications'));
       await tester.pumpAndSettle();
       expect(find.text('Notifications are off'), findsOneWidget);

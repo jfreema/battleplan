@@ -13,6 +13,7 @@ import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/notifications/presentation/notification_labels.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// "Notifications for this team" (NOTIF-3): the push level, and muting for
@@ -156,6 +157,23 @@ class TeamNotificationsScreen extends ConsumerWidget {
                   title: Text(label),
                   onTap: () => mute(length),
                 ),
+            ],
+          ),
+          gap,
+          // Pushes on this device and what to be told about, for every
+          // team (#28).
+          SettingsCard(
+            children: [
+              SettingsRow(
+                icon: AppIcons.settings,
+                title: l10n.notificationsAllTeamsLink,
+                onTap: () => unawaited(
+                  context.push(
+                    '/settings/notifications',
+                    extra: BackLabel(title),
+                  ),
+                ),
+              ),
             ],
           ),
         ],

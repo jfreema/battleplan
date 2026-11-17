@@ -203,6 +203,17 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           ? null
           : backLabelFrom(context, teamName),
       actions: [
+        // Notification settings, a tap from what they're about (#28).
+        IconButton(
+          tooltip: l10n.notificationSettings,
+          onPressed: () => unawaited(
+            context.push(
+              '/settings/notifications',
+              extra: BackLabel(l10n.notificationsTooltip),
+            ),
+          ),
+          icon: const Icon(AppIcons.settings),
+        ),
         // On a phone or with large text, the icon with its name as a
         // tooltip, so the title still fits beside it.
         if (anyUnread &&

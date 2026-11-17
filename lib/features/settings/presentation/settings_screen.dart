@@ -17,9 +17,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Settings (SPEC §6.10), from Profile: notifications, sign-in methods,
-/// blocked people, about, and the account actions. The photo and name,
-/// the themes, and the Admin panel are on Profile itself.
+/// Settings (SPEC §6.10), from Profile: sign-in methods, blocked people,
+/// about, and signing out everywhere and deleting the account. The photo
+/// and name, notifications, the color scheme, the Admin panel, and Sign out
+/// are on Profile itself (#28).
 class SettingsScreen extends ConsumerWidget {
   const new({required this.appBuild, this.showDevTools = false, super.key});
 
@@ -59,12 +60,6 @@ class SettingsScreen extends ConsumerWidget {
               headingGap,
               SettingsCard(
                 children: [
-                  SettingsRow(
-                    icon: AppIcons.notifications,
-                    highlighted: true,
-                    title: l10n.notificationSettings,
-                    onTap: () => context.push('/settings/notifications'),
-                  ),
                   SettingsRow(
                     icon: AppIcons.key,
                     title: l10n.signInMethods,
@@ -127,14 +122,9 @@ class SettingsScreen extends ConsumerWidget {
                     onTap: () =>
                         links.open(Uri(scheme: 'mailto', path: support)),
                   ),
-                  // Last, in the same ruled list, as on Profile: a second
-                  // list right under it would draw a double rule.
-                  SettingsRow(
-                    icon: AppIcons.signOut,
-                    title: l10n.signOut,
-                    chevron: false,
-                    onTap: () => ref.read(sessionServiceProvider).signOut(),
-                  ),
+                  // Last, in the same ruled list: a second list right under
+                  // it would draw a double rule. Sign out itself is on
+                  // Profile, in one place (#28).
                   SettingsRow(
                     icon: AppIcons.signOut,
                     title: l10n.signOutEverywhere,

@@ -1399,7 +1399,10 @@ void main() {
       PageRows rowsOf(String text) => tester.widget<PageRows>(
         find.ancestor(of: find.text(text), matching: find.byType(PageRows)),
       );
-      expect(rowsOf('Sign out'), same(rowsOf('Contact support')));
+      expect(
+        rowsOf('Sign out of all devices'),
+        same(rowsOf('Contact support')),
+      );
     });
 
     testWidgets("Teams' Archived row lines up with Join and Create", (

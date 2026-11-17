@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/services/service_providers.dart';
@@ -18,6 +19,7 @@ import 'package:battleplan/features/auth/presentation/your_icon_screen.dart'
 import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/schedule/application/providers.dart'
     show deviceTimeZoneProvider;
+import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -146,6 +148,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             onTap: profile == null
                                 ? null
                                 : () => unawaited(_pickTimeZone(profile)),
+                          ),
+                          // Your own settings in one place (#28): what you're
+                          // told about, how the app looks, then the rest.
+                          PageRow(
+                            icon: AppIcons.notifications,
+                            title: l10n.notificationsTooltip,
+                            onTap: () => unawaited(
+                              context.push(
+                                '/settings/notifications',
+                                extra: BackLabel(l10n.profile),
+                              ),
+                            ),
+                          ),
+                          PageRow(
+                            icon: AppIcons.colorScheme,
+                            title: l10n.colorScheme,
+                            subtitle: ref
+                                .watch(defaultSchemeControllerProvider)
+                                .label(l10n),
+                            onTap: () => unawaited(
+                              context.push(
+                                '/teams/scheme',
+                                extra: BackLabel(l10n.profile),
+                              ),
+                            ),
                           ),
                           PageRow(
                             icon: AppIcons.settings,

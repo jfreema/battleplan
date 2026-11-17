@@ -81,7 +81,8 @@ class _NotificationSettingsScreenState
     return GumdropScaffold(
       maxWidth: 560,
       title: l10n.notificationSettings,
-      backLabel: backLabelFrom(context, l10n.settings),
+      // From Profile (#28), a bell's gear, or a team's notifications.
+      backLabel: backLabelFrom(context, l10n.profile),
       body: PageList(
         children: [
           PageHeading(l10n.pushThisDevice),

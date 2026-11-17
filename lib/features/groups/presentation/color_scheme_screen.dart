@@ -110,8 +110,9 @@ class ColorSchemeScreen extends ConsumerWidget {
     return GumdropScaffold(
       maxWidth: 560,
       title: title,
+      // Teams or Profile open the default (#28); each names itself.
       backLabel: id == null
-          ? l10n.tabTeams
+          ? backLabelFrom(context, l10n.tabTeams)
           : isGroup
           ? l10n.groupSettings
           : l10n.teamSettings,
