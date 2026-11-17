@@ -249,9 +249,14 @@ const UpdateMemberInput = z.object({
   title: z.string().trim().max(40).nullable().optional(),
   // A coach of the team (TEAM-3); unset, the owner counts as one.
   coach: z.boolean().optional(),
+  // A play maker (BOARD-4, #63): draws and changes the team's plays.
+  playMaker: z.boolean().optional(),
 });
 
-/** Changes a member's role, title, or whether they coach (TEAM-3, TEAM-4). */
+/**
+ * Changes a member's role, title, whether they coach, or whether they make
+ * plays (TEAM-3, TEAM-4, BOARD-4).
+ */
 export const updateGroupMember = onCall(async (request) => {
   const actorUid = requireAuth(request);
   const input = parse(UpdateMemberInput, request.data);
@@ -269,9 +274,13 @@ export const updateGroupMember = onCall(async (request) => {
   }
   if (input.title !== undefined) update.title = input.title || null;
   // Nobody coaches a basic group (TEAM-14); an older app may still ask.
-  if (input.coach !== undefined) {
+  if (input.coach !== undefined || input.playMaker !== undefined) {
     const group = await db().collection(Collections.groups).doc(input.groupId).get();
-    if (group.get('kind') !== 'group') update.coach = input.coach;
+    if (group.get('kind') !== 'group') {
+      if (input.coach !== undefined) update.coach = input.coach;
+      // A basic group has no plays either (TEAM-14).
+      if (input.playMaker !== undefined) update.playMaker = input.playMaker;
+    }
   }
   if (Object.keys(update).length === 0) return { ok: true };
   await ref.update(update);
@@ -281,7 +290,12 @@ export const updateGroupMember = onCall(async (request) => {
     groupId: input.groupId,
     targetType: 'user',
     targetId: input.uid,
-    before: { role: targetRole, title: target.get('title') ?? null, coach: target.get('coach') ?? null },
+    before: {
+      role: targetRole,
+      title: target.get('title') ?? null,
+      coach: target.get('coach') ?? null,
+      playMaker: target.get('playMaker') ?? null,
+    },
     after: update,
   });
   if (update.role === 'admin') {

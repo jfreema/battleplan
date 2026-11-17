@@ -1,5 +1,6 @@
 // Security rules for plays (SPEC §6.16 BOARD-4, ARCH §6.14): everyone on
-// the team reads them; admins, and super admins, write them on open teams.
+// the team reads them; admins, the play makers they pick (#63), and super
+// admins write them on open teams.
 // Run against the emulator: npm --prefix functions run emulators:test
 import {
   assertFails,
@@ -122,6 +123,36 @@ describe('drawing plays (BOARD-2, BOARD-4)', () => {
     await assertFails(root().doc('plays/pl1').update({ title: 'Late', updatedAt: now() }));
     await assertFails(as('alice').doc('plays/pl1').delete());
     await assertSucceeds(as('bob').doc('plays/pl1').get());
+  });
+});
+
+describe('play makers (BOARD-4, #63)', () => {
+  // dee is a member the admins made a play maker.
+  beforeEach(async () => {
+    await env.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().doc('groupMembers/teamA_dee').set({ groupId: 'teamA', uid: 'dee', role: 'member', displayName: 'dee', photoPath: null, playMaker: true }),
+    );
+  });
+
+  it('draw, change, and delete the team\'s plays, as themselves', async () => {
+    await assertSucceeds(as('dee').collection('plays').add(play('dee')));
+    await assertFails(as('dee').collection('plays').add(play('alice')));
+    await assertSucceeds(as('dee').doc('plays/pl1').update({ title: 'Squeeze', updatedAt: now() }));
+    await assertSucceeds(as('dee').doc('plays/pl1').delete());
+  });
+
+  it('only on their own team, and not once it is archived or a basic group', async () => {
+    await assertFails(as('dee').collection('plays').add(play('dee', {}, 'teamB')));
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('groups/teamA').update({ archivedAt: ts('2026-10-02T00:00:00Z') }));
+    await assertFails(as('dee').collection('plays').add(play('dee')));
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('groups/teamA').update({ archivedAt: null, kind: 'group' }));
+    await assertFails(as('dee').collection('plays').add(play('dee')));
+  });
+
+  it('are made by admins only: nobody makes themselves one', async () => {
+    await assertFails(as('bob').doc('groupMembers/teamA_bob').update({ playMaker: true }));
+    await assertFails(as('dee').doc('groupMembers/teamA_dee').update({ playMaker: false }));
+    await assertFails(as('bob').collection('plays').add(play('bob')));
   });
 });
 

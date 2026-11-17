@@ -55,6 +55,7 @@ async function file(path: string, contentType = 'image/jpeg'): Promise<void> {
  * Thunder Fall: pat owns it; ada is an admin; cole coaches; gia is an admin
  * and Emma's parent; sam is Emma's parent; lee is the player Lee; una is a
  * team parent with no player; pen was added by email and hasn't signed in.
+ * lee is also a play maker (#63).
  * Emma has details; sam's new player Max waits for approval.
  */
 async function fall(extra: object = {}): Promise<void> {
@@ -74,7 +75,7 @@ async function fall(extra: object = {}): Promise<void> {
     ['cole', { role: 'member', coach: true, title: 'Assistant coach' }],
     ['gia', { role: 'admin', title: 'Treasurer' }],
     ['sam', { role: 'member', notificationLevel: 'important', contactPhone: '555-0100', colorScheme: 'navy', avatarColor: 'grape' }],
-    ['lee', { role: 'member' }],
+    ['lee', { role: 'member', playMaker: true }],
     ['una', { role: 'member', title: 'Team parent', hereFor: 'nobody' }],
     ['pen', { role: 'member', pending: true }],
   ];
@@ -181,6 +182,9 @@ describe('starting a new season (TEAM-16)', () => {
     });
     expect(await member(groupId, 'lee')).toMatchObject({ playerSummary: '#12', colorScheme: null, avatarColor: null });
     expect((await member(groupId, 'lee'))!.hereFor).toBeUndefined();
+    // A play maker (#63) still makes plays; nobody else becomes one.
+    expect((await member(groupId, 'lee'))!.playMaker).toBe(true);
+    expect((await member(groupId, 'sam'))!.playMaker).toBeUndefined();
     // So does saying they're not here for a player (PLAYER-3): nobody asks again.
     expect(await member(groupId, 'una')).toMatchObject({ role: 'member', title: 'Team parent', playerSummary: null, hereFor: 'nobody' });
     expect(await member(groupId, 'pen')).toMatchObject({ pending: true });

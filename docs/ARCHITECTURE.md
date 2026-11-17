@@ -510,7 +510,7 @@ Before calling it, the iPhone, iPad, and Mac apps revoke Apple's tokens for an a
 | `dueCharges` | `{dueId}_{participantId}` | due + person (DUES-2) | `due_charges` | admins |
 | `duesPayments` | `{groupId}` | a team's ways to pay (DUES-3) | `dues_payment_methods` | admins |
 | `groupDocuments` | auto | file or link | `documents` | members if allowed, Functions |
-| `plays` | auto | saved play (§6.14) | `plays` | admins |
+| `plays` | auto | saved play (§6.14) | `plays` | admins and play makers |
 | `notifications` | `{dedupeKey}_{uid}` | notification-center item | `notifications` | Functions; the recipient marks read |
 | `notifyLog` | dedupe key | one notification send | — | Functions only (TTL 7 days) |
 | `calendarLinks` | the link's token | calendar link (SCHED-11, §6.15) | — (operational) | Functions; the owner reads |
@@ -568,6 +568,7 @@ groupMembers/{groupId}_{uid}
   groupId, uid, role: 'owner' | 'admin' | 'member' | 'participant', title?   # 'participant': one of a direct conversation's two people (CHAT-19); team lists ask for the three team roles, so conversations never show or count as teams
   otherUid?, lastMessageAt?                             # direct only: the other person, and (cache ← messages) when it last had a message, which orders Messages
   coach?                                                # TEAM-3: set by admins (updateGroupMember); unset, the owner counts as a coach (Membership.isCoach). On a team coaches have no answer of their own, so they hear every event change and reminder (audienceOf, PLAYER-7)
+  playMaker?                                            # #63: set by admins (updateGroupMember), never by the member; true lets them write the team's plays (playEditorOk), as admins do; kept into a new season
   hereFor?: 'later' | 'nobody'                          # PLAYER-3: what the member said to "Who are you here for?" without picking a player, written only by them: 'later' is Not now on the chat's card (or closing it), 'nobody' is "I'm a coach or another adult". Absent until they say. The card and the schedule's line stop for that team after either (D75); a new season copies it
   setupClosed?: true                                    # TEAM-1 (#3): an admin put away the team's setup card (its X, its Done, or leaving the chat once it said the team is ready), written only by them; absent until then. The card shows for a team's owner and admins on teams made since 17 Nov 2026 (`setupCardSince`), for their first 30 days (`Group.inSetupWindow`, `teamSetupProvider`); a new season doesn't copy it
   jerseyNumber?, position?                              # unused; number and position live on the member's `self` player

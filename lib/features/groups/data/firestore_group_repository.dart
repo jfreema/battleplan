@@ -420,12 +420,14 @@ class FirestoreMemberRepository implements MemberRepository {
     String? title,
     bool clearTitle = false,
     bool? coach,
+    bool? playMaker,
   }) => _call('updateGroupMember', {
     'groupId': groupId.value,
     'uid': uid.value,
     if (role != null) 'role': role.value,
     if (clearTitle) 'title': null else 'title': ?title,
     'coach': ?coach,
+    'playMaker': ?playMaker,
   });
 
   @override
@@ -714,6 +716,7 @@ Membership membershipFromFirestore(Map<String, dynamic> d) => Membership(
   contactPhone: _shared(d['contactPhone']),
   contactEmail: _shared(d['contactEmail']),
   coach: d['coach'] as bool?,
+  playMaker: d['playMaker'] == true,
   hereFor: HereFor.tryParse(d['hereFor'] as String?),
   setupClosed: d['setupClosed'] == true,
   otherUid: d['otherUid'] as String?,

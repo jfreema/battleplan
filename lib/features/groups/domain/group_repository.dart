@@ -124,9 +124,9 @@ abstract interface class MemberRepository {
   /// live roster would re-read on every member's read marker.
   Future<List<Membership>> fetchRoster(GroupId groupId);
 
-  /// Makes someone an admin or a member, sets their title (TEAM-4), or
-  /// makes them a coach or not (TEAM-3). Only the owner (or a super admin)
-  /// can take admin away.
+  /// Makes someone an admin or a member, sets their title (TEAM-4), makes
+  /// them a coach or not (TEAM-3), or a play maker or not (BOARD-4, #63).
+  /// Only the owner (or a super admin) can take admin away.
   Future<void> updateMember(
     GroupId groupId,
     UserId uid, {
@@ -134,6 +134,7 @@ abstract interface class MemberRepository {
     String? title,
     bool clearTitle = false,
     bool? coach,
+    bool? playMaker,
   });
 
   /// Removes someone from the team (TEAM-3).

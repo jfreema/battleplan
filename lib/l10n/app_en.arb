@@ -525,6 +525,8 @@
   "rosterCoaches": "Coaches",
   "memberCoach": "Coach",
   "memberCoachHelp": "Listed with the coaches",
+  "memberPlayMaker": "Play maker",
+  "memberPlayMakerHelp": "Can draw, save, and change the team's plays",
   "rosterAdmins": "Admins",
   "rosterMembers": "Members",
   "roleOwner": "Owner",

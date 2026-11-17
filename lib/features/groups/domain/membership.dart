@@ -47,6 +47,11 @@ abstract class Membership with _$Membership {
     /// the owner counts as one ([isCoach]).
     bool? coach,
 
+    /// A play maker (BOARD-4, #63), set by its admins: draws, saves,
+    /// changes, and deletes the team's plays as its admins do, without
+    /// being an admin. Admins don't need it.
+    @Default(false) bool playMaker,
+
     /// What they said to "Who are you here for?" without picking a player
     /// (PLAYER-3), so the team stops asking: `later` for Not now on the
     /// chat's card, `nobody` for "I'm a coach or another adult". Null until

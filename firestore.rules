@@ -1142,8 +1142,14 @@ service cloud.firestore {
     // ---- Plays (SPEC §6.16, ARCH §6.14) ------------------------------------
 
     // Everyone on the team reads its plays; admins draw, change, and delete
-    // them (BOARD-4), and super admins (§3), on an open team (TEAM-9).
-    function playEditorOk(g) { return active(g) && !isGroupKind(g) && (superAdmin() || isAdmin(g)); }
+    // them (BOARD-4), as do the play makers they pick (#63, set only by the
+    // updateGroupMember callable), and super admins (§3), on an open team
+    // (TEAM-9).
+    function playEditorOk(g) {
+      return active(g) && !isGroupKind(g)
+        && (superAdmin() || isAdmin(g)
+            || (isMember(g) && member(g).get('playMaker', false) == true));
+    }
     // A play's own fields: a known board, a title, a note, and 1 to 10 steps
     // (Limits.playStepsMax) of at most 150 elements each (playElementsMax).
     function playStepOk(steps, i) {

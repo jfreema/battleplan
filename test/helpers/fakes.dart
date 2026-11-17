@@ -688,10 +688,16 @@ class FakeMemberRepository implements MemberRepository {
     String? title,
     bool clearTitle = false,
     bool? coach,
+    bool? playMaker,
   }) async {
     if (coach != null) {
       calls.add('coach ${uid.value} $coach');
       _updateMine(groupId, uid, (m) => m.copyWith(coach: coach));
+      return;
+    }
+    if (playMaker != null) {
+      calls.add('playMaker ${uid.value} $playMaker');
+      _updateMine(groupId, uid, (m) => m.copyWith(playMaker: playMaker));
       return;
     }
     calls.add('update ${uid.value} ${role?.value ?? ''}'.trim());

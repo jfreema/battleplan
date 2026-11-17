@@ -294,6 +294,8 @@ export async function copyTeamForSeason(
       role: place.role,
       title: place.title,
       ...(place.coach === null ? {} : { coach: place.coach }),
+      // A play maker (#63) still makes plays on the new team.
+      ...(m.playMaker === true ? { playMaker: true } : {}),
       displayName: m.displayName ?? '',
       photoPath: m.photoPath ?? null,
       playerSummary: playerSummaryOf(summaries.get(who) ?? []),

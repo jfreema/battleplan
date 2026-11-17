@@ -135,6 +135,7 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | **Member** | Anyone on the team |
 | **Guardian** | A member linked to one or more players as their parent or guardian, who answers RSVPs for them |
 | **Player (member)** | A member linked to a player as themselves ("I am this player"), who answers RSVPs on that player's row, never as themselves (admins included) |
+| **Play maker** | A member the team's admins let draw, save, change, and delete the team's plays (BOARD-4, #63): an assistant coach or a captain who shouldn't manage the team. Not a role of its own: a switch on their card, beside Coach |
 | **Team admin** | Manages the team: coaches, managers, team parents |
 | **Owner** | The admin who created the team, or was given it. Exactly one per team. |
 | **Super admin** | Runs the platform. Can see and manage every team and user. |
@@ -175,6 +176,8 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | Reset or revoke invite links | — | ✓ | ✓ | ✓ |
 | Remove members | — | non-admins | ✓ | ✓ |
 | Make someone an admin | — | ✓ | ✓ | ✓ |
+| Draw, save, change, and delete the team's plays (BOARD-2, BOARD-4) | play makers | ✓ | ✓ | ✓ |
+| Make someone a play maker, or stop (#63) | — | ✓ | ✓ | ✓ |
 | Remove someone's admin role | — | — | ✓ | ✓ |
 | Edit team profile and settings | — | ✓ | ✓ | ✓ |
 | See and act on reports in the team | — | ✓ | ✓ | ✓ |
@@ -453,6 +456,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - A **Players** section on every team (jersey number on a plain disc, name, and who's linked: "Player" or "Guardian"), then sections for **Coaches**, Admins, and Members. Each member shows their players: a guardian shows "Emma #7", and a member who is a player shows their number (PLAYER-8).
   - **Who sees the people:** with the team setting "Everyone can see who's on the team" off (TEAM-5), members see the players, the coaches, and their own card (which has Leave team), and a line saying the admins keep the rest private; admins see everyone. Names still show where people act, as authors in chat and on RSVPs.
   - **Coaches:** team admins turn on **Coach** on a person's card, for a parent who coaches too, for example. Coaches are listed together, their Owner or Admin badge kept. Until someone sets it, the owner counts as a coach.
+  - **Play makers** (owner's request 2026-11-17, #63): under Coach, team admins turn on **Play maker** ("Can draw, save, and change the team's plays") on a member's card, so an assistant coach or a captain makes plays without managing the team (BOARD-4). Their card shows a Play maker tag beside Coach. Admins make plays anyway, so an admin's card has no switch; a group (TEAM-14) has no plays, so none there. It's set through `updateGroupMember`, audited, and a play maker brought into a new season stays one (TEAM-16).
   - Admins see pending players and claims at the top, with Approve and Decline (PLAYER-4).
   - Each person row shows a photo or initials, name, title, role badge (Owner/Admin), and "Not joined yet" for added accounts.
   - Search by name.
@@ -1278,7 +1282,7 @@ Requested 2026-10-15; built the same day (ROADMAP tasks 242–248). The coach's 
   - **Soccer**: a full or half pitch with its boxes, arcs, and goals; 4-4-2, 4-3-3, 3-5-2, 9v9, and 7v7, for either side.
   - **Football (American), X's and O's**: yard lines, hash marks, the line of scrimmage, and the line to gain; the offense as O's in the I formation or shotgun, the defense as X's in a 4-3 or 3-4.
   - Every board starts with the ball in play: in the pitcher's hand, with the point guard, on the center spot, on the line of scrimmage. Teams of other sports get a blank board, and any board can be picked.
-- **BOARD-2 · The whiteboard.** **Plays** in the main navigation opens it for the team's admins: the team's sport's board, ready to draw. Drag players, opponents, and the ball with a finger, a pencil, or a mouse to show how a play unfolds; add more; label one with a number, a position, or a roster player; draw run (solid), pass (dashed), and block or screen (T) arrows, freehand lines, and text; erase; undo and redo (and ⌘/Ctrl+Z, Delete, and Escape on a keyboard). The tools sit beside the board on a tablet or laptop and below it on a phone, each big enough for a finger. On a phone the board runs the screen's width, under one bar: the step's controls (or, with something picked, what to do with it), undo, redo, and More, which holds **Save to plays**, **New board**, **Saved plays**, and whatever else has no room. Players, arrows, and text stay the same size however big the board is drawn. A drag moves a player; a tap picks one. The drawing stays on that device until it's cleared, so leaving never loses it; **New board** starts over (asking first) on any board.
+- **BOARD-2 · The whiteboard.** **Plays** in the main navigation opens it for the team's admins and play makers (TEAM-3, #63): the team's sport's board, ready to draw. Drag players, opponents, and the ball with a finger, a pencil, or a mouse to show how a play unfolds; add more; label one with a number, a position, or a roster player; draw run (solid), pass (dashed), and block or screen (T) arrows, freehand lines, and text; erase; undo and redo (and ⌘/Ctrl+Z, Delete, and Escape on a keyboard). The tools sit beside the board on a tablet or laptop and below it on a phone, each big enough for a finger. On a phone the board runs the screen's width, under one bar: the step's controls (or, with something picked, what to do with it), undo, redo, and More, which holds **Save to plays**, **New board**, **Saved plays**, and whatever else has no room. Players, arrows, and text stay the same size however big the board is drawn. A drag moves a player; a tap picks one. The drawing stays on that device until it's cleared, so leaving never loses it; **New board** starts over (asking first) on any board.
 - **BOARD-3 · Steps.** A play can have up to 10 steps. A new step starts where everyone stands; **Play** moves the players and the ball smoothly from each step to the next.
 - **BOARD-4 · Saved plays.** **Save to plays** keeps a copy, named, for the team: everyone on the team opens Plays to see them (for them it shows the saved plays, starting right under the team's header with the list, or "No plays yet. Your coaches' plays will show up here.", with no back row or second Plays title of its own; #31, owner's go 2026-11-16), step by step. The whiteboard's bar has **Saved** (on a phone) or **Saved plays** to open them. Admins edit, duplicate, delete, or put a saved play back on the whiteboard. Positions are only labels on the drawing; nothing is saved on a player (players have no position field, ROADMAP task 234).
 - **BOARD-5 · Sharing a play.** Under a saved play's steps, for everyone on the team (owner's request 2026-10-27, ROADMAP task 315):
@@ -1290,7 +1294,7 @@ Requested 2026-10-15; built the same day (ROADMAP tasks 242–248). The coach's 
 
 - Each board looks like its field or court, with its starting positions and the ball, on a tablet, a laptop, and a phone. On a phone the board, and a saved play for the team, run the screen's width.
 - A coach drags players and the ball to show a play unfolding, draws arrows, adds steps, plays them back, and saves only when they want to keep one.
-- Members view saved plays but can't change them; people not on the team can't read them; archived teams' plays are read-only.
+- Members view saved plays but can't change them, unless an admin made them a play maker; people not on the team can't read them; archived teams' plays are read-only.
 - Anyone on the team posts a saved play to the chat, where its picture opens the play, and saves it as a GIF that plays its steps, holds the last for 3 seconds, and repeats, or shares that GIF through the share sheet.
 
 ---

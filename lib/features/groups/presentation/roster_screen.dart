@@ -694,6 +694,9 @@ class MemberCard extends ConsumerWidget {
     final hasPlayers =
         ref.watch(groupProvider(member.groupId)).value?.hasPlayers ?? true;
     final coach = hasPlayers && member.isCoach;
+    // A play maker (#63): admins make plays anyway, so only for others.
+    final canMakePlays = hasPlayers && !member.isAdmin;
+    final playMaker = canMakePlays && member.playMaker;
     // It scrolls when it's taller than its sheet or dialog (an admin's
     // card, with the phone and email someone shares, on a small phone or
     // with large text), so its last rows, Leave team, Remove from team,
@@ -711,12 +714,15 @@ class MemberCard extends ConsumerWidget {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             if (member.title?.isNotEmpty ?? false) Text(member.title!),
-            if (badge != null || coach) ...[
+            if (badge != null || coach || playMaker) ...[
               const SizedBox(height: Space.sm),
               Wrap(
                 spacing: Space.sm,
+                runSpacing: Space.sm,
+                alignment: WrapAlignment.center,
                 children: [
                   if (coach) InfoTag(text: l10n.memberCoach),
+                  if (playMaker) InfoTag(text: l10n.memberPlayMaker),
                   if (badge != null) InfoTag(text: badge),
                 ],
               ),
@@ -818,6 +824,31 @@ class MemberCard extends ConsumerWidget {
                       member.groupId,
                       member.uid,
                       coach: coach,
+                    );
+                  } on AppFailure catch (e) {
+                    if (!context.mounted) return;
+                    showAppSnackBar(
+                      context,
+                      e is PermissionDenied
+                          ? l10n.notAllowed
+                          : l10n.errorMemberAction,
+                    );
+                  }
+                },
+              ),
+            // Someone who draws and changes the team's plays without being
+            // an admin (BOARD-4, #63): an assistant coach, a captain.
+            if (canEditTitle && canMakePlays)
+              SwitchListTile(
+                title: Text(l10n.memberPlayMaker),
+                subtitle: Text(l10n.memberPlayMakerHelp),
+                value: member.playMaker,
+                onChanged: (on) async {
+                  try {
+                    await repo.updateMember(
+                      member.groupId,
+                      member.uid,
+                      playMaker: on,
                     );
                   } on AppFailure catch (e) {
                     if (!context.mounted) return;

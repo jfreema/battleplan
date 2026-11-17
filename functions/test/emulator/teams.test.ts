@@ -164,6 +164,9 @@ describe('a basic group has no players or guardians (TEAM-14)', () => {
   it('has no coaches: an older app asking makes no change', async () => {
     await run(teams.updateGroupMember, 'pat', { groupId: 'club', uid: 'sam', coach: true });
     expect((await members().doc('club_sam').get()).get('coach')).toBeUndefined();
+    // Nor play makers (#63): a basic group has no plays.
+    await run(teams.updateGroupMember, 'pat', { groupId: 'club', uid: 'sam', playMaker: true });
+    expect((await members().doc('club_sam').get()).get('playMaker')).toBeUndefined();
     // Its title still changes.
     await run(teams.updateGroupMember, 'pat', { groupId: 'club', uid: 'sam', title: 'Treasurer' });
     expect((await members().doc('club_sam').get()).get('title')).toBe('Treasurer');
@@ -238,6 +241,20 @@ describe('an archived team is read-only (TEAM-9)', () => {
   it('works as before on an open team', async () => {
     await run(teams.updateGroupMember, 'ada', { groupId: 'open', uid: 'sam', title: 'Coach' });
     expect((await members().doc('open_sam').get()).get('title')).toBe('Coach');
+  });
+});
+
+describe('play makers (BOARD-4, #63)', () => {
+  it("an admin makes a member one and takes it back, audited; members can't", async () => {
+    await run(teams.updateGroupMember, 'ada', { groupId: 'open', uid: 'sam', playMaker: true });
+    expect((await members().doc('open_sam').get()).get('playMaker')).toBe(true);
+    const audits = await db().collection(Collections.auditLogs).where('action', '==', 'updateGroupMember').get();
+    expect(audits.docs[0]?.get('after')).toEqual({ playMaker: true });
+    expect(audits.docs[0]?.get('before')).toMatchObject({ playMaker: null });
+    await expect(run(teams.updateGroupMember, 'sam', { groupId: 'open', uid: 'ada', playMaker: false })).rejects
+      .toMatchObject({ code: 'permission-denied' });
+    await run(teams.updateGroupMember, 'pat', { groupId: 'open', uid: 'sam', playMaker: false });
+    expect((await members().doc('open_sam').get()).get('playMaker')).toBe(false);
   });
 });
 
