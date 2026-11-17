@@ -148,7 +148,9 @@ class ColorSchemeScreen extends ConsumerWidget {
                     mine: mine,
                   ),
                   subtitle: teamDefault == null
-                      ? l10n.colorSchemeYourDefaultSubtitle
+                      ? (isGroup
+                            ? l10n.colorSchemeYourDefaultSubtitleGroup
+                            : l10n.colorSchemeYourDefaultSubtitle)
                       : l10n.colorSchemeTeamDefaultSubtitle,
                   selected: pick == null,
                   onTap: () => unawaited(choose(null)),

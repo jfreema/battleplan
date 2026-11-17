@@ -76,7 +76,9 @@ class TeamInfoScreen extends ConsumerWidget {
                     row(
                       'notifications',
                       AppIcons.notifications,
-                      l10n.teamNotificationsMenu,
+                      isGroup
+                          ? l10n.groupNotificationsMenu
+                          : l10n.teamNotificationsMenu,
                     ),
                     // How I see this team (SET-2): my own pick, else the
                     // team's default.

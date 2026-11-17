@@ -42,12 +42,16 @@ String notificationLevelLabel(AppLocalizations l10n, NotificationLevel l) =>
       NotificationLevel.none => l10n.levelOff,
     };
 
-String notificationLevelHelp(AppLocalizations l10n, NotificationLevel l) =>
-    switch (l) {
-      NotificationLevel.all => l10n.levelAllHelp,
-      NotificationLevel.important => l10n.levelImportantHelp,
-      NotificationLevel.none => l10n.levelOffHelp,
-    };
+/// What a level does, in a group's words for a [group] (TEAM-14).
+String notificationLevelHelp(
+  AppLocalizations l10n,
+  NotificationLevel l, {
+  bool group = false,
+}) => switch (l) {
+  NotificationLevel.all => group ? l10n.levelAllHelpGroup : l10n.levelAllHelp,
+  NotificationLevel.important => l10n.levelImportantHelp,
+  NotificationLevel.none => group ? l10n.levelOffHelpGroup : l10n.levelOffHelp,
+};
 
 /// "Muted until 3:45 PM", "Muted until Tue, Oct 14 9:00 AM", "Muted until
 /// you unmute", or null when not muted; in the viewer's [zone] (SET-7).

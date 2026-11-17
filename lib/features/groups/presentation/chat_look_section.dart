@@ -106,9 +106,14 @@ class ChatLookSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(l10n.chatLookIntro(group.name), style: muted),
+        Text(
+          group.isGroup
+              ? l10n.chatLookIntroGroup(group.name)
+              : l10n.chatLookIntro(group.name),
+          style: muted,
+        ),
         const SizedBox(height: 14),
-        _Preview(bubble: mine),
+        _Preview(bubble: mine, group: group.isGroup),
         const SizedBox(height: 16),
         PageHeading(l10n.chatBubbleColor),
         const SizedBox(height: 14),
@@ -130,7 +135,9 @@ class ChatLookSection extends ConsumerWidget {
               // old team palette shows as picked. A team with no color
               // has the theme's.
               _ColorTile(
-                label: l10n.teamColorOption,
+                label: group.isGroup
+                    ? l10n.groupColorOption
+                    : l10n.teamColorOption,
                 accent: _teamAccent(c, group.color),
                 teamSwatch: true,
                 selected: picked == null,
@@ -155,7 +162,7 @@ class ChatLookSection extends ConsumerWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                l10n.chatLookTip,
+                group.isGroup ? l10n.chatLookTipGroup : l10n.chatLookTip,
                 style: muted?.copyWith(fontSize: 14),
               ),
             ),
@@ -489,7 +496,10 @@ class _BackgroundTile extends StatelessWidget {
 /// (no bubble), and your answer in the picked color, on the page inside a
 /// dashed outline.
 class _Preview extends StatelessWidget {
-  const new({required this.bubble});
+  const new({required this.bubble, this.group = false});
+
+  /// A group's: a friend's message, not a coach's (TEAM-14, #30).
+  final bool group;
 
   final Color bubble;
 
@@ -498,7 +508,9 @@ class _Preview extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final c = GumdropColors.of(context);
     final text = Theme.of(context).textTheme;
-    final name = l10n.chatLookPreviewName;
+    final name = group
+        ? l10n.chatLookPreviewNameGroup
+        : l10n.chatLookPreviewName;
     // Ink, or white on a dark team color, whichever reads better, as the
     // chat itself picks it (CHAT-18).
     final onBubble =
@@ -553,7 +565,9 @@ class _Preview extends StatelessWidget {
                         ),
                         const SizedBox(height: 1),
                         Text(
-                          l10n.chatLookPreviewOther,
+                          group
+                              ? l10n.chatLookPreviewOtherGroup
+                              : l10n.chatLookPreviewOther,
                           style: ChatText.of(text.bodyLarge)
                               .copyWith(color: c.textOnPage),
                         ),
@@ -581,7 +595,9 @@ class _Preview extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    l10n.chatLookPreviewMine,
+                    group
+                        ? l10n.chatLookPreviewMineGroup
+                        : l10n.chatLookPreviewMine,
                     style: ChatText.of(
                       text.bodyLarge,
                       mine: true,

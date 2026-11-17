@@ -37,12 +37,20 @@ class TeamNotificationsScreen extends ConsumerWidget {
       context,
       (group?.isGroup ?? false) ? l10n.groupSettings : l10n.teamSettings,
     );
+    // A group says group (TEAM-14, #30).
+    final isGroup = group?.isGroup ?? false;
+    final title = isGroup
+        ? l10n.groupNotificationsMenu
+        : l10n.teamNotificationsMenu;
     if (membership == null) {
       return GumdropScaffold(
         maxWidth: 560,
-        title: l10n.teamNotificationsMenu,
+        title: title,
         backLabel: back,
-        body: EmptyState(icon: AppIcons.group, message: l10n.notAMember),
+        body: EmptyState(
+          icon: AppIcons.group,
+          message: isGroup ? l10n.notAMemberGroup : l10n.notAMember,
+        ),
       );
     }
 
@@ -95,7 +103,7 @@ class TeamNotificationsScreen extends ConsumerWidget {
     // plain bar with the team's name under it).
     return GumdropScaffold(
       maxWidth: 560,
-      title: l10n.teamNotificationsMenu,
+      title: title,
       backLabel: back,
       body: PageList(
         children: [
@@ -115,7 +123,9 @@ class TeamNotificationsScreen extends ConsumerWidget {
                   RadioListTile<NotificationLevel>(
                     value: level,
                     title: Text(notificationLevelLabel(l10n, level)),
-                    subtitle: Text(notificationLevelHelp(l10n, level)),
+                    subtitle: Text(
+                      notificationLevelHelp(l10n, level, group: isGroup),
+                    ),
                   ),
               ],
             ),

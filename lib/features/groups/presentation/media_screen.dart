@@ -34,7 +34,8 @@ class MediaScreen extends ConsumerWidget {
     MediaItem item,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final (title, body) = _deleteWording(l10n, item);
+    final group = ref.read(groupProvider(groupId)).value?.isGroup ?? false;
+    final (title, body) = _deleteWording(l10n, item, group: group);
     final ok = await showConfirmDialog(
       context,
       title: title,
@@ -85,7 +86,12 @@ class MediaScreen extends ConsumerWidget {
 
     final Widget content;
     if (items != null && items.isEmpty) {
-      content = EmptyState(icon: AppIcons.media, message: l10n.mediaEmpty);
+      content = EmptyState(
+        icon: AppIcons.media,
+        message: (group?.isGroup ?? false)
+            ? l10n.mediaEmptyGroup
+            : l10n.mediaEmpty,
+      );
     } else if (items != null) {
       content = RefreshIndicator(
         onRefresh: () => ref.refresh(teamMediaProvider(groupId).future),
@@ -95,6 +101,7 @@ class MediaScreen extends ConsumerWidget {
           separatorBuilder: (_, _) => const Divider(height: 1),
           itemBuilder: (_, i) => _MediaRow(
             item: items[i],
+            group: group?.isGroup ?? false,
             onDelete: () => unawaited(_delete(context, ref, items[i])),
           ),
         ),
@@ -168,16 +175,19 @@ class MediaScreen extends ConsumerWidget {
 /// One file: a preview (images) or an icon, what it is, size and date, and
 /// Delete.
 class _MediaRow extends ConsumerWidget {
-  const new({required this.item, required this.onDelete});
+  const new({required this.item, required this.onDelete, this.group = false});
 
   final MediaItem item;
+
+  /// A group's: its logo is the group logo (TEAM-14).
+  final bool group;
   final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
-    final label = mediaKindLabel(l10n, item);
+    final label = mediaKindLabel(l10n, item, group: group);
     final url = item.isImage
         ? ref.watch(teamPhotoUrlProvider(item.path)).value
         : null;
@@ -231,34 +241,38 @@ class _MediaRow extends ConsumerWidget {
 /// ("Fall roster.pdf · Sam Rivera", or "Document" once its record is gone),
 /// or "Unused file" (STORE-5). A photo no message shows (say, from a send
 /// that failed), or a logo or background the team no longer uses, says so.
-String mediaKindLabel(AppLocalizations l10n, MediaItem item) =>
-    switch (item.kind) {
-      MediaKind.chatPhoto when item.current == false =>
-        l10n.mediaKindUnusedChatPhoto,
-      MediaKind.chatPhoto => switch (item.authorName) {
-        final name? when name.isNotEmpty => l10n.mediaKindChatPhoto(name),
-        _ => l10n.mediaKindChatPhotoNoName,
-      },
-      MediaKind.logo => _addedBy(
-        l10n,
-        item.current == false ? l10n.mediaKindOldLogo : l10n.mediaKindLogo,
-        item.authorName,
-      ),
-      MediaKind.background => _addedBy(
-        l10n,
-        item.current == false
-            ? l10n.mediaKindOldBackground
-            : l10n.mediaKindBackground,
-        item.authorName,
-      ),
-      MediaKind.document => switch ((item.documentName, item.authorName)) {
-        (final doc?, final name?) when doc.isNotEmpty && name.isNotEmpty =>
-          l10n.mediaKindDocumentNamed(doc, name),
-        (final doc?, _) when doc.isNotEmpty => doc,
-        _ => l10n.mediaKindDocument,
-      },
-      MediaKind.other => l10n.mediaKindOther,
-    };
+String mediaKindLabel(
+  AppLocalizations l10n,
+  MediaItem item, {
+  bool group = false,
+}) => switch (item.kind) {
+  MediaKind.chatPhoto when item.current == false =>
+    l10n.mediaKindUnusedChatPhoto,
+  MediaKind.chatPhoto => switch (item.authorName) {
+    final name? when name.isNotEmpty => l10n.mediaKindChatPhoto(name),
+    _ => l10n.mediaKindChatPhotoNoName,
+  },
+  MediaKind.logo => _addedBy(l10n, switch ((item.current == false, group)) {
+    (true, true) => l10n.mediaKindOldLogoGroup,
+    (true, false) => l10n.mediaKindOldLogo,
+    (false, true) => l10n.mediaKindLogoGroup,
+    (false, false) => l10n.mediaKindLogo,
+  }, item.authorName),
+  MediaKind.background => _addedBy(
+    l10n,
+    item.current == false
+        ? l10n.mediaKindOldBackground
+        : l10n.mediaKindBackground,
+    item.authorName,
+  ),
+  MediaKind.document => switch ((item.documentName, item.authorName)) {
+    (final doc?, final name?) when doc.isNotEmpty && name.isNotEmpty =>
+      l10n.mediaKindDocumentNamed(doc, name),
+    (final doc?, _) when doc.isNotEmpty => doc,
+    _ => l10n.mediaKindDocument,
+  },
+  MediaKind.other => l10n.mediaKindOther,
+};
 
 /// "Team logo · Alex Kim": who added the logo or background (STORE-5),
 /// when the file says.
@@ -268,23 +282,26 @@ String _addedBy(AppLocalizations l10n, String label, String? name) =>
 /// What deleting does, in the confirm dialog: a chat photo leaves its
 /// message, and the logo or background resets (ARCH §6.11). A file nothing
 /// shows gets the plain wording.
-(String, String) _deleteWording(AppLocalizations l10n, MediaItem item) =>
-    switch (item.kind) {
-      MediaKind.chatPhoto when item.current != false => (
-        l10n.deleteMediaPhotoTitle,
-        l10n.deleteMediaPhotoBody,
-      ),
-      MediaKind.logo when item.current != false => (
-        l10n.deleteMediaLogoTitle,
-        l10n.deleteMediaLogoBody,
-      ),
-      MediaKind.background when item.current != false => (
-        l10n.deleteMediaBackgroundTitle,
-        l10n.deleteMediaBackgroundBody,
-      ),
-      MediaKind.document => (
-        l10n.deleteMediaDocumentTitle,
-        l10n.deleteMediaDocumentBody,
-      ),
-      _ => (l10n.deleteMediaFileTitle, l10n.deleteMediaFileBody),
-    };
+(String, String) _deleteWording(
+  AppLocalizations l10n,
+  MediaItem item, {
+  bool group = false,
+}) => switch (item.kind) {
+  MediaKind.chatPhoto when item.current != false => (
+    l10n.deleteMediaPhotoTitle,
+    l10n.deleteMediaPhotoBody,
+  ),
+  MediaKind.logo when item.current != false => (
+    group ? l10n.deleteMediaLogoTitleGroup : l10n.deleteMediaLogoTitle,
+    group ? l10n.deleteMediaLogoBodyGroup : l10n.deleteMediaLogoBody,
+  ),
+  MediaKind.background when item.current != false => (
+    l10n.deleteMediaBackgroundTitle,
+    l10n.deleteMediaBackgroundBody,
+  ),
+  MediaKind.document => (
+    l10n.deleteMediaDocumentTitle,
+    l10n.deleteMediaDocumentBody,
+  ),
+  _ => (l10n.deleteMediaFileTitle, l10n.deleteMediaFileBody),
+};

@@ -188,14 +188,18 @@ class _NewSeasonScreenState extends ConsumerState<NewSeasonScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
-                          l10n.newSeasonIntro(group.name),
+                          group.isGroup
+                              ? l10n.newSeasonIntroGroup(group.name)
+                              : l10n.newSeasonIntro(group.name),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: GumdropColors.of(context).textMuted,
                           ),
                         ),
                         const SizedBox(height: 9),
                         LabeledField(
-                          label: l10n.newSeasonName,
+                          label: group.isGroup
+                              ? l10n.newSeasonNameGroup
+                              : l10n.newSeasonName,
                           child: TextFormField(
                             controller: _name,
                             maxLength: Limits.groupNameMax,
@@ -204,7 +208,11 @@ class _NewSeasonScreenState extends ConsumerState<NewSeasonScreen> {
                             decoration: gumdropField(),
                             validator: (v) {
                               final name = (v ?? '').trim();
-                              if (name.isEmpty) return l10n.teamNameRequired;
+                              if (name.isEmpty) {
+                                return group.isGroup
+                                    ? l10n.groupNameRequired
+                                    : l10n.teamNameRequired;
+                              }
                               return name == group.name.trim()
                                   ? l10n.newSeasonNameSame
                                   : null;
@@ -252,7 +260,9 @@ class _NewSeasonScreenState extends ConsumerState<NewSeasonScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  l10n.newSeasonWhoHelp,
+                  group.isGroup
+                      ? l10n.newSeasonWhoHelpGroup
+                      : l10n.newSeasonWhoHelp,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: c.textMutedOnPage,
                   ),

@@ -17,7 +17,7 @@ Future<void> leaveTeam(BuildContext context, WidgetRef ref, Group group) async {
     context,
     title: l10n.leaveTeamTitle(group.name),
     message: l10n.leaveTeamBody,
-    confirmLabel: l10n.leaveTeamMenu,
+    confirmLabel: group.isGroup ? l10n.leaveGroupMenu : l10n.leaveTeamMenu,
     cancelLabel: l10n.cancel,
     destructive: true,
   );
@@ -30,8 +30,18 @@ Future<void> leaveTeam(BuildContext context, WidgetRef ref, Group group) async {
     await ref.read(groupRepositoryProvider).leave(group.id);
     router.go('/');
   } on OwnerMustTransfer {
-    if (context.mounted) showAppSnackBar(context, l10n.ownerMustTransfer);
+    if (context.mounted) {
+      showAppSnackBar(
+        context,
+        group.isGroup ? l10n.ownerMustTransferGroup : l10n.ownerMustTransfer,
+      );
+    }
   } on AppFailure {
-    if (context.mounted) showAppSnackBar(context, l10n.errorLeaveTeam);
+    if (context.mounted) {
+      showAppSnackBar(
+        context,
+        group.isGroup ? l10n.errorLeaveGroup : l10n.errorLeaveTeam,
+      );
+    }
   }
 }

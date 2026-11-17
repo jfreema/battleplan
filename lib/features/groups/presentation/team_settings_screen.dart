@@ -138,9 +138,9 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
     if (!group.isArchived) {
       final ok = await showConfirmDialog(
         context,
-        title: l10n.archiveTeam,
-        message: l10n.archiveTeamBody,
-        confirmLabel: l10n.archiveTeam,
+        title: group.isGroup ? l10n.archiveGroup : l10n.archiveTeam,
+        message: group.isGroup ? l10n.archiveGroupBody : l10n.archiveTeamBody,
+        confirmLabel: group.isGroup ? l10n.archiveGroup : l10n.archiveTeam,
         cancelLabel: l10n.cancel,
       );
       if (!ok) return;
@@ -216,9 +216,9 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
     final l10n = AppLocalizations.of(context);
     final typed = await askText(
       context,
-      title: l10n.deleteTeam,
+      title: group.isGroup ? l10n.deleteGroup : l10n.deleteTeam,
       label: group.name,
-      helper: l10n.deleteTeamBody,
+      helper: group.isGroup ? l10n.deleteGroupBody : l10n.deleteTeamBody,
     );
     if (typed == null || !mounted) return;
     if (typed.trim() != group.name.trim()) {
@@ -229,7 +229,12 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
       await ref.read(groupRepositoryProvider).deleteGroup(group.id, typed);
       if (mounted) context.go('/');
     } on AppFailure {
-      if (mounted) showAppSnackBar(context, l10n.errorDeleteTeam);
+      if (mounted) {
+        showAppSnackBar(
+          context,
+          group.isGroup ? l10n.errorDeleteGroup : l10n.errorDeleteTeam,
+        );
+      }
     }
   }
 
@@ -317,7 +322,7 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
         ? chatCandyOrder.first
         : ChatCandy.fromStored(group.bubbleColorOrDefault);
     final lookColor = candy == null
-        ? l10n.teamColorOption
+        ? (group.isGroup ? l10n.groupColorOption : l10n.teamColorOption)
         : chatCandyName(l10n, candy);
     final lookBackground = switch (look.background) {
       ChatBackground.plain => l10n.backgroundPlain,
@@ -487,7 +492,9 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                           ),
                           const SizedBox(height: 9),
                           LabeledField(
-                            label: l10n.teamNameLabel,
+                            label: group.isGroup
+                                ? l10n.groupNameLabel
+                                : l10n.teamNameLabel,
                             child: TextField(
                               controller: _name,
                               maxLength: Limits.groupNameMax,
@@ -572,7 +579,9 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                 gap,
                 // The team color, on its badge and in the switcher (TEAM-1,
                 // design §3.18).
-                PageHeading(l10n.teamColorLabel),
+                PageHeading(
+                  group.isGroup ? l10n.groupColorLabel : l10n.teamColorLabel,
+                ),
                 headingGap,
                 TeamColorGrid(
                   selected: group.color,
@@ -585,7 +594,9 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  l10n.teamColorTintNote,
+                  group.isGroup
+                      ? l10n.groupColorTintNote
+                      : l10n.teamColorTintNote,
                   style: text.bodySmall?.copyWith(color: c.textMutedOnPage),
                 ),
                 gap,
@@ -666,8 +677,12 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                   ),
                   // Who sees the roster's people (TEAM-3).
                   switchRow(
-                    title: l10n.permSeePeople,
-                    subtitle: l10n.permSeePeopleHelp,
+                    title: group.isGroup
+                        ? l10n.permSeePeopleGroup
+                        : l10n.permSeePeople,
+                    subtitle: group.isGroup
+                        ? l10n.permSeePeopleHelpGroup
+                        : l10n.permSeePeopleHelp,
                     value: s.membersCanSeePeople,
                     onChanged: (v) =>
                         setSettings(s.copyWith(membersCanSeePeople: v)),
@@ -843,7 +858,9 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                         SettingsRow(
                           icon: AppIcons.newSeason,
                           title: l10n.newSeason,
-                          subtitle: l10n.newSeasonHelp,
+                          subtitle: group.isGroup
+                              ? l10n.newSeasonHelpGroup
+                              : l10n.newSeasonHelp,
                           subtitleLines: 2,
                           onTap: () => unawaited(
                             context.push('/g/${group.id.value}/season'),
@@ -858,16 +875,21 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                         icon: group.isArchived
                             ? AppIcons.unarchive
                             : AppIcons.archive,
-                        title: group.isArchived
-                            ? l10n.restoreTeam
-                            : l10n.archiveTeam,
+                        title: switch ((group.isArchived, group.isGroup)) {
+                          (true, true) => l10n.restoreGroup,
+                          (true, false) => l10n.restoreTeam,
+                          (false, true) => l10n.archiveGroup,
+                          (false, false) => l10n.archiveTeam,
+                        },
                         onTap: () => _archive(group),
                       ),
                       Builder(
                         builder: (context) => SettingsRow(
                           icon: AppIcons.delete,
                           accent: GumdropColors.of(context).cherry,
-                          title: l10n.deleteTeam,
+                          title: group.isGroup
+                              ? l10n.deleteGroup
+                              : l10n.deleteTeam,
                           titleColor: GumdropColors.of(context).cherry.text,
                           onTap: () => _delete(group),
                         ),

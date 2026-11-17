@@ -870,7 +870,7 @@ class MemberCard extends ConsumerWidget {
                   color: Theme.of(context).colorScheme.error,
                 ),
                 title: Text(
-                  l10n.leaveTeamMenu,
+                  hasPlayers ? l10n.leaveTeamMenu : l10n.leaveGroupMenu,
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
                 // Asked over the card. Leaving goes home, and the card
