@@ -1298,6 +1298,8 @@
   "scheduleEmptyAdmins": "No upcoming events. Admins will add them here.",
   "scheduleAddEvent": "Add an event",
   "scheduleImport": "Import a schedule",
+  "scheduleSyncCalendar": "Sync to my calendar",
+  "@scheduleSyncCalendar": {"description": "A quiet row at the top of Upcoming that opens the calendar link (SCHED-11), which keeps Google, Apple or Outlook Calendar up to date."},
   "scheduleEmptyDay": "Nothing on this day.",
   "scheduleLoadMore": "Load more",
   "calendarPreviousMonth": "Previous month",

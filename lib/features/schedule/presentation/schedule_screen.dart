@@ -47,27 +47,90 @@ class ScheduleScreen extends ConsumerWidget {
     final canCreate =
         group != null && canCreateEvents(group, me, superAdmin: superAdmin);
     final full = group?.storageFull ?? false;
+    // Import a schedule beside the +, for the team's admins (#22): coaches
+    // coming from TeamSnap found it only in Team settings. Not while the
+    // empty Upcoming offers it already (#3), so it's never there twice.
+    final upcoming = ref.watch(teamEventsProvider(groupId, past: false));
+    final filtered = ref.watch(
+      scheduleViewProvider.select((o) => o.filters.isNotEmpty),
+    );
+    final emptyOffersImport =
+        !filtered && upcoming.reachedEnd && upcoming.events.isEmpty;
+    // Nor before the first page, so it doesn't come and go.
+    final unknown = upcoming.loading && upcoming.events.isEmpty;
+    // canCreate rules out an archived team.
+    final canImport =
+        canCreate && (me?.isAdmin ?? false) && !emptyOffersImport && !unknown;
 
     final c = GumdropColors.of(context);
+    final plus = canCreate
+        ? FloatingActionButton(
+            // The team's tabs stay built side by side, and Documents
+            // has one too: no shared hero tag between them.
+            heroTag: null,
+            tooltip: l10n.eventNew,
+            // Full storage stops new events (STORE-4); the button
+            // stays, flat in the well's color, to say why.
+            backgroundColor: full ? c.well : null,
+            foregroundColor: full ? c.textMuted : null,
+            shape: full ? const GumdropShape() : null,
+            onPressed: () => full
+                ? showStorageFull(context)
+                : unawaited(context.push('/g/${groupId.value}/schedule/new')),
+            child: const Icon(AppIcons.add, size: 28, weight: 700),
+          )
+        : null;
+
+    void openImport() => unawaited(
+      context.push(
+        '/g/${groupId.value}/import',
+        extra: BackLabel(l10n.tabSchedule),
+      ),
+    );
+    // With large text, or on a narrow phone, the words would crowd the +:
+    // the icon alone then, with its name as the tooltip.
+    final roomy =
+        MediaQuery.sizeOf(context).width >= 340 &&
+        MediaQuery.textScalerOf(context).scale(15) <= 15 * 1.3;
+    final buttons = GumdropButtons.of(context);
+    final onPage = WidgetStatePropertyAll(c.page);
+    // Quiet: outlined, on the page's color, so it reads over the list
+    // scrolling under it.
+    final import = roomy
+        ? OutlinedButton.icon(
+            style: buttons
+                .secondary(
+                  height: 44,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                )
+                .copyWith(backgroundColor: onPage),
+            onPressed: openImport,
+            icon: const Icon(AppIcons.download, size: 20),
+            label: Text(
+              l10n.scheduleImport,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          )
+        : IconButton(
+            style: buttons.icon(size: 44).copyWith(backgroundColor: onPage),
+            tooltip: l10n.scheduleImport,
+            onPressed: openImport,
+            icon: const Icon(AppIcons.download, size: 22),
+          );
 
     return Scaffold(
-      floatingActionButton: canCreate
-          ? FloatingActionButton(
-              // The team's tabs stay built side by side, and Documents
-              // has one too: no shared hero tag between them.
-              heroTag: null,
-              tooltip: l10n.eventNew,
-              // Full storage stops new events (STORE-4); the button
-              // stays, flat in the well's color, to say why.
-              backgroundColor: full ? c.well : null,
-              foregroundColor: full ? c.textMuted : null,
-              shape: full ? const GumdropShape() : null,
-              onPressed: () => full
-                  ? showStorageFull(context)
-                  : unawaited(context.push('/g/${groupId.value}/schedule/new')),
-              child: const Icon(AppIcons.add, size: 28, weight: 700),
-            )
-          : null,
+      floatingActionButton: plus == null || !canImport
+          ? plus
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              // Never past the screen's edge: the words give way first.
+              children: [
+                Flexible(child: import),
+                const SizedBox(width: Space.md),
+                plus,
+              ],
+            ),
       body: ScheduleTabs(groupId: groupId),
     );
   }
@@ -341,6 +404,82 @@ class _SegmentsState extends State<_Segments> {
   }
 }
 
+/// "Sync to my calendar" at the top of Upcoming (SCHED-11, #22): a quiet
+/// row, muted, that opens the calendar link which keeps Google, Apple or
+/// Outlook Calendar up to date, for this team or, on Your schedule, for
+/// every team. People who live in their phone's calendar found it only in
+/// Team settings. Nothing for someone not on the team (a super admin
+/// viewing it) or with no team.
+class _SyncRow extends ConsumerWidget {
+  const new({required this.groupId});
+
+  /// The team; null on Your schedule.
+  final GroupId? groupId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final c = GumdropColors.of(context);
+    final team = groupId;
+    final shown = team == null
+        ? ref.watch(yourScheduleTeamsProvider).isNotEmpty
+        : ref.watch(myMembershipProvider(team).select((m) => m != null));
+    if (!shown) return const SizedBox(height: 8);
+    void open() => unawaited(
+      team == null
+          ? context.push('/teams/calendar', extra: BackLabel(l10n.yourSchedule))
+          : context.push(
+              '/g/${team.value}/calendar',
+              extra: BackLabel(l10n.tabSchedule),
+            ),
+    );
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 2, 8, 0),
+      child: FocusRingInk(
+        onTap: open,
+        radius: BorderRadius.circular(12),
+        child: Semantics(
+          button: true,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                children: [
+                  Icon(
+                    AppIcons.calendarLink,
+                    size: 20,
+                    color: c.textMutedOnPage,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      l10n.scheduleSyncCalendar,
+                      style: GumdropStyle.of(context).label(
+                        TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: c.textMutedOnPage,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    AppIcons.chevronRight,
+                    size: 18,
+                    weight: 700,
+                    color: c.textMutedOnPage,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// A team's empty Upcoming (SCHED-1, #3): **Add an event** for whoever can
 /// make events, doing what the + does (full storage says why, STORE-4),
 /// and for the team's admins a quiet **Import a schedule** under it. People
@@ -429,12 +568,21 @@ class EventList extends ConsumerWidget {
       // A team's Upcoming with nothing coming up and no filter on: its one
       // next step (#3). Past, a filtered view and Your schedule just say
       // there's nothing.
-      if (team != null && !past && options.filters.isEmpty) {
-        return _EmptyUpcoming(groupId: team);
-      }
-      return EmptyState(
-        icon: AppIcons.schedule,
-        message: past ? l10n.scheduleEmptyPast : l10n.scheduleEmptyUpcoming,
+      final empty = team != null && !past && options.filters.isEmpty
+          ? _EmptyUpcoming(groupId: team)
+          : EmptyState(
+              icon: AppIcons.schedule,
+              message: past
+                  ? l10n.scheduleEmptyPast
+                  : l10n.scheduleEmptyUpcoming,
+            );
+      if (past) return empty;
+      // Sync to my calendar stays at the top (#22).
+      return Column(
+        children: [
+          _SyncRow(groupId: team),
+          Expanded(child: empty),
+        ],
       );
     }
     final range = _range(state.events, zone);
@@ -443,11 +591,19 @@ class EventList extends ConsumerWidget {
     // Built as they scroll into view, so a long list (or one with more
     // pages loaded) doesn't build every row and its RSVP lookups at once
     // (SPEC §8.1).
+    // Upcoming starts with Sync to my calendar (#22), which scrolls away
+    // with the list.
+    final sync = past ? 0 : 1;
     return ListView.builder(
       // Clear of the + button and the tab bar; Your schedule has neither.
-      padding: EdgeInsets.only(top: 8, bottom: team == null ? Space.xl : 96),
-      itemCount: events.length + (more ? 1 : 0),
-      itemBuilder: (context, i) {
+      padding: EdgeInsets.only(
+        top: past ? 8 : 0,
+        bottom: team == null ? Space.xl : 96,
+      ),
+      itemCount: sync + events.length + (more ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (index < sync) return _SyncRow(groupId: team);
+        final i = index - sync;
         if (i == events.length) {
           return Padding(
             padding: const EdgeInsets.all(Space.md),

@@ -435,6 +435,15 @@ GoRouter router(Ref ref) {
               child: const YourScheduleScreen(),
             ),
           ),
+          // Every team's calendar link (SCHED-11), from Your schedule's
+          // Sync to my calendar (#22).
+          GoRoute(
+            path: 'calendar',
+            pageBuilder: (_, state) => PanelPage(
+              key: state.pageKey,
+              child: const CalendarLinkScreen(),
+            ),
+          ),
         ],
       ),
       GoRoute(

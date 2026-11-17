@@ -20,21 +20,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Calendar link (SCHED-11), from the team menu: a private link that keeps
-/// Google, Apple, or Outlook Calendar in sync with this team's schedule,
-/// or with every team's. Made when asked; reset or turned off here.
+/// Calendar link (SCHED-11), from Team settings or the top of a team's
+/// Upcoming: a private link that keeps Google, Apple, or Outlook Calendar
+/// in sync with this team's schedule, or with every team's. With no
+/// [groupId] (from Your schedule's See all, #22), every team's only. Made
+/// when asked; reset or turned off here.
 class CalendarLinkScreen extends ConsumerStatefulWidget {
-  const new({required this.groupId, super.key});
+  const new({this.groupId, super.key});
 
-  final GroupId groupId;
+  /// The team it's opened in; null for every team's link alone.
+  final GroupId? groupId;
 
   @override
   ConsumerState<CalendarLinkScreen> createState() => _CalendarLinkState();
 }
 
 class _CalendarLinkState extends ConsumerState<CalendarLinkScreen> {
-  /// Showing the link for all my teams rather than this team's.
-  bool _allTeams = false;
+  /// Showing the link for all my teams rather than this team's: always,
+  /// with no team.
+  late bool _allTeams = widget.groupId == null;
   bool _busy = false;
 
   /// The team the link on show is for; null for all my teams.
@@ -85,13 +89,20 @@ class _CalendarLinkState extends ConsumerState<CalendarLinkScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final group = ref.watch(groupProvider(widget.groupId)).value;
-    // Opened from Team settings (#14).
+    final groupId = widget.groupId;
+    final group = groupId == null
+        ? null
+        : ref.watch(groupProvider(groupId)).value;
+    // Opened from Team settings (#14), or Your schedule (#22).
     final back = backLabelFrom(
       context,
-      (group?.isGroup ?? false) ? l10n.groupSettings : l10n.teamSettings,
+      groupId == null
+          ? l10n.yourSchedule
+          : (group?.isGroup ?? false)
+          ? l10n.groupSettings
+          : l10n.teamSettings,
     );
-    if (ref.watch(myMembershipProvider(widget.groupId)) == null) {
+    if (groupId != null && ref.watch(myMembershipProvider(groupId)) == null) {
       return GumdropScaffold(
         maxWidth: 560,
         title: l10n.calendarLinkTitle,
@@ -188,7 +199,8 @@ class _CalendarLinkState extends ConsumerState<CalendarLinkScreen> {
       backLabel: back,
       body: PageList(
         children: [
-          if (teamCount > 1) ...[
+          // A team's own, or all of them; with no team, all of them.
+          if (groupId != null && teamCount > 1) ...[
             SegmentedButton<bool>(
               showSelectedIcon: false,
               segments: [
