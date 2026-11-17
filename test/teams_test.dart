@@ -957,6 +957,87 @@ void main() {
   });
 
   group('joining (INV-5, INV-7)', () {
+    testWidgets('the code box says Continue and what a code is; the preview '
+        'is pushed over it, so Back keeps the code (#20)', (tester) async {
+      final invites = FakeInviteRepository();
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        invites: invites,
+      );
+      await tester.tap(find.text('Join a Team or Group'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('8 letters and numbers from whoever invited you'),
+        findsOneWidget,
+      );
+      // No sample code that looks filled in, and no Join here.
+      expect(find.text('K7XP-M2QR'), findsNothing);
+      expect(find.text('Join team'), findsNothing);
+      await tester.enterText(find.byType(TextField), 'k7xp-m2qr');
+      await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+      await tester.pumpAndSettle();
+
+      // One short confirmation: the team, one Join, and the way back.
+      expect(find.text('Join Thunder?'), findsOneWidget);
+      expect(find.text('Softball · 12 members'), findsOneWidget);
+      expect(find.text('Invited by Alex Kim'), findsOneWidget);
+      expect(find.byType(FilledButton), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Join team'), findsOneWidget);
+      expect(find.text('Open in app'), findsNothing);
+      expect(find.textContaining('Installing the app first'), findsNothing);
+      expect(find.byType(AppStoreBadge), findsNothing);
+      expect(find.text('Join a Team or Group'), findsOneWidget);
+
+      // Back: the box, with the code still in it.
+      await tester.tap(find.byTooltip('Back').first);
+      await tester.pumpAndSettle();
+      expect(find.text('k7xp-m2qr'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Continue'), findsOneWidget);
+
+      // "Not this team?" goes back too.
+      await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Not this team? Enter another code'));
+      await tester.pumpAndSettle();
+      expect(find.text('k7xp-m2qr'), findsOneWidget);
+      expect(invites.redeemed, isEmpty);
+    });
+
+    testWidgets('the confirmation reads well: one heading, 48 px targets, '
+        'contrast, and 200% text', (tester) async {
+      final handle = tester.ensureSemantics();
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        invites: FakeInviteRepository(),
+        size: const Size(390, 844),
+      );
+      await tester.tap(find.text('Join a Team or Group'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'K7XPM2QR');
+      await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+      await tester.pumpAndSettle();
+      final headers = find.semantics.byPredicate(
+        (node) => node.flagsCollection.isHeader,
+      );
+      expect(headers, findsOne);
+      final title = tester.getSemantics(find.text('Join Thunder?'));
+      expect(title.label, 'Join Thunder?');
+      expect(title.flagsCollection.isHeader, isTrue);
+      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+      await expectLater(tester, meetsGuideline(textContrastGuideline));
+      handle.dispose();
+
+      tester.platformDispatcher.textScaleFactorTestValue = 2;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      tester.view.physicalSize = const Size(320, 640);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      await tester.ensureVisible(find.text('Join team'));
+      expect(find.text('Join team'), findsOneWidget);
+    });
+
     testWidgets('people already on the team go straight to it', (tester) async {
       final invites = FakeInviteRepository();
       await pumpApp(
@@ -1035,9 +1116,9 @@ void main() {
       expect(invites.redeemed, ['K7XPM2QR']);
     });
 
-    testWidgets('the preview shows the logo; a browser offers Open in app', (
-      tester,
-    ) async {
+    testWidgets('signed out, one main button: Sign in to join in an app, '
+        'Continue in browser on the web with the code, and Open in app only '
+        'on phones (#20)', (tester) async {
       final invites = FakeInviteRepository()
         ..previewed = const InvitePreview(
           groupId: 'a',
@@ -1054,34 +1135,96 @@ void main() {
         linkOpener: opener,
       );
       await go(tester, '/join/K7XPM2QR');
-      // Not a browser here: Sign in to join, no Open in app.
+      // In an app: Sign in to join, and nothing about installing it.
+      expect(find.widgetWithText(FilledButton, 'Sign in to join'), findsOne);
       expect(find.text('Open in app'), findsNothing);
-      expect(find.text('Sign in to join'), findsOneWidget);
+      expect(find.text('K7XP-M2QR'), findsNothing);
+      expect(find.textContaining('Installing the app first'), findsNothing);
       final badge = tester.widget<TeamBadge>(find.byType(TeamBadge));
       expect(badge.imageUrl, 'https://example.com/logo.jpg');
 
-      // In a browser: Open in app, and Join as Continue in browser.
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            authRepositoryProvider.overrideWithValue(FakeAuthRepository()),
-            inviteRepositoryProvider.overrideWithValue(invites),
-            linkOpenerProvider.overrideWithValue(opener),
-          ],
-          child: const MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: JoinScreen(code: 'K7XPM2QR', inBrowser: true),
+      Future<void> browser({required bool onPhone}) async {
+        await tester.pumpWidget(
+          ProviderScope(
+            key: UniqueKey(),
+            overrides: [
+              authRepositoryProvider.overrideWithValue(FakeAuthRepository()),
+              inviteRepositoryProvider.overrideWithValue(invites),
+              linkOpenerProvider.overrideWithValue(opener),
+            ],
+            child: MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: JoinScreen(
+                code: 'K7XPM2QR',
+                inBrowser: true,
+                onPhone: onPhone,
+              ),
+            ),
           ),
-        ),
+        );
+        await tester.pumpAndSettle();
+      }
+
+      // A computer's browser: Continue in browser, coral, and the code to
+      // type into the app later; no app to open.
+      await browser(onPhone: false);
+      expect(
+        find.widgetWithText(FilledButton, 'Continue in browser'),
+        findsOneWidget,
       );
-      await tester.pumpAndSettle();
-      expect(find.text('Continue in browser'), findsOneWidget);
+      expect(find.text('Open in app'), findsNothing);
+      expect(find.text('K7XP-M2QR'), findsOneWidget);
+      expect(find.textContaining('Installing the app first'), findsOneWidget);
       // Android (the tests' platform) waits for Google Play: no App Store.
       expect(find.byType(AppStoreBadge), findsNothing);
-      await tester.tap(find.text('Open in app'));
+
+      // A phone's browser: Open in app too, a quiet outlined button.
+      await browser(onPhone: true);
+      expect(find.byType(FilledButton), findsOneWidget);
+      final open = find.widgetWithText(OutlinedButton, 'Open in app');
+      expect(open, findsOneWidget);
+      await tester.ensureVisible(open);
+      await tester.tap(open);
       await tester.pump();
       expect(opener.opened.single.path, '/join/K7XPM2QR');
+    });
+
+    testWidgets('signed in from a link: the short confirmation, with Open in '
+        'app only in a phone browser (#20)', (tester) async {
+      Future<void> open({required bool web, required bool onPhone}) async {
+        await pumpApp(
+          tester,
+          auth: FakeAuthRepository(user: coach),
+          invites: FakeInviteRepository(),
+          browser: FakeBrowserInfo(isWeb: web, onPhone: onPhone),
+        );
+        await go(tester, '/join/K7XPM2QR');
+      }
+
+      await open(web: false, onPhone: false);
+      expect(find.text('Join Thunder?'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Join team'), findsOneWidget);
+      expect(find.byType(FilledButton), findsOneWidget);
+      expect(find.text('Open in app'), findsNothing);
+      expect(find.text('K7XP-M2QR'), findsNothing);
+      expect(find.textContaining('Installing the app first'), findsNothing);
+      expect(find.byType(AppStoreBadge), findsNothing);
+      // Not from the code box: no "Not this team?".
+      expect(find.textContaining('Not this team?'), findsNothing);
+
+      // A computer's browser: the same.
+      await open(web: true, onPhone: false);
+      expect(find.text('Join Thunder?'), findsOneWidget);
+      expect(find.text('Open in app'), findsNothing);
+      expect(find.text('K7XP-M2QR'), findsNothing);
+
+      // A phone's browser: Open in app, quiet, under Join team.
+      await open(web: true, onPhone: true);
+      expect(find.byType(FilledButton), findsOneWidget);
+      expect(find.widgetWithText(OutlinedButton, 'Open in app'), findsOne);
+      expect(find.text('K7XP-M2QR'), findsNothing);
+      expect(find.byType(AppStoreBadge), findsNothing);
     });
 
     testWidgets(

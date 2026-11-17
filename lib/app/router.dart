@@ -397,6 +397,8 @@ GoRouter router(Ref ref) {
         builder: (_, state) => JoinScreen(
           code: state.pathParameters['code']!,
           autoJoin: state.uri.queryParameters['join'] == '1',
+          // Pushed over the code box (#20): "Not this team?" goes back.
+          fromCodeBox: state.extra is FromCodeBox,
         ),
       ),
       // The top of the app (SPEC §5.1): Teams, which a team's back arrow

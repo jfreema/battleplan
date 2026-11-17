@@ -227,8 +227,10 @@ void main() {
     await tester.tap(find.text('Join a Team or Group'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'k7xp-m2qr');
-    await tester.tap(find.widgetWithText(FilledButton, 'Join team'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
     await tester.pumpAndSettle();
+    expect(find.text('Join Book club?'), findsOneWidget);
+    expect(find.text('Not this group? Enter another code'), findsOneWidget);
     expect(find.text('8 members'), findsOneWidget);
     expect(find.textContaining('Other'), findsNothing);
     await tester.tap(find.widgetWithText(FilledButton, 'Join group'));

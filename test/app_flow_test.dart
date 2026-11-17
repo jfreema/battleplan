@@ -993,8 +993,9 @@ void main() {
     await tester.tap(find.text('Join a Team or Group'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'k7xp-m2qr');
-    await tester.tap(find.widgetWithText(FilledButton, 'Join team'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
     await tester.pumpAndSettle();
+    expect(find.text('Join Thunder?'), findsOneWidget);
     expect(find.text('Thunder'), findsOneWidget);
     expect(find.text('Invited by Alex Kim'), findsOneWidget);
     await tester.tap(find.widgetWithText(FilledButton, 'Join team'));
@@ -1021,7 +1022,7 @@ void main() {
     await tester.tap(find.text('Join a Team or Group'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'k7xp-m2qr');
-    await tester.tap(find.widgetWithText(FilledButton, 'Join team'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'Join team'));
     await tester.pumpAndSettle();
@@ -1067,9 +1068,15 @@ void main() {
     await tester.tap(find.text('Join a Team or Group'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'ZZZZ-ZZZZ');
-    await tester.tap(find.widgetWithText(FilledButton, 'Join team'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
     await tester.pumpAndSettle();
     expect(find.textContaining("couldn't find that invite"), findsOneWidget);
+    expect(find.text("This invite didn't work"), findsOneWidget);
+    expect(find.text('Go to my teams'), findsOneWidget);
+    // Back to the box in one tap, the code still there to fix (#20).
+    await tester.tap(find.text('Enter another code'));
+    await tester.pumpAndSettle();
+    expect(find.text('ZZZZ-ZZZZ'), findsOneWidget);
   });
 
   testWidgets('every roster has players, and admins paste a roster', (

@@ -630,16 +630,28 @@ Players that others answer for never get accounts, and every account belongs to 
 - **INV-5 · MVP · Joining.**
   1. Open a link. It opens the app if installed, otherwise the web app (WEB-4).
   2. Sign in or create an account if needed; the app continues automatically afterward.
-  3. See the team preview: logo, name, sport, member count, "Invited by Alex".
+  3. See the team preview: logo, name, sport, member count, "Invited by Alex". Signed in (the apps, or the web app), it's a short confirmation on the app's frame (#20, owner's go 2026-11-16): **Join Thunder?** over the team's card (its badge, name, "Soccer · 12 members" (no sport in a group), and "Invited by Alex"), one coral **Join team** (**Join group**), and nothing about installing the app. It's the check that the code is for the right team, so a mistyped code never drops anyone into a stranger's team.
   4. Tap **Join team**: they're in the team's chat, whose card at the top says how to answer RSVPs. Claiming or adding a player waits until they want to, through **Pick my player** there or **Who are you here for?** on the Team tab (PLAYER-3).
   5. Land in the team's chat, where "Sam joined" appears.
 
   People who are already members just go to the team.
 - **INV-6 · MVP · Join without a link.** "Join a team" (on Teams and in the team switcher) offers **Enter code** and **Scan QR code**, using the camera on phones and in the browser.
+  - The code box is labeled "Invite code", with "8 letters and numbers from whoever invited you" under it (no sample code, which looked filled in). It takes the code with or without the dash, in any case, or a pasted link.
+  - Its button says **Continue** (#20): it opens the preview (INV-5) over the box, so "Join team" is tapped once, on the real decision. The preview's back row says "‹ Join a Team or Group", and a quiet **Not this team? Enter another code** under Join also goes back; either way the code is still in the box, to fix a typo. A wrong code's message (INV-8) has the same way back.
 - **INV-7 · MVP · Web join page.**
-  - `/join/<code>` (served by the web app under `/app`, WEB-4) shows the team preview, **Open in app**, and **Continue in browser**, then the code with Apple's App Store badge and its credit line under it, in browsers not on Android; Google Play's badge joins it once that app is listed (Phase 5).
+  - `/join/<code>` (served by the web app under `/app`, WEB-4) shows the team preview with one coral button for whoever opens it (#20):
+
+    | Who | Coral button | Quiet button | Code and "Installing the app first?" | App Store badge |
+    |---|---|---|---|---|
+    | Signed in, any app, from the code box or a link | Join team | Not this team? (from the box) | no | no |
+    | Signed in, phone browser, from a link | Join team | Open in app | no | no |
+    | Signed out, phone browser | Continue in browser | Open in app | yes | iPhone and iPad |
+    | Signed out, computer browser | Continue in browser | none | yes | yes |
+    | Signed out, phone app | Sign in to join | none | no | no |
+
+    Open in app is an outlined button, only in phone and tablet browsers (iPhone, iPad, Android), where the app can be installed. Apple's App Store badge and its credit line show in browsers not on Android; Google Play's badge joins it once that app is listed (Phase 5). Signed in from a link, with nothing under the page, its chevron goes up to Teams.
   - Shared in a messaging app (iMessage, WhatsApp, Messenger, Slack, Discord, and others), the link's preview says "Join Thunder U14 on Battleplan" and who sent the invite, with the team's logo, or Battleplan's card when the team has none or the link no longer works (1.1, ARCH §6.6).
-  - The invite code is shown large, so people can type it in after installing the app.
+  - Signed out in a browser, the invite code is shown large, so people can type it in after installing the app.
 - **INV-8 · MVP · Problems.**
   - Expired, revoked, used-up, or unknown codes get a plain explanation and "Ask a team admin for a new link."
   - Too many attempts: "Try again in a few minutes."

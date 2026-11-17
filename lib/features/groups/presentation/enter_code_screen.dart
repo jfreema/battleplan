@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
+import 'package:battleplan/features/groups/presentation/join_screen.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -19,7 +22,8 @@ String? inviteCodeFrom(String input) {
 }
 
 /// Join without a link (INV-6), at `/join`: type the code, or scan the
-/// team's QR code with the camera (phones and browsers).
+/// team's QR code with the camera (phones and browsers), then Continue to
+/// the team's preview, where Join is.
 class EnterCodeScreen extends StatefulWidget {
   const new({super.key});
 
@@ -37,13 +41,18 @@ class _EnterCodeScreenState extends State<EnterCodeScreen> {
     super.dispose();
   }
 
+  /// Opens the team's preview over the box (INV-5, #20): pushed, so Back
+  /// comes here with the code still typed, to fix a typo. Joining is the
+  /// preview's one button, so "Join team" is tapped once.
   void _go(String input) {
     final code = inviteCodeFrom(input);
+    final l10n = AppLocalizations.of(context);
     if (code == null) {
-      setState(() => _error = AppLocalizations.of(context).inviteCodeInvalid);
+      setState(() => _error = l10n.inviteCodeInvalid);
       return;
     }
-    context.go('/join/$code');
+    if (_error != null) setState(() => _error = null);
+    unawaited(context.push('/join/$code', extra: FromCodeBox(l10n.joinTeam)));
   }
 
   Future<void> _scan() async {
@@ -80,17 +89,21 @@ class _EnterCodeScreenState extends State<EnterCodeScreen> {
                   controller: _code,
                   autofocus: true,
                   textCapitalization: TextCapitalization.characters,
+                  // What a code is, not a sample of one, which looked
+                  // already filled in (#20).
                   decoration: InputDecoration(
                     labelText: l10n.inviteCodeLabel,
-                    hintText: 'K7XP-M2QR',
+                    helperText: l10n.inviteCodeHint,
+                    helperMaxLines: 4,
                     errorText: error,
+                    errorMaxLines: 3,
                   ),
                   onSubmitted: _go,
                 ),
                 const SizedBox(height: Space.lg),
                 FilledButton(
                   onPressed: () => _go(_code.text),
-                  child: Text(l10n.joinTeamButton),
+                  child: Text(l10n.inviteCodeContinue),
                 ),
                 const SizedBox(height: Space.xl),
                 OutlinedButton.icon(

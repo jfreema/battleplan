@@ -9,6 +9,10 @@ abstract interface class BrowserInfo {
   /// True on an iPhone or iPad browser tab, where web push works only once
   /// the app is added to the Home Screen (NOTIF-9).
   bool get pushNeedsHomeScreen;
+
+  /// True in a phone or tablet's browser (iPhone, iPad, Android), where
+  /// the app can be installed, so an invite offers Open in app (INV-7).
+  bool get onPhone;
 }
 
 /// Not a browser, or one without quirks the app cares about.
@@ -20,4 +24,7 @@ class PlainBrowserInfo implements BrowserInfo {
 
   @override
   bool get pushNeedsHomeScreen => false;
+
+  @override
+  bool get onPhone => false;
 }

@@ -6,11 +6,16 @@ import 'package:battleplan/core/services/browser_info.dart';
 /// The browser's user agent and display mode behind [BrowserInfo]. Read
 /// once: neither changes while the page is open.
 class WebBrowserInfo implements BrowserInfo {
-  new() : pushNeedsHomeScreen = platform.pushNeedsHomeScreen();
+  new()
+    : pushNeedsHomeScreen = platform.pushNeedsHomeScreen(),
+      onPhone = platform.onPhone();
 
   @override
   bool get isWeb => true;
 
   @override
   final bool pushNeedsHomeScreen;
+
+  @override
+  final bool onPhone;
 }
