@@ -11,9 +11,11 @@ import 'package:battleplan/features/chat/domain/chat_queue_store.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/presentation/message_tile.dart';
 import 'package:battleplan/features/chat/presentation/photo_grid.dart';
+import 'package:battleplan/features/chat/presentation/reactions.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/polls/domain/poll.dart';
 import 'package:battleplan/features/safety/domain/safety.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
@@ -64,8 +66,10 @@ void main() {
     Group? group,
     FakePhotoPicker? picker,
     List<Override> overrides = const [],
+    Size size = const Size(400, 1600),
   }) => pumpApp(
     tester,
+    size: size,
     auth: FakeAuthRepository(user: coach),
     groups: {'a': group ?? testGroup('a', 'Thunder')},
     memberRepo:
@@ -829,4 +833,155 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Message 3'), findsOneWidget);
   });
+
+  group('the whole row opens the menu, and the picker in even rows (#19)', () {
+    /// Message [i]'s whole row.
+    Finder row(int i) => find.ancestor(
+      of: find.text('Message $i'),
+      matching: find.byType(MessageTile),
+    );
+
+    /// Beside message [i]'s words, near the right edge of its row.
+    Offset beside(WidgetTester tester, int i) => Offset(
+      tester.getRect(row(i)).right - 30,
+      tester.getCenter(find.text('Message $i')).dy,
+    );
+
+    testWidgets('a long-press or a right-click beside a short message opens '
+        'its menu', (tester) async {
+      final repo = FakeMessageRepository([msg(2), msg(1)]);
+      await openChat(tester, repo, readAt: msg(2).createdAt);
+      await tester.longPressAt(beside(tester, 1));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Pin'));
+      await tester.pumpAndSettle();
+      expect(repo.pins, ['m1 pinned']);
+      await tester.tapAt(beside(tester, 2), buttons: kSecondaryMouseButton);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Pin'));
+      await tester.pumpAndSettle();
+      expect(repo.pins, ['m1 pinned', 'm2 pinned']);
+    });
+
+    testWidgets('between two messages, the menu is for the message whose row '
+        'it is', (tester) async {
+      final repo = FakeMessageRepository([msg(2), msg(1)]);
+      await openChat(tester, repo, readAt: msg(2).createdAt);
+      // The two rows meet with no gap: the strip between the words is
+      // their padding.
+      expect(
+        tester.getRect(row(1)).bottom,
+        moreOrLessEquals(tester.getRect(row(2)).top),
+      );
+      await tester.longPressAt(Offset(200, tester.getRect(row(2)).top + 1));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Pin'));
+      await tester.pumpAndSettle();
+      // The pinned bar moved the chat down: where they meet now.
+      await tester.longPressAt(Offset(200, tester.getRect(row(2)).top - 1));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Pin'));
+      await tester.pumpAndSettle();
+      expect(repo.pins, ['m2 pinned', 'm1 pinned']);
+    });
+
+    testWidgets('a mouse anywhere on the row shows the hover button and the '
+        "time; a tap beside the words doesn't", (tester) async {
+      final repo = FakeMessageRepository([msg(2), msg(1)]);
+      await openChat(tester, repo, readAt: msg(2).createdAt);
+      final time = find.textContaining(RegExp(r'^\d{1,2}:\d{2}'));
+      final before = time.evaluate().length;
+      // A tap beside the words leaves the time alone; on the words, it
+      // shows it.
+      // (Past the wait for a double-tap.)
+      Future<void> settle() async {
+        await tester.pump(const Duration(milliseconds: 400));
+        await tester.pumpAndSettle();
+      }
+
+      await tester.tapAt(beside(tester, 2));
+      await settle();
+      expect(time.evaluate().length, before);
+      await tester.tap(find.text('Message 2'));
+      await settle();
+      expect(time.evaluate().length, before + 1);
+      await tester.tap(find.text('Message 2'));
+      await settle();
+
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: Offset.zero);
+      addTearDown(mouse.removePointer);
+      await mouse.moveTo(beside(tester, 2));
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Message options'), findsOneWidget);
+      expect(time.evaluate().length, before + 1);
+      await tester.tap(find.byTooltip('Message options'));
+      await settle();
+      expect(find.text('Pin'), findsOneWidget);
+    });
+
+    testWidgets('the picker: the four favorites, then two rows of six, in '
+        'columns, each target at least 48 × 48', (tester) async {
+      for (final width in [360.0, 390.0]) {
+        await openChat(
+          tester,
+          FakeMessageRepository([msg(1)]),
+          size: Size(width, 900),
+        );
+        await tester.longPress(find.text('Message 1'));
+        await tester.pumpAndSettle();
+        final rows = _pickerRows(tester);
+        expect(rows.map((r) => r.length), [4, 6, 6], reason: '$width');
+        // Straight columns: the two rows of six line up.
+        expect(
+          [for (final r in rows[1]) r.center.dx],
+          [for (final r in rows[2]) moreOrLessEquals(r.center.dx)],
+        );
+        for (final r in rows.expand((r) => r)) {
+          expect(r.width, greaterThanOrEqualTo(48));
+          expect(r.height, greaterThanOrEqualTo(48));
+        }
+      }
+    });
+
+    testWidgets("where six won't fit, as with large text on a narrow phone, "
+        'rows of four, never an uneven last row', (tester) async {
+      tester.platformDispatcher.textScaleFactorTestValue = 2;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await openChat(
+        tester,
+        FakeMessageRepository([msg(1)]),
+        size: const Size(320, 1400),
+      );
+      await tester.longPress(find.text('Message 1'));
+      await tester.pumpAndSettle();
+      expect(_pickerRows(tester).map((r) => r.length), [4, 4, 4, 4]);
+    });
+  });
+}
+
+/// The message menu's emoji buttons, row by row, top to bottom.
+List<List<Rect>> _pickerRows(WidgetTester tester) {
+  final rects = [
+    for (final e
+        in find
+            .descendant(
+              of: find.byType(ReactionPicker),
+              matching: find.byType(InkWell),
+            )
+            .evaluate())
+      tester.getRect(find.byWidget(e.widget)),
+  ];
+  final rows = <double, List<Rect>>{};
+  for (final r in rects) {
+    final key = rows.keys.firstWhere(
+      (k) => (k - r.center.dy).abs() < 4,
+      orElse: () => r.center.dy,
+    );
+    (rows[key] ??= []).add(r);
+  }
+  return [
+    for (final k in rows.keys.toList()..sort())
+      rows[k]!..sort((a, b) => a.left.compareTo(b.left)),
+  ];
 }

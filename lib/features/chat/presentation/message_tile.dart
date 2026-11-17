@@ -99,7 +99,14 @@ class MessageTile extends ConsumerStatefulWidget {
 
 class _MessageTileState extends ConsumerState<MessageTile> {
   bool _showTime = false;
+
+  /// The pointer is somewhere on the message's row (#19): the hover
+  /// button and the time show, and the row is faintly tinted.
   bool _hovering = false;
+
+  /// The message's menu is open: its row keeps the tint, so it's clear
+  /// whose menu it is, and a long-press shows it registered (#19).
+  bool _menuOpen = false;
 
   /// Focused from the keyboard (SPEC §7.6), and so ringed.
   bool _focused = false;
@@ -233,6 +240,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     final archived =
         ref.read(groupProvider(m.groupId)).value?.isArchived ?? false;
     final canDelete = (widget.mine || canModerate) && (!archived || superAdmin);
+    setState(() => _menuOpen = true);
     await showAdaptiveSheet<void>(
       context,
       builder: (sheet) => SafeArea(
@@ -364,6 +372,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
         ),
       ),
     );
+    if (mounted) setState(() => _menuOpen = false);
   }
 
   /// Opens the author's page (TEAM-15), when they're someone on the team,
@@ -871,111 +880,100 @@ class _MessageTileState extends ConsumerState<MessageTile> {
           : CrossAxisAlignment.start,
       children: [
         ?header,
-        MouseRegion(
-          onEnter: (_) => setState(() => _hovering = true),
-          onExit: (_) => setState(() => _hovering = false),
-          child: menuAction(
-            GestureDetector(
-              excludeFromSemantics: !shaped,
-              onTap: () => setState(() => _showTime = !_showTime),
-              // Swipe right to reply (CHAT-13, phones).
-              onHorizontalDragUpdate: widget.onReply == null || web
-                  ? null
-                  : (d) => setState(
-                      () => _swipe = (_swipe + d.delta.dx).clamp(0, 96),
-                    ),
-              onHorizontalDragEnd: widget.onReply == null || web
-                  ? null
-                  : (_) {
-                      if (_swipe >= _swipeToReply) {
-                        Haptics.selection();
-                        widget.onReply!();
-                      }
-                      setState(() => _swipe = 0);
-                    },
-              // The message menu (CHAT-7): long-press on phones, right-click
-              // on the web. Double-tap loves it (CHAT-6).
-              onLongPress: deleted
-                  ? null
-                  : () {
-                      Haptics.medium();
-                      unawaited(_openMenu());
-                    },
-              onSecondaryTap: deleted ? null : () => unawaited(_openMenu()),
-              // Not on polls: waiting for a second tap would hold up voting.
-              onDoubleTap:
-                  deleted ||
-                      web ||
-                      isPoll ||
-                      isEvent ||
-                      ref.watch(viewingAsSuperAdminProvider(m.groupId))
-                  ? null
-                  : () {
-                      Haptics.light();
-                      fireAndForget(_react(Reaction.love));
-                    },
-              // Full keyboard navigation (SPEC §7.6): Tab reaches each
-              // message, and Enter, Space, the menu key, or Shift+F10 opens
-              // its menu, as long-press and right-click do.
-              child: FocusableActionDetector(
-                enabled: !deleted,
-                onShowFocusHighlight: (on) => setState(() => _focused = on),
-                shortcuts: const {
-                  SingleActivator(LogicalKeyboardKey.contextMenu):
-                      ActivateIntent(),
-                  SingleActivator(LogicalKeyboardKey.f10, shift: true):
-                      ActivateIntent(),
-                },
-                actions: {
-                  ActivateIntent: CallbackAction<ActivateIntent>(
-                    onInvoke: (_) => unawaited(_openMenu()),
+        menuAction(
+          GestureDetector(
+            excludeFromSemantics: !shaped,
+            onTap: () => setState(() => _showTime = !_showTime),
+            // Swipe right to reply (CHAT-13, phones).
+            onHorizontalDragUpdate: widget.onReply == null || web
+                ? null
+                : (d) => setState(
+                    () => _swipe = (_swipe + d.delta.dx).clamp(0, 96),
                   ),
-                },
-                child: Transform.translate(
-                  offset: Offset(_swipe, 0),
-                  child: Row(
-                    // Fitted to the bubble or card, so mine sit on the right
-                    // at any width; a poll card is as wide as it may be, up
-                    // to its own cap.
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (mine && _hovering && !deleted) _hoverButton(),
-                      Flexible(
-                        // The visible focus ring (SPEC §7.6): around the
-                        // bubble or card, or a little outside text that's on
-                        // the page, so it doesn't cross the letters.
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            bubble,
-                            if (_focused)
-                              Positioned(
-                                left: shaped ? 0 : -6,
-                                right: shaped ? 0 : -6,
-                                top: shaped ? 0 : -3,
-                                bottom: shaped ? 0 : -3,
-                                child: IgnorePointer(
-                                  child: DecoratedBox(
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: c.textOnPage,
-                                        width: 2,
-                                      ),
-                                      borderRadius: card
-                                          ? BorderRadius.circular(18)
-                                          : background == null
-                                          ? BorderRadius.circular(10)
-                                          : radius,
+            onHorizontalDragEnd: widget.onReply == null || web
+                ? null
+                : (_) {
+                    if (_swipe >= _swipeToReply) {
+                      Haptics.selection();
+                      widget.onReply!();
+                    }
+                    setState(() => _swipe = 0);
+                  },
+            // Long-press and right-click open the menu from anywhere on
+            // the row (#19), below. Double-tap loves it (CHAT-6).
+            // Not on polls: waiting for a second tap would hold up voting.
+            onDoubleTap:
+                deleted ||
+                    web ||
+                    isPoll ||
+                    isEvent ||
+                    ref.watch(viewingAsSuperAdminProvider(m.groupId))
+                ? null
+                : () {
+                    Haptics.light();
+                    fireAndForget(_react(Reaction.love));
+                  },
+            // Full keyboard navigation (SPEC §7.6): Tab reaches each
+            // message, and Enter, Space, the menu key, or Shift+F10 opens
+            // its menu, as long-press and right-click do.
+            child: FocusableActionDetector(
+              enabled: !deleted,
+              onShowFocusHighlight: (on) => setState(() => _focused = on),
+              shortcuts: const {
+                SingleActivator(LogicalKeyboardKey.contextMenu):
+                    ActivateIntent(),
+                SingleActivator(LogicalKeyboardKey.f10, shift: true):
+                    ActivateIntent(),
+              },
+              actions: {
+                ActivateIntent: CallbackAction<ActivateIntent>(
+                  onInvoke: (_) => unawaited(_openMenu()),
+                ),
+              },
+              child: Transform.translate(
+                offset: Offset(_swipe, 0),
+                child: Row(
+                  // Fitted to the bubble or card, so mine sit on the right
+                  // at any width; a poll card is as wide as it may be, up
+                  // to its own cap.
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (mine && _hovering && !deleted) _hoverButton(),
+                    Flexible(
+                      // The visible focus ring (SPEC §7.6): around the
+                      // bubble or card, or a little outside text that's on
+                      // the page, so it doesn't cross the letters.
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          bubble,
+                          if (_focused)
+                            Positioned(
+                              left: shaped ? 0 : -6,
+                              right: shaped ? 0 : -6,
+                              top: shaped ? 0 : -3,
+                              bottom: shaped ? 0 : -3,
+                              child: IgnorePointer(
+                                child: DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: c.textOnPage,
+                                      width: 2,
                                     ),
+                                    borderRadius: card
+                                        ? BorderRadius.circular(18)
+                                        : background == null
+                                        ? BorderRadius.circular(10)
+                                        : radius,
                                   ),
                                 ),
                               ),
-                          ],
-                        ),
+                            ),
+                        ],
                       ),
-                      if (!mine && _hovering && !deleted) _hoverButton(),
-                    ],
-                  ),
+                    ),
+                    if (!mine && _hovering && !deleted) _hoverButton(),
+                  ],
                 ),
               ),
             ),
@@ -1064,13 +1062,44 @@ class _MessageTileState extends ConsumerState<MessageTile> {
         ],
       ),
     );
-    return AnimatedContainer(
-      duration: Motion.of(context, Motion.slow),
-      curve: Motion.curve,
-      color: widget.highlighted
-          ? c.you.face.withValues(alpha: 0.28)
-          : Colors.transparent,
-      child: row,
+    // The message menu (CHAT-7) opens from anywhere on the row, its full
+    // width and the padding between messages, not only the words (#19,
+    // 2026-11-16: others' messages have no bubble, so a press beside "On my
+    // way!" did nothing): long-press on phones, right-click with a mouse,
+    // and on hover the button beside the message, with the row faintly
+    // tinted so it's clear whose it is. Tap (the time), double-tap,
+    // swipe to reply, the keyboard and a screen reader's action stay on
+    // the message; the photo, reaction chips, links and cards keep their
+    // own presses, which win where they are.
+    final tint = _hovering || _menuOpen
+        ? c.textOnPage.withValues(alpha: 0.05)
+        : Colors.transparent;
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        excludeFromSemantics: true,
+        onLongPress: deleted
+            ? null
+            : () {
+                Haptics.medium();
+                unawaited(_openMenu());
+              },
+        onSecondaryTap: deleted ? null : () => unawaited(_openMenu()),
+        child: AnimatedContainer(
+          duration: Motion.of(context, Motion.slow),
+          curve: Motion.curve,
+          color: widget.highlighted
+              ? c.you.face.withValues(alpha: 0.28)
+              : Colors.transparent,
+          child: AnimatedContainer(
+            duration: Motion.of(context, Motion.fast),
+            color: tint,
+            child: row,
+          ),
+        ),
+      ),
     );
   }
 

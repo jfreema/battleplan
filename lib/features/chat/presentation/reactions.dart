@@ -87,7 +87,10 @@ String reactionName(AppLocalizations l10n, Reaction r) => switch (r) {
 const _mainReactions = 4;
 
 /// The reactions at the top of the message menu (CHAT-6): the main four on
-/// one row, then the other 12.
+/// one row, then the other 12 in two rows of 6, or three of 4 where 6
+/// won't fit (a narrow screen with large text). Every emoji sits in an
+/// equal cell, so they line up in columns with no ragged last row (#19,
+/// 2026-11-16: a wrap made rows of 8 and 4 at 390 px, 7 and 5 at 360).
 class ReactionPicker extends StatelessWidget {
   const new({required this.mine, required this.onPick, super.key});
 
@@ -108,8 +111,7 @@ class ReactionPicker extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(Space.xs),
           // At least 48 × 48 to tap (SPEC §7.6), and no wider than that
-          // (no alignment, which would stretch it), so the rest of the
-          // reactions wrap in rows.
+          // (no alignment, which would stretch it): a circle in its cell.
           constraints: const BoxConstraints(
             minWidth: kMinInteractiveDimension,
             minHeight: kMinInteractiveDimension,
@@ -131,22 +133,31 @@ class ReactionPicker extends StatelessWidget {
         ),
       ),
     );
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // A button as drawn: the 28 px emoji at this text size and its
+        // padding, at least 48. Six to a row when six such fit.
+        final extent = math.max(
+          kMinInteractiveDimension,
+          MediaQuery.textScalerOf(context).scale(28) * 1.25 + 2 * Space.xs,
+        );
+        final perRow = constraints.maxWidth / 6 >= extent ? 6 : 4;
+        Widget row(Iterable<Reaction> reactions) => Row(
           children: [
-            for (final r in reactionOrder.take(_mainReactions)) button(r),
+            for (final r in reactions)
+              Expanded(child: Center(child: button(r))),
           ],
-        ),
-        Wrap(
-          alignment: WrapAlignment.center,
+        );
+        final rest = reactionOrder.skip(_mainReactions).toList();
+        return Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            for (final r in reactionOrder.skip(_mainReactions)) button(r),
+            row(reactionOrder.take(_mainReactions)),
+            for (var i = 0; i < rest.length; i += perRow)
+              row(rest.skip(i).take(perRow)),
           ],
-        ),
-      ],
+        );
+      },
     );
   }
 }
