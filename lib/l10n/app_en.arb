@@ -270,6 +270,7 @@
   "createTeam": "Create a Team",
   "createGroupTitle": "Create a Group",
   "teamSwitcherTitle": "Your teams",
+  "switcherCurrentTeam": "current team",
   "archivedTeams": "Archived",
   "switchTeamTooltip": "Switch team",
   "notificationsTooltip": "Notifications",

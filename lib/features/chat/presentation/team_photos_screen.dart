@@ -4,6 +4,7 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/chat/presentation/photo_grid.dart';
 import 'package:battleplan/features/chat/presentation/photo_viewer.dart';
@@ -40,7 +41,14 @@ class TeamPhotosScreen extends ConsumerWidget {
 
     final Widget body;
     if (state.loading) {
-      body = const Center(child: CircularProgressIndicator());
+      // The grid's own squares while it loads, not a spinner (#25).
+      body = const SkeletonGrid(
+        maxTile: _minTile,
+        spacing: 3,
+        padding: EdgeInsets.fromLTRB(Space.page, 14, Space.page, Space.xxl),
+        minColumns: 3,
+        tiles: 12,
+      );
     } else if (photos.isEmpty && state.failed) {
       body = Center(child: Text(l10n.loadError));
     } else if (photos.isEmpty && state.reachedEnd) {

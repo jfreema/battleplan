@@ -7,6 +7,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/plays_icon.dart';
+import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
@@ -80,7 +81,11 @@ class SavedPlaysScreen extends ConsumerWidget {
     final list = plays.value ?? const <Play>[];
     final Widget body;
     if (plays.isLoading && list.isEmpty) {
-      body = const Center(child: CircularProgressIndicator());
+      // The cards' own shape while they load, not a spinner (#25).
+      body = const SkeletonGrid(
+        aspect: 0.9,
+        padding: EdgeInsets.fromLTRB(16, 14, 16, Space.xl),
+      );
     } else if (list.isEmpty) {
       body = EmptyState(
         art: const PlaysIcon(colorful: true, size: 64),

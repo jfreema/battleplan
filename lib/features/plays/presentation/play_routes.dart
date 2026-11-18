@@ -1,6 +1,8 @@
+import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/plays_icon.dart';
+import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/plays/application/providers.dart';
@@ -25,9 +27,12 @@ class PlaysRoute extends ConsumerWidget {
     final me = ref.watch(myMembershipProvider(groupId));
     final superAdmin = ref.watch(authUserProvider).value?.isSuperAdmin ?? false;
     if (group == null) {
-      return Scaffold(
-        appBar: AppBar(),
-        body: const Center(child: CircularProgressIndicator()),
+      // The saved plays' shape until the team loads, not a spinner (#25).
+      return const Scaffold(
+        body: SkeletonGrid(
+          aspect: 0.9,
+          padding: EdgeInsets.fromLTRB(16, 14, 16, Space.xl),
+        ),
       );
     }
     if (!canEditPlays(group, me, superAdmin: superAdmin)) {

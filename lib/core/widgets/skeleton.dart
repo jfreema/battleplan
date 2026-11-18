@@ -55,3 +55,62 @@ class SkeletonList extends StatelessWidget {
     );
   }
 }
+
+/// Placeholder tiles shown while a grid loads (SPEC §7.5, #25): the
+/// grid's own columns of [aspect]-shaped tiles, one for each [maxTile],
+/// [spacing] apart inside [padding], so the page keeps its shape when the
+/// pictures come. Saved plays and Team photos load with it, not a spinner.
+class SkeletonGrid extends StatelessWidget {
+  const new({
+    this.maxTile = 300,
+    this.aspect = 1,
+    this.spacing = 12,
+    this.padding = const EdgeInsets.all(16),
+    this.minColumns = 1,
+    this.tiles = 6,
+    super.key,
+  });
+
+  final double maxTile;
+  final double aspect;
+  final double spacing;
+  final EdgeInsets padding;
+
+  /// The fewest columns, as the grid itself keeps (three for photos).
+  final int minColumns;
+  final int tiles;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.surfaceContainerHighest;
+    return Semantics(
+      label: AppLocalizations.of(context).loadingLabel,
+      child: ExcludeSemantics(
+        child: LayoutBuilder(
+          builder: (context, box) {
+            final width = box.maxWidth - padding.horizontal;
+            // As the grids count theirs: whole tiles of [maxTile].
+            final columns = (width / maxTile).floor().clamp(minColumns, 8);
+            return GridView.builder(
+              physics: const NeverScrollableScrollPhysics(),
+              padding: padding,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: columns,
+                mainAxisSpacing: spacing,
+                crossAxisSpacing: spacing,
+                childAspectRatio: aspect,
+              ),
+              itemCount: tiles,
+              itemBuilder: (_, _) => DecoratedBox(
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(Corners.chip),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}

@@ -285,7 +285,8 @@ Sign in
 - **Contents.**
   - Your teams, most recent activity first.
   - Each team shows its logo, name, sport icon, last-message preview, unread message count, and muted icon.
-  - Archived teams collapse into an "Archived" section.
+  - **In the app's own rows** (#25, owner's go 2026-11-17: it was a stock list, with the current team's name and check in blue, the groups' color, and the stock red count): "Your teams" as a heading, then each team a row at least 64 tall between hairlines: the 40 px badge, the name in Fredoka in the text color with its sport's icon (a group's own) in muted text, and the last message, muted, on one line. The team I'm on has a faint tint, a bold name, and a coral check at the end; screen readers hear "Thunder, Soccer, current team, 3 unread messages". Unread is Teams' coral count (1 to 99+), an outlined gray one beside the muted icon for a muted team (CHAT-9), or a coral dot before the count loads.
+  - Archived teams collapse into an "Archived" row whose chevron turns as it opens them.
   - At the bottom: **Join a Team or Group** (code or QR), **Create a Team**, and below it **Create a Group** (TEAM-14); the team switcher has the same three.
 - **Switching** keeps you on the same tab: from one team's Schedule to the other team's Schedule. The other tabs then open on the new team too, at their start, never back on the team you left, and a sheet or dialog left open (a person's card, a message's menu) closes, whatever changed the team: the switcher, a notification or link, or leaving a team for another. Within a team, each tab keeps its place.
 - **Memory.** The app remembers the last team and tab on each device, or Teams when you left from there, and opens there. Teams opens each team at the tab you last had in it.
@@ -1404,7 +1405,7 @@ Build these once in `core/` and reuse them everywhere:
 - Settings rows: plain rows on the page between 1 px hairlines, each a 22 px icon, a title and muted subtitle, and a chevron, with no panel and no icon disc; a destructive row is in the accent text. A true card (the team's card on the Team tab and in Team settings, a player card) is a card with a rim and a lip.
 - Headings: page headings in Lilita 25 with the scheme's drop, card headings in Lilita 20 with none, small capitals labels in the section label style
 - Empty state (a 64 px muted icon, one sentence, one coral button, and at most one quiet link under it: the team's empty Schedule's Import a schedule, SCHED-1)
-- Skeleton loaders (no spinners for lists)
+- Skeleton loaders (no spinners for lists): placeholder rows for lists, and for grids placeholder tiles in the grid's own columns, as Saved plays and Team photos load (#25)
 - Snackbar
 - Confirm dialog (destructive actions in red, with the verb on the button: "Delete message")
 - Bottom sheet on phones, dialog or popover on wide screens
