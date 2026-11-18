@@ -192,13 +192,24 @@ void main() {
       return invites;
     }
 
+    /// The link's settings are in a sheet behind Link settings (#16).
+    Future<void> openLinkSettings(WidgetTester tester) async {
+      final row = find.text('Link settings');
+      await tester.scrollUntilVisible(
+        row,
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(row);
+      await tester.pumpAndSettle();
+    }
+
     testWidgets('admins set expiry and uses on the link people have', (
       tester,
     ) async {
       final invites = await openInvite(tester);
-      final change = find.widgetWithText(OutlinedButton, 'Expiry and uses');
-      await tester.ensureVisible(change);
-      await tester.tap(change);
+      await openLinkSettings(tester);
+      await tester.tap(find.text('Expiry and uses'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Never'));
       await tester.pumpAndSettle();
@@ -212,6 +223,11 @@ void main() {
       expect(invites.resets, 0);
       // Same code: the link and QR already shared still work.
       expect(find.text('K7XP-M2QR'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.textContaining('Used 0 of 20 times'),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
       expect(find.textContaining('Used 0 of 20 times'), findsOneWidget);
     });
 
@@ -219,9 +235,8 @@ void main() {
       tester,
     ) async {
       final invites = await openInvite(tester);
-      final off = find.widgetWithText(TextButton, 'Turn off link');
-      await tester.ensureVisible(off);
-      await tester.tap(off);
+      await openLinkSettings(tester);
+      await tester.tap(find.text('Turn off link'));
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(FilledButton, 'Turn off link'));
       await tester.pumpAndSettle();

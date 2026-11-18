@@ -25,10 +25,14 @@ class SharePlusSharer implements Sharer {
   /// otherwise copy link"). share_plus's own fallback would open an email
   /// instead.
   @override
-  Future<bool> shareLink(Uri uri, {String? subject}) =>
-      web && !canWebShareLink(uri)
+  Future<bool> shareLink(Uri uri, {String? subject}) => !canShareLink(uri)
       ? Future.value(false)
       : _share(ShareParams(uri: uri, subject: subject));
+
+  /// The phone apps always have a share sheet; a browser only with Web
+  /// Share.
+  @override
+  bool canShareLink(Uri uri) => !web || canWebShareLink(uri);
 
   @override
   Future<bool> shareImage(Uint8List bytes, {required String name}) => _share(

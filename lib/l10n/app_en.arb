@@ -690,7 +690,8 @@
   "linkCopied": "Link copied.",
   "copyLink": "Copy link",
   "share": "Share",
-  "showQr": "Show QR code",
+  "linkCopiedButton": "Copied",
+  "qrShowFullScreen": "Show full screen",
   "qrCodeLabel": "QR code for the team's invite link",
   "inviteShareSubject": "Join {team} on Battleplan",
   "@inviteShareSubject": {
@@ -896,7 +897,9 @@
   "inviteResent": "Invite sent again",
   "emailInvitesNeedVerified": "Verify your email first, then you can send invites.",
   "emailInvitesRateLimited": "That's the most invites for today. Try again tomorrow.",
-  "emailInvitesSubtitle": "Send single-use links to up to 50 people",
+  "emailInvitesSubtitle": "Email each person their own link. They join when they're ready.",
+  "addByEmailSubtitle": "Put people on the team now. New people get an email to set up their account.",
+  "addByEmailSubtitleGroup": "Put people on the group now. New people get an email to set up their account.",
   "whoAreYouHereFor": "Who are you here for?",
   "whoAreYouHereForHelp": "Pick your players. A team admin approves the link, and then you can answer RSVPs for them. You can chat with the team right away.",
   "whoAreYouHereForRosterHint": "Say if you're a player or here for one",
@@ -1903,6 +1906,25 @@
   "teamSuspended": "This team has been suspended.",
   "inviteContinue": "Continue to your team",
   "inviteContinueTo": "Continue to {team}",
+  "inviteReadyTitle": "{team} is ready!",
+  "@inviteReadyTitle": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteToTitle": "Invite to {team}",
+  "@inviteToTitle": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteReadyLine": "Send this link to your families so they can join.",
+  "inviteReadyLineGroup": "Send this link to the people you want in the group.",
+  "inviteAnyoneLine": "Anyone with this link or code can join.",
   "signInAddedByAdminHint": "Added to a team by an admin? Use the link in your setup email first.",
   "addPhoto": "Add photo",
   "cropPhotoTitle": "Crop photo",
@@ -1927,6 +1949,10 @@
   "newOwnerAutomatic": "Automatic",
   "newOwnerNobody": "Nobody else is on this team, so it will be archived",
   "linkChangeOptions": "Expiry and uses",
+  "linkChangeOptionsHelp": "How long the link works, and how many people can use it",
+  "linkSettingsRow": "Link settings",
+  "resetLinkHelp": "A new link and QR code. The old ones stop working.",
+  "linkTurnOffHelp": "Nobody can join with it until an admin turns on a new one.",
   "linkChangeOptionsBody": "The link and QR code you've shared keep working, with these limits. An expiry counts from now.",
   "linkTurnOff": "Turn off link",
   "linkTurnOffBody": "Nobody can join with the link or QR code until an admin turns on a new one. Email invites still work.",

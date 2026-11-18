@@ -13,6 +13,7 @@ import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/admin/admin.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
+import 'package:battleplan/features/groups/presentation/invite_screen.dart';
 import 'package:battleplan/features/schedule/application/providers.dart'
     show viewerTimeZoneProvider;
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -129,8 +130,11 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
           if (mounted) showAppSnackBar(context, l10n.createTeamLogoFailed);
         }
       }
-      // TEAM-1: the next screen is "Invite your team".
-      if (mounted) context.go('/g/${id.value}/invite');
+      // TEAM-1: the next screen is Invite, saying "Hornets is ready!"
+      // (INV-1, #16).
+      if (mounted) {
+        context.go('/g/${id.value}/invite', extra: const InviteAfterCreate());
+      }
     } on TimeoutException catch (error, stack) {
       // Said, and reported, like first-run setup's: it keeps someone from
       // making a team. Trying again is safe (_requestId).

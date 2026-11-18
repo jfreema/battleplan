@@ -743,7 +743,10 @@ void main() {
         invites: invites,
         size: tall,
       );
-      await tester.tap(find.widgetWithText(OutlinedButton, 'Reset link'));
+      // Reset is in Link settings (#16).
+      await tester.tap(find.text('Link settings'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Reset link'));
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(FilledButton, 'Reset link'));
       await tester.pumpAndSettle();

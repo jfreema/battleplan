@@ -6,6 +6,11 @@ import 'dart:typed_data';
 abstract interface class Sharer {
   Future<bool> shareLink(Uri uri, {String? subject});
 
+  /// Whether [shareLink] can share [uri] here, known before drawing: true
+  /// in the phone apps, and in a browser with Web Share. Without it (most
+  /// computer browsers) a screen offers Copy link alone (#16).
+  bool canShareLink(Uri uri);
+
   /// Shares an image file. On phones the sheet also offers Save Image.
   Future<bool> shareImage(Uint8List bytes, {required String name});
 
@@ -23,6 +28,9 @@ class NoopSharer implements Sharer {
 
   @override
   Future<bool> shareLink(Uri uri, {String? subject}) async => false;
+
+  @override
+  bool canShareLink(Uri uri) => false;
 
   @override
   Future<bool> shareImage(Uint8List bytes, {required String name}) async =>

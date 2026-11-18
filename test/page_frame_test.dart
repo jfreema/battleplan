@@ -158,7 +158,11 @@ void main() {
       expect(find.widgetWithText(PageTitle, title), findsOneWidget);
       await tester.tap(find.bySemanticsLabel('Back, Invite'));
       await tester.pumpAndSettle();
-      expect(find.widgetWithText(PageTitle, 'Invite'), findsOneWidget);
+      // Its title names the team (#16); its pages' backs say "Invite".
+      expect(
+        find.widgetWithText(PageTitle, 'Invite to Thunder U14'),
+        findsOneWidget,
+      );
     }
     await pumpTeam(tester, scheme: TeamScheme.army);
     await pushTo(tester, '/g/a/team/players/mia');
@@ -259,7 +263,7 @@ void main() {
   testWidgets("on wide screens Invite's pages, Media, Reports and Import "
       'open as side panels, like the other settings pages', (tester) async {
     for (final (from, route, title) in [
-      ('/g/a/team', '/g/a/invite', 'Invite'),
+      ('/g/a/team', '/g/a/invite', 'Invite to Thunder U14'),
       ('/g/a/team', '/g/a/invite/email', 'Email invites'),
       ('/g/a/team', '/g/a/members/add', 'Add people by email'),
       ('/g/a/info', '/g/a/media', 'Media'),

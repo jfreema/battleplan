@@ -487,6 +487,9 @@ Future<void> pumpTeam(
   List<GuardianRequest> requests = const [],
   FakeNotificationRepository? notifications,
   FakePlayRepository? plays,
+  FakeInviteRepository? invites,
+  FakeSharer? sharer,
+  Group? team,
   List<Override> overrides = const [],
 }) async {
   final events = FakeEventRepository(sceneEvents);
@@ -506,7 +509,7 @@ Future<void> pumpTeam(
     tester,
     auth: FakeAuthRepository(user: user),
     prefs: _prefs(scheme: scheme),
-    groups: {'a': sceneTeam},
+    groups: {'a': team ?? sceneTeam},
     // My pick on the scene team is the same scheme (SET-2).
     memberships: [
       for (final m in sceneMembers)
@@ -528,6 +531,8 @@ Future<void> pumpTeam(
     notifications: notifications,
     documentRepo: FakeDocumentRepository(sceneDocuments),
     playRepo: plays,
+    invites: invites,
+    sharer: sharer,
     admin: FakeAdminRepository(
       totalsValue: const AdminTotals(
         users: 1284,

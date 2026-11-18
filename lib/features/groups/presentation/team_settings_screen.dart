@@ -28,6 +28,7 @@ import 'package:battleplan/features/groups/presentation/chat_bubble_colors.dart'
 import 'package:battleplan/features/groups/presentation/chat_look_section.dart';
 import 'package:battleplan/features/groups/presentation/create_team_screen.dart';
 import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
+import 'package:battleplan/features/groups/presentation/invite_screen.dart';
 import 'package:battleplan/features/groups/presentation/storage_widgets.dart';
 import 'package:battleplan/features/groups/presentation/team_scheme_section.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -628,19 +629,13 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                       onTap: () => unawaited(_changeTimeZone(group, repo)),
                     ),
                     // The invite link: expiry, uses, reset, and turn off
-                    // (INV-2).
+                    // (INV-2), in Link settings over this page (#16).
                     SettingsRow(
                       icon: AppIcons.link,
                       title: l10n.manageInviteLink,
                       subtitle: l10n.manageInviteLinkSubtitle,
-                      onTap: () => unawaited(
-                        context.push(
-                          '/g/${group.id.value}/invite',
-                          extra: BackLabel(
-                            group.isGroup ? l10n.groupAdmin : l10n.teamAdmin,
-                          ),
-                        ),
-                      ),
+                      onTap: () =>
+                          unawaited(showLinkSettings(context, ref, group.id)),
                     ),
                   ],
                 ),

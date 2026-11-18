@@ -16,6 +16,7 @@ import 'package:battleplan/features/chat/presentation/reactions.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/invite.dart';
 import 'package:battleplan/features/groups/domain/media.dart';
+import 'package:battleplan/features/groups/presentation/invite_screen.dart';
 import 'package:battleplan/features/groups/presentation/roster_requests.dart';
 import 'package:battleplan/features/groups/presentation/roster_screen.dart';
 import 'package:battleplan/features/players/domain/player.dart';
@@ -401,10 +402,13 @@ void main() {
       memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
     );
     // Creating a team replaces the stack with its invite screen, so there's
-    // no back button (TEAM-1).
-    GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/g/a/invite');
+    // no back button (TEAM-1), and it says the team is ready (#16).
+    GoRouter.of(tester.element(find.byType(Scaffold).first))
+        .go('/g/a/invite', extra: const InviteAfterCreate());
     await tester.pumpAndSettle();
-    final go = find.widgetWithText(FilledButton, 'Continue to Thunder');
+    expect(find.text('Thunder is ready!'), findsOneWidget);
+    // Plain text, so Share is the page's one coral button.
+    final go = find.widgetWithText(TextButton, 'Continue to Thunder');
     expect(go, findsOneWidget);
     await tester.tap(go);
     await tester.pumpAndSettle();
@@ -414,6 +418,7 @@ void main() {
     await openTeamTab(tester);
     await tester.tap(find.text('Invite'));
     await tester.pumpAndSettle();
+    expect(find.text('Invite to Thunder'), findsOneWidget);
     expect(find.text('Continue to Thunder'), findsNothing);
   });
 
@@ -436,8 +441,14 @@ void main() {
     await tester.tap(create);
     await tester.pumpAndSettle();
     expect(groupRepo.created, ['Thunder U14']);
-    // TEAM-1: the next screen is "Invite your team" (the fake team has no
+    // TEAM-1: the next screen is Invite, told the team was just made, so
+    // it says "Thunder U14 is ready!" (#16; the fake team has no
     // membership yet, so the shell guard shows instead).
+    final config = GoRouter.of(tester.element(find.byType(Scaffold).first))
+        .routerDelegate
+        .currentConfiguration;
+    expect(config.uri.path, endsWith('/invite'));
+    expect(config.extra, isA<InviteAfterCreate>());
   });
 
   testWidgets('roster: the owner can make a member an admin', (tester) async {
@@ -934,10 +945,16 @@ void main() {
     await tester.tap(find.text('Invite'));
     await tester.pumpAndSettle();
     expect(find.text('K7XP-M2QR'), findsOneWidget);
-    expect(find.text('Show QR code'), findsOneWidget);
-    final reset = find.widgetWithText(OutlinedButton, 'Reset link');
-    await tester.ensureVisible(reset);
-    await tester.tap(reset);
+    // Reset is in Link settings (#16).
+    final settings = find.text('Link settings');
+    await tester.scrollUntilVisible(
+      settings,
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(settings);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Reset link'));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'Reset link'));
     await tester.pumpAndSettle();

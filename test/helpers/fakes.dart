@@ -3334,12 +3334,18 @@ class FakeSharer implements Sharer {
   /// caller copies them (SPEC §4.2).
   bool linksShare = true;
 
+  /// A share sheet that says it can share a link, then doesn't (#16).
+  bool linksFail = false;
+
   @override
   Future<bool> shareLink(Uri uri, {String? subject}) async {
-    if (!linksShare) return false;
+    if (!linksShare || linksFail) return false;
     shared.add('link $uri');
     return true;
   }
+
+  @override
+  bool canShareLink(Uri uri) => linksShare;
 
   @override
   Future<bool> shareImage(Uint8List bytes, {required String name}) async {

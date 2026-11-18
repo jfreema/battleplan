@@ -226,6 +226,22 @@ class PageTitle extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 6, 20, 4),
       child: LayoutBuilder(
         builder: (context, constraints) {
+          // No word broken across the lines.
+          bool wordsFit(TextStyle style) {
+            for (final word in title.split(RegExp(r'\s+'))) {
+              final painter = TextPainter(
+                text: TextSpan(text: word, style: style),
+                maxLines: 1,
+                textDirection: direction,
+                textScaler: scaler,
+              )..layout();
+              final ok = painter.width <= constraints.maxWidth;
+              painter.dispose();
+              if (!ok) return false;
+            }
+            return true;
+          }
+
           bool fits(TextStyle style) {
             final whole = TextPainter(
               text: TextSpan(text: title, style: style),
@@ -233,21 +249,9 @@ class PageTitle extends StatelessWidget {
               textDirection: direction,
               textScaler: scaler,
             )..layout(maxWidth: constraints.maxWidth);
-            var ok = !whole.didExceedMaxLines;
+            final ok = !whole.didExceedMaxLines;
             whole.dispose();
-            // No word broken across the lines.
-            for (final word in title.split(RegExp(r'\s+'))) {
-              if (!ok) break;
-              final painter = TextPainter(
-                text: TextSpan(text: word, style: style),
-                maxLines: 1,
-                textDirection: direction,
-                textScaler: scaler,
-              )..layout();
-              ok = painter.width <= constraints.maxWidth;
-              painter.dispose();
-            }
-            return ok;
+            return ok && wordsFit(style);
           }
 
           TextStyle styleAt(double size) =>
@@ -256,14 +260,17 @@ class PageTitle extends StatelessWidget {
             (size) => fits(styleAt(size)),
             orElse: () => -1,
           );
+          // Too long even at the smallest: two lines that end in "…" while
+          // every word still fits a line ("Riverside Thunder 10U Blue is
+          // ready!" with large text, #16), else one, rather than a word
+          // split in two.
+          final lines = size >= 0 || wordsFit(styleAt(sizes.last)) ? 2 : 1;
           return Semantics(
             header: true,
             namesRoute: true,
             child: Text(
               title,
-              // Where even the smallest can't hold a word, one line that
-              // ends in "…" rather than a word split in two.
-              maxLines: size < 0 ? 1 : 2,
+              maxLines: lines,
               overflow: TextOverflow.ellipsis,
               style: styleAt(size < 0 ? sizes.last : size),
             ),
@@ -805,7 +812,9 @@ class SettingsRow extends StatelessWidget {
 
   /// A chevron at the end when [onTap] is set and there's no [trailing].
   final bool chevron;
-  final int subtitleLines;
+
+  /// Null lets the subtitle wrap (a line that says what a row does, #16).
+  final int? subtitleLines;
 
   @override
   Widget build(BuildContext context) {

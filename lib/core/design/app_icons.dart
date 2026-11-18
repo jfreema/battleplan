@@ -16,6 +16,11 @@ abstract final class AppIcons {
   /// A screen's options, at the top right: a hamburger, three lines.
   static const IconData menu = Symbols.menu_rounded;
   static const IconData expand = Symbols.expand_more_rounded;
+
+  /// A small badge that says a picture opens full screen (the invite QR
+  /// code, #16).
+  static const IconData enlarge = Symbols.open_in_full_rounded;
+
   static const IconData settings = Symbols.settings_rounded;
   static const IconData signOut = Symbols.logout_rounded;
   static const IconData add = Symbols.add_rounded;
@@ -71,6 +76,12 @@ abstract final class AppIcons {
   static const IconData spreadsheet = Symbols.table_chart_rounded;
   static const IconData slides = Symbols.slideshow_rounded;
   static const IconData link = Symbols.link_rounded;
+
+  /// Link settings' rows (INV-2, #16): how long the link works, and turning
+  /// it off.
+  static const IconData linkExpiry = Symbols.timer_rounded;
+  static const IconData linkOff = Symbols.link_off_rounded;
+
   static const IconData upload = Symbols.upload_file_rounded;
   static const IconData pin = Symbols.push_pin_rounded;
   static const IconData openExternal = Symbols.open_in_new_rounded;
