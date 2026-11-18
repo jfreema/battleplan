@@ -490,21 +490,25 @@ Future<void> pumpTeam(
   FakeInviteRepository? invites,
   FakeSharer? sharer,
   Group? team,
+  List<Event>? events,
+  FakePollRepository? pollRepo,
   List<Override> overrides = const [],
 }) async {
-  final events = FakeEventRepository(sceneEvents);
-  final rsvps = FakeRsvpRepository(events)
+  final eventRepo = FakeEventRepository(events ?? sceneEvents);
+  final rsvps = FakeRsvpRepository(eventRepo)
     ..rsvps.addAll([
       _rsvp('noah', 'Noah Lee', RsvpStatus.going),
       _rsvp('mia', 'Mia Kim', RsvpStatus.going, note: 'Bringing snacks'),
       _rsvp('leo', 'Leo Rivera', RsvpStatus.maybe),
       _rsvp('ava', 'Ava Park', RsvpStatus.notGoing),
     ]);
-  final polls = FakePollRepository()
-    ..put(scenePoll)
-    ..votes['m2'] = {
-      'coach': {'0'},
-    };
+  final polls =
+      pollRepo ??
+      (FakePollRepository()
+        ..put(scenePoll)
+        ..votes['m2'] = {
+          'coach': {'0'},
+        });
   await pumpApp(
     tester,
     auth: FakeAuthRepository(user: user),
@@ -521,7 +525,7 @@ Future<void> pumpTeam(
     users: FakeUserRepository()..colorScheme = scheme,
     messageRepo: messages ?? FakeMessageRepository(sceneMessages),
     pollRepo: polls,
-    eventRepo: events,
+    eventRepo: eventRepo,
     rsvpRepo: rsvps,
     playerRepo: FakePlayerRepository(scenePlayers)
       ..links.addAll(links ?? sceneLinks)

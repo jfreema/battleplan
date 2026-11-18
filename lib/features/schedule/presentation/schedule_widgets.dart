@@ -270,6 +270,11 @@ class CandyInitials extends StatelessWidget {
 /// [compact] (the schedule and chat cards, SPEC §7.3) three 36 px pills in
 /// a 48 px tap height: the picked one its candy (mint, lemon, cherry) on
 /// its lip, the others quiet, or all outlined while there's no answer.
+///
+/// Locked ([onChanged] null: past the deadline, once the event starts, an
+/// archived team, a super admin viewing), it's one flat tag with the answer
+/// in the row's place instead, so nothing that can't be pressed looks
+/// pressable (#53).
 class RsvpChoice extends StatelessWidget {
   const new({
     required this.statuses,
@@ -299,6 +304,9 @@ class RsvpChoice extends StatelessWidget {
     final height = compact ? 48.0 : 50.0;
     final gap = compact ? 4.0 : _gap;
     final enabled = onChanged != null;
+    if (!enabled) {
+      return _LockedAnswer(status: current, height: height, compact: compact);
+    }
     final n = statuses.length;
     return SizedBox(
       width: double.infinity,
@@ -360,6 +368,108 @@ class RsvpChoice extends StatelessWidget {
                 onChanged!(s.first);
               }
             : null,
+      ),
+    );
+  }
+}
+
+/// A locked answer (SCHED-5, #53): one flat pill at the start of the row,
+/// in the row's height ([height]), so nothing moves when the deadline
+/// passes. An answer is its icon and word on its candy (mint, lemon, or the
+/// warning red for Not going) in ink or white, with no lip, raise, or
+/// outline; no answer is "No reply" in muted text, outlined like an
+/// InfoTag. Screen readers hear "Going. RSVPs are closed."
+class _LockedAnswer extends StatelessWidget {
+  const new({
+    required this.status,
+    required this.height,
+    required this.compact,
+  });
+
+  final RsvpStatus? status;
+  final double height;
+
+  /// On a card (the schedule's): its card colors and smaller type.
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = GumdropColors.of(context);
+    final answer = status;
+    final label = answer == null ? l10n.rsvpNoReply : statusLabel(l10n, answer);
+    final Widget tag;
+    if (answer == null) {
+      final muted = c.onCard ? c.textMuted : c.textMutedOnPage;
+      tag = Container(
+        constraints: const BoxConstraints(minHeight: 36),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: ShapeDecoration(
+          shape: StadiumBorder(side: BorderSide(color: c.outline, width: 1.5)),
+        ),
+        child: Center(
+          widthFactor: 1,
+          child: Text(
+            label,
+            maxLines: 1,
+            style: GumdropStyle.of(context).label(
+              TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: compact ? 14 : 15,
+                height: 1.2,
+                color: muted,
+              ),
+            ),
+          ),
+        ),
+      );
+    } else {
+      final accent = statusAccent(context, answer);
+      // Ink on its candy; white on the warning red.
+      final ink = c.inkOn(accent);
+      final (glyph, size) = switch (answer) {
+        RsvpStatus.going => (AppIcons.going, compact ? 16.0 : 18.0),
+        RsvpStatus.maybe => (AppIcons.maybe, compact ? 18.0 : 20.0),
+        RsvpStatus.notGoing => (AppIcons.notGoing, compact ? 14.0 : 16.0),
+      };
+      tag = Container(
+        constraints: const BoxConstraints(minHeight: 36),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          color: accent.face,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(glyph, size: size, weight: 700, color: ink),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GumdropStyle.of(context).label(
+                  TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: compact ? 14 : 16,
+                    height: 1.2,
+                    color: ink,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return Semantics(
+      container: true,
+      label: '$label. ${l10n.eventRsvpClosed}',
+      excludeSemantics: true,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minHeight: height),
+        child: Align(alignment: AlignmentDirectional.centerStart, child: tag),
       ),
     );
   }

@@ -1032,7 +1032,8 @@ class RsvpButtons extends ConsumerWidget {
       return _CardRsvpRow(
         label: label,
         semanticName: participant.shownName,
-        unanswered: current == null,
+        // Nothing left to do once it can't be answered: no coral dot (#53).
+        unanswered: current == null && enabled,
         pills: statuses.length,
         choice: RsvpChoice(
           statuses: statuses,

@@ -220,43 +220,58 @@ class _PollCardState extends ConsumerState<PollCard> {
             ),
           );
           final time = widget.time ?? '';
+          final large = MediaQuery.textScalerOf(context).scale(1) > 1.5;
+          final mark = Padding(
+            padding: const EdgeInsetsDirectional.only(end: 5),
+            child: Icon(AppIcons.poll, size: 16, weight: 700, color: ink),
+          );
+          final label = Text(
+            l10n.pollLabel.toUpperCase(),
+            semanticsLabel: l10n.pollLabel,
+            style: style.label(
+              TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                height: 16 / 13,
+                letterSpacing: 13 * 0.08,
+                color: ink,
+              ),
+            ),
+          );
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // The head: POLL, who asked and how, and when.
-              Row(
-                children: [
-                  Icon(AppIcons.poll, size: 16, weight: 700, color: ink),
-                  const SizedBox(width: 5),
-                  Text(
-                    l10n.pollLabel.toUpperCase(),
-                    semanticsLabel: l10n.pollLabel,
-                    style: style.label(
-                      TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                        height: 16 / 13,
-                        letterSpacing: 13 * 0.08,
-                        color: ink,
+              // The head: POLL, who asked and how, and when; with large
+              // text, who and when go under POLL, so neither is cut off.
+              if (large) ...[
+                Row(children: [mark, label]),
+                Text(
+                  [...tags, if (time.isNotEmpty) time].join(' · '),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: small,
+                ),
+              ] else
+                Row(
+                  children: [
+                    mark,
+                    label,
+                    const SizedBox(width: Space.sm),
+                    Expanded(
+                      child: Text(
+                        tags.join(' · '),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: small,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: Space.sm),
-                  Expanded(
-                    child: Text(
-                      tags.join(' · '),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: small,
-                    ),
-                  ),
-                  if (time.isNotEmpty) ...[
-                    const SizedBox(width: Space.sm),
-                    Text(time, style: small),
+                    if (time.isNotEmpty) ...[
+                      const SizedBox(width: Space.sm),
+                      Text(time, style: small),
+                    ],
                   ],
-                ],
-              ),
+                ),
               const SizedBox(height: 6),
               Text(
                 value.question,
@@ -275,6 +290,8 @@ class _PollCardState extends ConsumerState<PollCard> {
                   option: option,
                   chosen: mine.contains(option.id),
                   leading: leaders.contains(option.id),
+                  // Grays the other bars once there's a result (#53).
+                  decided: leaders.isNotEmpty,
                   onCoral: widget.mine,
                   bubbleInk: widget.mine ? ink : null,
                   bubbleFill: widget.bubbleColor,
@@ -426,12 +443,19 @@ String closesLabel(
 /// choice), the text, the votes and share on the right (which show who
 /// chose it), and a 6 px bar under it filled to its share of voters. On my
 /// coral bubble ([onCoral]) it's all in ink.
+///
+/// Where it can't be voted in ([onTap] null: closed, an archived team, a
+/// super admin viewing), it reads as a result, not a choice (#53): no ring,
+/// only a plain check for my choice, and no ripple or focus. On a closed
+/// poll the most votes ([leading]) get a trophy after the text and keep
+/// their mint bar, while the others' bars go gray ([decided]).
 class _OptionRow extends StatelessWidget {
   const new({
     required this.poll,
     required this.option,
     required this.chosen,
     required this.leading,
+    required this.decided,
     required this.onTap,
     required this.onShowVoters,
     this.onCoral = false,
@@ -449,6 +473,9 @@ class _OptionRow extends StatelessWidget {
 
   /// Ahead once the poll has closed.
   final bool leading;
+
+  /// The poll closed with votes: the bars of options not [leading] go gray.
+  final bool decided;
   final bool onCoral;
   final VoidCallback? onTap;
 
@@ -463,27 +490,45 @@ class _OptionRow extends StatelessWidget {
     final votes = poll.votesFor(option.id);
     final ink = onCoral ? bubbleInk ?? c.ink : c.textPrimary;
     final track = onCoral ? ink.withValues(alpha: 0.18) : c.cardTrack;
-    final fill = onCoral ? ink : c.mint.face;
+    final locked = onTap == null;
+    // The winner's bar stays mint; once decided, the rest go quiet gray.
+    final fill = decided && !leading
+        ? (onCoral
+              ? ink.withValues(alpha: 0.35)
+              : c.textMuted.withValues(alpha: 0.45))
+        : onCoral
+        ? ink
+        : c.mint.face;
     final shape = poll.allowMultiple ? BoxShape.rectangle : BoxShape.circle;
     final radius = poll.allowMultiple ? BorderRadius.circular(5) : null;
-    final marker = Container(
-      width: 18,
-      height: 18,
-      decoration: BoxDecoration(
-        color: chosen ? ink : null,
-        border: Border.all(color: ink, width: 2),
-        shape: shape,
-        borderRadius: radius,
-      ),
-      child: chosen
-          ? Icon(
-              AppIcons.check,
-              size: 13,
-              weight: 800,
-              color: onCoral ? bubbleFill ?? c.you.face : c.surface,
-            )
-          : null,
-    );
+    final marker = locked
+        // Nothing to pick: my choice's plain check, else the ring's room,
+        // so the options still line up.
+        ? SizedBox.square(
+            dimension: 18,
+            child: chosen
+                ? Icon(AppIcons.check, size: 18, weight: 800, color: ink)
+                : null,
+          )
+        : Container(
+            width: 18,
+            height: 18,
+            decoration: BoxDecoration(
+              color: chosen ? ink : null,
+              border: Border.all(color: ink, width: 2),
+              shape: shape,
+              borderRadius: radius,
+            ),
+            child: chosen
+                ? Icon(
+                    AppIcons.check,
+                    size: 13,
+                    weight: 800,
+                    color: onCoral ? bubbleFill ?? c.you.face : c.surface,
+                  )
+                : null,
+          );
+    final percent = (share * 100).round();
     final count = Text(
       l10n.pollOptionVotesShare(votes, (share * 100).round()),
       style: TextStyle(
@@ -495,9 +540,19 @@ class _OptionRow extends StatelessWidget {
       ),
     );
     return Semantics(
-      button: onTap != null,
-      selected: chosen,
-      label: '${option.text}, ${l10n.pollOptionVotes(votes)}',
+      button: !locked,
+      // A result says the choice in words: "Saturday, 8 votes, 73%, your
+      // choice, most votes" (#53).
+      selected: locked ? null : chosen,
+      label: locked
+          ? [
+              option.text,
+              l10n.pollOptionVotes(votes),
+              l10n.pollSharePercent(percent),
+              if (chosen) l10n.pollYourChoice,
+              if (leading) l10n.pollMostVotes,
+            ].join(', ')
+          : '${option.text}, ${l10n.pollOptionVotes(votes)}',
       // The label replaces the row's own semantics, so it carries the
       // actions too, or screen readers couldn't vote.
       excludeSemantics: true,
@@ -521,54 +576,103 @@ class _OptionRow extends StatelessWidget {
                   // wraps the count rather than overflowing.
                   LayoutBuilder(
                     builder: (context, box) {
+                      // With large text the count goes under the option,
+                      // so the option has the row and no word is split
+                      // (#53); otherwise it's beside it, never over half.
+                      final under =
+                          MediaQuery.textScalerOf(context).scale(1) > 1.5;
                       final countBox = BoxConstraints(
-                        maxWidth: (box.maxWidth / 2).clamp(
-                          48.0,
-                          double.infinity,
+                        maxWidth: under
+                            ? box.maxWidth - 26
+                            : (box.maxWidth / 2).clamp(48.0, double.infinity),
+                      );
+                      final text = Text.rich(
+                        TextSpan(
+                          text: option.text,
+                          children: [
+                            // The most votes, right after the text; the
+                            // space lets it wrap rather than split a word.
+                            if (leading) ...[
+                              const TextSpan(text: ' '),
+                              WidgetSpan(
+                                alignment: PlaceholderAlignment.middle,
+                                child: Icon(
+                                  AppIcons.trophy,
+                                  size: 16,
+                                  fill: 1,
+                                  color: ink,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        maxLines: under ? 3 : 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: AppFonts.body,
+                          fontWeight: chosen || leading
+                              ? FontWeight.w800
+                              : FontWeight.w700,
+                          fontSize: 16,
+                          height: 22 / 16,
+                          color: ink,
                         ),
                       );
+                      final votes = switch (onShowVoters) {
+                        // Its own tap target: the count shows who chose
+                        // it, the rest of the row votes.
+                        final show? => Tooltip(
+                          message: l10n.pollSeeWhoChose(option.text),
+                          child: InkWell(
+                            onTap: show,
+                            borderRadius: BorderRadius.circular(Corners.chip),
+                            child: ConstrainedBox(
+                              constraints: countBox.copyWith(
+                                minHeight: 36,
+                                minWidth: 48,
+                              ),
+                              child: Align(
+                                alignment: under
+                                    ? AlignmentDirectional.centerStart
+                                    : Alignment.center,
+                                widthFactor: 1,
+                                child: count,
+                              ),
+                            ),
+                          ),
+                        ),
+                        null => ConstrainedBox(
+                          constraints: countBox,
+                          child: count,
+                        ),
+                      };
+                      if (under) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                marker,
+                                const SizedBox(width: 8),
+                                Expanded(child: text),
+                              ],
+                            ),
+                            Padding(
+                              padding: const EdgeInsetsDirectional.only(
+                                start: 26,
+                              ),
+                              child: votes,
+                            ),
+                          ],
+                        );
+                      }
                       return Row(
                         children: [
                           marker,
                           const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              option.text,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontFamily: AppFonts.body,
-                                fontWeight: chosen || leading
-                                    ? FontWeight.w800
-                                    : FontWeight.w700,
-                                fontSize: 16,
-                                height: 22 / 16,
-                                color: ink,
-                              ),
-                            ),
-                          ),
+                          Expanded(child: text),
                           const SizedBox(width: Space.sm),
-                          if (onShowVoters case final show?)
-                            // Its own tap target: the count shows who chose
-                            // it, the rest of the row votes.
-                            Tooltip(
-                              message: l10n.pollSeeWhoChose(option.text),
-                              child: InkWell(
-                                onTap: show,
-                                borderRadius: BorderRadius.circular(
-                                  Corners.chip,
-                                ),
-                                child: ConstrainedBox(
-                                  constraints: countBox.copyWith(
-                                    minHeight: 36,
-                                    minWidth: 48,
-                                  ),
-                                  child: Center(widthFactor: 1, child: count),
-                                ),
-                              ),
-                            )
-                          else
-                            ConstrainedBox(constraints: countBox, child: count),
+                          votes,
                         ],
                       );
                     },

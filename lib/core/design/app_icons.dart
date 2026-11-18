@@ -68,6 +68,10 @@ abstract final class AppIcons {
   static const IconData media = Symbols.perm_media_rounded;
   static const IconData file = Symbols.insert_drive_file_rounded;
   static const IconData poll = Symbols.poll_rounded;
+
+  /// The most votes on a closed poll (POLL-2, #53), drawn filled.
+  static const IconData trophy = Symbols.trophy_rounded;
+
   static const IconData event = Symbols.event_rounded;
   static const IconData reminder = Symbols.alarm_rounded;
   static const IconData document = Symbols.description_rounded;

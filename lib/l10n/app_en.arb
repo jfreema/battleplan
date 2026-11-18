@@ -1281,6 +1281,16 @@
     }
   },
   "pollOptionVotes": "{count, plural, =1{1 vote} other{{count} votes}}",
+  "pollSharePercent": "{percent}%",
+  "@pollSharePercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "pollYourChoice": "your choice",
+  "pollMostVotes": "most votes",
   "newPoll": "New poll",
   "pollPost": "Post",
   "pollQuestion": "Question",

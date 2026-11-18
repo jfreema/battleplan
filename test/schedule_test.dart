@@ -1186,10 +1186,9 @@ void main() {
       );
       await openDetails(tester, 'Practice');
       expect(find.textContaining('deadline has passed'), findsOneWidget);
-      final buttons = tester.widget<SegmentedButton<RsvpStatus>>(
-        find.byType(SegmentedButton<RsvpStatus>),
-      );
-      expect(buttons.onSelectionChanged, isNull);
+      // A member's answer is one flat tag, not buttons (#53).
+      expect(find.byType(SegmentedButton<RsvpStatus>), findsNothing);
+      expect(find.text('No reply'), findsWidgets);
 
       await openSchedule(
         tester,
