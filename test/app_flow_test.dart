@@ -3090,7 +3090,15 @@ void main() {
         memberships: [testMembership('a', 'coach', role: MemberRole.admin)],
       );
       final pattern = find.text('Sprinkles');
-      await openSettings(tester, until: pattern);
+      // Admin settings → Look → Chat look, its own page (#32).
+      await openSettings(tester, until: find.text('Chat look'));
+      await tester.tap(find.text('Chat look'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        pattern,
+        300,
+        scrollable: find.byType(Scrollable).last,
+      );
       await tester.ensureVisible(pattern);
       await tester.pumpAndSettle();
       expect(find.text('Plus'), findsNothing);
@@ -3178,11 +3186,20 @@ void main() {
       await tester.tap(find.text('Change logo'));
       await tester.pumpAndSettle();
       expect(find.text(full), findsOneWidget);
+      // The chat background is on the Chat look page (#32).
+      await tester.pumpAndSettle(const Duration(seconds: 5));
+      await tester.scrollUntilVisible(
+        find.text('Chat look'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Chat look'));
+      await tester.pumpAndSettle();
       final photo = find.text('Photo');
       await tester.scrollUntilVisible(
         photo,
         300,
-        scrollable: find.byType(Scrollable).first,
+        scrollable: find.byType(Scrollable).last,
       );
       await tester.ensureVisible(photo);
       await tester.pumpAndSettle();

@@ -492,6 +492,7 @@ Future<void> pumpTeam(
   Group? team,
   List<Event>? events,
   FakePollRepository? pollRepo,
+  MemberRole? role,
   List<Override> overrides = const [],
 }) async {
   final eventRepo = FakeEventRepository(events ?? sceneEvents);
@@ -517,7 +518,10 @@ Future<void> pumpTeam(
     // My pick on the scene team is the same scheme (SET-2).
     memberships: [
       for (final m in sceneMembers)
-        if (m.uid.value == user.uid) m.copyWith(colorScheme: scheme) else m,
+        if (m.uid.value == user.uid)
+          m.copyWith(colorScheme: scheme, role: role ?? m.role)
+        else
+          m,
       if (!sceneMembers.any((m) => m.uid.value == user.uid))
         testMembership('a', user.uid).copyWith(colorScheme: scheme),
     ],

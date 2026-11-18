@@ -463,6 +463,8 @@ void main() {
         'does: no bubble', (tester) async {
       await pumpTeam(tester, scheme: TeamScheme.army);
       await goTo(tester, '/g/a/settings');
+      // Admin settings → Look → Chat look (#32).
+      await pushTo(tester, '/g/a/settings/chat-look');
       final preview = find.text('Practice moved to 6:30 tonight.');
       await tester.ensureVisible(preview);
       await tester.pumpAndSettle();

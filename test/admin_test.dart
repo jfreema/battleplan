@@ -823,6 +823,8 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byType(TextField).first, 'Storm');
+      // Save comes on once the name changes (#32).
+      await tester.pump();
       await tester.tap(find.widgetWithText(FilledButton, 'Save'));
       await tester.pumpAndSettle();
       expect(admin.calls.last, 'team t1 name=Storm description=');
@@ -832,6 +834,11 @@ void main() {
       expect(admin.calls.last, 'team t1 photoPath=groups/t1/avatar/logo0.jpg');
       expect(groups.logosUploaded, 0);
 
+      // The chat look, on its own page (#32).
+      await tester.pumpAndSettle(const Duration(seconds: 5));
+      await tester.ensureVisible(find.text('Chat look'));
+      await tester.tap(find.text('Chat look'));
+      await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('Sprinkles'));
       await tester.tap(find.text('Sprinkles'));
       await tester.pumpAndSettle();
@@ -843,6 +850,8 @@ void main() {
         admin.calls.last,
         'team t1 chatTheme=photo:groups/t1/theme/bg.jpg',
       );
+      Navigator.of(tester.element(find.text('Sprinkles'))).pop();
+      await tester.pumpAndSettle();
 
       final allowMaybe = find.text('Allow "Maybe" RSVPs');
       await tester.ensureVisible(allowMaybe);
@@ -850,12 +859,17 @@ void main() {
       await tester.pumpAndSettle();
       expect(admin.calls.last, 'team t1 settings');
 
-      // The team's default color scheme (SET-2).
+      // The team's default color scheme (SET-2), on its own page (#32).
+      await tester.ensureVisible(find.text('Team color scheme'));
+      await tester.tap(find.text('Team color scheme'));
+      await tester.pumpAndSettle();
       final navy = find.text('Navy');
       await tester.ensureVisible(navy);
       await tester.tap(navy);
       await tester.pumpAndSettle();
       expect(admin.calls.last, 'team t1 colorScheme=navy');
+      Navigator.of(tester.element(navy)).pop();
+      await tester.pumpAndSettle();
 
       // Where new members' notifications start (TEAM-5, NOTIF-3).
       final important = find.widgetWithText(ChoiceChip, 'Important only');

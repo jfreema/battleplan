@@ -179,7 +179,8 @@ void main() {
         },
     'color scheme': (WidgetTester tester, {required TeamScheme scheme}) =>
         pumpFromTeamSettings(tester, scheme: scheme, path: '/g/a/scheme'),
-    // Admin settings' team default color scheme (SET-2), its five rows.
+    // Admin settings' team default color scheme (SET-2), its five rows,
+    // on its own page from Look (#32).
     'team color scheme':
         (WidgetTester tester, {required TeamScheme scheme}) async {
           await pumpFromTeamSettings(
@@ -187,6 +188,7 @@ void main() {
             scheme: scheme,
             path: '/g/a/settings',
           );
+          await pushTo(tester, '/g/a/settings/color-scheme');
           final last = find.text('Light blue');
           await tester.scrollUntilVisible(
             last,
@@ -194,8 +196,17 @@ void main() {
             scrollable: find.byType(Scrollable).last,
           );
           await tester.pumpAndSettle();
-          expect(find.text('Team color scheme'), findsOneWidget);
+          // The page's last line, none being set.
+          expect(
+            find.text('None set yet: everyone sees their own default.'),
+            findsOneWidget,
+          );
         },
+    // Admin settings → Look → Chat look (CHAT-18, #32).
+    'chat look': (WidgetTester tester, {required TeamScheme scheme}) async {
+      await pumpFromTeamSettings(tester, scheme: scheme, path: '/g/a/settings');
+      await pushTo(tester, '/g/a/settings/chat-look');
+    },
     'group schedule':
         (WidgetTester tester, {required TeamScheme scheme}) async {
           await pumpGroupSchedule(tester, scheme: scheme);

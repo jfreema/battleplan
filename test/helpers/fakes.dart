@@ -425,13 +425,19 @@ class FakeGroupRepository implements GroupRepository {
     final g = groups[id.value]!;
     groups[id.value] = g.copyWith(
       name: name ?? g.name,
+      description: description ?? g.description,
       timeZone: timeZone ?? g.timeZone,
       settings: settings ?? g.settings,
     );
     if (timeZone != null) updates.add('timeZone $timeZone');
-    updates.add(
-      settings != null ? 'settings' : (name != null ? 'name $name' : 'other'),
-    );
+    updates.add(switch ((settings, name, description)) {
+      (_?, _, _) => 'settings',
+      // The name and description save together (#32).
+      (null, final n?, final d?) => 'name $n description $d',
+      (null, final n?, null) => 'name $n',
+      (null, null, final d?) => 'description $d',
+      _ => 'other',
+    });
   }
 
   int logosUploaded = 0;

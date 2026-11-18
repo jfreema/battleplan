@@ -735,7 +735,17 @@ void main() {
       GoRouter.of(tester.element(find.byType(Scaffold).first))
           .go('/g/a/settings');
       await tester.pumpAndSettle();
-      expect(find.text('Team color scheme'), findsOneWidget);
+      // Under Look, saying none is set; its page has the five (#32).
+      expect(
+        find.text('Not set: everyone sees their own default'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Team color scheme'));
+      await tester.pumpAndSettle();
+      expect(
+        find.widgetWithText(PageTitle, 'Team color scheme'),
+        findsOneWidget,
+      );
       expect(
         find.text('None set yet: everyone sees their own default.'),
         findsOneWidget,

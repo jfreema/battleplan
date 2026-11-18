@@ -34,6 +34,7 @@ import 'package:battleplan/features/documents/presentation/documents_screen.dart
 import 'package:battleplan/features/dues/dues.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/presentation/add_members_screen.dart';
+import 'package:battleplan/features/groups/presentation/admin_look_pages.dart';
 import 'package:battleplan/features/groups/presentation/color_scheme_screen.dart';
 import 'package:battleplan/features/groups/presentation/create_team_screen.dart';
 import 'package:battleplan/features/groups/presentation/email_invites_screen.dart';
@@ -713,6 +714,9 @@ GoRouter router(Ref ref) {
           // settings; its path is still `settings`.
           GoRoute(
             path: 'settings',
+            // Typing in the name or description and leaving asks first
+            // (#32): a go from the rail or the team header lands here.
+            onExit: (_, _) => TeamSettingsScreen.mayLeave(),
             pageBuilder: (_, state) => PanelPage(
               key: state.pageKey,
               child: TeamSettingsScreen(
@@ -720,6 +724,27 @@ GoRouter router(Ref ref) {
                 appBuild: ref.read(appBuildProvider),
               ),
             ),
+            // Look's two pages (#32), side panels on wide screens.
+            routes: [
+              GoRoute(
+                path: 'chat-look',
+                pageBuilder: (_, state) => PanelPage(
+                  key: state.pageKey,
+                  child: ChatLookScreen(
+                    groupId: GroupId(state.pathParameters['groupId']!),
+                  ),
+                ),
+              ),
+              GoRoute(
+                path: 'color-scheme',
+                pageBuilder: (_, state) => PanelPage(
+                  key: state.pageKey,
+                  child: TeamSchemeScreen(
+                    groupId: GroupId(state.pathParameters['groupId']!),
+                  ),
+                ),
+              ),
+            ],
           ),
           GoRoute(
             path: 'media',

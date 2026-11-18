@@ -55,14 +55,12 @@ void main() {
         'change it.';
     for (final words in [
       'GROUP NAME',
-      'Color',
+      // Look's small label, in capitals (#32).
+      'COLOR',
       "The color is on the group's badge and in the switcher.",
+      'Group color scheme',
       "Everyone can see who's in the group",
       'Off: only admins see everyone in the group. Members see only themselves.',
-      chatIntro,
-      'Sam',
-      'Moved to 7 tonight, same place.',
-      'Group color',
       'A new group for the next season, with the people you choose.',
       'Archive group',
       'Delete group',
@@ -71,7 +69,8 @@ void main() {
     }
     for (final words in [
       'TEAM NAME',
-      'Team color',
+      'TEAM COLOR',
+      'Team color scheme',
       'Coach',
       'Archive team',
       'Delete team',
@@ -87,21 +86,40 @@ void main() {
     await tester.tap(find.text('Delete group'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Type the group name'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    // The chat look, on its own page now (#32), with a friend's message.
+    await tester.tap(find.text('Chat look'));
+    await tester.pumpAndSettle();
+    for (final words in [
+      chatIntro,
+      'Sam',
+      'Moved to 7 tonight, same place.',
+      'Group color',
+    ]) {
+      expect(find.text(words), findsWidgets, reason: words);
+    }
+    expect(find.text('Coach'), findsNothing);
   });
 
   testWidgets("a team's Admin settings keep team words", (tester) async {
     await open(tester, '/g/a/info,/g/a/settings', kind: GroupKind.team);
     for (final words in [
       'TEAM NAME',
-      'Team color',
+      'TEAM COLOR',
+      'Team color scheme',
       "Everyone can see who's on the team",
-      'Coach',
       'Archive team',
       'Delete team',
     ]) {
       expect(find.text(words), findsWidgets, reason: words);
     }
     expect(find.text('GROUP NAME'), findsNothing);
+    // The chat look's preview, on its own page (#32): Coach's message.
+    await tester.tap(find.text('Chat look'));
+    await tester.pumpAndSettle();
+    expect(find.text('Coach'), findsWidgets);
   });
 
   testWidgets("a group's notifications, Media and new season say group", (
