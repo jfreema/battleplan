@@ -53,7 +53,8 @@ void main() {
       messageRepo: FakeMessageRepository(messages),
       safety: safety,
     );
-    await tester.tap(find.text('Documents'));
+    // "Docs" on the phone's tab bar (#64).
+    await tester.tap(find.text('Docs'));
     await tester.pumpAndSettle();
     expect(find.text('Every photo shared in the chat'), findsOneWidget);
     await tester.tap(find.text('Photos'));

@@ -381,7 +381,8 @@ void main() {
         notifications: notifications,
       );
       if (tapDocuments) {
-        await tester.tap(find.text('Documents'));
+        // "Docs" on the phone's tab bar (#64).
+        await tester.tap(find.text('Docs'));
         await tester.pumpAndSettle();
       }
       return (

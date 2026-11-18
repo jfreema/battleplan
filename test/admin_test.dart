@@ -1337,8 +1337,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(messages.photoBatches, [1]);
 
-      // Documents.
-      await tester.tap(find.text('Documents'));
+      // Documents ("Docs" on the phone's tab bar, #64).
+      await tester.tap(find.text('Docs'));
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Add a file or link'));
       await tester.pumpAndSettle();
@@ -1573,7 +1573,7 @@ void main() {
       expect(messages.deleted, ['m1']);
 
       // Documents: no adding, but deleting any.
-      await tester.tap(find.text('Documents'));
+      await tester.tap(find.text('Docs'));
       await tester.pumpAndSettle();
       expect(find.byType(FloatingActionButton), findsNothing);
       expect(admin.opened, ['t1']);

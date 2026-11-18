@@ -112,16 +112,16 @@ void main() {
     }
   }
 
-  // Five tabs share a 360-point phone (SPEC §5.3). "Documents" fills its
-  // tab at the default text size; with larger text, a label too long for
-  // its tab shrinks to fit rather than ending in "…".
+  // Five tabs share a 360-point phone (SPEC §5.3), Documents as "Docs"
+  // (#64); with larger text the labels shrink, together, to fit rather
+  // than ending in "…".
   for (final scale in [1.0, 1.3, 2.0]) {
     testWidgets('every tab label is whole and inside its tab at 360 px, '
         'with text at ${(scale * 100).round()}%', (tester) async {
       tester.platformDispatcher.textScaleFactorTestValue = scale;
       addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
       await top(tester, const Size(360, 780), '/g/a/chat');
-      for (final label in ['Chat', 'Schedule', 'Documents', 'Plays', 'Team']) {
+      for (final label in ['Chat', 'Schedule', 'Docs', 'Plays', 'Team']) {
         final text = find.descendant(
           of: find.byType(OpenFieldTabBar),
           matching: find.text(label),
@@ -140,6 +140,115 @@ void main() {
       }
     });
   }
+
+  // #64 (owner's request 2026-11-17: "the words collide with each
+  // other"): the labels share one size, the longest fitting its tab with
+  // room on each side, so neighbors never touch, a team's five or a
+  // group's four, at any phone width and text size.
+  for (final group in [false, true]) {
+    for (final width in [320.0, 360.0, 390.0]) {
+      for (final scale in [1.0, 1.5, 2.0]) {
+        testWidgets("${group ? "a group's" : "a team's"} tab labels never "
+            'touch, all one size, at ${width.round()} px with text at '
+            '${(scale * 100).round()}%', (tester) async {
+          tester.platformDispatcher.textScaleFactorTestValue = scale;
+          addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+          await pumpTeam(
+            tester,
+            scheme: TeamScheme.army,
+            size: Size(width, 780),
+            team: group ? sceneTeam.copyWith(kind: GroupKind.group) : null,
+          );
+          final labels = [
+            'Chat',
+            'Schedule',
+            'Docs',
+            if (!group) 'Plays',
+            if (group) 'People' else 'Team',
+          ];
+          final rects = [
+            for (final label in labels)
+              tester.getRect(
+                find.descendant(
+                  of: find.byType(OpenFieldTabBar),
+                  matching: find.text(label),
+                ),
+              ),
+          ];
+          for (var i = 1; i < rects.length; i++) {
+            expect(
+              rects[i].left - rects[i - 1].right,
+              greaterThanOrEqualTo(2 * OpenFieldTabBar.labelGap - 0.5),
+              reason: '${labels[i - 1]} and ${labels[i]}',
+            );
+          }
+          // One size: the same height, and the same scale for each.
+          final scales = {
+            for (final label in labels)
+              tester
+                  .widget<Text>(
+                    find.descendant(
+                      of: find.byType(OpenFieldTabBar),
+                      matching: find.text(label),
+                    ),
+                  )
+                  .textScaler,
+          };
+          expect(scales, hasLength(1));
+          expect(
+            rects.map((r) => r.height.toStringAsFixed(1)).toSet(),
+            hasLength(1),
+          );
+          // Never bigger than the text size asks.
+          final asked = TextScaler.linear(scale);
+          expect(
+            scales.single!.scale(13),
+            lessThanOrEqualTo(asked.scale(13) + 0.01),
+          );
+        });
+      }
+    }
+  }
+
+  testWidgets("the phone's bar says Docs; screen readers hear Documents", (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    await top(tester, const Size(390, 780), '/g/a/chat');
+    expect(
+      find.descendant(
+        of: find.byType(OpenFieldTabBar),
+        matching: find.text('Docs'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.bySemanticsLabel('Documents, Tab 3 of 5'), findsOneWidget);
+    handle.dispose();
+  });
+
+  testWidgets("the rail's labels are whole and one size at 200%", (
+    tester,
+  ) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await top(tester, const Size(1280, 900), '/g/a/chat');
+    final rail = find.byType(OpenFieldRail);
+    final scales = {
+      for (final label in [
+        'Chat',
+        'Schedule',
+        'Documents',
+        'Plays',
+        'Team',
+        'Teams',
+        'Profile',
+      ])
+        tester
+            .widget<Text>(find.descendant(of: rail, matching: find.text(label)))
+            .textScaler,
+    };
+    expect(scales, hasLength(1));
+  });
 
   // A phone on its side is wide enough for the rail (840 px and up) but
   // short: with large text, five tabs are taller than the screen, and the

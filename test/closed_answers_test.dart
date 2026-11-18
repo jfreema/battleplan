@@ -2,6 +2,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/players/domain/player.dart';
@@ -309,11 +310,20 @@ void main() {
         'dot on an unanswered one', (tester) async {
       final handle = tester.ensureSemantics();
       final now = DateTime.now();
+      // Started, but today where the team is (Chicago), or Upcoming
+      // leaves it out: just after midnight, half an hour ago is yesterday.
+      final local = ZonedTime.wallClock('America/Chicago', now);
+      final today = Duration(
+        hours: local.hour,
+        minutes: local.minute,
+        seconds: local.second,
+      );
+      const ago = Duration(minutes: 30);
       final started = [
         for (final e in scenes.sceneEvents)
           if (e.id.value == 'e1' || e.id.value == 'e2')
             e.copyWith(
-              startAt: now.subtract(const Duration(minutes: 30)),
+              startAt: now.subtract(today > ago ? ago : today ~/ 2),
               endAt: now.add(const Duration(hours: 1)),
             ),
       ];

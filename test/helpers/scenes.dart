@@ -703,7 +703,8 @@ Future<void> pumpDocuments(
   required TeamScheme scheme,
 }) async {
   await pumpTeam(tester, scheme: scheme);
-  await tester.tap(find.text('Documents'));
+  // "Docs" on the phone's tab bar (#64).
+  await tester.tap(find.text('Docs'));
   await tester.pumpAndSettle();
 }
 

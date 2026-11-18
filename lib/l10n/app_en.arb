@@ -64,6 +64,10 @@
   "tabChat": "Chat",
   "tabSchedule": "Schedule",
   "tabDocuments": "Documents",
+  "tabDocsShort": "Docs",
+  "@tabDocsShort": {
+    "description": "Documents on the phone's bottom tab bar, where five labels share a narrow screen. Short as it can be."
+  },
   "tabPlays": "Plays",
   "tabTeam": "Team",
   "@tabTeam": {

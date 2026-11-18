@@ -244,19 +244,25 @@ class _TeamShellState extends ConsumerState<TeamShell> {
       for (final (i, tab) in teamTabs.indexed)
         if (plays || tab != 'plays') i,
     ];
-    final destinations = <(Widget Function({required bool selected}), String)>[
-      (({required selected}) => const ChatIcon(), l10n.tabChat),
-      (glyph(AppIcons.schedule), l10n.tabSchedule),
-      (glyph(AppIcons.documents), l10n.tabDocuments),
-      // Drawn: no icon font has a coach's play, an O, its route, and an X
-      // (BOARD-1).
-      if (plays) (({required selected}) => const PlaysIcon(), l10n.tabPlays),
-      // The roster, Invite, and Dues (SPEC §5.3); a group's is People.
-      (
-        glyph(AppIcons.group),
-        (shownGroup?.isGroup ?? false) ? l10n.groupPeople : l10n.tabTeam,
-      ),
-    ];
+    // Each tab's icon, label, and the phone bar's shorter label, if any.
+    final destinations =
+        <(Widget Function({required bool selected}), String, String?)>[
+          (({required selected}) => const ChatIcon(), l10n.tabChat, null),
+          (glyph(AppIcons.schedule), l10n.tabSchedule, null),
+          // "Docs" on the phone's bar, where five labels share 320 points
+          // (#64); Documents to screen readers and in the rail.
+          (glyph(AppIcons.documents), l10n.tabDocuments, l10n.tabDocsShort),
+          // Drawn: no icon font has a coach's play, an O, its route, and an
+          // X (BOARD-1).
+          if (plays)
+            (({required selected}) => const PlaysIcon(), l10n.tabPlays, null),
+          // The roster, Invite, and Dues (SPEC §5.3); a group's is People.
+          (
+            glyph(AppIcons.group),
+            (shownGroup?.isGroup ?? false) ? l10n.groupPeople : l10n.tabTeam,
+            null,
+          ),
+        ];
     // The Chat tab shows this team's unread count (CHAT-9).
     final unread = viewing
         ? 0
@@ -321,11 +327,12 @@ class _TeamShellState extends ConsumerState<TeamShell> {
     };
 
     final tabs = <OpenFieldTab>[
-      for (final (i, (icon, label)) in destinations.indexed)
+      for (final (i, (icon, label, short)) in destinations.indexed)
         (
           icon: tabIcon(i, icon(selected: false)),
           selectedIcon: tabIcon(i, icon(selected: true)),
           label: label,
+          short: short,
           badge: i == 0 && unread > 0
               ? l10n.unreadCount(unread)
               : i == teamTab && requests > 0

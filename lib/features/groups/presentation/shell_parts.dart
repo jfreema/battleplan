@@ -43,12 +43,15 @@ abstract final class HeaderEyebrow {
 /// One tab of `OpenFieldTabBar` or `OpenFieldRail`: its icon (and the icon
 /// when it's the current tab), and its label.
 ///
-/// `badge` is what the tab's count says to a screen reader ("3 unread
-/// messages"), or null.
+/// `short` is what the phone's tab bar shows where five tabs share 320
+/// points ("Docs" for Documents, #64), or null for the label; screen
+/// readers and the rail have the whole label. `badge` is what the tab's
+/// count says to a screen reader ("3 unread messages"), or null.
 typedef OpenFieldTab = ({
   Widget icon,
   Widget selectedIcon,
   String label,
+  String? short,
   String? badge,
 });
 
@@ -61,6 +64,11 @@ typedef OpenFieldRailLink = ({IconData icon, String label, VoidCallback onTap});
 /// area, in the scheme's tab bar color with a 1 px rule on top. The tabs
 /// share the width; the current one has a coral icon, a text-colored label
 /// and a 40 × 3 coral bar on the bar's top edge.
+///
+/// Its labels share one size (#64, owner's request 2026-11-17: "the words
+/// collide with each other"): the text size asked for, or smaller where
+/// the longest label wouldn't fit its tab with [labelGap] on each side, so
+/// no two labels ever touch and none is smaller than its neighbors.
 class OpenFieldTabBar extends StatelessWidget {
   const new({
     required this.tabs,
@@ -72,6 +80,37 @@ class OpenFieldTabBar extends StatelessWidget {
   final List<OpenFieldTab> tabs;
   final int selectedIndex;
   final ValueChanged<int> onSelect;
+
+  /// The least room on each side of a label, so neighbors stay apart.
+  static const double labelGap = 4;
+
+  /// The labels' one text scale for tabs [cell] wide: the [asked] scale, or
+  /// less where the longest label wouldn't fit with [labelGap] each side.
+  static double labelScale(
+    BuildContext context,
+    List<OpenFieldTab> tabs, {
+    required double cell,
+    required double asked,
+    bool short = true,
+  }) {
+    final style = _Tab.labelStyle(context);
+    var widest = 0.0;
+    for (final tab in tabs) {
+      final painter = TextPainter(
+        text: TextSpan(
+          text: short ? tab.short ?? tab.label : tab.label,
+          style: style,
+        ),
+        maxLines: 1,
+        textDirection: Directionality.of(context),
+      )..layout();
+      if (painter.width > widest) widest = painter.width;
+      painter.dispose();
+    }
+    final room = cell - 2 * labelGap;
+    if (widest <= 0 || room <= 0) return asked;
+    return room / widest < asked ? room / widest : asked;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -88,20 +127,34 @@ class OpenFieldTabBar extends StatelessWidget {
         borderOnForeground: false,
         child: Padding(
           padding: EdgeInsets.fromLTRB(6, 0, 6, bottom),
-          child: Row(
-            children: [
-              for (final (i, tab) in tabs.indexed)
-                Expanded(
-                  child: _Tab(
-                    tab: tab,
-                    index: i,
-                    count: tabs.length,
-                    selected: i == selectedIndex,
-                    onTap: () => onSelect(i),
-                    marker: Alignment.topCenter,
-                  ),
-                ),
-            ],
+          child: LayoutBuilder(
+            builder: (context, box) {
+              final scale = labelScale(
+                context,
+                tabs,
+                cell: box.maxWidth / tabs.length,
+                asked:
+                    MediaQuery.textScalerOf(context).scale(_Tab.labelSize) /
+                    _Tab.labelSize,
+              );
+              return Row(
+                children: [
+                  for (final (i, tab) in tabs.indexed)
+                    Expanded(
+                      child: _Tab(
+                        tab: tab,
+                        index: i,
+                        count: tabs.length,
+                        selected: i == selectedIndex,
+                        onTap: () => onSelect(i),
+                        marker: Alignment.topCenter,
+                        labelScale: scale,
+                        short: true,
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -126,9 +179,32 @@ class OpenFieldRail extends StatelessWidget {
   final ValueChanged<int> onSelect;
   final List<OpenFieldRailLink> links;
 
+  /// The rail's width.
+  static const double width = 88;
+
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
+    final linkTabs = <OpenFieldTab>[
+      for (final link in links)
+        (
+          icon: Icon(link.icon),
+          selectedIcon: Icon(link.icon),
+          label: link.label,
+          short: null,
+          badge: null,
+        ),
+    ];
+    // One size for every label, the whole label, as the tab bar's (#64).
+    final scale = OpenFieldTabBar.labelScale(
+      context,
+      [...tabs, ...linkTabs],
+      cell: width,
+      asked:
+          MediaQuery.textScalerOf(context).scale(_Tab.labelSize) /
+          _Tab.labelSize,
+      short: false,
+    );
     final items = [
       const SizedBox(height: 12),
       for (final (i, tab) in tabs.indexed)
@@ -141,6 +217,7 @@ class OpenFieldRail extends StatelessWidget {
             selected: i == selectedIndex,
             onTap: () => onSelect(i),
             marker: Alignment.centerLeft,
+            labelScale: scale,
           ),
         ),
     ];
@@ -150,7 +227,7 @@ class OpenFieldRail extends StatelessWidget {
       child: SafeArea(
         right: false,
         child: SizedBox(
-          width: 88,
+          width: width,
           // The links at the foot. On a window too short for every tab and
           // link, such as a phone on its side with large text, the rail
           // scrolls rather than overflows.
@@ -166,19 +243,15 @@ class OpenFieldRail extends StatelessWidget {
                     children: [
                       ...items,
                       const Spacer(),
-                      for (final link in links)
+                      for (final (i, link) in links.indexed)
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 4),
                           child: _Tab(
-                            tab: (
-                              icon: Icon(link.icon),
-                              selectedIcon: Icon(link.icon),
-                              label: link.label,
-                              badge: null,
-                            ),
+                            tab: linkTabs[i],
                             selected: false,
                             onTap: link.onTap,
                             marker: Alignment.centerLeft,
+                            labelScale: scale,
                           ),
                         ),
                       const SizedBox(height: 12),
@@ -202,9 +275,32 @@ class _Tab extends StatelessWidget {
     required this.marker,
     this.index,
     this.count,
+    this.labelScale,
+    this.short = false,
   });
 
+  /// A label's size before the text size scales it.
+  static const double labelSize = 13;
+
+  /// A label's style, before the text size scales it.
+  static TextStyle labelStyle(BuildContext context, {Color? color}) =>
+      GumdropStyle.of(context).label(
+        TextStyle(
+          fontSize: labelSize,
+          height: 1.1,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      );
+
   final OpenFieldTab tab;
+
+  /// The bar's or the rail's one scale for every label (#64); null shrinks
+  /// this label alone, and only if it must.
+  final double? labelScale;
+
+  /// The phone bar's shorter label where there is one ("Docs").
+  final bool short;
 
   /// Which tab this is, of [count]; both null for a rail link, which isn't
   /// a tab.
@@ -263,23 +359,23 @@ class _Tab extends StatelessWidget {
                       child: selected ? tab.selectedIcon : tab.icon,
                     ),
                     const SizedBox(height: 4),
-                    // Whole, and as big as the text size makes it until the
-                    // tab is full; then it shrinks to fit rather than being
-                    // cut off ("Docume…"), as five tabs on a 360-point
-                    // phone would be with larger text.
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        tab.label,
-                        maxLines: 1,
-                        textAlign: TextAlign.center,
-                        style: GumdropStyle.of(context).label(
-                          TextStyle(
-                            fontSize: 13,
-                            height: 1.1,
-                            fontWeight: FontWeight.w600,
-                            color: color,
-                          ),
+                    // Whole, never cut off ("Docume…"), and at the bar's or
+                    // rail's one size, apart from its neighbors (#64).
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: OpenFieldTabBar.labelGap,
+                      ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          short ? tab.short ?? tab.label : tab.label,
+                          maxLines: 1,
+                          textAlign: TextAlign.center,
+                          textScaler: switch (labelScale) {
+                            final scale? => TextScaler.linear(scale),
+                            null => null,
+                          },
+                          style: labelStyle(context, color: color),
                         ),
                       ),
                     ),

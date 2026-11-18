@@ -408,7 +408,8 @@ void main() {
     testWidgets("on a phone it's in a team's header on every tab, before "
         'Messages, and opens over the team', (tester) async {
       await pump(tester, boss);
-      for (final tab in ['Chat', 'Schedule', 'Documents', 'Plays']) {
+      // "Docs" on the phone's tab bar (#64).
+      for (final tab in ['Chat', 'Schedule', 'Docs', 'Plays']) {
         await tester.tap(find.text(tab).last);
         await tester.pumpAndSettle();
         final button = find.byTooltip('Admin panel');

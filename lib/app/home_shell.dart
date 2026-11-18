@@ -38,6 +38,7 @@ class HomeShell extends ConsumerWidget {
           icon: Icon(icon),
           selectedIcon: Icon(icon, fill: 1),
           label: label,
+          short: null,
           badge: null,
         ),
     ];

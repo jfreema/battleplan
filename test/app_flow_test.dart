@@ -2728,7 +2728,8 @@ void main() {
     expect(find.text('Thunder'), findsOneWidget);
     expect(find.text('Chat'), findsOneWidget);
     expect(find.text('Schedule'), findsOneWidget);
-    expect(find.text('Documents'), findsOneWidget);
+    // "Docs" on the phone's tab bar (#64).
+    expect(find.text('Docs'), findsOneWidget);
     expect(find.text('No messages yet. Say hi to the team!'), findsOneWidget);
   });
 

@@ -917,8 +917,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(repo.photoBatches, [2]);
 
-      // Not while another tab is showing.
-      await tester.tap(find.text('Documents'));
+      // Not while another tab is showing ("Docs" on the bar, #64).
+      await tester.tap(find.text('Docs'));
       await tester.pumpAndSettle();
       drops.drop([(bytes: tinyPng, contentType: 'image/png')]);
       await tester.pumpAndSettle();
