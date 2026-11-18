@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/gumdrop_buttons.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
@@ -9,6 +11,7 @@ import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
@@ -25,6 +28,9 @@ import 'package:battleplan/features/players/presentation/guardian_picker.dart';
 import 'package:battleplan/features/players/presentation/player_details_section.dart';
 import 'package:battleplan/features/players/presentation/player_dialogs.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
+import 'package:battleplan/features/schedule/domain/event.dart';
+import 'package:battleplan/features/schedule/domain/rsvp.dart';
+import 'package:battleplan/features/schedule/schedule.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -172,38 +178,19 @@ class PlayerCardScreen extends ConsumerWidget {
             ),
           for (final l in playerLinks)
             if (roster.where((m) => m.uid == l.uid).firstOrNull case final m?)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Avatar(
-                  name: m.displayName,
-                  colorKey: m.uid.value,
-                  color: m.avatarColor,
-                ),
-                title: Text(m.displayName),
-                subtitle: Text(
-                  [
-                    if (l.isSelf)
-                      l10n.playerLinkPlayer
-                    else
-                      l10n.playerLinkGuardian,
-                    if (m.pending) l10n.notJoinedYet,
-                  ].join(' · '),
-                ),
-                // Admins remove any link; a member can remove their own.
-                trailing: isAdmin || m.uid.value == me
-                    ? IconButton(
-                        tooltip: l.isSelf
-                            ? l10n.removePlayerLink
-                            : l10n.removeGuardian,
-                        icon: const Icon(AppIcons.close),
-                        onPressed: () => unawaited(
-                          _removeGuardian(
-                            context,
-                            ref,
-                            m.uid,
-                            m.displayName,
-                            self: l.isSelf,
-                          ),
+              _LinkRow(
+                member: m,
+                isSelf: l.isSelf,
+                // Admins unlink anyone; a member can unlink themselves.
+                onUnlink: isAdmin || m.uid.value == me
+                    ? () => unawaited(
+                        _unlink(
+                          context,
+                          ref,
+                          player,
+                          m,
+                          isPlayer: l.isSelf,
+                          mine: m.uid.value == me,
                         ),
                       )
                     : null,
@@ -405,20 +392,40 @@ class PlayerCardScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _removeGuardian(
+  /// Unlinks [member] from [player] (PLAYER-5, #37), saying first what
+  /// that means: whoever it is stops answering the player's RSVPs and
+  /// seeing their details, and stays on the team. My own link ([mine]),
+  /// as a guardian or as the player ([isPlayer]), can be claimed again.
+  Future<void> _unlink(
     BuildContext context,
     WidgetRef ref,
-    UserId uid,
-    String name, {
-    required bool self,
+    Player player,
+    Membership member, {
+    required bool isPlayer,
+    required bool mine,
   }) async {
     final l10n = AppLocalizations.of(context);
+    final first = player.firstName;
+    final person = member.displayName.trim().split(RegExp(r'\s+')).first;
+    final (title, message) = switch ((mine, isPlayer)) {
+      (true, true) => (
+        l10n.unlinkPlayerSelfTitle(player.label),
+        l10n.unlinkPlayerSelfBody,
+      ),
+      (true, false) => (
+        l10n.unlinkGuardianSelfTitle(first),
+        l10n.unlinkGuardianSelfBody(first),
+      ),
+      (false, _) => (
+        l10n.unlinkOtherTitle(member.displayName, first),
+        l10n.unlinkOtherBody(person, first),
+      ),
+    };
     final ok = await showConfirmDialog(
       context,
-      title: self
-          ? l10n.removePlayerLinkTitle(name)
-          : l10n.removeGuardianTitle(name),
-      confirmLabel: self ? l10n.removePlayerLink : l10n.removeGuardian,
+      title: title,
+      message: message,
+      confirmLabel: l10n.unlinkAction,
       cancelLabel: l10n.cancel,
       destructive: true,
     );
@@ -426,7 +433,13 @@ class PlayerCardScreen extends ConsumerWidget {
     try {
       await ref
           .read(playerRepositoryProvider)
-          .removeGuardian(groupId, playerId, uid);
+          .removeGuardian(groupId, playerId, member.uid);
+      if (context.mounted) {
+        showAppSnackBar(
+          context,
+          mine ? l10n.unlinkedSelf(first) : l10n.unlinkedOther(person, first),
+        );
+      }
     } on AppFailure {
       if (context.mounted) showAppSnackBar(context, l10n.errorRemoveGuardian);
     }
@@ -605,40 +618,160 @@ class _UpcomingRsvps extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(l10n.upcomingRsvps, style: theme.textTheme.titleSmall),
+        // Placeholder rows while the events load, not a spinner (#37).
         if (list.loading)
-          const Padding(
-            padding: EdgeInsets.all(Space.md),
-            child: Center(child: CircularProgressIndicator()),
-          )
+          const SkeletonList(rows: 3)
         else if (events.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: Space.sm),
             child: Text(l10n.noUpcomingRsvps),
           ),
         for (final e in events)
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(e.title),
-            subtitle: Text(
-              e.allDay
-                  ? dates.formatMediumDate(
-                      dayOf(e, ViewerZone.of(context) ?? e.timeZone),
-                    )
-                  : '${dates.formatMediumDate(ViewerZone.wallClock(context, e.startAt))} · '
-                        '${dates.formatTimeOfDay(TimeOfDay.fromDateTime(ViewerZone.wallClock(context, e.startAt)))}',
-            ),
-            trailing: Text(switch (answers[e.id.value]?.status) {
-              RsvpStatus.going => l10n.rsvpGoing,
-              RsvpStatus.maybe => l10n.rsvpMaybe,
-              RsvpStatus.notGoing => l10n.rsvpNotGoing,
-              null => l10n.rsvpNoAnswer,
-            }),
+          _UpcomingRow(
+            event: e,
+            answer: answers[e.id.value],
+            when: e.allDay
+                ? dates.formatMediumDate(
+                    dayOf(e, ViewerZone.of(context) ?? e.timeZone),
+                  )
+                : '${dates.formatMediumDate(ViewerZone.wallClock(context, e.startAt))} · '
+                      '${dates.formatTimeOfDay(TimeOfDay.fromDateTime(ViewerZone.wallClock(context, e.startAt)))}',
             onTap: () => context.push(
               '/g/${groupId.value}/schedule/e/${e.id.value}',
               extra: BackLabel(first),
             ),
           ),
       ],
+    );
+  }
+}
+
+/// One person linked to the player: their name and how they're linked
+/// ("Guardian", "Player · Not joined yet"), and a worded, quiet Unlink
+/// where a bare X didn't say what it does (PLAYER-5, #37). Unlink sits at
+/// the row's end, or under the name with large text, as page rows put
+/// theirs, so the name and "Guardian" keep the row's width and never break
+/// inside a word.
+class _LinkRow extends StatelessWidget {
+  const new({required this.member, required this.isSelf, this.onUnlink});
+
+  final Membership member;
+
+  /// Linked as the player, not as a guardian.
+  final bool isSelf;
+
+  /// Null where the viewer may not unlink them.
+  final VoidCallback? onUnlink;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final below =
+        onUnlink != null && MediaQuery.textScalerOf(context).scale(1) > 1.5;
+    final unlink = switch (onUnlink) {
+      final tap? => Semantics(
+        // Its own button, apart from the row's text.
+        container: true,
+        label: l10n.unlinkPerson(member.displayName),
+        excludeSemantics: true,
+        button: true,
+        child: TextButton(
+          style: GumdropButtons.of(context).link().copyWith(
+            minimumSize: const WidgetStatePropertyAll(Size(48, 48)),
+            // Under the name, its word starts where the name's does.
+            padding: below
+                ? const WidgetStatePropertyAll(EdgeInsets.zero)
+                : null,
+          ),
+          onPressed: tap,
+          child: Text(l10n.unlinkAction),
+        ),
+      ),
+      null => null,
+    };
+    final role = Text(
+      [
+        if (isSelf) l10n.playerLinkPlayer else l10n.playerLinkGuardian,
+        if (member.pending) l10n.notJoinedYet,
+      ].join(' · '),
+    );
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Avatar(
+        name: member.displayName,
+        colorKey: member.uid.value,
+        color: member.avatarColor,
+      ),
+      title: Text(member.displayName),
+      subtitle: switch ((below, unlink)) {
+        (true, final button?) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [role, button],
+        ),
+        _ => role,
+      },
+      trailing: below ? null : unlink,
+    );
+  }
+}
+
+/// One upcoming event on the player card: its title and when, and the
+/// player's answer at the end in its color with its icon, as the RSVP
+/// history page shows answers (#37), or "No answer" and "Canceled" muted.
+/// Screen readers hear one line: "Practice, Sat, Nov 21 · 4:00 PM, Going".
+class _UpcomingRow extends StatelessWidget {
+  const new({
+    required this.event,
+    required this.answer,
+    required this.when,
+    required this.onTap,
+  });
+
+  final Event event;
+  final Rsvp? answer;
+  final String when;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = GumdropColors.of(context);
+    final status = answer?.status;
+    final quiet = event.isCanceled || status == null;
+    final label = event.isCanceled
+        ? l10n.eventCanceled
+        : status == null
+        ? l10n.rsvpNoAnswer
+        : statusLabel(l10n, status);
+    final color = quiet
+        ? (c.onCard ? c.textMuted : c.textMutedOnPage)
+        : statusColor(context, status);
+    // A page row: the answer at its end, or under the event with large
+    // text, so it never crowds the title.
+    return PageRow(
+      title: event.title,
+      subtitle: when,
+      semanticsLabel: '${event.title}, $when, $label',
+      // When wraps with large text rather than losing its time.
+      subtitleMaxLines: null,
+      onTap: onTap,
+      chevron: false,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (!quiet) ...[
+            Icon(statusIcon(status), size: 18, weight: 700, color: color),
+            const SizedBox(width: 4),
+          ],
+          Flexible(
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodyLarge
+                  ?.copyWith(fontWeight: FontWeight.w700, color: color),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

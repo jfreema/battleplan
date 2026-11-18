@@ -46,17 +46,21 @@ class PlayerDetailsSection extends ConsumerWidget {
                 style: theme.textTheme.titleSmall,
               ),
             ),
-            // Editing starts from what's stored, so it waits for it.
+            // Editing starts from what's stored, so it waits for it. It
+            // gives way to the title with large text rather than running
+            // off the card.
             if (canEdit)
-              TextButton.icon(
-                onPressed: details.hasValue
-                    ? () => context.push(
-                        '/g/${groupId.value}/team/players/'
-                        '${playerId.value}/details',
-                      )
-                    : null,
-                icon: const Icon(AppIcons.edit),
-                label: Text(l10n.editPlayerDetails),
+              Flexible(
+                child: TextButton.icon(
+                  onPressed: details.hasValue
+                      ? () => context.push(
+                          '/g/${groupId.value}/team/players/'
+                          '${playerId.value}/details',
+                        )
+                      : null,
+                  icon: const Icon(AppIcons.edit),
+                  label: Text(l10n.editPlayerDetails),
+                ),
               ),
           ],
         ),

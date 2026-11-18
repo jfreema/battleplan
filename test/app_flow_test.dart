@@ -1969,18 +1969,25 @@ void main() {
       await tester.enterText(find.byType(TextField).first, 'mom@example.com');
       await tester.tap(find.widgetWithText(FilledButton, 'Add'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('Remove link'));
+      // A worded Unlink that says what it means (#37).
+      await tester.tap(find.widgetWithText(TextButton, 'Unlink'));
       await tester.pumpAndSettle();
+      expect(find.textContaining('Unlink yourself from Emma'), findsOneWidget);
       expect(
-        find.text('Unlink Emma Rodriguez as this player?'),
+        find.text(
+          "You won't answer this player's RSVPs or see their details any "
+          "more. You'll stay on the team, and you can claim the player "
+          'again later.',
+        ),
         findsOneWidget,
       );
-      await tester.tap(find.widgetWithText(FilledButton, 'Remove link'));
+      await tester.tap(find.widgetWithText(FilledButton, 'Unlink'));
       await tester.pumpAndSettle();
       expect(playerRepo.calls, [
         'inviteGuardian emma mom@example.com',
         'removeGuardian emma coach',
       ]);
+      expect(find.text("You're no longer linked to Emma."), findsOneWidget);
     });
 
     testWidgets("adding the player's own member as a guardian says they're "
