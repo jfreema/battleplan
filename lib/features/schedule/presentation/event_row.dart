@@ -2,6 +2,7 @@ import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/widgets/team_dot.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
@@ -138,15 +139,12 @@ class EventRow extends StatelessWidget {
                       if (showTeam && group != null)
                         Row(
                           children: [
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: group!.color == null
-                                    ? AppTokens.brand
-                                    : Color(group!.color!),
-                                shape: BoxShape.circle,
-                              ),
+                            // The team's true color, ringed where it would
+                            // vanish into the card (#36).
+                            TeamDot(
+                              color: group!.color == null
+                                  ? AppTokens.brand
+                                  : Color(group!.color!),
                             ),
                             const SizedBox(width: 6),
                             Flexible(

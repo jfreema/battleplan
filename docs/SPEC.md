@@ -1382,7 +1382,7 @@ From 1.1 the app has one theme, **Open Field**, in five color schemes (owner's r
 
 **Who picks.** A team's admins set its default scheme in Admin settings; each person can pick their own for a team or group in Team settings → Color scheme, which wins over the team's default, plus a default on Teams for the top level and every team with neither (SET-2).
 
-**Team colors** no longer tint the pages: a team's color is on its badge, in the switcher, and as its dot in Your schedule (TEAM-1, §7.1). Open Field replaced the five Gumdrop themes (Gumdrop Army, Pop Dark, Pop Light, Candy, and Arena), the Themes screen, and their team-color backgrounds.
+**Team colors** no longer tint the pages: a team's color is on its badge, in the switcher, and as its dot in Your schedule (TEAM-1, §7.1). The dot is the team's true color, never lightened, 10 px; where it stands out from the card under it by less than 3:1 (navy, maroon, slate, or black on a dark card, light blue or gold on a light one), a 1.5 px ring in the card's muted text outlines it, one rule in every scheme (#36, owner's go 2026-11-17: dark teams' dots vanished on the dark cards). It's decorative; the name beside it says the team. Open Field replaced the five Gumdrop themes (Gumdrop Army, Pop Dark, Pop Light, Candy, and Arena), the Themes screen, and their team-color backgrounds.
 
 - A team still on a retired color (Royal blue or Violet) shows as its replacement (Blue or Purple) everywhere (TEAM-5).
 
