@@ -3,16 +3,25 @@ import 'dart:async';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/links.dart';
 import 'package:battleplan/core/logging.dart';
+import 'package:battleplan/features/auth/data/native_google_sign_in.dart';
 import 'package:battleplan/features/auth/domain/auth_repository.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in_platform_interface/google_sign_in_platform_interface.dart'
+    show GoogleSignInException;
 
 /// Firebase Authentication behind [AuthRepository]. Firebase types and
 /// exceptions stay in this file; callers get [AuthUser] and [AppFailure]s.
 class FirebaseAuthRepository implements AuthRepository {
-  new(this._auth, this._functions, {required this.links, this.onSignInError});
+  new(
+    this._auth,
+    this._functions, {
+    required this.links,
+    this.onSignInError,
+    this.googleNative,
+  });
 
   final FirebaseFunctions _functions;
 
@@ -28,6 +37,12 @@ class FirebaseAuthRepository implements AuthRepository {
   /// sheet and the failures the app explains aren't reported.
   final void Function(ProviderSignInException error, StackTrace stack)?
   onSignInError;
+
+  /// Google in the phone's own account sheet, for signing in, linking, and
+  /// confirming it's you; set on Android only. Without it, Google goes
+  /// through Firebase's provider flow like Apple: a popup on the web, the
+  /// system browser sheet on iOS (and on the emulators).
+  final NativeGoogleSignIn? googleNative;
 
   final FirebaseAuth _auth;
   AuthUser? _current;
@@ -187,12 +202,20 @@ class FirebaseAuthRepository implements AuthRepository {
     ..addScope('name');
 
   /// Shared by every OAuth provider. Web uses a popup (redirects break under
-  /// browser storage partitioning, ARCH §6.1). Mobile opens the provider in
-  /// the system sheet and returns through the app's URL scheme.
+  /// browser storage partitioning, ARCH §6.1). Google on Android uses the
+  /// phone's own account sheet ([googleNative]), since Firebase's provider
+  /// flow there signs in through a browser tab that can lose its place
+  /// (2026-11-18). Otherwise mobile opens the provider in the system sheet
+  /// and returns through the app's URL scheme.
   Future<void> _signInWithProvider(AuthProvider provider) async {
     try {
       if (kIsWeb) {
         await _auth.signInWithPopup(provider);
+      } else if (_native(provider) case final native?) {
+        // Null: they closed the sheet.
+        final credential = await _googleCredential(native);
+        if (credential == null) return;
+        await _auth.signInWithCredential(credential);
       } else {
         await _auth.signInWithProvider(provider);
       }
@@ -221,12 +244,33 @@ class FirebaseAuthRepository implements AuthRepository {
       // on Android with nothing logged (2026-11-10).
       if (failure is UnknownFailure) _report(provider, 'sign in', e, stack);
       throw failure;
+    } on GoogleSignInException catch (e, stack) {
+      // The account sheet failed (closing it isn't an error): shown as
+      // "Something went wrong", and reported.
+      _report(provider, 'sign in', e, stack);
+      throw UnknownFailure('google-${e.code.name}');
     } on Object catch (e, stack) {
       // Not Firebase's own error, so the plugin itself failed.
       _report(provider, 'sign in', e, stack);
       rethrow;
     }
   }
+
+  /// The phone's own Google sheet, for [provider] when it's Google and the
+  /// app has one ([googleNative], Android).
+  NativeGoogleSignIn? _native(AuthProvider provider) =>
+      provider.providerId == GoogleAuthProvider.PROVIDER_ID
+      ? googleNative
+      : null;
+
+  /// The Google credential for the account picked in [native]'s sheet, or
+  /// null if the person closed it.
+  static Future<AuthCredential?> _googleCredential(
+    NativeGoogleSignIn native,
+  ) async => switch (await native.idToken()) {
+    final token? => GoogleAuthProvider.credential(idToken: token),
+    null => null,
+  };
 
   /// Hands a provider failure the app can't explain to [onSignInError],
   /// with Firebase's code and message (or the other error as text), and
@@ -240,6 +284,14 @@ class FirebaseAuthRepository implements AuthRepository {
     final report = switch (error) {
       FirebaseAuthException(:final code, :final message) =>
         ProviderSignInException(provider.providerId, action, code, message),
+      // The phone's own Google sheet, with the plugin's code.
+      GoogleSignInException(:final code, :final description) =>
+        ProviderSignInException(
+          provider.providerId,
+          action,
+          'google-${code.name}',
+          description,
+        ),
       _ => ProviderSignInException(
         provider.providerId,
         action,
@@ -405,12 +457,19 @@ class FirebaseAuthRepository implements AuthRepository {
     try {
       if (kIsWeb) {
         await user.linkWithPopup(provider);
+      } else if (_native(provider) case final native?) {
+        final credential = await _googleCredential(native);
+        if (credential == null) return false;
+        await user.linkWithCredential(credential);
       } else {
         await user.linkWithProvider(provider);
       }
     } on FirebaseAuthException catch (e, stack) {
       if (_cancelCodes.contains(e.code)) return false;
       _throwProviderError(provider, 'link', e, stack);
+    } on GoogleSignInException catch (e, stack) {
+      _report(provider, 'link', e, stack);
+      throw UnknownFailure('google-${e.code.name}');
     } on Object catch (e, stack) {
       _report(provider, 'link', e, stack);
       rethrow;
@@ -500,12 +559,23 @@ class FirebaseAuthRepository implements AuthRepository {
     try {
       if (kIsWeb) {
         await user.reauthenticateWithPopup(provider);
+      } else if (_native(provider) case final native?) {
+        final credential = await _googleCredential(native);
+        // Closing the sheet, as closing the browser sheet does.
+        if (credential == null) throw const RequiresRecentLogin();
+        await user.reauthenticateWithCredential(credential);
       } else {
         await user.reauthenticateWithProvider(provider);
       }
     } on FirebaseAuthException catch (e, stack) {
       if (_cancelCodes.contains(e.code)) throw const RequiresRecentLogin();
       _throwProviderError(provider, 'confirm', e, stack);
+    } on GoogleSignInException catch (e, stack) {
+      _report(provider, 'confirm', e, stack);
+      throw UnknownFailure('google-${e.code.name}');
+    } on AppFailure {
+      // Already the app's own: the sheet closed.
+      rethrow;
     } on Object catch (e, stack) {
       _report(provider, 'confirm', e, stack);
       rethrow;
@@ -608,11 +678,13 @@ final class ProviderSignInException implements Exception {
   /// What was tried: sign in, link, or confirm.
   final String action;
 
-  /// Firebase's error code, or `unexpected` for an error that isn't
-  /// Firebase's.
+  /// Firebase's error code, the account sheet's as `google-…` (Google on
+  /// Android, such as `google-providerConfigurationError`), or `unexpected`
+  /// for an error that's neither's.
   final String code;
 
-  /// Firebase's message, or the other error as text.
+  /// Firebase's message or the sheet's description, or the other error as
+  /// text.
   final String? detail;
 
   @override

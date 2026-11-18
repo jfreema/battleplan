@@ -767,6 +767,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "18.1.2"
+  google_sign_in_android:
+    dependency: "direct main"
+    description:
+      name: google_sign_in_android
+      sha256: af51a005b7c3c3f54cb5e7d04dd5db96f081e6f92b36468c60d14726a047f918
+      url: "https://pub.dev"
+    source: hosted
+    version: "7.2.19"
+  google_sign_in_platform_interface:
+    dependency: "direct main"
+    description:
+      name: google_sign_in_platform_interface
+      sha256: "7f59208c42b415a3cca203571128d6f84f885fead2d5b53eb65a9e27f2965bb5"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.0"
   graphs:
     dependency: transitive
     description:

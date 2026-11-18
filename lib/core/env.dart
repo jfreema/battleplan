@@ -22,6 +22,22 @@ class AppEnv {
   /// prod never shows a button that can't work.
   static const appleSignInInProd = true;
 
+  /// The project's web OAuth client ("Web client (auto created by Google
+  /// Service)"), which Android's own Google sign-in asks for an ID token
+  /// for, so Firebase accepts it (AUTH-1, ARCH §6.1). Not a secret: it's in
+  /// every google-services.json. Null on the emulators, whose fake Google
+  /// page needs Firebase's own flow.
+  String? get googleServerClientId => useEmulators
+      ? null
+      : switch (flavor) {
+          AppFlavor.dev =>
+            '814215990622-eaimmmv1ki0luj2dbr9gucd6f8lqr84f'
+                '.apps.googleusercontent.com',
+          AppFlavor.prod =>
+            '628123687470-5ean303f7qcev52tbg9hqjmrul2f5qi9'
+                '.apps.googleusercontent.com',
+        };
+
   /// Shown as a small banner so dev builds are never mistaken for prod.
   String? get bannerLabel => switch ((flavor, useEmulators)) {
     (AppFlavor.prod, _) => null,

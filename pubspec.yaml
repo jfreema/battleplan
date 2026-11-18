@@ -32,6 +32,11 @@ dependencies:
   freezed_annotation: ^3.1.0
   gal: ^2.3.3
   go_router: ^18.0.2
+  # Google sign-in in Android's own account sheet (AUTH-1, ARCH §6.1):
+  # only the Android plugin, which registers itself, used through its
+  # platform interface, so iOS and the web keep Firebase's own flows.
+  google_sign_in_android: ^7.2.19
+  google_sign_in_platform_interface: ^3.1.0
   image_picker: ^1.2.4
   intl: ^0.20.3
   json_annotation: ^4.12.0

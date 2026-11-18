@@ -2,11 +2,13 @@
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/links.dart';
 import 'package:battleplan/features/auth/data/firebase_auth_repository.dart';
+import 'package:battleplan/features/auth/data/native_google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_sign_in_platform_interface/google_sign_in_platform_interface.dart';
 import 'package:mock_exceptions/mock_exceptions.dart';
 
 import '../helpers/fake_functions.dart';
@@ -119,6 +121,25 @@ class _AppleInfo implements AdditionalUserInfo {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+/// Android's own Google account sheet: hands back [token] for the account
+/// picked (null: closed), or fails with [error].
+class _Sheet implements NativeGoogleSignIn {
+  new({this.token = 'google-id-token', this.error});
+
+  final String? token;
+  final Exception? error;
+
+  /// How many times it opened.
+  int opened = 0;
+
+  @override
+  Future<String?> idToken() async {
+    opened++;
+    if (error case final error?) throw error;
+    return token;
+  }
+}
+
 /// Records the Apple authorization codes revoked, or fails with
 /// [revokeError].
 class _RevokingAuth extends MockFirebaseAuth {
@@ -140,8 +161,15 @@ void main() {
 
   setUp(() => functions = FakeFunctions());
 
-  FirebaseAuthRepository repoFor(MockFirebaseAuth auth) =>
-      FirebaseAuthRepository(auth, functions, links: _links);
+  FirebaseAuthRepository repoFor(
+    MockFirebaseAuth auth, {
+    NativeGoogleSignIn? google,
+  }) => FirebaseAuthRepository(
+    auth,
+    functions,
+    links: _links,
+    googleNative: google,
+  );
 
   /// Runs [act] once per code on a fresh auth whose [method] throws it.
   Future<void> expectMapped(
@@ -150,6 +178,7 @@ void main() {
     Symbol method,
     Future<void> Function(FirebaseAuthRepository repo) act, {
     MockUser Function()? user,
+    NativeGoogleSignIn? google,
   }) async {
     for (final (code, type) in cases) {
       final mockUser = user?.call() ?? _user();
@@ -157,7 +186,11 @@ void main() {
       whenCalling(Invocation.method(method, null))
           .on(target(auth))
           .thenThrow(_e(code));
-      await expectLater(act(repoFor(auth)), throwsA(type), reason: code);
+      await expectLater(
+        act(repoFor(auth, google: google)),
+        throwsA(type),
+        reason: code,
+      );
     }
   }
 
@@ -474,6 +507,184 @@ void main() {
       #sendSignInLinkToEmail,
       (r) => r.sendSignInLink('a@example.com'),
     );
+  });
+
+  group("Google in Android's own account sheet, not a browser tab that "
+      'can lose its place ("missing initial state", 2026-11-18; AUTH-1)', () {
+    test(
+      'signs in with the account picked, never through the browser',
+      () async {
+        final auth = MockFirebaseAuth(
+          mockUser: _user(providers: ['google.com']),
+        );
+        // Firebase's browser flow would fail; it isn't used.
+        whenCalling(Invocation.method(#signInWithProvider, null))
+            .on(auth)
+            .thenThrow(_e('web-internal-error'));
+        final sheet = _Sheet();
+        await repoFor(auth, google: sheet).signInWithGoogle();
+        expect(sheet.opened, 1);
+        expect(auth.currentUser, isNotNull);
+
+        // Closing the sheet signs nobody in, and isn't an error.
+        final closed = MockFirebaseAuth(mockUser: _user());
+        await repoFor(closed, google: _Sheet(token: null)).signInWithGoogle();
+        expect(closed.currentUser, isNull);
+      },
+    );
+
+    test("Apple keeps Firebase's flow", () async {
+      final sheet = _Sheet();
+      final auth = MockFirebaseAuth(mockUser: _user(providers: ['apple.com']));
+      await repoFor(auth, google: sheet).signInWithApple();
+      expect(sheet.opened, 0);
+      expect(auth.currentUser, isNotNull);
+    });
+
+    test("Firebase's answers mean what they did, and the sheet's own "
+        'failures are reported as "Something went wrong"', () async {
+      await expectMapped(
+        [
+          (
+            'account-exists-with-different-credential',
+            isA<AccountExistsWithOtherMethod>(),
+          ),
+          ('user-disabled', isA<PermissionDenied>()),
+          ('network-request-failed', isA<Offline>()),
+          ('invalid-credential', isA<UnknownFailure>()),
+        ],
+        (a) => a,
+        #signInWithCredential,
+        (r) => r.signInWithGoogle(),
+        google: _Sheet(),
+      );
+
+      final reports = <ProviderSignInException>[];
+      final broken = FirebaseAuthRepository(
+        MockFirebaseAuth(
+          signedIn: true,
+          mockUser: _user(providers: ['google.com']),
+        ),
+        functions,
+        links: _links,
+        googleNative: _Sheet(
+          error: const GoogleSignInException(
+            code: GoogleSignInExceptionCode.providerConfigurationError,
+            description: 'Developer console is not set up correctly.',
+          ),
+        ),
+        onSignInError: (e, _) => reports.add(e),
+      );
+      for (final act in [
+        broken.signInWithGoogle,
+        () => broken.reauthenticateWithProvider('google.com'),
+      ]) {
+        await expectLater(act(), throwsA(isA<UnknownFailure>()));
+      }
+      expect(reports.map((r) => r.action), ['sign in', 'confirm']);
+      expect(reports.first.providerId, 'google.com');
+      expect(reports.first.code, 'google-providerConfigurationError');
+      expect(
+        reports.first.detail,
+        'Developer console is not set up correctly.',
+      );
+    });
+
+    test(
+      'emails a sign-in link instead of merging accounts (AUTH-7)',
+      () async {
+        final auth = MockFirebaseAuth();
+        whenCalling(Invocation.method(#signInWithCredential, null))
+            .on(auth)
+            .thenThrow(
+              _e(
+                'account-exists-with-different-credential',
+                email: 'alex@example.com',
+              ),
+            );
+        await expectLater(
+          repoFor(auth, google: _Sheet()).signInWithGoogle(),
+          throwsA(
+            isA<AccountExistsWithOtherMethod>().having(
+              (f) => f.message,
+              'email',
+              'alex@example.com',
+            ),
+          ),
+        );
+      },
+    );
+
+    test(
+      'links Google from Sign-in methods; closing the sheet links nothing',
+      () async {
+        final user = _user();
+        whenCalling(Invocation.method(#linkWithProvider, null))
+            .on(user)
+            .thenThrow(_e('web-internal-error'));
+        final auth = MockFirebaseAuth(signedIn: true, mockUser: user);
+        expect(await repoFor(auth, google: _Sheet()).linkGoogle(), isTrue);
+        expect(
+          functions.calls.where((c) => c.$1 == 'recordSignInMethodChange'),
+          hasLength(1),
+        );
+        expect(
+          await repoFor(auth, google: _Sheet(token: null)).linkGoogle(),
+          isFalse,
+        );
+        expect(functions.calls, hasLength(1));
+
+        // A Google account already on someone else's: the screen explains it.
+        final taken = _user();
+        whenCalling(Invocation.method(#linkWithCredential, null))
+            .on(taken)
+            .thenThrow(_e('credential-already-in-use'));
+        await expectLater(
+          repoFor(
+            MockFirebaseAuth(signedIn: true, mockUser: taken),
+            google: _Sheet(),
+          ).linkGoogle(),
+          throwsA(isA<CredentialInUse>()),
+        );
+      },
+    );
+
+    test("confirms it's you with Google before a change; closing the sheet "
+        'leaves the change waiting, unreported', () async {
+      final reports = <ProviderSignInException>[];
+      FirebaseAuthRepository confirming(MockUser user, _Sheet sheet) =>
+          FirebaseAuthRepository(
+            MockFirebaseAuth(signedIn: true, mockUser: user),
+            functions,
+            links: _links,
+            googleNative: sheet,
+            onSignInError: (e, _) => reports.add(e),
+          );
+      final user = _user(providers: ['google.com']);
+      whenCalling(Invocation.method(#reauthenticateWithProvider, null))
+          .on(user)
+          .thenThrow(_e('web-internal-error'));
+      final sheet = _Sheet();
+      await confirming(user, sheet).reauthenticateWithProvider('google.com');
+      expect(sheet.opened, 1);
+      await expectLater(
+        confirming(
+          _user(providers: ['google.com']),
+          _Sheet(token: null),
+        ).reauthenticateWithProvider('google.com'),
+        throwsA(isA<RequiresRecentLogin>()),
+      );
+      // Another Google account than this one's.
+      final other = _user(providers: ['google.com']);
+      whenCalling(Invocation.method(#reauthenticateWithCredential, null))
+          .on(other)
+          .thenThrow(_e('user-mismatch'));
+      await expectLater(
+        confirming(other, _Sheet()).reauthenticateWithProvider('google.com'),
+        throwsA(isA<UnknownFailure>()),
+      );
+      expect(reports.map((r) => r.code), ['user-mismatch']);
+    });
   });
 
   test('links and unlinks sign-in methods, keeping the last one', () async {

@@ -25,6 +25,7 @@ import 'package:battleplan/features/admin/data/functions_admin_repository.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/data/firebase_auth_repository.dart';
 import 'package:battleplan/features/auth/data/firestore_user_repository.dart';
+import 'package:battleplan/features/auth/data/native_google_sign_in.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/chat/data/firestore_message_repository.dart';
 import 'package:battleplan/features/chat/data/prefs_chat_queue_store.dart';
@@ -162,6 +163,14 @@ List<Override> buildOverrides({
       // wrong" still leaves a trace (SPEC AUTH-1, ARCH §9).
       onSignInError: (e, stack) =>
           unawaited(crashReporter.recordError(e, stack)),
+      // Google in Android's own account sheet, not a browser tab that can
+      // lose its place on the way back from Google (2026-11-18).
+      googleNative: switch (env.googleServerClientId) {
+        final id?
+            when !kIsWeb && defaultTargetPlatform == TargetPlatform.android =>
+          AndroidGoogleSignIn(id),
+        _ => null,
+      },
     ),
   ),
   userRepositoryProvider.overrideWithValue(
