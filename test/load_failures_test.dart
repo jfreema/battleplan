@@ -48,6 +48,9 @@ class _FlakyEvents extends FakeEventRepository {
     DateTime from, {
     int limit = 50,
   }) {
+    // The chat's Next up (#43) reads the next five on its own: not the
+    // list these tests make fail.
+    if (limit == 5) return super.watchUpcoming(groupId, from, limit: limit);
     subscriptions++;
     final real = super.watchUpcoming(groupId, from, limit: limit);
     return _flaky(

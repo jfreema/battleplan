@@ -22,6 +22,7 @@ import 'package:battleplan/features/groups/presentation/shell_parts.dart';
 import 'package:battleplan/features/groups/presentation/team_switcher.dart';
 import 'package:battleplan/features/notifications/domain/push_repository.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
+import 'package:battleplan/features/schedule/presentation/event_card.dart';
 import 'package:battleplan/features/schedule/presentation/event_details_screen.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_format.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -1610,7 +1611,14 @@ void main() {
         find.textContaining(RegExp(r'^12/\d+ going'), findRichText: true),
         findsOneWidget,
       );
-      await tester.tap(find.text('Going'));
+      // The card's own Going: Next up at the top of the chat has one too
+      // (#43).
+      await tester.tap(
+        find.descendant(
+          of: find.byType(EventCard),
+          matching: find.text('Going'),
+        ),
+      );
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.status, RsvpStatus.going);
       expect(rsvps.rsvps.single.participantId, 'coach');

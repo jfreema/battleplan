@@ -39,6 +39,7 @@ import 'package:battleplan/features/players/players.dart';
 import 'package:battleplan/features/polls/polls.dart';
 import 'package:battleplan/features/safety/application/providers.dart';
 import 'package:battleplan/features/safety/safety.dart';
+import 'package:battleplan/features/schedule/schedule.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -881,6 +882,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     return Column(
       children: [
+        // A team's next event, with Going and Not going while it waits on
+        // me (#43): never in a conversation, never a post in the chat.
+        if (!direct) NextUpStrip(groupId: widget.groupId),
         // The pinned row, which is the search entry when nothing is pinned
         // (CHAT-15, CHAT-20): a team's chat only; a conversation has its
         // search in its header.

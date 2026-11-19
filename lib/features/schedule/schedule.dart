@@ -3,6 +3,9 @@
 library;
 
 export 'presentation/event_card.dart' show EventCard;
+// What's next (#43): the strip at the top of a team's chat, and the line on
+// its card on Teams.
+export 'presentation/next_up.dart' show NextUpStrip, TeamCardNextLine;
 // How answers, times, and event types read, for a player's RSVP history
 // (PLAYER-11) and an import's preview (IMPORT-3).
 export 'presentation/schedule_format.dart'

@@ -361,6 +361,10 @@ class _TeamCard extends ConsumerWidget {
                                     color: c.textMuted,
                                   ),
                                 ),
+                              // The team's next event, and whether it waits
+                              // on my answer (#43); nothing on an archived
+                              // team or with none in two weeks.
+                              TeamCardNextLine(groupId: group.id),
                             ],
                           ),
                         ),

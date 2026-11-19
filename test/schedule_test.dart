@@ -19,6 +19,7 @@ import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/domain/recurrence.dart';
 import 'package:battleplan/features/schedule/domain/rsvp.dart';
 import 'package:battleplan/features/schedule/domain/schedule_rules.dart';
+import 'package:battleplan/features/schedule/presentation/event_card.dart';
 import 'package:battleplan/features/schedule/presentation/event_details_screen.dart';
 import 'package:battleplan/features/schedule/presentation/event_form_screen.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_widgets.dart';
@@ -1898,8 +1899,15 @@ void main() {
           ),
         ]),
       );
-      // The chat card: one set of buttons, the player's.
-      expect(find.byType(SegmentedButton<RsvpStatus>), findsOneWidget);
+      // The chat card: one set of buttons, the player's (Next up at the
+      // top of the chat has its own, #43).
+      expect(
+        find.descendant(
+          of: find.byType(EventCard),
+          matching: find.byType(SegmentedButton<RsvpStatus>),
+        ),
+        findsOneWidget,
+      );
       expect(find.text('You'), findsOneWidget);
       await tester.tap(find.text('Schedule'));
       await tester.pumpAndSettle();
@@ -2457,12 +2465,15 @@ void main() {
         events: [event('e1', title: 'vs. Eagles', type: EventType.game)],
         messages: FakeMessageRepository([card('e1')]),
       );
-      expect(find.byType(SegmentedButton<RsvpStatus>), findsOneWidget);
+      // The card's buttons; Next up at the top of the chat has its own (#43).
+      Finder onCard(Finder f) =>
+          find.descendant(of: find.byType(EventCard), matching: f);
+      expect(onCard(find.byType(SegmentedButton<RsvpStatus>)), findsOneWidget);
       expect(
         find.text("0/20 going · You haven't answered", findRichText: true),
         findsOneWidget,
       );
-      await tester.tap(find.text('Going'));
+      await tester.tap(onCard(find.text('Going')));
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.status, RsvpStatus.going);
       expect(rsvps.rsvps.single.participantId, 'coach');

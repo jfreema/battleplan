@@ -344,12 +344,22 @@ void main() {
       await tester.tap(answer('Lightning game', 'Going'));
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.groupId, const GroupId('p'));
-      // Teams read my answers on the events shown, and no further.
+      // Teams read my answers on the events shown, and no further: Your
+      // schedule's window, and each card's Next line's one event (#43).
       final last = rsvps.events.events['p1']!.startAt;
-      expect(rsvps.windows, isNotEmpty);
-      for (final w in rsvps.windows) {
+      const instant = Duration(milliseconds: 1);
+      final nextUp = {
+        for (final id in ['b1', 'p1'])
+          (
+            from: rsvps.events.events[id]!.startAt,
+            until: rsvps.events.events[id]!.startAt.add(instant),
+          ),
+      };
+      final shown = rsvps.windows.where((w) => !nextUp.contains(w));
+      expect(shown, isNotEmpty);
+      for (final w in shown) {
         expect(w.from, rsvps.events.events['b1']!.startAt);
-        expect(w.until, last.add(const Duration(milliseconds: 1)));
+        expect(w.until, last.add(instant));
       }
     });
 
@@ -669,11 +679,14 @@ void main() {
     );
     expect(repo.live, 4);
 
-    // In a team, nothing of Teams' is left listening.
+    // In a team, nothing of Teams' is left listening: only the chat's Next
+    // up, the team's next five (#43).
+    repo.asked.clear();
     await tester.tap(find.text('Thunder').first);
     await tester.pumpAndSettle();
     expect(location(tester), '/g/a/chat');
-    expect(repo.live, 0);
+    expect(repo.asked, ['upcoming a 5']);
+    expect(repo.live, 1);
 
     await tester.tap(backToTeams());
     await tester.pumpAndSettle();
