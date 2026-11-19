@@ -406,6 +406,10 @@ describe('every role, spot checks the other files leave out', () => {
     // Where the nightly storage recount stopped, and notifications waiting
     // for a retry, with each one's progress (#41): Functions only.
     await assertFails(root().doc('ops/storageRecount').get());
+    // One-time changes to data and what they changed (#48).
+    await assertFails(root().doc('ops/migrations').get());
+    await assertFails(as('alice').doc('ops/migrations').get());
+    await assertFails(as('alice').doc('ops/migrations').set({ reminderDefaultsOff: null }));
     await assertFails(as('alice').doc('ops/storageRecount').set({ after: null }));
     await assertFails(root().doc('notifyRetries/m1').get());
     await assertFails(as('alice').doc('notifyRetries/m1').get());

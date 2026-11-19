@@ -17,6 +17,7 @@ function steps(over: Partial<CleanupSteps> = {}, ms = 1_000) {
   };
   const all: CleanupSteps = {
     remindOpenReports: step('reports', 2),
+    runMigrations: step('migrations', 1),
     pruneDevices: step('devices', 3),
     removeAllOrphanDocumentFiles: step('documents', 4),
     removeAllOrphanMessageFiles: step('photos', 5),
@@ -34,16 +35,24 @@ describe('dailyCleanup (ARCH §6.4, SAFE-4)', () => {
   it('reminds about open reports first, and the storage recount goes last, stopping at 8.5 minutes', async () => {
     const s = steps();
     const out = await runDailyCleanup(s.all, s.now);
-    expect(s.ran).toEqual(['reports', 'devices', 'documents', 'photos', `storage until ${CLEANUP_CUT_SHORT_MS}`]);
+    expect(s.ran).toEqual([
+      'reports',
+      'migrations',
+      'devices',
+      'documents',
+      'photos',
+      `storage until ${CLEANUP_CUT_SHORT_MS}`,
+    ]);
     expect(out).toMatchObject({
       reportsWaiting: 2,
+      migrated: 1,
       devicesPruned: 3,
       orphanDocumentFiles: 4,
       orphanMessageFiles: 5,
       teamsReconciled: 6,
       teamsFailed: 0,
       cutShort: false,
-      totalMs: 5_000,
+      totalMs: 6_000,
       reportsMs: 1_000,
       storageMs: 1_000,
     });
@@ -60,9 +69,23 @@ describe('dailyCleanup (ARCH §6.4, SAFE-4)', () => {
       },
     });
     const out = await runDailyCleanup(s.all, s.now);
-    expect(s.ran).toEqual(['reports', 'documents', 'photos']);
+    expect(s.ran).toEqual(['reports', 'migrations', 'documents', 'photos']);
     expect(out).toMatchObject({ reportsWaiting: 2, devicesPruned: 0, teamsReconciled: 0 });
     expect(error.mock.calls.map((c) => c[0])).toEqual(['device_prune_failed', 'storage_reconcile_failed']);
+    error.mockRestore();
+  });
+
+  it("a one-time change that fails doesn't stop the night (#48)", async () => {
+    const error = vi.spyOn(logger, 'error').mockImplementation(() => undefined);
+    const s = steps({
+      runMigrations: async () => {
+        throw new Error('migration down');
+      },
+    });
+    const out = await runDailyCleanup(s.all, s.now);
+    expect(s.ran).toEqual(['reports', 'devices', 'documents', 'photos', `storage until ${CLEANUP_CUT_SHORT_MS}`]);
+    expect(out).toMatchObject({ migrated: 0, devicesPruned: 3, teamsReconciled: 6 });
+    expect(error.mock.calls.map((c) => c[0])).toEqual(['migration_failed']);
     error.mockRestore();
   });
 
