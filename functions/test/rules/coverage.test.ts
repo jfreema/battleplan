@@ -394,6 +394,11 @@ describe('every role, spot checks the other files leave out', () => {
   it('keeps invites, rate limits, and series away from super admins too', async () => {
     await assertFails(root().doc('invites/K7XPM2QR').get());
     await assertFails(root().doc('rateLimits/alice_x').get());
+    // The sign-up spike counter (ADMIN-9, #52): Functions only.
+    await assertFails(root().doc('ops/signupBursts').get());
+    await assertFails(as('alice').doc('ops/signupBursts').get());
+    await assertFails(as('alice').doc('ops/signupBursts').set({ recent: [], alertedAt: 0 }));
+    await assertFails(anon().doc('ops/signupBursts').get());
     await assertFails(root().doc('eventSeries/s1').update({ createdBy: 'root' }));
     await assertFails(root().doc('devices/abcdefghijklmnop1234').get());
     await assertFails(root().doc('devices/abcdefghijklmnop1234').delete());

@@ -523,6 +523,7 @@ Before calling it, the iPhone, iPad, and Mac apps revoke Apple's tokens for an a
 | `reports` | auto | report | `reports` | Functions |
 | `auditLogs` | auto | admin action | `audit_logs` | Functions |
 | `rateLimits` | `{uid}_{action}_{window}` | counter window | — (operational) | Functions |
+| `ops` | `signupBursts` | the sign-up spike counter (ADMIN-9, #52) | — (operational) | Functions only |
 | `config` | `app`, `superAdmins` | — | `app_config` | Functions (`app` through `adminUpdateConfig`; `superAdmins` is a lock) |
 
 #### Fields
@@ -757,6 +758,10 @@ auditLogs/{logId}
 
 rateLimits/{uid}_{action}_{window}
   count, expiresAt                                      # TTL: 2 days
+
+ops/signupBursts                                        # Functions only (ADMIN-9, #52)
+  recent: [{uid, at}]                                   # the last hour's finished setups, ms; at most 500
+  alertedAt                                             # ms of the last spike email; none again for 6 hours
 
 config/app                                              # written only by adminUpdateConfig (ADMIN-7); every signed-in app reads it
   allowUserGroupCreation, maxGroupsCreatedPerUserPerDay # createGroup enforces both; the limit is 1..100

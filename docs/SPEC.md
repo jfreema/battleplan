@@ -1104,6 +1104,7 @@ This is for platform operators (super admins) to manage every team and user.
   - **Find:** search by name or email; filter by Added (not joined yet), Active, Disabled, or Super admin.
   - **Sort:** by any column, Name, Email, Status, Joined, or Last active, either way (owner's request 2026-11-14: "In the admin panel, allow me to sort users by any of the fields."). On a computer, tap a column's heading, and tap it again to flip it; on a phone, **Sort by** and the Ascending/Descending button. A column starts A to Z (Status as Active, Added, Disabled), or newest first for the dates; people without a value come last. It covers everyone the filter matches, not just the loaded page, and a search's matches sort the same way. Newest joined first by default.
   - **Details:** profile, status, sign-in methods, teams and roles, joined date, last active.
+  - **Google Play's test accounts** (owner's go 2026-11-18, "Do #33 and #52"): after every Android upload, Google Play's automatic checks sign up with throwaway accounts. An email at Google's test lab (`@cloudtestlabaccounts.com`), or a Gmail address shaped like `name.12345@gmail.com`, gets a flat, muted **Play test** tag beside the name, in the table and the phone rows, heard as "likely Google Play test account", and its own page says "Likely a Google Play test account. It isn't blocked." It's a guess for a label only: nothing about the account is blocked, hidden, or treated differently (the owner's rule). The app and Functions share the one rule (`likelyPlayTestAccount`).
   - **Actions:**
     - Create a user (with an optional team and role).
     - Edit name; add to a team.
@@ -1132,10 +1133,11 @@ This is for platform operators (super admins) to manage every team and user.
   - Nobody can set or see another person's password. Admins can only send setup and password-reset emails (AUTH-6).
   - The Privacy Policy states that super admins can access team content for moderation and support (LEGAL-1).
 - **ADMIN-9 · MVP · Alert emails.** Every super admin gets an email, at the owner's request:
-  - **New account:** when someone finishes first-run setup (AUTH-5), once: their name, email, how they sign in, and whether a team admin added them first (AUTH-6), linking to them in the admin panel. Someone who signs in but never finishes setup isn't counted.
+  - **New account:** when someone finishes first-run setup (AUTH-5), once: their name, email, how they sign in, and whether a team admin added them first (AUTH-6), linking to them in the admin panel. Someone who signs in but never finishes setup isn't counted. A likely Google Play test account (ADMIN-4) is said in the subject, "New account (likely Google Play test): Pat Lee", and a first line: "This looks like one of Google Play's test accounts, from its automatic checks after an Android upload. Nothing needs doing." (#52)
+  - **Sign-up spike** (#52): when 10 or more people finish first-run setup within any 60 minutes, one email, "Sign-up spike: 10 new accounts in the last hour", naming the newest 20 ("and 7 more" past that), with "If these look like bots, you can disable them on the Users page. Google Play test accounts aren't counted." and **Open Users**. Then none for 6 hours, however many more arrive. Accounts an admin added (TEAM-7) and likely Google Play test accounts don't count. It always sends, like report alerts, since it's a safety alert and rare. The count is a server-only document (`ops/signupBursts`) holding the last hour's sign-ups (who and when) and when the last spike email went. App Check (SAFE-5) is what stops bots; this only says when something looks unusual.
   - **New team:** who created it and its sport, linking to it in the admin panel.
   - **Team deleted:** who deleted it (the owner, or a super admin) and how many members it had, linking to its audit entries.
-  - Platform settings (ADMIN-7) has **Email super admins about new accounts and teams**, on by default. Report alerts (SAFE-4) always email.
+  - Platform settings (ADMIN-7) has **Email super admins about new accounts and teams**, on by default. Report alerts (SAFE-4) and the sign-up spike always email.
   - An email that fails never stops what it's about; it's logged.
 
 ### 6.12 Safety and moderation (SAFE)

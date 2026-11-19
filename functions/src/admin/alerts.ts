@@ -3,6 +3,7 @@
 // config/app's emailAdminAlerts is on, as it is unless a super admin turns
 // it off in Platform settings. They never fail what they're about.
 import { logger } from 'firebase-functions/v2';
+import { likelyPlayTestAccount } from '../accounts/play_test.js';
 import { emailSuperAdmins } from '../email/super_admins.js';
 import { newAccountEmail, teamCreatedEmail, teamDeletedEmail } from '../email/templates.js';
 import type { Email } from '../email/service.js';
@@ -41,7 +42,14 @@ export async function alertNewAccount(account: {
   await alert('newAccount', (to) =>
     newAccountEmail(
       to,
-      { name: account.name, email: account.email, methods, addedByAdmin: account.addedByAdmin },
+      {
+        name: account.name,
+        email: account.email,
+        methods,
+        addedByAdmin: account.addedByAdmin,
+        // Labeled, never treated differently (#52).
+        playTest: likelyPlayTestAccount(account.email),
+      },
       appUrl(`/admin/users/${account.uid}`),
     ),
   );

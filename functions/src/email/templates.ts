@@ -145,22 +145,64 @@ function aTeam(sport: string): string {
   return `${/^[aeiou]/i.test(sport) ? 'an' : 'a'} ${sport} team`;
 }
 
-/** ADMIN-9: someone finished signing up, for every super admin. */
+/**
+ * ADMIN-9: someone finished signing up, for every super admin. A likely
+ * Google Play test account (#52) says so in its subject and first line, so
+ * it isn't mistaken for a bot.
+ */
 export function newAccountEmail(
   to: string,
-  account: { name: string; email: string; methods: string[]; addedByAdmin: boolean },
+  account: { name: string; email: string; methods: string[]; addedByAdmin: boolean; playTest?: boolean },
   url: string,
 ): Email {
   const how = account.methods.length ? `, with ${account.methods.join(' and ')}` : '';
   return {
     to,
-    subject: `New account: ${account.name}`,
+    subject: account.playTest
+      ? `New account (likely Google Play test): ${account.name}`
+      : `New account: ${account.name}`,
     ...layout(
       [
+        ...(account.playTest
+          ? [
+              "This looks like one of Google Play's test accounts, from its automatic checks after an Android " +
+                'upload. Nothing needs doing.',
+            ]
+          : []),
         `${account.name} (${account.email}) finished signing up for Battleplan${how}.`,
         ...(account.addedByAdmin ? ['A team admin added them first.'] : []),
       ],
       { label: 'Open in the admin panel', url },
+    ),
+  };
+}
+
+/** How many sign-ups a spike email names before "and 7 more". */
+export const SPIKE_NAMES_SHOWN = 20;
+
+/**
+ * ADMIN-9 (#52): sign-ups spiked, for every super admin: how many in the
+ * last hour, who (the newest [SPIKE_NAMES_SHOWN], then "and 7 more"), and
+ * what to do if they look like bots.
+ */
+export function signupSpikeEmail(
+  to: string,
+  spike: { count: number; people: { name: string; email: string }[] },
+  url: string,
+): Email {
+  const shown = spike.people.slice(0, SPIKE_NAMES_SHOWN).map((a) => (a.email ? `${a.name} (${a.email})` : a.name));
+  const more = spike.count - shown.length;
+  return {
+    to,
+    subject: `Sign-up spike: ${spike.count} new accounts in the last hour`,
+    ...layout(
+      [
+        `${spike.count} new accounts finished signing up for Battleplan in the last hour:`,
+        ...shown,
+        ...(more > 0 ? [`and ${more} more`] : []),
+        "If these look like bots, you can disable them on the Users page. Google Play test accounts aren't counted.",
+      ],
+      { label: 'Open Users', url },
     ),
   };
 }

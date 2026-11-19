@@ -1076,10 +1076,10 @@ void main() {
         admin: people(),
         size: const Size(390, 844),
       );
+      // Each row's name leads its title (the tags wrap after it, #52).
       List<String> names() => [
         for (final tile in tester.widgetList<ListTile>(find.byType(ListTile)))
-          (((tile.title! as Row).children.first as Flexible).child as Text)
-              .data!,
+          ((tile.title! as Wrap).children.first as Text).data!,
       ];
       expect(find.text('Sort by'), findsOneWidget);
       expect(find.text('Descending'), findsOneWidget);

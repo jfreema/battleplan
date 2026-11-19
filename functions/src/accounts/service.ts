@@ -27,6 +27,7 @@ import {
 } from '../email/templates.js';
 import { sendEmail } from '../email/service.js';
 import { alertNewAccount } from '../admin/alerts.js';
+import { noteSignUp } from '../admin/signup_bursts.js';
 import { activateUrl, appUrl } from '../links/service.js';
 import { projectId } from '../shared/project.js';
 import {
@@ -184,7 +185,8 @@ export async function ensureUserProfile(
 
   if (result.activated) await clearPendingMemberships(uid);
 
-  // ADMIN-9: super admins hear about every new account.
+  // ADMIN-9: super admins hear about every new account, and once about a
+  // spike of them (#52).
   if (result.signedUp && setup) {
     await alertNewAccount({
       uid,
@@ -193,6 +195,7 @@ export async function ensureUserProfile(
       providerIds: identity.providerIds,
       addedByAdmin: result.addedByAdmin === true,
     });
+    await noteSignUp({ uid, email: user.email ?? '', addedByAdmin: result.addedByAdmin === true });
   }
 
   // AUTH-7, AUTH-8: the old address hears about the change from us too,

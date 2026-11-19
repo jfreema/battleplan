@@ -1323,6 +1323,7 @@ service cloud.firestore {
       allow get: if signedIn() && configId == 'app';
     }
 
-    // invites, rateLimits: Functions only (no client access).
+    // invites, rateLimits, ops (the sign-up spike counter, ADMIN-9):
+    // Functions only (no client access).
   }
 }

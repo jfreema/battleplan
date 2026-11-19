@@ -32,7 +32,8 @@
     "assignments": "assignments",
     "dues": "dues",
     "dueCharges": "dueCharges",
-    "duesPayments": "duesPayments"
+    "duesPayments": "duesPayments",
+    "ops": "ops"
   },
   "enums": {
     "dueStatus": [

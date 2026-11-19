@@ -9,6 +9,7 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
+import 'package:battleplan/core/widgets/info_tag.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -300,6 +301,22 @@ String teamStatusLabel(AppLocalizations l10n, TeamStatus s) => switch (s) {
 };
 
 /// Added (not joined yet), Active, or Disabled (ADMIN-4).
+/// "Play test" beside a likely Google Play test account (ADMIN-4, #52): a
+/// flat, muted tag, never a warning, heard as "likely Google Play test
+/// account". Nothing about the account is treated differently.
+class PlayTestTag extends StatelessWidget {
+  const new({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Semantics(
+      label: l10n.adminPlayTestSpoken,
+      child: ExcludeSemantics(child: InfoTag(text: l10n.adminPlayTestTag)),
+    );
+  }
+}
+
 class UserStatusChip extends StatelessWidget {
   const new({required this.status, super.key});
 

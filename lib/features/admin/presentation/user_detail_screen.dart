@@ -11,6 +11,7 @@ import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
+import 'package:battleplan/features/admin/domain/play_test.dart';
 import 'package:battleplan/features/admin/presentation/admin_widgets.dart';
 import 'package:battleplan/features/admin/presentation/users_screen.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
@@ -116,6 +117,21 @@ class _Profile extends StatelessWidget {
                       child: StatusChip(
                         label: l10n.adminSuperAdmin,
                         color: theme.colorScheme.tertiary,
+                      ),
+                    ),
+                  // Google Play's checks after an Android upload (#52): a
+                  // label, and a line saying nothing more is done.
+                  if (likelyPlayTestAccount(u.email))
+                    Padding(
+                      padding: const EdgeInsets.only(top: Space.xs),
+                      child: Wrap(
+                        spacing: Space.sm,
+                        runSpacing: Space.xs,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          const PlayTestTag(),
+                          Text(l10n.adminPlayTestNote),
+                        ],
                       ),
                     ),
                   const SizedBox(height: Space.sm),

@@ -35,6 +35,7 @@ export const Collections = {
   dues: 'dues',
   dueCharges: 'dueCharges',
   duesPayments: 'duesPayments',
+  ops: 'ops',
 } as const;
 
 export const Limits = {

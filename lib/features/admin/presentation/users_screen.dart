@@ -11,6 +11,7 @@ import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
+import 'package:battleplan/features/admin/domain/play_test.dart';
 import 'package:battleplan/features/admin/presentation/admin_widgets.dart';
 import 'package:battleplan/features/admin/presentation/teams_screen.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -262,6 +263,11 @@ class _UsersTable extends StatelessWidget {
                           semanticLabel: l10n.adminSuperAdmin,
                         ),
                       ],
+                      // A label only; the account is like any other (#52).
+                      if (likelyPlayTestAccount(u.email)) ...[
+                        const SizedBox(width: Space.sm),
+                        const PlayTestTag(),
+                      ],
                     ],
                   ),
                 ),
@@ -301,13 +307,17 @@ class _UserTile extends StatelessWidget {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Avatar(name: user.displayName, colorKey: user.uid.value),
-      title: Row(
+      // The name, then the super admin mark and the Play test tag beside
+      // it, or under it when there's no room (large text, #52).
+      title: Wrap(
+        spacing: Space.xs,
+        runSpacing: Space.xs,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          Flexible(child: Text(user.displayName)),
-          if (user.superAdmin) ...[
-            const SizedBox(width: Space.xs),
+          Text(user.displayName),
+          if (user.superAdmin)
             Icon(AppIcons.admin, size: 18, semanticLabel: l10n.adminSuperAdmin),
-          ],
+          if (likelyPlayTestAccount(user.email)) const PlayTestTag(),
         ],
       ),
       subtitle: Text(user.email ?? ''),

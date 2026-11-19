@@ -37,6 +37,7 @@ abstract final class Collections {
   static const String dues = 'dues';
   static const String dueCharges = 'dueCharges';
   static const String duesPayments = 'duesPayments';
+  static const String ops = 'ops';
 }
 
 /// Limits shared with the server and security rules.
