@@ -29,3 +29,11 @@ abstract class AuthUser with _$AuthUser {
     DateTime? authTime,
   }) = _AuthUser;
 }
+
+/// Whether [user] signed in with an email that isn't verified yet (AUTH-3):
+/// an email sign-up before its link is opened. Google and Apple sign-ins
+/// arrive verified. Creating a team or group, email invites, and adding
+/// people by email wait for it; the banner above every screen, the line on
+/// Welcome, and the notice on Create a Team show while it's true (#33).
+bool needsVerifiedEmail(AuthUser? user) =>
+    user != null && user.email != null && !user.emailVerified;

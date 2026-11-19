@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:battleplan/app/app_services.dart';
 import 'package:battleplan/app/home_shell.dart';
+import 'package:battleplan/app/route_extra_codec.dart';
 import 'package:battleplan/app/update_required_screen.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
@@ -176,6 +177,8 @@ GoRouter router(Ref ref) {
     observers: [OpenSheets()],
     initialLocation: '/',
     refreshListenable: refresh,
+    // Back labels and Invite's "ready!" survive each refresh (#33).
+    extraCodec: const RouteExtraCodec(),
     redirect: (context, state) {
       // Universal Links and App Links for /app/... arrive with the prefix the
       // web app's base href removes in browsers (D40).

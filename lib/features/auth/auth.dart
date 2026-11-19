@@ -3,3 +3,5 @@
 library;
 
 export 'presentation/fresh_sign_in.dart' show askText, withFreshSignIn;
+export 'presentation/verify_email_banner.dart'
+    show VerifyEmailNotice, recheckEmailVerified;

@@ -149,9 +149,9 @@ class FirebaseAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> reloadUser() async {
+  Future<bool> reloadUser() async {
     final user = _auth.currentUser;
-    if (user == null) return;
+    if (user == null) return false;
     try {
       await user.reload();
       // reload() doesn't emit on idTokenChanges; a forced token refresh
@@ -168,6 +168,7 @@ class FirebaseAuthRepository implements AuthRepository {
         _ => UnknownFailure(e.code),
       };
     }
+    return _auth.currentUser?.emailVerified ?? false;
   }
 
   @override

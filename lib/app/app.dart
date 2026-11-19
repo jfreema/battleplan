@@ -57,7 +57,17 @@ class BattleplanApp extends ConsumerWidget {
         child: PushBannerHost(
           onOpen: (m) => ref.read(pushHandlerProvider.notifier).open(m),
           child: AnnouncementBanner.wrap(
-            VerifyEmailBanner.wrap(child ?? const SizedBox.shrink()),
+            VerifyEmailBanner.wrap(
+              // The pages get a screen-reader node of their own. Each page's
+              // route has a modal barrier whose BlockSemantics hides
+              // everything painted before it up to the nearest such node,
+              // which was the whole app, banners included, so neither
+              // banner was ever read (#33).
+              Semantics(
+                container: true,
+                child: child ?? const SizedBox.shrink(),
+              ),
+            ),
           ),
         ),
       ),

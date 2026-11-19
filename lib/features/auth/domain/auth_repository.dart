@@ -24,8 +24,9 @@ abstract interface class AuthRepository {
   Future<void> sendEmailVerification();
 
   /// Re-reads the signed-in user from the server, so a just-verified email
-  /// shows as verified without signing out.
-  Future<void> reloadUser();
+  /// shows as verified without signing out. Returns whether the email is
+  /// verified now; false when signed out.
+  Future<bool> reloadUser();
 
   /// Sends a password reset email (AUTH-4). Succeeds whether or not an
   /// account exists for [email], so the app never reveals which emails have

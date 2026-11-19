@@ -284,10 +284,21 @@ void main() {
     }
   });
 
-  test('reloads the user, signing out a revoked session', () async {
-    await repoFor(MockFirebaseAuth()).reloadUser();
-    await repoFor(MockFirebaseAuth(signedIn: true, mockUser: _user()))
-        .reloadUser();
+  test('reloads the user, saying whether the email is verified now, and '
+      'signing out a revoked session', () async {
+    expect(await repoFor(MockFirebaseAuth()).reloadUser(), isFalse);
+    expect(
+      await repoFor(MockFirebaseAuth(signedIn: true, mockUser: _user()))
+          .reloadUser(),
+      isTrue,
+    );
+    // An email sign-up whose link isn't opened yet (#33).
+    expect(
+      await repoFor(
+        MockFirebaseAuth(signedIn: true, mockUser: _user(verified: false)),
+      ).reloadUser(),
+      isFalse,
+    );
     for (final (code, type) in [
       ('user-token-expired', isA<Unauthenticated>()),
       ('user-disabled', isA<Unauthenticated>()),

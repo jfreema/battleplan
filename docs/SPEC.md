@@ -369,8 +369,15 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - Passwords need 8+ characters, enforced by Firebase's password policy.
   - Show/hide password toggle.
 - **AUTH-3 · MVP · Email verification.**
-  - Google and Apple sign-ins arrive verified. Email sign-ins get a verification link, and a banner stays up until it's tapped.
+  - Google and Apple sign-ins arrive verified. Email sign-ins get a verification link, and a banner stays up until it's tapped: "Verify your email: we sent a link to pat@example.com." with **Resend** and **I've verified**, in the info color (blue raspberry, as routine announcements are), above every screen.
   - A verified email is required to create a team, send email invites, or add people by email.
+  - **Said before it's needed** (owner's go 2026-11-18, "Do #33"), not only when Create fails at the end:
+    - **Welcome** (Teams with no teams) has one muted line under its words: "To create a team, first verify your email. We sent a link to pat@example.com." Joining doesn't need it.
+    - **Create a Team** and **Create a Group** start with a calm notice card: "Verify your email to create a team" (or "a group"), "We sent a link to pat@example.com. Open it, then come back here.", with **Resend email** and **I've verified**. The form stays usable and Create stays on.
+    - **Create tapped too soon** checks with the server first. Still unverified, the card turns to the warning look, "Your email isn't verified yet. Open the link we sent to pat@example.com.", with no second error under the button, and Create waits.
+  - **The app checks again by itself:** whenever it comes back to the front (on the web, when its tab is shown again), the usual way back from the email, and every 10 seconds while Create a Team waits, for a link opened on another device. Once verified, the banner and the card go, and a snackbar says "Email verified. You can create your team now." A Create that waited goes ahead by itself, with the same request so it can't make two teams, if the form didn't change meanwhile; otherwise Create is simply ready.
+  - **I've verified** checks by hand and says "Not verified yet. Open the link we sent to pat@example.com." when it isn't. **Resend** says "Sent. Check your inbox.", or "Try again in a few minutes." at Firebase's limit.
+  - The banner keeps the app's layout the same shape whether it shows or not, so verifying never rebuilds the screens under it.
 - **AUTH-4 · MVP · Password reset by email.**
   - "Forgot password?" → enter email → "If an account exists for that email, we've sent a reset link."
   - The link opens the reset page; then the user signs in with the new password at `/emaillogin` (AUTH-2), where "Forgot password?" is. A reset a super admin sends continues there.
@@ -428,7 +435,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
 ### 6.2 Teams and membership (TEAM)
 
 - **TEAM-1 · MVP · Create a team.**
-  - **Who:** any signed-in user with a verified email. Super admins can turn this off, and each person can create up to 5 teams a day (super admins can change the limit, ADMIN-7).
+  - **Who:** any signed-in user with a verified email. Super admins can turn this off, and each person can create up to 5 teams a day (super admins can change the limit, ADMIN-7). An email account not verified yet sees a notice at the top of the form saying so, with Resend email and I've verified; a Create tapped too soon waits and goes ahead by itself once the email is verified (AUTH-3, #33).
   - **Fields:**
     - Name (required, ≤ 50 characters).
     - Sport: Baseball, Basketball, Football, Hockey, Lacrosse, Soccer, Softball, Volleyball, or Other.
@@ -1118,7 +1125,7 @@ This is for platform operators (super admins) to manage every team and user.
   - Storage per team, for every team without its own limit (STORE-1, STORE-6), and maximum upload size.
   - Support email.
   - Whether super admins get alert emails about new accounts and teams (ADMIN-9).
-  - A banner announcement for all users, with text, severity, and an end date.
+  - A banner announcement for all users, with text, severity, and an end date. Screen readers read it, and its Dismiss, before the page, and announce it when it appears (§7.6).
 - **ADMIN-8 · MVP · Safeguards.**
   - Destructive actions require confirmation.
   - Every admin action writes an audit entry.
@@ -1422,6 +1429,7 @@ Sheets, dialogs, menus, snack bars, inputs, buttons, chips, and switches take th
 ### 7.6 Accessibility
 
 - Screen-reader labels on every icon button and image. Photos read as "Photo from Alex".
+- The banners above every screen, the email verification banner (AUTH-3) and the super admins' announcement (ADMIN-7), are read before the page, with their buttons, and announced when they appear. They sit above the navigator, so the pages are one screen-reader node of their own; without it, each page's modal barrier hid them (#33).
 - Logical focus order, a visible focus ring, and full keyboard navigation on web.
 - Touch targets at least 48 × 48.
 - Color is never the only signal: RSVP states also use icons and words.

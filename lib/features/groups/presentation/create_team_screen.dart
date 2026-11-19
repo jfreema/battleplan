@@ -11,6 +11,9 @@ import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/services/time_zone_names.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/admin/admin.dart';
+import 'package:battleplan/features/auth/application/providers.dart';
+import 'package:battleplan/features/auth/auth.dart';
+import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
 import 'package:battleplan/features/groups/presentation/invite_screen.dart';
@@ -44,6 +47,11 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
   /// otherwise leave Create spinning.
   static const _saveTimeout = Duration(seconds: 30);
 
+  /// How often the app asks whether the email is verified while this
+  /// screen waits for it (#33): a link opened on a computer never brings
+  /// the app back to the front.
+  static const _recheckEvery = Duration(seconds: 10);
+
   /// This screen's attempt, the same on every retry, so a first request
   /// that arrives late and a retry make one team between them (TEAM-1).
   final String _requestId = newRequestId();
@@ -62,10 +70,66 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
   bool _saving = false;
   String? _error;
 
+  /// Create was tapped before the email was verified (#33): the notice says
+  /// it isn't yet, and once it is, the team is made with what was filled
+  /// in then ([_tappedWith]) if nothing changed meanwhile.
+  bool _waitingToVerify = false;
+  Object? _tappedWith;
+  Timer? _recheck;
+
   @override
   void initState() {
     super.initState();
     unawaited(_loadZones());
+    ref.listenManual(authUserProvider, _onUser, fireImmediately: true);
+  }
+
+  /// What the form holds, to tell whether it changed while Create waited.
+  Object _filledIn() => (
+    _name.text.trim(),
+    _description.text.trim(),
+    _sport,
+    _timeZone,
+    _color,
+    _logo,
+  );
+
+  /// Not verified: checks every [_recheckEvery] until it is (#33). Then a
+  /// Create that waited on it goes ahead by itself, the same request, so
+  /// it can't make two teams.
+  void _onUser(AsyncValue<AuthUser?>? previous, AsyncValue<AuthUser?> next) {
+    if (needsVerifiedEmail(next.value)) {
+      _recheck ??= Timer.periodic(
+        _recheckEvery,
+        (_) => unawaited(recheckEmailVerified(ref)),
+      );
+      return;
+    }
+    _recheck?.cancel();
+    _recheck = null;
+    if (!_waitingToVerify || !needsVerifiedEmail(previous?.value)) return;
+    final unchanged = _tappedWith == _filledIn();
+    setState(() {
+      _waitingToVerify = false;
+      _tappedWith = null;
+    });
+    if (!unchanged) return;
+    // After the banner's "Email verified…" is up: it goes, since the team
+    // is being made and Invite says "Hornets is ready!".
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.maybeOf(context)?.hideCurrentSnackBar();
+      unawaited(_create());
+    });
+  }
+
+  /// Create waits for the email to be verified, with what's filled in now.
+  void _waitForVerify() {
+    if (!mounted) return;
+    setState(() {
+      _waitingToVerify = true;
+      _tappedWith = _filledIn();
+    });
   }
 
   /// A new team starts in the creator's zone (SET-7): the one they
@@ -82,6 +146,7 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
 
   @override
   void dispose() {
+    _recheck?.cancel();
     _name.dispose();
     _description.dispose();
     super.dispose();
@@ -98,13 +163,22 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
       '#${(argb & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
 
   Future<void> _create() async {
-    if (!(_form.currentState?.validate() ?? false)) return;
+    if (_saving || !(_form.currentState?.validate() ?? false)) return;
     final l10n = AppLocalizations.of(context);
     setState(() {
       _saving = true;
       _error = null;
+      _waitingToVerify = false;
     });
     try {
+      // Not verified as far as the app knows: it asks first, since the
+      // link may have been opened just now. Still not: the notice says so,
+      // and Create waits for it, with no error under the button (#33).
+      if (needsVerifiedEmail(ref.read(authUserProvider).value) &&
+          !await recheckEmailVerified(ref)) {
+        _waitForVerify();
+        return;
+      }
       final id = await ref
           .read(groupRepositoryProvider)
           .createGroup(
@@ -147,11 +221,13 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
         ),
       );
       if (mounted) setState(() => _error = l10n.errorCreateTeam);
+    } on EmailNotVerified {
+      // The server still saw it unverified: the same wait as above.
+      _waitForVerify();
     } on AppFailure catch (e) {
       if (!mounted) return;
       setState(
         () => _error = switch (e) {
-          EmailNotVerified() => l10n.createTeamNeedsVerifiedEmail,
           RateLimited() => l10n.createTeamRateLimited,
           TooManyTeams() => l10n.tooManyTeams,
           PermissionDenied() => l10n.createTeamTurnedOff,
@@ -170,6 +246,7 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
     final theme = Theme.of(context);
     final error = _error;
     final c = GumdropColors.of(context);
+    final unverified = needsVerifiedEmail(ref.watch(authUserProvider).value);
     return GumdropScaffold(
       maxWidth: 520,
       title: _kind == GroupKind.group ? l10n.createGroupTitle : l10n.createTeam,
@@ -188,6 +265,14 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
                 Space.xl,
               ),
               children: [
+                // What's needed before anything is typed (#33).
+                if (unverified) ...[
+                  VerifyEmailNotice(
+                    group: _kind == GroupKind.group,
+                    waiting: _waitingToVerify,
+                  ),
+                  const SizedBox(height: 14),
+                ],
                 SettingsPanel(
                   radius: Corners.panel,
                   padding: const EdgeInsets.fromLTRB(14, 12, 14, 13),

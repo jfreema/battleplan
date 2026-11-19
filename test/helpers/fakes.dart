@@ -141,18 +141,39 @@ class FakeAuthRepository implements AuthRepository {
   final List<String> resetEmails = [];
   int verificationEmailsSent = 0;
 
+  /// Set to make Resend fail this way (Firebase's limit: RateLimited).
+  AppFailure? resendFailsWith;
+
   @override
-  Future<void> sendEmailVerification() async => verificationEmailsSent++;
+  Future<void> sendEmailVerification() async {
+    if (resendFailsWith case final failure?) throw failure;
+    verificationEmailsSent++;
+  }
 
   /// Set to make the next reload fail the way a revoked session does: the
   /// session ends, then the reload throws.
   bool reloadEndsSession = false;
 
+  /// The verification link was opened: the next reload finds the email
+  /// verified, as Firebase's does (AUTH-3).
+  bool linkOpened = false;
+
+  /// How many times the app checked with the server.
+  int reloads = 0;
+
   @override
-  Future<void> reloadUser() async {
-    if (!reloadEndsSession) return;
-    endSessionElsewhere();
-    throw const Unauthenticated('user-token-expired');
+  Future<bool> reloadUser() async {
+    reloads++;
+    if (reloadEndsSession) {
+      endSessionElsewhere();
+      throw const Unauthenticated('user-token-expired');
+    }
+    final user = _user;
+    if (linkOpened && user != null && !user.emailVerified) {
+      _user = user.copyWith(emailVerified: true);
+      _controller.add(_user);
+    }
+    return _user?.emailVerified ?? false;
   }
 
   @override

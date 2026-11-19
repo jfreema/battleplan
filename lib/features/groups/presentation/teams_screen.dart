@@ -12,6 +12,8 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/features/admin/admin.dart';
+import 'package:battleplan/features/auth/application/providers.dart';
+import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/chat/chat.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
@@ -96,7 +98,13 @@ class TeamsScreen extends ConsumerWidget {
     if (teams.isLoading && !teams.hasValue) {
       body = const SkeletonList();
     } else if (mine.isEmpty) {
-      body = _Welcome(joinOrCreate: joinOrCreate, schemes: schemeSection);
+      final user = ref.watch(authUserProvider).value;
+      body = _Welcome(
+        joinOrCreate: joinOrCreate,
+        schemes: schemeSection,
+        // Creating needs a verified email; joining doesn't (#33).
+        verifyEmail: needsVerifiedEmail(user) ? user!.email : null,
+      );
     } else {
       body = ListView(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, Space.xl),
@@ -438,10 +446,17 @@ class _RequestsButton extends StatelessWidget {
 /// No team yet (SPEC §5.1): what the app is for, then Join a team and
 /// Create a team.
 class _Welcome extends StatelessWidget {
-  const new({required this.joinOrCreate, required this.schemes});
+  const new({
+    required this.joinOrCreate,
+    required this.schemes,
+    this.verifyEmail,
+  });
 
   final Widget joinOrCreate;
   final Widget schemes;
+
+  /// The email to verify before creating a team, while it isn't (#33).
+  final String? verifyEmail;
 
   @override
   Widget build(BuildContext context) {
@@ -470,6 +485,18 @@ class _Welcome extends StatelessWidget {
               color: c.textMutedOnPage,
             ),
           ),
+          if (verifyEmail case final email?) ...[
+            const SizedBox(height: Space.sm),
+            Text(
+              l10n.welcomeVerifyEmail(email),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: c.textMutedOnPage,
+              ),
+            ),
+          ],
           const SizedBox(height: Space.xl),
           joinOrCreate,
           schemes,
