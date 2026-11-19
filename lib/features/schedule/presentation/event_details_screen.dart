@@ -16,6 +16,7 @@ import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
+import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
@@ -64,6 +65,9 @@ class EventDetailsScreen extends ConsumerWidget {
         appBar: AppBar(),
         body: async.isLoading || group == null || zone == null
             ? const SkeletonList()
+            // An event that couldn't be read (#40), not one that's gone.
+            : async.hasError
+            ? LoadError(onRetry: () => ref.invalidate(eventProvider(eventId)))
             : EmptyState(icon: AppIcons.event, message: l10n.eventNotFound),
       );
     }

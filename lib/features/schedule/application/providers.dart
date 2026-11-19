@@ -269,6 +269,14 @@ abstract class EventListState with _$EventListState {
 
     /// True once there's nothing more to load.
     @Default(false) bool reachedEnd,
+
+    /// The live list stopped (#40): "Couldn't load" with Try again while
+    /// nothing shows, else the events kept under "Couldn't refresh." Gone
+    /// with the next answer.
+    @Default(false) bool failed,
+
+    /// Load more failed: the end of the list says so, with Try again.
+    @Default(false) bool moreFailed,
   }) = _EventListState;
 }
 
@@ -338,11 +346,14 @@ class TeamEvents extends _$TeamEvents {
         }
         _publish(
           reachedEnd: _loadedMore ? _moreCursor == null : page.next == null,
+          failed: false,
         );
       },
+      // Said, not shown as an empty list nobody can tell from "Nothing
+      // coming up" (#40).
       onError: (Object _) {
         _loaded = true;
-        _publish();
+        _publish(failed: true);
       },
     );
     final edgeSub = edge.listen((events) {
@@ -388,7 +399,7 @@ class TeamEvents extends _$TeamEvents {
     _publish();
   }
 
-  void _publish({bool? loadingMore, bool? reachedEnd}) {
+  void _publish({bool? loadingMore, bool? reachedEnd, bool? failed}) {
     final all = {..._known, ..._edge};
     final sorted = [
       for (final e in all.values)
@@ -399,6 +410,7 @@ class TeamEvents extends _$TeamEvents {
       loading: false,
       loadingMore: loadingMore ?? state.loadingMore,
       reachedEnd: reachedEnd ?? state.reachedEnd,
+      failed: failed ?? state.failed,
     );
   }
 
@@ -410,7 +422,7 @@ class TeamEvents extends _$TeamEvents {
       state = state.copyWith(reachedEnd: true);
       return;
     }
-    state = state.copyWith(loadingMore: true);
+    state = state.copyWith(loadingMore: true, moreFailed: false);
     try {
       final page = await ref
           .read(eventRepositoryProvider)
@@ -423,8 +435,8 @@ class TeamEvents extends _$TeamEvents {
       if (page.events.isNotEmpty) _tail = page.events.last;
       _publish(loadingMore: false, reachedEnd: page.next == null);
     } on Object {
-      state = state.copyWith(loadingMore: false);
-      rethrow;
+      // The end of the list says so, with Try again (#40).
+      state = state.copyWith(loadingMore: false, moreFailed: true);
     }
   }
 }
@@ -495,6 +507,8 @@ EventListState yourScheduleEvents(
     loading: lists.any((l) => l.loading),
     loadingMore: lists.any((l) => l.loadingMore),
     reachedEnd: lists.every((l) => l.reachedEnd),
+    failed: lists.any((l) => l.failed),
+    moreFailed: lists.any((l) => l.moreFailed),
   );
 }
 
@@ -556,6 +570,11 @@ AsyncValue<List<Event>> monthEvents(Ref ref, GroupId groupId, DateTime month) {
   if (inRange.hasError) {
     return AsyncError(inRange.error!, inRange.stackTrace ?? StackTrace.current);
   }
+  // The days before it failing is a failed month too, not one that never
+  // finishes loading (#40).
+  if (before.hasError && !before.hasValue) {
+    return AsyncError(before.error!, before.stackTrace ?? StackTrace.current);
+  }
   if (!inRange.hasValue || !before.hasValue) return const AsyncLoading();
   return AsyncData(
     [
@@ -577,6 +596,13 @@ AsyncValue<List<Event>> yourScheduleMonthEvents(Ref ref, DateTime month) {
   final months = [
     for (final g in teams) ref.watch(monthEventsProvider(g.id, month)),
   ];
+  // One team's month failing fails the whole, rather than loading forever
+  // (#40).
+  for (final m in months) {
+    if (m.hasError && !m.hasValue) {
+      return AsyncError(m.error!, m.stackTrace ?? StackTrace.current);
+    }
+  }
   if (months.any((m) => !m.hasValue)) return const AsyncLoading();
   return AsyncData(
     [for (final m in months) ...m.value!]

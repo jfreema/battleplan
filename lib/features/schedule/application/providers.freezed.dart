@@ -17,7 +17,11 @@ mixin _$EventListState {
 
 /// Upcoming: soonest first. Past: newest first.
  List<Event> get events; bool get loading; bool get loadingMore;/// True once there's nothing more to load.
- bool get reachedEnd;
+ bool get reachedEnd;/// The live list stopped (#40): "Couldn't load" with Try again while
+/// nothing shows, else the events kept under "Couldn't refresh." Gone
+/// with the next answer.
+ bool get failed;/// Load more failed: the end of the list says so, with Try again.
+ bool get moreFailed;
 /// Create a copy of EventListState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -29,20 +33,20 @@ $EventListStateCopyWith<EventListState> get copyWith => _$EventListStateCopyWith
 @override
 bool operator ==(Object other) {
   final _this = this as EventListState;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is EventListState&&const DeepCollectionEquality().equals(other.events, _this.events)&&(identical(other.loading, _this.loading) || other.loading == _this.loading)&&(identical(other.loadingMore, _this.loadingMore) || other.loadingMore == _this.loadingMore)&&(identical(other.reachedEnd, _this.reachedEnd) || other.reachedEnd == _this.reachedEnd));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is EventListState&&const DeepCollectionEquality().equals(other.events, _this.events)&&(identical(other.loading, _this.loading) || other.loading == _this.loading)&&(identical(other.loadingMore, _this.loadingMore) || other.loadingMore == _this.loadingMore)&&(identical(other.reachedEnd, _this.reachedEnd) || other.reachedEnd == _this.reachedEnd)&&(identical(other.failed, _this.failed) || other.failed == _this.failed)&&(identical(other.moreFailed, _this.moreFailed) || other.moreFailed == _this.moreFailed));
 }
 
 
 @override
 int get hashCode {
   final _this = this as EventListState;
-  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.events),_this.loading,_this.loadingMore,_this.reachedEnd);
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.events),_this.loading,_this.loadingMore,_this.reachedEnd,_this.failed,_this.moreFailed);
 }
 
 @override
 String toString() {
   final _this = this as EventListState;
-  return 'EventListState(events: ${_this.events}, loading: ${_this.loading}, loadingMore: ${_this.loadingMore}, reachedEnd: ${_this.reachedEnd})';
+  return 'EventListState(events: ${_this.events}, loading: ${_this.loading}, loadingMore: ${_this.loadingMore}, reachedEnd: ${_this.reachedEnd}, failed: ${_this.failed}, moreFailed: ${_this.moreFailed})';
 }
 
 
@@ -53,7 +57,7 @@ abstract mixin class $EventListStateCopyWith<$Res>  {
   factory $EventListStateCopyWith(EventListState value, $Res Function(EventListState) _then) = _$EventListStateCopyWithImpl;
 @useResult
 $Res call({
- List<Event> events, bool loading, bool loadingMore, bool reachedEnd
+ List<Event> events, bool loading, bool loadingMore, bool reachedEnd, bool failed, bool moreFailed
 });
 
 
@@ -70,12 +74,14 @@ class _$EventListStateCopyWithImpl<$Res>
 
 /// Create a copy of EventListState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? events = null,Object? loading = null,Object? loadingMore = null,Object? reachedEnd = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? events = null,Object? loading = null,Object? loadingMore = null,Object? reachedEnd = null,Object? failed = null,Object? moreFailed = null,}) {
   return _then(EventListState(
 events: null == events ? _self.events : events // ignore: cast_nullable_to_non_nullable
 as List<Event>,loading: null == loading ? _self.loading : loading // ignore: cast_nullable_to_non_nullable
 as bool,loadingMore: null == loadingMore ? _self.loadingMore : loadingMore // ignore: cast_nullable_to_non_nullable
 as bool,reachedEnd: null == reachedEnd ? _self.reachedEnd : reachedEnd // ignore: cast_nullable_to_non_nullable
+as bool,failed: null == failed ? _self.failed : failed // ignore: cast_nullable_to_non_nullable
+as bool,moreFailed: null == moreFailed ? _self.moreFailed : moreFailed // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -161,10 +167,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Event> events,  bool loading,  bool loadingMore,  bool reachedEnd)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Event> events,  bool loading,  bool loadingMore,  bool reachedEnd,  bool failed,  bool moreFailed)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _EventListState() when $default != null:
-return $default(_that.events,_that.loading,_that.loadingMore,_that.reachedEnd);case _:
+return $default(_that.events,_that.loading,_that.loadingMore,_that.reachedEnd,_that.failed,_that.moreFailed);case _:
   return orElse();
 
 }
@@ -182,10 +188,10 @@ return $default(_that.events,_that.loading,_that.loadingMore,_that.reachedEnd);c
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Event> events,  bool loading,  bool loadingMore,  bool reachedEnd)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Event> events,  bool loading,  bool loadingMore,  bool reachedEnd,  bool failed,  bool moreFailed)  $default,) {final _that = this;
 switch (_that) {
 case _EventListState():
-return $default(_that.events,_that.loading,_that.loadingMore,_that.reachedEnd);case _:
+return $default(_that.events,_that.loading,_that.loadingMore,_that.reachedEnd,_that.failed,_that.moreFailed);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -202,10 +208,10 @@ return $default(_that.events,_that.loading,_that.loadingMore,_that.reachedEnd);c
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Event> events,  bool loading,  bool loadingMore,  bool reachedEnd)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Event> events,  bool loading,  bool loadingMore,  bool reachedEnd,  bool failed,  bool moreFailed)?  $default,) {final _that = this;
 switch (_that) {
 case _EventListState() when $default != null:
-return $default(_that.events,_that.loading,_that.loadingMore,_that.reachedEnd);case _:
+return $default(_that.events,_that.loading,_that.loadingMore,_that.reachedEnd,_that.failed,_that.moreFailed);case _:
   return null;
 
 }
@@ -217,7 +223,7 @@ return $default(_that.events,_that.loading,_that.loadingMore,_that.reachedEnd);c
 
 
 class _EventListState implements EventListState {
-  const _EventListState({ List<Event> events = const <Event>[], this.loading = true, this.loadingMore = false, this.reachedEnd = false}): _events = events;
+  const _EventListState({ List<Event> events = const <Event>[], this.loading = true, this.loadingMore = false, this.reachedEnd = false, this.failed = false, this.moreFailed = false}): _events = events;
   
 
 /// Upcoming: soonest first. Past: newest first.
@@ -233,6 +239,12 @@ class _EventListState implements EventListState {
 @override@JsonKey() final  bool loadingMore;
 /// True once there's nothing more to load.
 @override@JsonKey() final  bool reachedEnd;
+/// The live list stopped (#40): "Couldn't load" with Try again while
+/// nothing shows, else the events kept under "Couldn't refresh." Gone
+/// with the next answer.
+@override@JsonKey() final  bool failed;
+/// Load more failed: the end of the list says so, with Try again.
+@override@JsonKey() final  bool moreFailed;
 
 /// Create a copy of EventListState
 /// with the given fields replaced by the non-null parameter values.
@@ -244,18 +256,18 @@ _$EventListStateCopyWith<_EventListState> get copyWith => __$EventListStateCopyW
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _EventListState&&const DeepCollectionEquality().equals(other.events, _events)&&(identical(other.loading, loading) || other.loading == loading)&&(identical(other.loadingMore, loadingMore) || other.loadingMore == loadingMore)&&(identical(other.reachedEnd, reachedEnd) || other.reachedEnd == reachedEnd));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _EventListState&&const DeepCollectionEquality().equals(other.events, _events)&&(identical(other.loading, loading) || other.loading == loading)&&(identical(other.loadingMore, loadingMore) || other.loadingMore == loadingMore)&&(identical(other.reachedEnd, reachedEnd) || other.reachedEnd == reachedEnd)&&(identical(other.failed, failed) || other.failed == failed)&&(identical(other.moreFailed, moreFailed) || other.moreFailed == moreFailed));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_events),loading,loadingMore,reachedEnd);
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_events),loading,loadingMore,reachedEnd,failed,moreFailed);
 }
 
 @override
 String toString() {
-    return 'EventListState(events: $events, loading: $loading, loadingMore: $loadingMore, reachedEnd: $reachedEnd)';
+    return 'EventListState(events: $events, loading: $loading, loadingMore: $loadingMore, reachedEnd: $reachedEnd, failed: $failed, moreFailed: $moreFailed)';
 }
 
 
@@ -266,7 +278,7 @@ abstract mixin class _$EventListStateCopyWith<$Res> implements $EventListStateCo
   factory _$EventListStateCopyWith(_EventListState value, $Res Function(_EventListState) _then) = __$EventListStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<Event> events, bool loading, bool loadingMore, bool reachedEnd
+ List<Event> events, bool loading, bool loadingMore, bool reachedEnd, bool failed, bool moreFailed
 });
 
 
@@ -283,12 +295,14 @@ class __$EventListStateCopyWithImpl<$Res>
 
 /// Create a copy of EventListState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? events = null,Object? loading = null,Object? loadingMore = null,Object? reachedEnd = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? events = null,Object? loading = null,Object? loadingMore = null,Object? reachedEnd = null,Object? failed = null,Object? moreFailed = null,}) {
   return _then(_EventListState(
 events: null == events ? _self._events : events // ignore: cast_nullable_to_non_nullable
 as List<Event>,loading: null == loading ? _self.loading : loading // ignore: cast_nullable_to_non_nullable
 as bool,loadingMore: null == loadingMore ? _self.loadingMore : loadingMore // ignore: cast_nullable_to_non_nullable
 as bool,reachedEnd: null == reachedEnd ? _self.reachedEnd : reachedEnd // ignore: cast_nullable_to_non_nullable
+as bool,failed: null == failed ? _self.failed : failed // ignore: cast_nullable_to_non_nullable
+as bool,moreFailed: null == moreFailed ? _self.moreFailed : moreFailed // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

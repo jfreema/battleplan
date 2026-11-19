@@ -1308,7 +1308,7 @@ final class TeamEventsProvider
   }
 }
 
-String _$teamEventsHash() => r'8e5740c3002d6e002e9d137ff78e3ec83a082bc3';
+String _$teamEventsHash() => r'2a0df128763576d186a3891405a2693ca26166af';
 
 /// One team's Upcoming (from the start of today) or Past (before it, newest
 /// first): the first [limit] live (50, or fewer for Your schedule on Teams,
@@ -1558,7 +1558,7 @@ final class YourScheduleEventsProvider
 }
 
 String _$yourScheduleEventsHash() =>
-    r'a64cfdd49435bc2d1be4d77d974d5c69e8a8456e';
+    r'1a4187f731fc4d54c9d02680d213163747c4a101';
 
 /// Your schedule (SCHED-2): the Upcoming or Past of every team in
 /// [yourScheduleTeams] merged, one query per team, each listening to its
@@ -1930,7 +1930,7 @@ final class MonthEventsProvider
   }
 }
 
-String _$monthEventsHash() => r'1a42e448ac6eab58255072d119daa8bc5e53f531';
+String _$monthEventsHash() => r'37dda36fe8b3a158aa9a657eeb5fbee0996c88c3';
 
 /// A month of one team's events for the calendar (SCHED-1), for every cell
 /// of its grid (see [calendarWindow]), with the all-day events that began
@@ -2037,7 +2037,7 @@ final class YourScheduleMonthEventsProvider
 }
 
 String _$yourScheduleMonthEventsHash() =>
-    r'b5e909429c8bd983599352615d8b35d6c8940b38';
+    r'700bcf223f93da131f3f0e43e94dffc7b733952f';
 
 /// A month of Your schedule for its calendar (SCHED-2): every team's in
 /// [yourScheduleTeams].

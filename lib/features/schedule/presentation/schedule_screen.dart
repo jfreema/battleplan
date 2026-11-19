@@ -11,6 +11,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
+import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
@@ -25,6 +26,7 @@ import 'package:battleplan/features/schedule/presentation/calendar_view.dart';
 import 'package:battleplan/features/schedule/presentation/event_details_screen.dart';
 import 'package:battleplan/features/schedule/presentation/event_row.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_format.dart';
+import 'package:battleplan/features/schedule/presentation/schedule_retry.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -560,6 +562,15 @@ class EventList extends ConsumerWidget {
     if (zone == null || (state.loading && state.events.isEmpty)) {
       return const SkeletonList();
     }
+    // Try again starts the list over, its placeholder rows meanwhile (#40).
+    void retry() => team == null
+        ? retryYourSchedule(ref, past: past)
+        : ref.invalidate(teamEventsProvider(team, past: past));
+    // Failed before anything showed: said, never an empty list nobody can
+    // tell from "Nothing coming up" (#40).
+    if (state.failed && state.events.isEmpty) {
+      return LoadError(onRetry: retry);
+    }
     final events = [
       for (final e in state.events)
         if (options.shows(e)) e,
@@ -592,7 +603,9 @@ class EventList extends ConsumerWidget {
     // pages loaded) doesn't build every row and its RSVP lookups at once
     // (SPEC §8.1).
     // Upcoming starts with Sync to my calendar (#22), which scrolls away
-    // with the list.
+    // with the list; a list that stopped after showing events keeps them,
+    // under "Couldn't refresh." (#40).
+    final notice = state.failed ? 1 : 0;
     final sync = past ? 0 : 1;
     return ListView.builder(
       // Clear of the + button and the tab bar; Your schedule has neither.
@@ -600,16 +613,24 @@ class EventList extends ConsumerWidget {
         top: past ? 8 : 0,
         bottom: team == null ? Space.xl : 96,
       ),
-      itemCount: sync + events.length + (more ? 1 : 0),
+      itemCount: notice + sync + events.length + (more ? 1 : 0),
       itemBuilder: (context, index) {
-        if (index < sync) return _SyncRow(groupId: team);
-        final i = index - sync;
+        if (index < notice) return RefreshFailedNotice(onRetry: retry);
+        if (index < notice + sync) return _SyncRow(groupId: team);
+        final i = index - notice - sync;
         if (i == events.length) {
           return Padding(
             padding: const EdgeInsets.all(Space.md),
             child: Center(
               child: state.loadingMore
                   ? const CircularProgressIndicator()
+                  // Load more that failed says so, with Try again (#40).
+                  : state.moreFailed
+                  ? LoadError(
+                      inline: true,
+                      message: l10n.loadMoreFailed,
+                      onRetry: () => unawaited(_loadMore(ref)),
+                    )
                   : TextButton(
                       style: GumdropButtons.of(context).link(),
                       onPressed: () => unawaited(_loadMore(ref)),

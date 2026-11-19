@@ -1,3 +1,4 @@
+import 'package:battleplan/core/bad_records.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
@@ -11,7 +12,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// who may write what, and Functions clear them with their event, their
 /// team, a member who leaves, and a deleted account.
 class FirestoreAssignmentRepository implements AssignmentRepository {
-  new(this._db);
+  new(this._db, {BadRecords? badRecords}) : _bad = badRecords ?? BadRecords();
+
+  /// Leaves out a task that can't be read, and says so (#40).
+  final BadRecords _bad;
 
   final FirebaseFirestore _db;
 
@@ -29,10 +33,14 @@ class FirestoreAssignmentRepository implements AssignmentRepository {
           .map((snap) {
             final list = [
               for (final d in snap.docs)
-                assignmentFromFirestore(
+                ?_bad.read(
+                  'assignment',
                   d.id,
-                  d.data(),
-                  pending: d.metadata.hasPendingWrites,
+                  () => assignmentFromFirestore(
+                    d.id,
+                    d.data(),
+                    pending: d.metadata.hasPendingWrites,
+                  ),
                 ),
             ];
             // In the order they were added; one just added (no server time

@@ -1,3 +1,4 @@
+import 'package:battleplan/core/bad_records.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
@@ -13,10 +14,18 @@ import 'package:cloud_functions/cloud_functions.dart';
 /// directly under the rules (counts start at 0, the server keeps them);
 /// series go through the `saveEventSeries` callable.
 class FirestoreEventRepository implements EventRepository {
-  new(this._db, this._functions);
+  new(this._db, this._functions, {BadRecords? badRecords})
+    : _bad = badRecords ?? BadRecords();
 
   final FirebaseFirestore _db;
   final FirebaseFunctions _functions;
+
+  /// Leaves out an event or series that can't be read, and says so (#40).
+  final BadRecords _bad;
+
+  /// [d] as an event, or null, told, when it can't be read.
+  Event? _event(DocumentSnapshot<Map<String, dynamic>> d) =>
+      _bad.read('event', d.id, () => eventFromFirestore(d.id, d.data()!));
 
   CollectionReference<Map<String, dynamic>> get _events =>
       _db.collection(Collections.events);
@@ -24,8 +33,10 @@ class FirestoreEventRepository implements EventRepository {
   Query<Map<String, dynamic>> _team(GroupId groupId) =>
       _events.where('groupId', isEqualTo: groupId.value);
 
+  // The cursor is the last record read, good or not, so a bad one at the
+  // end of a page never stops Load more.
   EventPage _page(QuerySnapshot<Map<String, dynamic>> q, int limit) => (
-    events: [for (final d in q.docs) eventFromFirestore(d.id, d.data())],
+    events: [for (final d in q.docs) ?_event(d)],
     next: q.docs.length < limit ? null : PageCursor(q.docs.last),
   );
 
@@ -76,13 +87,14 @@ class FirestoreEventRepository implements EventRepository {
     GroupId groupId,
     DateTime from,
     DateTime until,
-  ) => _team(groupId)
-      .where('startAt', isGreaterThanOrEqualTo: Timestamp.fromDate(from))
-      .where('startAt', isLessThan: Timestamp.fromDate(until))
-      .orderBy('startAt')
-      .limit(Limits.queryLimitMax)
-      .snapshots()
-      .map((q) => [for (final d in q.docs) eventFromFirestore(d.id, d.data())]);
+  ) =>
+      _team(groupId)
+          .where('startAt', isGreaterThanOrEqualTo: Timestamp.fromDate(from))
+          .where('startAt', isLessThan: Timestamp.fromDate(until))
+          .orderBy('startAt')
+          .limit(Limits.queryLimitMax)
+          .snapshots()
+          .map((q) => [for (final d in q.docs) ?_event(d)]);
 
   @override
   Future<List<Event>> eventsBetween(
@@ -101,9 +113,7 @@ class FirestoreEventRepository implements EventRepository {
         final page = await (last == null ? q : q.startAfterDocument(last))
             .limit(Limits.queryLimitMax)
             .get();
-        out.addAll([
-          for (final d in page.docs) eventFromFirestore(d.id, d.data()),
-        ]);
+        out.addAll([for (final d in page.docs) ?_event(d)]);
         if (page.docs.length < Limits.queryLimitMax) return out;
         last = page.docs.last;
       }
@@ -123,7 +133,16 @@ class FirestoreEventRepository implements EventRepository {
       // Offline, an event that was never cached reads as missing; wait for
       // the server rather than call it deleted.
       .where((d) => d.exists || !d.metadata.isFromCache)
-      .map((d) => d.exists ? eventFromFirestore(d.id, d.data()!) : null);
+      // One that can't be read errors, so its page says so (#40).
+      .map(
+        (d) => d.exists
+            ? _bad.readOne(
+                'event',
+                d.id,
+                () => eventFromFirestore(d.id, d.data()!),
+              )
+            : null,
+      );
 
   @override
   Stream<Event?> watchNextInSeries(
@@ -137,18 +156,22 @@ class FirestoreEventRepository implements EventRepository {
           .orderBy('startAt')
           .limit(1)
           .snapshots()
-          .map(
-            (q) => q.docs.isEmpty
-                ? null
-                : eventFromFirestore(q.docs.first.id, q.docs.first.data()),
-          );
+          .map((q) => q.docs.isEmpty ? null : _event(q.docs.first));
 
   @override
   Stream<EventSeries?> watchSeries(String seriesId) => _db
       .collection(Collections.eventSeries)
       .doc(seriesId)
       .snapshots()
-      .map((d) => d.exists ? seriesFromFirestore(d.id, d.data()!) : null);
+      .map(
+        (d) => d.exists
+            ? _bad.readOne(
+                'series',
+                d.id,
+                () => seriesFromFirestore(d.id, d.data()!),
+              )
+            : null,
+      );
 
   /// The fields the form sets, as the rules expect them (ARCH §6.2).
   Map<String, Object?> _fields(EventDraft draft) {

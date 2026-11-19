@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:battleplan/core/bad_records.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
@@ -17,7 +18,11 @@ import 'package:firebase_storage/firebase_storage.dart';
 /// document is written under the rules. Functions notify the team
 /// (`onDocumentCreated`) and delete a deleted document's file.
 class FirestoreDocumentRepository implements DocumentRepository {
-  new(this._db, this._storage);
+  new(this._db, this._storage, {BadRecords? badRecords})
+    : _bad = badRecords ?? BadRecords();
+
+  /// Leaves out a document that can't be read, and says so (#40).
+  final BadRecords _bad;
 
   final FirebaseFirestore _db;
   final FirebaseStorage _storage;
@@ -35,8 +40,10 @@ class FirestoreDocumentRepository implements DocumentRepository {
     };
   }
 
+  // The cursor is the last record read, good or not, so a bad one at the
+  // end of a page never stops Load more.
   DocumentPage _page(QuerySnapshot<Map<String, dynamic>> q, int limit) => (
-    documents: [for (final d in q.docs) _read(d)],
+    documents: [for (final d in q.docs) ?_readOrSkip(d)],
     next: q.docs.length < limit ? null : PageCursor(q.docs.last),
   );
 
@@ -46,6 +53,10 @@ class FirestoreDocumentRepository implements DocumentRepository {
         d.data()!,
         pending: d.metadata.hasPendingWrites,
       );
+
+  /// [d] in a list, or null, told, when it can't be read.
+  Document? _readOrSkip(DocumentSnapshot<Map<String, dynamic>> d) =>
+      _bad.read('document', d.id, () => _read(d));
 
   @override
   Stream<DocumentPage> watchFirstPage(
@@ -83,7 +94,7 @@ class FirestoreDocumentRepository implements DocumentRepository {
       .where('pinned', isEqualTo: true)
       .limit(Limits.queryLimitMax)
       .snapshots()
-      .map((q) => [for (final d in q.docs) _read(d)]);
+      .map((q) => [for (final d in q.docs) ?_readOrSkip(d)]);
 
   @override
   Stream<Document?> watchDocument(DocumentId id) {
@@ -95,7 +106,16 @@ class FirestoreDocumentRepository implements DocumentRepository {
         // for the server rather than call a live one deleted.
         .where((d) => d.exists || !d.metadata.isFromCache)
         .listen(
-          (d) => controller.add(d.exists ? _read(d) : null),
+          (d) {
+            if (!d.exists) return controller.add(null);
+            // One that can't be read errors, told once, so its page says
+            // so with Try again (#40).
+            try {
+              controller.add(_bad.readOne('document', d.id, () => _read(d)));
+            } on Object catch (e, stack) {
+              controller.addError(e, stack);
+            }
+          },
           // The rules can't check a missing document's team, so reading a
           // deleted one is refused: it's gone.
           onError: (Object e) =>

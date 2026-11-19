@@ -108,8 +108,11 @@ class TeamDocuments extends _$TeamDocuments {
         }
         _publish(
           reachedEnd: _loadedMore ? _moreCursor == null : page.next == null,
+          failed: false,
         );
       },
+      // Kept, with "Couldn't refresh.", or "Couldn't load" with Try again
+      // while nothing shows (#40); only the list's next answer clears it.
       onError: (Object _) =>
           state = state.copyWith(loading: false, failed: true),
     );
@@ -150,7 +153,7 @@ class TeamDocuments extends _$TeamDocuments {
         }, onError: (Object _) {});
   }
 
-  void _publish({bool? loadingMore, bool? reachedEnd}) {
+  void _publish({bool? loadingMore, bool? reachedEnd, bool? failed}) {
     // The pinned listener has the latest pinned state; the pages have
     // the rest. A document unpinned keeps its page's copy, unpinned.
     final all = <String, Document>{
@@ -163,7 +166,7 @@ class TeamDocuments extends _$TeamDocuments {
     state = state.copyWith(
       documents: arrangeDocuments(all.values, sort: sort),
       loading: !_arrived,
-      failed: false,
+      failed: failed ?? state.failed,
       loadingMore: loadingMore ?? state.loadingMore,
       reachedEnd: reachedEnd ?? state.reachedEnd,
     );

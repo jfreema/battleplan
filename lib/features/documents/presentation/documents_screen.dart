@@ -5,6 +5,7 @@ import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
@@ -91,13 +92,13 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     final gutter = Space.gutter(MediaQuery.sizeOf(context).width);
     _searchRest(view, state);
 
+    // Try again starts the list over, its placeholder rows meanwhile (#40).
+    void retry() => ref.invalidate(teamDocumentsProvider(groupId, view.sort));
     final Widget body;
-    if (group == null || (state.loading && state.documents.isEmpty)) {
-      body = state.failed
-          ? Center(child: Text(l10n.loadError))
-          : const SkeletonList();
-    } else if (state.failed && state.documents.isEmpty) {
-      body = Center(child: Text(l10n.loadError));
+    if (state.failed && state.documents.isEmpty) {
+      body = LoadError(onRetry: retry);
+    } else if (group == null || (state.loading && state.documents.isEmpty)) {
+      body = const SkeletonList();
     } else if (state.documents.isEmpty && state.reachedEnd) {
       body = EmptyState(
         icon: AppIcons.documents,
@@ -232,6 +233,10 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
               ),
             ),
           ),
+          // The list stopped after showing what it has: kept, with this
+          // (#40).
+          if (state.failed && state.documents.isNotEmpty)
+            RefreshFailedNotice(onRetry: retry),
           // Hidden while a filter looks through the documents.
           if (view.filter.trim().isEmpty)
             Padding(

@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
+import 'package:battleplan/features/schedule/presentation/schedule_retry.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_screen.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -79,6 +81,13 @@ class YourScheduleSection extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(vertical: 6),
               rsvpRange: range,
             )
+        // A list that stopped: one quiet line with Try again, so it never
+        // takes over Teams (#40).
+        else if (state.failed && !state.loading)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: LoadError(inline: true, onRetry: () => retry(ref)),
+          )
         // Said only once every team has answered with nothing to come.
         else if (ready && state.reachedEnd)
           Padding(
@@ -90,6 +99,16 @@ class YourScheduleSection extends ConsumerWidget {
                 fontWeight: FontWeight.w600,
                 color: GumdropColors.of(context).textMutedOnPage,
               ),
+            ),
+          ),
+        // Stopped after showing its cards: they stay, with this (#40).
+        if (state.failed && shown.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: LoadError(
+              inline: true,
+              message: l10n.refreshFailed,
+              onRetry: () => retry(ref),
             ),
           ),
         Padding(
@@ -104,6 +123,10 @@ class YourScheduleSection extends ConsumerWidget {
       ],
     );
   }
+
+  /// Starts every team's list for Teams over (#40).
+  static void retry(WidgetRef ref) =>
+      retryYourSchedule(ref, past: false, limit: yourScheduleLive);
 
   /// The window "My RSVPs" reads on each team shown (ARCH §6.2): from the
   /// earliest card's start to just past the latest's, so Teams reads my

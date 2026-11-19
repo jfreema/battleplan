@@ -1,3 +1,4 @@
+import 'package:battleplan/core/bad_records.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
@@ -10,7 +11,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// `rsvps/{eventId}_{participantId}`, so two guardians answering for one
 /// player write the same record (PLAYER-6); a trigger recounts the event.
 class FirestoreRsvpRepository implements RsvpRepository {
-  new(this._db);
+  new(this._db, {BadRecords? badRecords}) : _bad = badRecords ?? BadRecords();
+
+  /// Leaves out an answer that can't be read, and says so (#40).
+  final BadRecords _bad;
 
   final FirebaseFirestore _db;
 
@@ -50,7 +54,7 @@ class FirestoreRsvpRepository implements RsvpRepository {
         .limit(Limits.queryLimitMax)
         .snapshots(includeMetadataChanges: true)
         .asyncMap((first) async {
-          final all = [for (final d in first.docs) _rsvp(d)];
+          final all = [for (final d in first.docs) ?_rsvp(d)];
           var last = first.docs.length < Limits.queryLimitMax
               ? null
               : first.docs.last;
@@ -59,7 +63,7 @@ class FirestoreRsvpRepository implements RsvpRepository {
                 .startAfterDocument(last)
                 .limit(Limits.queryLimitMax)
                 .get();
-            all.addAll([for (final d in page.docs) _rsvp(d)]);
+            all.addAll([for (final d in page.docs) ?_rsvp(d)]);
             last = page.docs.length < Limits.queryLimitMax
                 ? null
                 : page.docs.last;
@@ -80,7 +84,7 @@ class FirestoreRsvpRepository implements RsvpRepository {
         .limit(Limits.queryLimitMax)
         .snapshots(includeMetadataChanges: true)
         .asyncMap((first) async {
-          final all = [for (final d in first.docs) _rsvp(d)];
+          final all = [for (final d in first.docs) ?_rsvp(d)];
           var last = first.docs.length < Limits.queryLimitMax
               ? null
               : first.docs.last;
@@ -89,7 +93,7 @@ class FirestoreRsvpRepository implements RsvpRepository {
                 .startAfterDocument(last)
                 .limit(Limits.queryLimitMax)
                 .get();
-            all.addAll([for (final d in page.docs) _rsvp(d)]);
+            all.addAll([for (final d in page.docs) ?_rsvp(d)]);
             last = page.docs.length < Limits.queryLimitMax
                 ? null
                 : page.docs.last;
@@ -144,8 +148,12 @@ class FirestoreRsvpRepository implements RsvpRepository {
     }
   }
 
-  Rsvp _rsvp(DocumentSnapshot<Map<String, dynamic>> d) =>
-      rsvpFromFirestore(d.data()!, pending: d.metadata.hasPendingWrites);
+  /// [d] as an answer, or null, told, when it can't be read.
+  Rsvp? _rsvp(DocumentSnapshot<Map<String, dynamic>> d) => _bad.read(
+    'rsvp',
+    d.id,
+    () => rsvpFromFirestore(d.data()!, pending: d.metadata.hasPendingWrites),
+  );
 }
 
 /// Reads an `rsvps` document (ARCH §6.2).

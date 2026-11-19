@@ -6,6 +6,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/documents/application/providers.dart';
 import 'package:battleplan/features/documents/domain/document.dart';
@@ -65,10 +66,10 @@ class DocumentScreen extends ConsumerWidget {
     if (d == null || d.groupId != groupId || group == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: EmptyState(
-          icon: AppIcons.documents,
-          message: doc.hasError ? l10n.loadError : l10n.documentGone,
-        ),
+        // A document that couldn't be read says so with Try again (#40).
+        body: doc.hasError
+            ? LoadError(onRetry: () => ref.invalidate(documentProvider(docId)))
+            : EmptyState(icon: AppIcons.documents, message: l10n.documentGone),
       );
     }
     // HEIC photos show as details on the web, which can't decode them.

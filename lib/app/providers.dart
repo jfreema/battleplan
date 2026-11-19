@@ -10,6 +10,7 @@ import 'package:battleplan/app/services/image_picker_photo_picker.dart';
 import 'package:battleplan/app/services/share_plus_sharer.dart';
 import 'package:battleplan/app/services/url_launcher_link_opener.dart';
 import 'package:battleplan/app/services/web_browser_info.dart';
+import 'package:battleplan/core/bad_records.dart';
 import 'package:battleplan/core/env.dart';
 import 'package:battleplan/core/links.dart';
 import 'package:battleplan/core/services/analytics.dart';
@@ -69,6 +70,12 @@ import 'package:flutter_riverpod/misc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// The one place repositories and services are constructed (ARCH §5.2 rule 4).
+/// Unreadable events, answers, tasks, and documents, left out of their
+/// lists, go to the crash log once each, as unreadable messages do (#40).
+/// Each repository reads its own kind, so each has its own.
+BadRecords _badRecords(CrashReporter crashReporter) =>
+    BadRecords((e, stack) => unawaited(crashReporter.recordError(e, stack)));
+
 List<Override> buildOverrides({
   required AppEnv env,
   required AppBuild build,
@@ -130,14 +137,27 @@ List<Override> buildOverrides({
     FirestorePollRepository(firestore, functions),
   ),
   documentRepositoryProvider.overrideWithValue(
-    FirestoreDocumentRepository(firestore, storage),
+    FirestoreDocumentRepository(
+      firestore,
+      storage,
+      badRecords: _badRecords(crashReporter),
+    ),
   ),
   eventRepositoryProvider.overrideWithValue(
-    FirestoreEventRepository(firestore, functions),
+    FirestoreEventRepository(
+      firestore,
+      functions,
+      badRecords: _badRecords(crashReporter),
+    ),
   ),
-  rsvpRepositoryProvider.overrideWithValue(FirestoreRsvpRepository(firestore)),
+  rsvpRepositoryProvider.overrideWithValue(
+    FirestoreRsvpRepository(firestore, badRecords: _badRecords(crashReporter)),
+  ),
   assignmentRepositoryProvider.overrideWithValue(
-    FirestoreAssignmentRepository(firestore),
+    FirestoreAssignmentRepository(
+      firestore,
+      badRecords: _badRecords(crashReporter),
+    ),
   ),
   duesRepositoryProvider.overrideWithValue(
     FirestoreDuesRepository(firestore, functions),

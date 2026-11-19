@@ -3,11 +3,13 @@ import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/time_zones.dart';
+import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/domain/recurrence.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_format.dart';
+import 'package:battleplan/features/schedule/presentation/schedule_retry.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_screen.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,6 +50,11 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
     final async = team == null
         ? ref.watch(yourScheduleMonthEventsProvider(month))
         : ref.watch(monthEventsProvider(team, month));
+    // A month that failed says so with Try again, rather than an empty
+    // calendar nobody can tell from one with nothing on it (#40).
+    if (async.hasError && !async.hasValue) {
+      return LoadError(onRetry: () => retryMonth(ref, team, month));
+    }
     final events = [
       for (final e in async.value ?? const <Event>[])
         if (options.shows(e)) e,
