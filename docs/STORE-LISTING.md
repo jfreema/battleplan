@@ -34,7 +34,7 @@ Don't pick the Kids category or "made for kids": accounts are for adults, and pl
 
 ## Version information
 
-**What's New in This Version** (1.2, approved by Apple by 2026-11-10; then 1.3, live since 2026-11-11, and 1.4.1, live since 2026-11-13, ROADMAP tasks 375 and 382, each with its What's New below; the next is 1.4.2; 4,000 characters). Version 1.1 went out on 2026-11-05, built on 2026-11-04 from `3d84c33` in Gumdrop Army; its What's New and description are in `git show 85053f7:docs/STORE-LISTING.md`.
+**What's New in This Version** (1.2, approved by Apple by 2026-11-10; then 1.3, live since 2026-11-11, and 1.4.1, live since 2026-11-13, ROADMAP tasks 375 and 382, each with its What's New below; then 1.4.2, approved by Apple by 2026-11-19 (build 492), which closed it to new builds; the next is 1.4.3, task 431; 4,000 characters). Version 1.1 went out on 2026-11-05, built on 2026-11-04 from `3d84c33` in Gumdrop Army; its What's New and description are in `git show 85053f7:docs/STORE-LISTING.md`.
 
 ```
 A whole new look, Open Field, with five color schemes: Army green, the default, plus Light, Dark, Navy, and Light blue. Everyone picks the scheme they see for each team, and a default for the rest.
