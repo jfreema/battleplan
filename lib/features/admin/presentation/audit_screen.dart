@@ -7,6 +7,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
@@ -195,7 +196,9 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
                   ),
               ],
             ),
-            AsyncError() => Center(child: Text(l10n.loadError)),
+            AsyncError() => LoadError(
+              onRetry: () => ref.invalidate(adminAuditProvider(_filter)),
+            ),
             _ => const SkeletonList(),
           },
         ],

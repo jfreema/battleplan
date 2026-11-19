@@ -3,9 +3,10 @@ import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/ids.dart';
-import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
+import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
+import 'package:battleplan/features/dues/application/providers.dart';
 import 'package:battleplan/features/dues/domain/due.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/groups.dart';
@@ -43,15 +44,24 @@ bool isDuesAdmin(WidgetRef ref, GroupId groupId) =>
     (ref.watch(myMembershipProvider(groupId))?.isAdmin ?? false) ||
     (ref.watch(authUserProvider).value?.isSuperAdmin ?? false);
 
-/// Shown where a list couldn't load, rather than a skeleton forever.
+/// Reads every due's shares on [groupId] again, after [teamChargesProvider]
+/// failed (#42): it's made from the dues and each one's shares, so those
+/// are what load again.
+void retryTeamCharges(WidgetRef ref, GroupId groupId) => ref
+  ..invalidate(teamDuesProvider(groupId))
+  ..invalidate(dueChargesProvider);
+
+/// Shown where a list couldn't load, rather than a skeleton forever, with
+/// Try again (#42): the full form for a page, [inline] for a section.
 class DuesLoadError extends StatelessWidget {
-  const new({super.key});
+  const new({required this.onRetry, this.inline = false, super.key});
+
+  final VoidCallback onRetry;
+  final bool inline;
 
   @override
-  Widget build(BuildContext context) => EmptyState(
-    icon: AppIcons.error,
-    message: AppLocalizations.of(context).loadError,
-  );
+  Widget build(BuildContext context) =>
+      LoadError(onRetry: onRetry, inline: inline);
 }
 
 /// A share's state in a word or two (DUES-2): Owes, Partly paid, Paid, or

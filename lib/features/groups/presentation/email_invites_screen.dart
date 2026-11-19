@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/invite.dart';
 import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
@@ -155,7 +156,13 @@ class _EmailInvitesScreenState extends ConsumerState<EmailInvitesScreen> {
                 AsyncData(:final value) => [
                   for (final invite in value) _row(context, invite),
                 ],
-                AsyncError() => [Text(l10n.loadError)],
+                AsyncError() => [
+                  LoadError(
+                    inline: true,
+                    onRetry: () =>
+                        ref.invalidate(emailInvitesProvider(widget.groupId)),
+                  ),
+                ],
                 _ => [const LinearProgressIndicator()],
               },
             ],

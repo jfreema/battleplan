@@ -58,7 +58,8 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     } on Object {
       if (mounted) {
         setState(() => _searchFailed = true);
-        showAppSnackBar(context, AppLocalizations.of(context).loadError);
+        // Load more at the list's end is the way to try again.
+        showAppSnackBar(context, AppLocalizations.of(context).loadMoreFailed);
       }
     }
   }

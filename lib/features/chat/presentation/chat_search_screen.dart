@@ -7,6 +7,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/chat/application/chat_search.dart';
@@ -159,11 +160,9 @@ class _ChatSearchScreenState extends ConsumerState<ChatSearchScreen> {
     } else if (search.loading) {
       results = const Center(child: CircularProgressIndicator());
     } else if (search.results.isEmpty && search.failed) {
-      results = EmptyState(
-        icon: AppIcons.warning,
+      results = LoadError(
         message: l10n.chatSearchFailed,
-        actionLabel: l10n.retry,
-        onAction: () => unawaited(_search.search(search.query)),
+        onRetry: () => unawaited(_search.search(search.query)),
       );
     } else if (search.results.isEmpty && search.reachedEnd) {
       results = EmptyState(

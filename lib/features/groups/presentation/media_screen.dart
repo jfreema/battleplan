@@ -7,6 +7,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/cover_image.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
@@ -107,11 +108,8 @@ class MediaScreen extends ConsumerWidget {
         ),
       );
     } else if (media.hasError) {
-      content = EmptyState(
-        icon: AppIcons.error,
-        message: l10n.loadError,
-        actionLabel: l10n.retry,
-        onAction: () => ref.invalidate(teamMediaProvider(groupId)),
+      content = LoadError(
+        onRetry: () => ref.invalidate(teamMediaProvider(groupId)),
       );
     } else {
       content = const SkeletonList();

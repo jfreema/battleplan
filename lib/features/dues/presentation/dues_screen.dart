@@ -10,6 +10,7 @@ import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
+import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
@@ -66,6 +67,11 @@ String _dueDate(AppLocalizations l10n, String dueOn) => duesDay(l10n, dueOn);
     failed: roster.hasError,
   );
 }
+
+/// Reads who a due can be for again, after [_everyone] failed (#42).
+void _retryEveryone(WidgetRef ref, Group group) => group.hasPlayers
+    ? ref.invalidate(playersProvider(group.id))
+    : ref.invalidate(rosterProvider(group.id));
 
 /// Dues at `/g/:groupId/dues` (DUES-1 to DUES-3). Admins see every due with
 /// how many have paid and what's still owed, and add new ones; everyone
@@ -173,7 +179,10 @@ class _AdminDues extends ConsumerWidget {
           ),
         const SizedBox(height: 16),
         if (list == null && dues.hasError)
-          const DuesLoadError()
+          DuesLoadError(
+            inline: true,
+            onRetry: () => ref.invalidate(teamDuesProvider(groupId)),
+          )
         else if (list == null)
           const SkeletonList()
         else if (list.isEmpty)
@@ -234,11 +243,16 @@ class _DueCard extends ConsumerWidget {
                             style: duesMuted(c),
                           ),
                         const SizedBox(height: 6),
-                        if (loaded == null)
-                          Text(
-                            charges.hasError ? l10n.loadError : '',
-                            style: duesMuted(c).copyWith(fontSize: 14),
+                        if (loaded == null && charges.hasError)
+                          LoadError(
+                            inline: true,
+                            onRetry: () => ref.invalidate(
+                              dueChargesProvider(due.groupId, due.id),
+                            ),
                           )
+                        else if (loaded == null)
+                          // The line's height while the shares load.
+                          Text('', style: duesMuted(c).copyWith(fontSize: 14))
                         else
                           Row(
                             children: [
@@ -368,7 +382,12 @@ class _MyDues extends ConsumerWidget {
     final group = ref.watch(groupProvider(groupId)).value;
     final list = mine.value;
     if (list == null) {
-      return mine.hasError ? const DuesLoadError() : const SkeletonList();
+      return mine.hasError
+          ? DuesLoadError(
+              inline: true,
+              onRetry: () => ref.invalidate(myChargesProvider(groupId)),
+            )
+          : const SkeletonList();
     }
     final owed = list.fold(0, (sum, x) => sum + x.owedCents);
     // "For Emma" once the shares are for more than one person.
@@ -644,7 +663,10 @@ class _HowToPay extends ConsumerWidget {
         ),
         const SizedBox(height: 4),
         if (pay == null && async.hasError)
-          const DuesLoadError()
+          DuesLoadError(
+            inline: true,
+            onRetry: () => ref.invalidate(duesPaymentsProvider(groupId)),
+          )
         else if (pay == null)
           const SkeletonList(rows: 1)
         else if (pay.isEmpty)
@@ -867,7 +889,11 @@ class DueDetailScreen extends ConsumerWidget {
           ),
       ],
       body: dues == null
-          ? (duesAsync.hasError ? const DuesLoadError() : const SkeletonList())
+          ? (duesAsync.hasError
+                ? DuesLoadError(
+                    onRetry: () => ref.invalidate(teamDuesProvider(groupId)),
+                  )
+                : const SkeletonList())
           : due == null
           ? Center(child: DuesQuiet(l10n.duesNotFound))
           : Align(
@@ -908,7 +934,11 @@ class DueDetailScreen extends ConsumerWidget {
                     if (due.note.isNotEmpty) DuesQuiet(due.note),
                     const SizedBox(height: 6),
                     if (chargesAsync.value == null && chargesAsync.hasError)
-                      const DuesLoadError()
+                      DuesLoadError(
+                        inline: true,
+                        onRetry: () =>
+                            ref.invalidate(dueChargesProvider(groupId, dueId)),
+                      )
                     else if (chargesAsync.value == null)
                       const SkeletonList()
                     else ...[
@@ -1064,7 +1094,10 @@ class _AddPeopleDialogState extends ConsumerState<_AddPeopleDialog> {
         child: SingleChildScrollView(
           child: !loaded
               ? (everyone.failed
-                    ? const DuesLoadError()
+                    ? DuesLoadError(
+                        inline: true,
+                        onRetry: () => _retryEveryone(ref, widget.group),
+                      )
                     : const SizedBox(height: 48))
               : others.isEmpty
               ? Text(l10n.duesAddNone)
@@ -1294,7 +1327,10 @@ class _NewDueScreenState extends ConsumerState<NewDueScreen> {
       // that failed, or a due that's gone, says so.
       final body = duesAsync == null || !duesAsync.hasValue
           ? (duesAsync?.hasError ?? false)
-                ? const DuesLoadError()
+                ? DuesLoadError(
+                    onRetry: () =>
+                        ref.invalidate(teamDuesProvider(widget.groupId)),
+                  )
                 : const SkeletonList()
           : group == null
           ? const SkeletonList()
@@ -1385,7 +1421,10 @@ class _NewDueScreenState extends ConsumerState<NewDueScreen> {
                 SectionLabel(l10n.duesWho),
                 const SizedBox(height: 6),
                 if (everyone == null && (everyoneAsync?.failed ?? false))
-                  const DuesLoadError()
+                  DuesLoadError(
+                    inline: true,
+                    onRetry: () => _retryEveryone(ref, group),
+                  )
                 else if (everyone == null)
                   const SkeletonList(rows: 3)
                 else if (everyone.isEmpty)

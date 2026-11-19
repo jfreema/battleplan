@@ -12,6 +12,7 @@ import 'package:battleplan/core/services/photo_picker.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
@@ -779,11 +780,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     } else if (chat.failed) {
       // The live page stopped (CHAT-1): say so, rather than show a chat
       // that no longer updates.
-      list = EmptyState(
-        icon: AppIcons.warning,
+      list = LoadError(
         message: l10n.chatLoadFailed,
-        actionLabel: l10n.retry,
-        onAction: () =>
+        onRetry: () =>
             ref.read(chatMessagesProvider(widget.groupId).notifier).retry(),
       );
     } else if (messages.isEmpty && pending.isEmpty && setupCard != null) {

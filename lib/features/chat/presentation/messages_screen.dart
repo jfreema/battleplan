@@ -7,6 +7,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/chat/application/direct_chats.dart';
@@ -62,9 +63,11 @@ class MessagesScreen extends ConsumerWidget {
             child: _ChatRow(chat: list[i]),
           ),
         ),
-        AsyncError() => EmptyState(
-          icon: AppIcons.error,
+        AsyncError() => LoadError(
           message: l10n.messagesLoadError,
+          // The conversations come from my memberships' stream: read it
+          // again.
+          onRetry: () => ref.invalidate(myDirectMembershipsProvider),
         ),
         _ => const SkeletonList(),
       },

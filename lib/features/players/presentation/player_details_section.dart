@@ -4,6 +4,7 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/domain/player_details.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -73,7 +74,10 @@ class PlayerDetailsSection extends ConsumerWidget {
         if (!details.hasValue && details.hasError)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: Space.sm),
-            child: Text(l10n.loadError),
+            child: LoadError(
+              inline: true,
+              onRetry: () => ref.invalidate(playerDetailsProvider(playerId)),
+            ),
           )
         else if (!details.hasValue)
           const Padding(

@@ -11,6 +11,7 @@ import 'package:battleplan/core/links.dart';
 import 'package:battleplan/core/open_sheets.dart';
 import 'package:battleplan/core/version.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/panel_page.dart';
 import 'package:battleplan/features/admin/presentation/admin_panel.dart'
     deferred as admin_panel;
@@ -1277,11 +1278,8 @@ class _AdminPanelState extends State<_AdminPanel> {
       appBar: AppBar(title: Text(l10n.adminPanel)),
       body: _error == null
           ? const Center(child: CircularProgressIndicator())
-          : EmptyState(
-              icon: AppIcons.error,
-              message: l10n.loadError,
-              actionLabel: l10n.retry,
-              onAction: () {
+          : LoadError(
+              onRetry: () {
                 setState(() => _error = null);
                 _load();
               },

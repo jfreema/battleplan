@@ -38,7 +38,7 @@ class DuesPeopleScreen extends ConsumerWidget {
       body = Center(child: DuesQuiet(l10n.duesPeopleAdminsOnly));
     } else if (list == null) {
       body = (all?.hasError ?? false)
-          ? const DuesLoadError()
+          ? DuesLoadError(onRetry: () => retryTeamCharges(ref, groupId))
           : const SkeletonList();
     } else {
       final people = duePeople(list);

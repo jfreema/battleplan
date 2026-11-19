@@ -12,6 +12,7 @@ import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/info_tag.dart';
+import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
@@ -137,7 +138,9 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
           : null,
       body: roster.when(
         loading: () => const SkeletonList(),
-        error: (_, _) => Center(child: Text(l10n.loadError)),
+        error: (_, _) => LoadError(
+          onRetry: () => ref.invalidate(rosterProvider(widget.groupId)),
+        ),
         data: (members) {
           final q = _query.trim().toLowerCase();
           final shown = q.isEmpty

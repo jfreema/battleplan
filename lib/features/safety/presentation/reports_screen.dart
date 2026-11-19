@@ -6,6 +6,7 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
@@ -59,7 +60,9 @@ class ReportsScreen extends ConsumerWidget {
           separatorBuilder: (_, _) => const Divider(height: Space.xl),
           itemBuilder: (_, i) => _ReportCard(report: value[i]),
         ),
-        AsyncError() => Center(child: Text(l10n.loadError)),
+        AsyncError() => LoadError(
+          onRetry: () => ref.invalidate(openReportsProvider(groupId)),
+        ),
         _ => const SkeletonList(),
       },
     );

@@ -143,10 +143,15 @@ class _Viewer extends ConsumerWidget {
         value,
         doc.fileName,
       ),
-      AsyncData() || AsyncError() => _Failed(
+      // The download failed: try it again (#42).
+      AsyncError() => LoadError(
+        onRetry: () => ref.invalidate(documentFileBytesProvider(doc.path!)),
+      ),
+      // No file to show: it can still be downloaded (DOC-4).
+      AsyncData() => _Failed(
         text: doc.type == DocumentType.pdf
             ? l10n.documentPdfFailed
-            : l10n.loadError,
+            : l10n.documentImageFailed,
       ),
       _ => const Center(child: CircularProgressIndicator()),
     };

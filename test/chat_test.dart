@@ -824,7 +824,7 @@ void main() {
     });
   });
 
-  testWidgets('a live chat that fails says so with Retry, instead of '
+  testWidgets('a live chat that fails says so with Try again, instead of '
       'loading for good', (tester) async {
     final repo = FakeMessageRepository(chat(3))
       ..watchError = StateError('bad message');
@@ -834,7 +834,7 @@ void main() {
       find.text("Couldn't load the chat. Check your connection and try again."),
       findsOneWidget,
     );
-    await tester.tap(find.text('Retry'));
+    await tester.tap(find.text('Try again'));
     await tester.pumpAndSettle();
     expect(find.text('Message 3'), findsOneWidget);
   });

@@ -4,6 +4,7 @@ import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
+import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/admin/presentation/admin_widgets.dart';
@@ -101,7 +102,9 @@ class AdminDashboardScreen extends ConsumerWidget {
             ),
           ],
         ),
-        AsyncError() => Center(child: Text(l10n.loadError)),
+        AsyncError() => LoadError(
+          onRetry: () => ref.invalidate(adminTotalsProvider),
+        ),
         _ => const Center(child: CircularProgressIndicator()),
       },
     );

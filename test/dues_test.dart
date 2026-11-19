@@ -474,13 +474,16 @@ void main() {
 
   group("lists that can't load say so", () {
     const error = "Couldn't load this. Check your connection and try again.";
+    // A section of the page says it in one line, with Try again (#42).
+    const inline = "Couldn't load this.";
 
     testWidgets('for an admin, on the list and on a due', (tester) async {
       final dues = FakeDuesRepository()..failReads = true;
       await pumpCoach(tester, dues);
       await go(tester, '/g/a/dues');
       // The dues, and how to pay.
-      expect(find.text(error), findsNWidgets(2));
+      expect(find.text(inline), findsNWidgets(2));
+      expect(find.text('Try again'), findsNWidgets(2));
       expect(find.text('Edit how to pay'), findsNothing);
       await go(tester, '/g/a/dues/d0');
       expect(find.text(error), findsOneWidget);
@@ -490,7 +493,7 @@ void main() {
       final dues = FakeDuesRepository()..failReads = true;
       await pumpCoach(tester, dues, role: MemberRole.member);
       await go(tester, '/g/a/dues');
-      expect(find.text(error), findsNWidgets(2));
+      expect(find.text(inline), findsNWidgets(2));
       expect(
         find.text("The admins haven't added a way to pay yet."),
         findsNothing,
@@ -694,10 +697,7 @@ void main() {
       final dues = FakeDuesRepository()..charges.add(emmaShare());
       await pumpParent(tester, dues);
       await go(tester, '/g/a/dues');
-      expect(
-        find.text("Couldn't load this. Check your connection and try again."),
-        findsOneWidget,
-      );
+      expect(find.text("Couldn't load this."), findsOneWidget);
       expect(find.text('Nothing owed.'), findsNothing);
     });
   });
@@ -878,10 +878,7 @@ void main() {
         ..paymentsStream = Stream.error(const Offline());
       await pumpCoach(tester, dues);
       await go(tester, '/g/a/dues');
-      expect(
-        find.text("Couldn't load this. Check your connection and try again."),
-        findsOneWidget,
-      );
+      expect(find.text("Couldn't load this."), findsOneWidget);
       expect(find.text('Edit how to pay'), findsNothing);
     });
 
@@ -1104,10 +1101,7 @@ void main() {
         playerRepo: repo,
       );
       await go(tester, '/g/a/dues/new');
-      expect(
-        find.text("Couldn't load this. Check your connection and try again."),
-        findsOneWidget,
-      );
+      expect(find.text("Couldn't load this."), findsOneWidget);
     });
 
     testWidgets('hints read as examples, and the note says who sees it', (

@@ -6,6 +6,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
@@ -72,7 +73,9 @@ class PlayerDetailsRoute extends ConsumerWidget {
       return Scaffold(
         appBar: AppBar(),
         body: details.hasError
-            ? Center(child: Text(l10n.loadError))
+            ? LoadError(
+                onRetry: () => ref.invalidate(playerDetailsProvider(playerId)),
+              )
             : const SkeletonList(),
       );
     }

@@ -305,7 +305,7 @@ void main() {
     expect(find.textContaining('Practice number 1'), findsWidgets);
   });
 
-  testWidgets('a failed search says so, and Retry searches again', (
+  testWidgets('a failed search says so, and Try again searches again', (
     tester,
   ) async {
     final repo = FakeMessageRepository(newestFirst([msg(1, 'Rainout tonight')]))
@@ -319,7 +319,7 @@ void main() {
       findsOneWidget,
     );
     repo.failSearch = null;
-    await tester.tap(find.text('Retry'));
+    await tester.tap(find.text('Try again'));
     await tester.pumpAndSettle();
     expect(find.textContaining('tonight'), findsOneWidget);
   });

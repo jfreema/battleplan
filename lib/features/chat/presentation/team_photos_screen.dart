@@ -4,6 +4,7 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/chat/presentation/photo_grid.dart';
@@ -50,7 +51,9 @@ class TeamPhotosScreen extends ConsumerWidget {
         tiles: 12,
       );
     } else if (photos.isEmpty && state.failed) {
-      body = Center(child: Text(l10n.loadError));
+      body = LoadError(
+        onRetry: () => ref.invalidate(teamPhotosProvider(groupId)),
+      );
     } else if (photos.isEmpty && state.reachedEnd) {
       body = EmptyState(icon: AppIcons.photo, message: l10n.photosEmpty);
     } else {

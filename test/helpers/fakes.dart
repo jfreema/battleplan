@@ -3452,6 +3452,21 @@ class FakeAdminRepository implements AdminRepository {
   /// Thrown by the next action instead of doing it.
   AppFailure? failWith;
 
+  /// The next this many reads (totals, lists, a team) fail, as offline
+  /// (#42).
+  int readFailures = 0;
+
+  /// How many reads were made.
+  int reads = 0;
+
+  void _read() {
+    reads++;
+    if (readFailures > 0) {
+      readFailures--;
+      throw const Offline();
+    }
+  }
+
   Future<void> _act(String call) async {
     final failure = failWith;
     if (failure != null) {
@@ -3471,7 +3486,10 @@ class FakeAdminRepository implements AdminRepository {
   }
 
   @override
-  Future<AdminTotals> totals() async => totalsValue;
+  Future<AdminTotals> totals() async {
+    _read();
+    return totalsValue;
+  }
 
   @override
   Future<AdminPage<AdminTeamRow>> listTeams(
@@ -3479,6 +3497,7 @@ class FakeAdminRepository implements AdminRepository {
     PageCursor? after,
     int limit = adminPageSize,
   }) async {
+    _read();
     teamQueries.add(query);
     final q = query.query.trim().toLowerCase();
     final scan = teamScan;
@@ -3520,8 +3539,10 @@ class FakeAdminRepository implements AdminRepository {
   }
 
   @override
-  Future<AdminTeamDetail> team(GroupId id) async =>
-      teamDetails[id.value] ?? AdminTeamDetail(id: id);
+  Future<AdminTeamDetail> team(GroupId id) async {
+    _read();
+    return teamDetails[id.value] ?? AdminTeamDetail(id: id);
+  }
 
   /// Teams whose View team was recorded, in order.
   final List<String> opened = [];
@@ -3592,6 +3613,7 @@ class FakeAdminRepository implements AdminRepository {
     PageCursor? after,
     int limit = adminPageSize,
   }) async {
+    _read();
     final q = query.query.trim().toLowerCase();
     bool matches(AdminUserRow u) => switch (query.filter) {
       null => true,
@@ -3711,10 +3733,13 @@ class FakeAdminRepository implements AdminRepository {
     ReportStatus status, {
     PageCursor? after,
     int limit = adminPageSize,
-  }) async => _page([
-    for (final r in reports)
-      if (r.status == status) r,
-  ], after);
+  }) async {
+    _read();
+    return _page([
+      for (final r in reports)
+        if (r.status == status) r,
+    ], after);
+  }
 
   @override
   Future<void> resolveReport(
@@ -3740,6 +3765,7 @@ class FakeAdminRepository implements AdminRepository {
     PageCursor? after,
     int limit = adminPageSize,
   }) async {
+    _read();
     auditFilters.add(filter);
     // Sorted as adminListAudit sorts (Who by uid here); ties newest first.
     Comparable<Object>? key(AuditEntry e) => switch (filter.sort) {

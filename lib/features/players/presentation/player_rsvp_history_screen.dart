@@ -5,6 +5,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/info_tag.dart';
+import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/groups.dart';
@@ -145,7 +146,14 @@ class _PlayerRsvpHistoryScreenState
                           horizontal: Space.page,
                           vertical: Space.lg,
                         ),
-                        child: Text(l10n.loadError),
+                        child: LoadError(
+                          inline: true,
+                          // The history is made from the events'
+                          // read, so that's what loads again.
+                          onRetry: () => ref.invalidate(
+                            eventsBetweenProvider(widget.groupId, from, _now),
+                          ),
+                        ),
                       ),
                     ],
                     _ => [

@@ -7,6 +7,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/team_badge.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
@@ -88,7 +89,10 @@ class AdminTeamScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  AsyncError() => Text(l10n.loadError),
+                  AsyncError() => LoadError(
+                    inline: true,
+                    onRetry: () => ref.invalidate(adminTeamProvider(groupId)),
+                  ),
                   _ => const Center(child: CircularProgressIndicator()),
                 },
               ],

@@ -4,6 +4,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/services/time_zones.dart';
+import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
@@ -184,7 +185,7 @@ class _PlatformSettingsScreenState
       title: l10n.adminSettings,
       body: !_loaded
           ? config.hasError
-                ? Center(child: Text(l10n.loadError))
+                ? LoadError(onRetry: () => ref.invalidate(appConfigProvider))
                 : const Center(child: CircularProgressIndicator())
           : AdminBody(
               maxWidth: 640,

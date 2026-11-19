@@ -7,6 +7,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
@@ -185,7 +186,9 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                   ),
               ],
             ),
-            AsyncError() => Center(child: Text(l10n.loadError)),
+            AsyncError() => LoadError(
+              onRetry: () => ref.invalidate(adminUsersProvider(_query)),
+            ),
             _ => const SkeletonList(),
           },
         ],
@@ -492,11 +495,10 @@ class _TeamPickerDialogState extends ConsumerState<_TeamPickerDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final teams = ref.watch(
-      adminTeamsProvider(
-        AdminTeamQuery(query: _query, sort: AdminTeamSort.activity),
-      ),
+    final teamsQuery = adminTeamsProvider(
+      AdminTeamQuery(query: _query, sort: AdminTeamSort.activity),
     );
+    final teams = ref.watch(teamsQuery);
     return AlertDialog(
       title: Text(l10n.adminChooseTeam),
       content: SizedBox(
@@ -541,7 +543,10 @@ class _TeamPickerDialogState extends ConsumerState<_TeamPickerDialog> {
                               ),
                           ],
                         ),
-                AsyncError() => Center(child: Text(l10n.loadError)),
+                AsyncError() => LoadError(
+                  inline: true,
+                  onRetry: () => ref.invalidate(teamsQuery),
+                ),
                 _ => const SkeletonList(rows: 4),
               },
             ),

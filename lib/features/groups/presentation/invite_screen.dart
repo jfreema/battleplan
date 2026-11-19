@@ -10,6 +10,7 @@ import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
@@ -120,11 +121,10 @@ class InviteScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => e is InviteUnusable && e.reason == 'link-off'
             ? _LinkOff(groupId: groupId, isAdmin: isAdmin, isGroup: isGroup)
-            : EmptyState(
-                icon: AppIcons.invite,
-                message: e is PermissionDenied
-                    ? l10n.invitesAdminsOnly
-                    : l10n.loadError,
+            : e is PermissionDenied
+            ? EmptyState(icon: AppIcons.invite, message: l10n.invitesAdminsOnly)
+            : LoadError(
+                onRetry: () => ref.invalidate(teamInviteProvider(groupId)),
               ),
         data: (inv) => _InviteBody(
           invite: inv,
@@ -579,7 +579,10 @@ class _LinkSettingsSheet extends ConsumerWidget {
                 child: Text(l10n.linkTurnOn),
               ),
             ] else if (failed)
-              Text(l10n.loadError, style: muted)
+              LoadError(
+                inline: true,
+                onRetry: () => ref.invalidate(teamInviteProvider(groupId)),
+              )
             else if (current == null)
               const Padding(
                 padding: EdgeInsets.all(Space.lg),
