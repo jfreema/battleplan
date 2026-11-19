@@ -212,7 +212,12 @@ class _Stat extends StatelessWidget {
     final style = GumdropStyle.of(context);
     final color = alert ? page.cherry : accent(page);
     final target = route;
-    final stacked = MediaQuery.textScalerOf(context).scale(1) > 1.5;
+    // The number under the words with large text, and a long one ("38 of
+    // 90", #47) on the narrowest screens (Slide Over, 320 wide), where it
+    // wouldn't fit beside them.
+    final stacked =
+        MediaQuery.textScalerOf(context).scale(1) > 1.5 ||
+        (value.length > 6 && MediaQuery.sizeOf(context).width < 340);
     final name = Text(
       label,
       style: TextStyle(
