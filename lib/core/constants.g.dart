@@ -29,6 +29,7 @@ abstract final class Collections {
   static const String rateLimits = 'rateLimits';
   static const String config = 'config';
   static const String notifyLog = 'notifyLog';
+  static const String notifyRetries = 'notifyRetries';
   static const String plays = 'plays';
   static const String calendarLinks = 'calendarLinks';
   static const String teamCalendars = 'teamCalendars';

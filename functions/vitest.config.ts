@@ -17,7 +17,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/**/*.ts'],
-      exclude: ['src/index.ts', 'src/**/handlers.ts', 'src/**/triggers.ts', 'src/ops/jobs.ts'],
+      exclude: ['src/index.ts', 'src/**/handlers.ts', 'src/**/triggers.ts', 'src/ops/jobs.ts', 'src/notify/jobs.ts'],
       reporter: ['text-summary', 'lcov'],
       reportsDirectory: 'coverage',
       thresholds: { lines: 80 },

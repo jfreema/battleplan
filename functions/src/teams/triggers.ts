@@ -3,13 +3,11 @@ import { onObjectDeleted, onObjectFinalized } from 'firebase-functions/v2/storag
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onDocumentUpdatedWithAuthContext } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
-import { postRenamedLine, removeAllOrphanMessageFiles, renamedLine } from '../chat/service.js';
-import { addStorageBytes, enforceUploadLimit, groupIdFromPath, reconcileAllStorage, updateStorageAlert } from './storage.js';
-import { removeAllOrphanDocumentFiles } from '../documents/service.js';
-import { pruneDevices } from '../notify/service.js';
+import { postRenamedLine, renamedLine } from '../chat/service.js';
+import { addStorageBytes, enforceUploadLimit, groupIdFromPath, updateStorageAlert } from './storage.js';
+import { runDailyCleanup } from './cleanup.js';
 import { pruneAvatars } from '../accounts/service.js';
 import { resendApiKey } from '../email/service.js';
-import { remindOpenReports } from '../safety/alerts.js';
 import { finishTeamDeletions as finishDeletions, sweepOrphanTeamFiles } from './service.js';
 
 /**
@@ -60,41 +58,17 @@ export const onGroupFileRemoved = onObjectDeleted(async (event) => {
 });
 
 /**
- * Daily housekeeping (ARCH §6.4 scheduled jobs): prunes devices that
- * stopped checking in, removes document uploads whose document was never
- * created and chat photos no message shows, then recomputes every team's storage total from the bucket and
- * updates its warning, and last reminds super admins of reports open more
- * than 12 hours (SAFE-4). Expiring invites joins it with its feature.
+ * Daily housekeeping (ARCH §6.4 scheduled jobs; runDailyCleanup): the
+ * report reminder first, then devices, orphan files, and the storage
+ * recount, with the longest time a function can run (#41). Expiring
+ * invites joins it with its feature.
  */
-export const dailyCleanup = onSchedule({ schedule: 'every day 04:00', timeZone: 'America/Chicago', secrets: [resendApiKey] }, async () => {
-  // NOTIF-10: the app rewrites its device at least daily, so one untouched
-  // for 60 days is abandoned. Pruned first, so today's pushes skip it.
-  const devicesPruned = await pruneDevices().catch((e) => {
-    logger.error('device_prune_failed', { error: String(e) });
-    return 0;
-  });
-  // DOC-2: an upload whose document was never saved (the app closed, the
-  // save failed) is gone after a day. Before the recount, so it counts.
-  const orphanDocumentFiles = await removeAllOrphanDocumentFiles().catch((e) => {
-    logger.error('orphan_document_cleanup_failed', { error: String(e) });
-    return 0;
-  });
-  // CHAT-3 (#26): photos wait in the tray and upload before Send, so one
-  // taken out, or a tray never sent, is gone after a day. Before the
-  // recount too.
-  const orphanMessageFiles = await removeAllOrphanMessageFiles().catch((e) => {
-    logger.error('orphan_message_cleanup_failed', { error: String(e) });
-    return 0;
-  });
-  const teams = await reconcileAllStorage();
-  // SAFE-4: super admins get one email while any report has been open more
-  // than 12 hours, so none passes 24 hours unseen.
-  const reportsWaiting = await remindOpenReports().catch((e) => {
-    logger.error('report_reminder_failed', { error: String(e) });
-    return 0;
-  });
-  logger.info('daily_cleanup', { devicesPruned, orphanDocumentFiles, orphanMessageFiles, teamsReconciled: teams, reportsWaiting });
-});
+export const dailyCleanup = onSchedule(
+  { schedule: 'every day 04:00', timeZone: 'America/Chicago', secrets: [resendApiKey], timeoutSeconds: 540 },
+  async () => {
+    await runDailyCleanup();
+  },
+);
 
 /**
  * groups updated → the "renamed" line in the team's chat (CHAT-10). Team

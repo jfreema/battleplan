@@ -27,6 +27,7 @@ export const Collections = {
   rateLimits: 'rateLimits',
   config: 'config',
   notifyLog: 'notifyLog',
+  notifyRetries: 'notifyRetries',
   plays: 'plays',
   calendarLinks: 'calendarLinks',
   teamCalendars: 'teamCalendars',

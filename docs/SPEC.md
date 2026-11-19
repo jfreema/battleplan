@@ -1052,6 +1052,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - Quiet hours.
   - Email for anything beyond event reminders and nudges (SCHED-14), or a daily digest.
   - SMS, which costs money per message.
+- **NOTIF-14 · MVP · Delivery that doesn't drop or repeat** (#41). A push that hits a passing error is sent again, a few times over about 20 seconds, only to the phones it missed, so nobody gets the same push twice. A notification that fails partway is finished within a minute or two: the notification-center items not written yet (one already read stays read) and pushes to the people not reached yet. One that can't go out within 10 minutes isn't pushed at all, since a late "Practice moved to 5:00" is worse than none; its center item, if written, still shows.
 
 ### 6.10 Profile and settings (SET)
 
@@ -1165,7 +1166,7 @@ The App Store requires these for apps with user-generated content (guideline 1.2
   - Super admins act anywhere: disable accounts, suspend teams.
   - Goal: act on every report within 24 hours.
   - Every super admin gets an email for each new report, about any team: the team, what was reported (a message, a person, or a document), and the reason, never who reported it or what was said, with a link to the reports queue. A report about one of the team's admins says only super admins see it.
-  - While any report has been open more than 12 hours, super admins get one reminder email a day saying how many are waiting and how old the oldest is.
+  - While any report has been open more than 12 hours, super admins get one reminder email a day saying how many are waiting and how old the oldest is. It's the night's first job, so nothing that runs long before it can stop it (#41).
 - **SAFE-5 · MVP · Rate limits and abuse controls.**
   - **Limits**, defined in one place (full table in ARCH §6.9):
 

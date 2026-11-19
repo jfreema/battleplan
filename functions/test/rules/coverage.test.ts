@@ -399,6 +399,16 @@ describe('every role, spot checks the other files leave out', () => {
     await assertFails(as('alice').doc('ops/signupBursts').get());
     await assertFails(as('alice').doc('ops/signupBursts').set({ recent: [], alertedAt: 0 }));
     await assertFails(anon().doc('ops/signupBursts').get());
+    // Where the nightly storage recount stopped, and notifications waiting
+    // for a retry, with each one's progress (#41): Functions only.
+    await assertFails(root().doc('ops/storageRecount').get());
+    await assertFails(as('alice').doc('ops/storageRecount').set({ after: null }));
+    await assertFails(root().doc('notifyRetries/m1').get());
+    await assertFails(as('alice').doc('notifyRetries/m1').get());
+    await assertFails(as('alice').doc('notifyRetries/m1').set({ kind: 'message' }));
+    await assertFails(as('alice').collection('notifyRetries').limit(10).get());
+    await assertFails(root().doc('notifyLog/m1').get());
+    await assertFails(as('alice').doc('notifyLog/m1').set({ state: 'done' }));
     await assertFails(root().doc('eventSeries/s1').update({ createdBy: 'root' }));
     await assertFails(root().doc('devices/abcdefghijklmnop1234').get());
     await assertFails(root().doc('devices/abcdefghijklmnop1234').delete());

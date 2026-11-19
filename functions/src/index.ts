@@ -80,6 +80,7 @@ export {
   sendEmailInvites,
   updateGroupInvite,
 } from './invites/handlers.js';
+export { retryNotifications } from './notify/jobs.js';
 export { logClientError } from './ops/handlers.js';
 export { tick } from './ops/jobs.js';
 export { closePoll } from './polls/handlers.js';

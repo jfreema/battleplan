@@ -1,14 +1,20 @@
 import { Timestamp } from 'firebase-admin/firestore';
-import { describe, expect, it } from 'vitest';
+import type { TokenMessage } from 'firebase-admin/messaging';
+import { afterEach, describe, expect, it } from 'vitest';
 import {
   buildPayload,
   canReceive,
   centerItemId,
   chunk,
+  chunkByPerson,
+  inputFromRetry,
+  isBriefFailure,
   levelAllowsPush,
   memberSettingsOf,
   prefAllowsPush,
   pushAllowed,
+  pushRetry,
+  sendWithRetries,
   shouldDeleteToken,
   tokensToDelete,
   truncate,
@@ -257,5 +263,131 @@ describe('token cleanup (ARCH §6.5 step 4)', () => {
   it('keeps every device when a bad payload fails the whole batch', () => {
     expect(tokensToDelete([fail('messaging/invalid-argument'), fail('messaging/invalid-argument')])).toEqual([]);
     expect(tokensToDelete([fail('messaging/invalid-argument'), fail('messaging/invalid-registration-token')])).toEqual([1]);
+  });
+});
+
+describe('resending brief failures (#41)', () => {
+  const real = { ...pushRetry };
+  afterEach(() => Object.assign(pushRetry, real));
+
+  /** A clock the waits move, and FCM answering by token: [plan] lists each try's error, or null for through. */
+  function fake(plan: Record<string, (string | null)[]>) {
+    let clock = 0;
+    const waits: number[] = [];
+    pushRetry.now = () => clock;
+    pushRetry.sleep = async (ms) => {
+      waits.push(ms);
+      clock += ms;
+    };
+    const sends: string[][] = [];
+    const tries = new Map<string, number>();
+    const sendEach = async (messages: TokenMessage[]) => {
+      sends.push(messages.map((m) => m.token));
+      const responses = messages.map((m) => {
+        const n = tries.get(m.token) ?? 0;
+        tries.set(m.token, n + 1);
+        const code = plan[m.token]?.[n] ?? null;
+        return code ? { success: false, error: { code } as never } : { success: true, messageId: m.token };
+      });
+      return { responses, successCount: responses.filter((r) => r.success).length };
+    };
+    const messages = Object.keys(plan).map((token) => ({ token }) as TokenMessage);
+    return { sendEach, sends, waits, messages, advance: (ms: number) => (clock += ms) };
+  }
+
+  it('knows the brief errors from the rest', () => {
+    for (const code of ['messaging/internal-error', 'messaging/server-unavailable', 'messaging/unknown-error',
+      'messaging/message-rate-exceeded', 'messaging/quota-exceeded', 'unavailable', 'deadline-exceeded',
+      'app/network-timeout-deadline']) {
+      expect(isBriefFailure(code)).toBe(true);
+    }
+    for (const code of ['messaging/registration-token-not-registered', 'messaging/invalid-registration-token',
+      'messaging/invalid-argument', 'messaging/third-party-auth-error', undefined]) {
+      expect(isBriefFailure(code)).toBe(false);
+    }
+  });
+
+  it('resends only what failed briefly, so nobody gets it twice, and never a dead token', async () => {
+    const f = fake({
+      ok: [],
+      brief: ['messaging/server-unavailable', null],
+      dead: ['messaging/registration-token-not-registered'],
+    });
+    const out = await sendWithRetries(f.messages, f.sendEach, 0);
+    expect(f.sends).toEqual([['ok', 'brief', 'dead'], ['brief']]);
+    expect(f.waits).toEqual([1_000]);
+    expect(out).toEqual({ sent: 2, failed: 1, retried: 1, gaveUp: 0, dead: [2] });
+  });
+
+  it('tries three more times, waiting 1, 4 and 15 seconds, then gives up', async () => {
+    const busy = 'messaging/internal-error';
+    const f = fake({ ok: [], stuck: [busy, busy, busy, busy, busy] });
+    const out = await sendWithRetries(f.messages, f.sendEach, 0);
+    expect(f.sends).toEqual([['ok', 'stuck'], ['stuck'], ['stuck'], ['stuck']]);
+    expect(f.waits).toEqual([1_000, 4_000, 15_000]);
+    expect(out).toEqual({ sent: 1, failed: 1, retried: 3, gaveUp: 1, dead: [] });
+  });
+
+  it('starts no retry that would end past its 40 seconds', async () => {
+    const f = fake({ slow: ['messaging/quota-exceeded', null] });
+    f.advance(39_500); // the send's reads took this long
+    const out = await sendWithRetries(f.messages, f.sendEach, 0);
+    expect(f.sends).toHaveLength(1);
+    expect(out.gaveUp).toBe(1);
+  });
+
+  it("forgets a token that dies on a resend, by its place in the whole list", async () => {
+    const f = fake({ a: [], b: ['messaging/server-unavailable', 'messaging/registration-token-not-registered'] });
+    const out = await sendWithRetries(f.messages, f.sendEach, 0);
+    expect(out.dead).toEqual([1]);
+    expect(out.failed).toBe(1);
+  });
+});
+
+describe('chunkByPerson (#41)', () => {
+  const d = (uid: string, n: number) => Array.from({ length: n }, (_, i) => ({ uid, token: `${uid}${i}` }));
+
+  it("keeps each person's devices in one run of at most the size", () => {
+    const runs = chunkByPerson([...d('a', 2), ...d('b', 3), ...d('c', 1)], 4);
+    expect(runs.map((r) => r.map((x) => x.token))).toEqual([['a0', 'a1'], ['b0', 'b1', 'b2', 'c0']]);
+  });
+
+  it('keeps people together even when the devices come mixed', () => {
+    const runs = chunkByPerson([{ uid: 'a', token: '1' }, { uid: 'b', token: '2' }, { uid: 'a', token: '3' }], 2);
+    expect(runs.map((r) => r.map((x) => x.token))).toEqual([['1', '3'], ['2']]);
+  });
+
+  it('never sends more than the size, even for someone with more devices', () => {
+    const runs = chunkByPerson(d('a', 5), 2);
+    expect(runs.map((r) => r.length)).toEqual([2, 2, 1]);
+  });
+});
+
+describe('inputFromRetry (#41)', () => {
+  const stored = {
+    kind: 'eventChanged',
+    groupId: 'g1',
+    recipients: { uids: ['sam', 'pat'] },
+    exclude: [],
+    actor: { uid: 'alex', name: 'Alex' },
+    target: { type: 'event', id: 'e1' },
+    route: '/g/g1/schedule/e/e1',
+    params: { title: 'Practice' },
+    teamName: 'Thunder',
+  };
+
+  it("gives each person the body rendered for them when it was per person", () => {
+    const input = inputFromRetry('e1_changed', { ...stored, body: null, bodies: { sam: 'For Emma: moved', pat: 'Moved' } });
+    expect(typeof input.body).toBe('function');
+    const body = input.body as (uid: string) => string;
+    expect([body('sam'), body('pat'), body('nobody')]).toEqual(['For Emma: moved', 'Moved', '']);
+    expect(input).toMatchObject({ dedupeKey: 'e1_changed', teamName: 'Thunder', recipients: { uids: ['sam', 'pat'] } });
+  });
+
+  it('keeps one body for all, and leaves out a team name it never learned', () => {
+    const input = inputFromRetry('m1', { ...stored, body: 'Alex: hi', bodies: null, teamName: null, actor: null });
+    expect(input.body).toBe('Alex: hi');
+    expect(input.actor).toBeNull();
+    expect('teamName' in input).toBe(false);
   });
 });

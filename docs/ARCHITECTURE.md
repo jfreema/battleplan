@@ -521,14 +521,15 @@ Before calling it, the iPhone, iPad, and Mac apps revoke Apple's tokens for an a
 | `groupDocuments` | auto | file or link | `documents` | members if allowed, Functions |
 | `plays` | auto | saved play (§6.14) | `plays` | admins and play makers |
 | `notifications` | `{dedupeKey}_{uid}` | notification-center item | `notifications` | Functions; the recipient marks read |
-| `notifyLog` | dedupe key | one notification send | — | Functions only (TTL 7 days) |
+| `notifyLog` | dedupe key | one notification send and how far it got (#41) | — | Functions only (TTL 7 days) |
+| `notifyRetries` | dedupe key | a notification waiting for `retryNotifications` (#41) | — (operational) | Functions only (TTL 1 day) |
 | `calendarLinks` | the link's token | calendar link (SCHED-11, §6.15) | — (operational) | Functions; the owner reads |
 | `teamCalendars` | `{groupId}` | a team's calendar feed, cached (§6.15) | — (cache) | Functions only |
 | `answerLinks` | SHA-256 of the token | answer link in an RSVP email (SCHED-14, §6.15) | — (operational) | Functions only (TTL) |
 | `reports` | auto | report | `reports` | Functions |
 | `auditLogs` | auto | admin action | `audit_logs` | Functions |
 | `rateLimits` | `{uid}_{action}_{window}` | counter window | — (operational) | Functions |
-| `ops` | `signupBursts` | the sign-up spike counter (ADMIN-9, #52) | — (operational) | Functions only |
+| `ops` | `signupBursts`, `storageRecount` | the sign-up spike counter (ADMIN-9, #52); where the nightly storage recount stopped (#41) | — (operational) | Functions only |
 | `config` | `app`, `superAdmins` | — | `app_config` | Functions (`app` through `adminUpdateConfig`; `superAdmins` is a lock) |
 
 #### Fields
@@ -735,6 +736,14 @@ notifications/{dedupeKey}_{uid}                         # notification-center it
 
 notifyLog/{dedupeKey}                                   # one per send, so a retried trigger can't push twice
   kind, groupId, createdAt, expiresAt                   # TTL: 7 days
+  state: 'sending' | 'done' | 'gaveUp', startedAt       # #41; older markers have no state, and mean sent
+  leaseUntil?                                           # the send working on it holds it 2 minutes
+  centerDone?, pushed?: [uid]                           # how far a send got: its center items, who it pushed
+
+notifyRetries/{dedupeKey}                               # #41: a send that failed, for retryNotifications
+  kind, groupId, recipients, exclude, actor, target, route, params, teamName?
+  body | bodies: {uid: body}                            # rendered per person when the body was
+  tries, nextAt, createdAt, expiresAt                   # TTL: 1 day
 
 calendarLinks/{token}                                   # SCHED-11, §6.15: the ID is the secret, 32 random bytes in base64url
   uid, groupId                                          # groupId null: all the person's teams
@@ -763,6 +772,9 @@ auditLogs/{logId}
 
 rateLimits/{uid}_{action}_{window}
   count, expiresAt                                      # TTL: 2 days
+
+ops/storageRecount                                      # Functions only (#41)
+  after: groupId | null, at                             # the last team the nightly recount did, when it was cut short
 
 ops/signupBursts                                        # Functions only (ADMIN-9, #52)
   recent: [{uid, at}]                                   # the last hour's finished setups, ms; at most 500
@@ -835,7 +847,7 @@ Every query that reads team data filters on `groupId`, so rules can check member
   - `teamCalendars.events` (a calendar feed's cached copy of up to 500 events, §6.15)
 
   Without the exemption, a reactions map keyed by user ID would create an index entry for every person who reacts.
-- **TTL policies** delete expired documents automatically: `notifications.expiresAt` (90 days), `rateLimits.expiresAt` (2 days), and `auditLogs.expiresAt` (1 year).
+- **TTL policies** delete expired documents automatically: `notifications.expiresAt` (90 days), `rateLimits.expiresAt` (2 days), `auditLogs.expiresAt` (1 year), `notifyLog.expiresAt` (7 days), `notifyRetries.expiresAt` (1 day), and `answerLinks.expiresAt`. They're `fieldOverrides` with `ttl: true` in `firestore.indexes.json`, so a deploy sets them.
 
 ### 6.3 Security rules
 
@@ -1012,7 +1024,8 @@ Unit tests cover every early-exit condition.
 | Job | Every | Does |
 |---|---|---|
 | `tick` | 5 min | Auto-close polls past `closesAt` (`closedAt == null`, `closesAt <= now`, one index) and notify voters. Send due event reminders (`nextReminderAt <= now`, pages of 100): the latest reminder whose time has come, skipping canceled and started events, to members who didn't say Not going by their own answer, plus each player's `self` member and guardians for players who didn't, named per player (no name prefix for a member's own player). "Reminder: Practice today at 6:00 PM · Riverside Park", with today and tomorrow worked out from dates in the event's time zone. The dedupe key is `{eventId}_r{offset}_{startSeconds}`, so a moved event gets its reminders again. Then `nextReminderAt` moves to the next reminder in a transaction, left alone if the event changed since it was read. Give messages from before chat search their `words` (CHAT-20, `backfillSearchWords`): 400 a run in ID order from the cursor in `config/searchWords`, skipping deleted ones and those already right, until `done`; after that a run reads that one document. One step failing doesn't stop the others. Lives in `ops/jobs.ts` |
-| `dailyCleanup` | 24 h | Expire invites; prune device tokens not updated in 60 days; delete orphan document files (under `groups/{g}/documents/{docId}/`, over a day old, whose `groupDocuments/{docId}` doesn't exist or points at another file; before the recount, so it counts them); delete orphan chat photos (under `groups/{g}/messages/{messageId}/`, over a day old, that no message in the chat shows: a tray never sent, or a photo taken out of it before Send, CHAT-3, #26; `removeAllOrphanMessageFiles` in chat/service.ts, also before the recount); reconcile `storageBytes`; update each team's storage warning (§6.11) Last, when any report has been open more than 12 hours, one email to each super admin with how many and the oldest's age (SAFE-4, `remindOpenReports`). |
+| `dailyCleanup` | 24 h | With 9 minutes, the longest a scheduled function gets (#41; `runDailyCleanup` in teams/cleanup.ts). First, when any report has been open more than 12 hours, one email to each super admin with how many and the oldest's age (SAFE-4, `remindOpenReports`): one quick query, ahead of everything that could run long. Then expire invites; prune device tokens not updated in 60 days; delete orphan document files (under `groups/{g}/documents/{docId}/`, over a day old, whose `groupDocuments/{docId}` doesn't exist or points at another file; before the recount, so it counts them); delete orphan chat photos (under `groups/{g}/messages/{messageId}/`, over a day old, that no message in the chat shows: a tray never sent, or a photo taken out of it before Send, CHAT-3, #26; `removeAllOrphanMessageFiles` in chat/service.ts, also before the recount); and last reconcile `storageBytes` and update each team's storage warning (§6.11). Each step catches its own failure, and so does each team's recount (`storage_recount_failed`), so one can't stop the rest. The `daily_cleanup` log has each step's time; past 7 minutes it warns (`daily_cleanup_slow`), and at 8.5 the recount stops cleanly (`daily_cleanup_cut_short`), keeping the last team done in `ops/storageRecount`, and the next night goes on after it. If the slow warning starts showing, the recount gets its own job. |
+| `retryNotifications` | 1 min | Finish notifications whose send failed (§6.5, #41): up to 50 waiting in `notifyRetries` whose `nextAt` has come, oldest first, through the same send, which picks up from the marker. Each is deleted once sent, or found sent; one another send is working on waits for the next minute; one 10 minutes old, or failing its fifth try, gives up (`notify_gave_up`). It stops taking new ones after 4 of its 5 minutes. With none waiting, almost always, it's one empty query. Lives in `notify/jobs.ts` |
 | `finishTeamDeletions` | 60 min | Finish team deletes that stopped partway: teams marked `deletingAt` more than 15 minutes ago, 20 a run, with 9 minutes (TEAM-9). Delete team marks the team (and `deletingBy`, who may retry), deletes every team collection, then its files (a Storage error throws, to try again), then its memberships and the team. |
 | `sweepTeamFiles` | Sundays | Delete files under `groups/{id}/` whose team or conversation is gone (TEAM-9, LEGAL-6). |
 
@@ -1030,7 +1043,7 @@ Unit tests cover every early-exit condition.
 
 **Steps in `notify.send()`**
 
-0. **Dedupe.** Create `notifyLog/{dedupeKey}`; if it already exists the send already happened (triggers can run twice), so stop.
+0. **Dedupe.** Create `notifyLog/{dedupeKey}` in the `sending` state, holding its lease for 2 minutes; that one write is the usual send's only extra. If it already exists (triggers can run twice), a transaction looks at it: `done` (or an older marker with no state) means sent, so stop; a held lease means another send is on it now, so stop; a `sending` marker 10 minutes old or more gives up (`gaveUp`, `notify_gave_up`); otherwise take the lease and finish it (below).
 1. **Recipients.** Resolve them as all team members, the team's admins, or listed people (for event reminders and changes, each affected player's `self` member and guardians, plus members by their own answer, M6). Drop the actor, anyone in `exclude`, people who blocked the actor, and disabled accounts.
 2. **Notification center.** For kinds that have center items (SPEC NOTIF-2), write one `notifications/{dedupeKey}_{uid}` doc per recipient, in batches, with a 90-day `expiresAt`. These are written **even when push is muted or off for that team**, so nothing important is missed.
 3. **Push.** Keep only recipients whose team level (Off drops everything; Important only keeps important kinds), mute (`mutedUntil` ahead), and global switch for this kind allow it. Profiles are read for every recipient of a notification-center kind (disabled accounts are dropped before center items are written) and, for chat messages, only for members who pass level and mute. For players, send one push per person naming their players ("Emma, Liam: Practice today at 6:00 PM"); a member who is the player gets it without a name prefix.
@@ -1038,7 +1051,12 @@ Unit tests cover every early-exit condition.
    - Load device tokens with `devices.where('uid','in', chunk of 30)`.
    - Send with `sendEach`, 500 per batch (one message per token, so each person can get their own wording).
    - Delete devices whose token comes back `registration-token-not-registered` or `invalid-registration-token`. `invalid-argument` deletes a token only if others in the same batch succeeded, since a bad payload fails every token.
+   - Send again only the tokens that failed with a brief error (`internal-error`, `server-unavailable`, `unknown-error`, `message-rate-exceeded`, `quota-exceeded`, and any unavailable or deadline error), up to 3 more times after 1, 4, and 15 seconds, so long as a retry can start within 40 seconds of the send (callables and triggers get 60). A token that went through is never sent again, and a dead one is never retried. `push_sent` logs `sent`, `failed`, `removed`, `retried`, and `gaveUp` (#41).
+   - Each person's devices go in the same batch, and after each batch but the last the marker notes who was pushed (`pushed`); the last is covered by `done`.
    - On the emulators, log instead of sending.
+5. **Done.** The marker turns `done` (and `centerDone: true` is noted once a center kind's items are in, when pushes follow). These notes are best effort: what they note has already happened, and a failed note is logged, not retried.
+
+**When a send fails** (#41). `trySend` logs `notify_failed`, hands the lease back, and queues the notification in `notifyRetries/{dedupeKey}`: the recipients as resolved (when the send got that far; otherwise as asked, with `exclude`), the body, or for a per-person body (PLAYER-7) each recipient's rendered one, since a function can't be stored (worked out on the spot if the send failed before resolving them), the team name, `tries`, `nextAt`, and a 1-day `expiresAt`. It returns who the push will be for, as far as it knows, so the caller's next push leaves them out (a reply's person doesn't also get the message). `retryNotifications` (§6.4) runs it through the same `send` a minute later, which finds the marker and finishes: center items only where none exists yet (`create`, so an item already read stays read), and pushes only to people not in `pushed`. A push more than 10 minutes late ("Practice moved to 5:00") is worse than none, so a marker that old gives up; a center item already written still shows. Triggers don't use the platform's retry, which would repeat their other work (chat lines, counts); this one path covers triggers and callables alike. A send whose own reads failed before it built the notification (`trySend` given a function) has nothing to retry, and is only logged.
 
 **Devices.** `signOutEverywhere` and `deleteAccount` remove all of the person's devices; `dailyCleanup` removes devices not updated in 60 days (the app rewrites its device at least daily). Removing someone from a team, or leaving, deletes their notification-center items for that team.
 
@@ -1497,7 +1515,7 @@ Assumptions for one active team: 25 members; 50 messages and 10 photos a day; ea
 - **Cloud SQL adds a fixed cost on top.** The smallest instances run **24/7** and cost roughly **$10–30/month**, or **$50+** for a production-grade instance, before storage and backups. That fixed cost is why we wait (§12).
 - **The dev project adds about $0.** It costs nothing while on Spark, and most development runs on the emulators.
   - On Blaze, Firestore and Hosting have free quotas per project, so testing in dev doesn't use prod's.
-  - The Functions, Cloud Scheduler (3 jobs), and Secret Manager free tiers are shared across the billing account. `tick`, `dailyCleanup`, `finishTeamDeletions`, and `sweepTeamFiles` in both projects make 8 jobs, so the five past the free three cost about $0.50/month.
+  - The Functions, Cloud Scheduler (3 jobs), and Secret Manager free tiers are shared across the billing account. `tick`, `dailyCleanup`, `finishTeamDeletions`, `sweepTeamFiles`, and `retryNotifications` in both projects make 10 jobs, so the seven past the free three cost about $0.70/month. `retryNotifications` runs 43,200 times a month in each project, each one empty query almost always, well inside the free invocations and reads.
   - Set the function-image cleanup policy (`firebase functions:artifacts:setpolicy`) in both projects, so deploy images don't pile up in Artifact Registry.
 - **Phase 1 proves it.** After two weeks of our team on prod, the real bill per service goes here, next to the estimates above (ROADMAP task 192).
 

@@ -1323,7 +1323,9 @@ service cloud.firestore {
       allow get: if signedIn() && configId == 'app';
     }
 
-    // invites, rateLimits, ops (the sign-up spike counter, ADMIN-9):
-    // Functions only (no client access).
+    // invites, rateLimits, notifyLog (each notification's progress),
+    // notifyRetries (notifications waiting for retryNotifications, #41), and
+    // ops (the sign-up spike counter, ADMIN-9, and where the nightly storage
+    // recount stopped, #41): Functions only (no client access).
   }
 }

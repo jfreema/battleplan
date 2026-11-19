@@ -11,11 +11,15 @@ import { onMessageCreated, onMessageUpdated } from '../../src/chat/triggers.js';
 import { reportContent } from '../../src/safety/handlers.js';
 import { removeMember, updateGroupMember } from '../../src/teams/handlers.js';
 import {
+  NOTIFY_GIVE_UP_MS,
   pruneDevices,
+  pushRetry,
   removeDevices,
   removeTargetNotifications,
   removeTeamNotifications,
+  retryDueNotifications,
   send,
+  trySend,
   type NotifyInput,
 } from '../../src/notify/service.js';
 import { db } from '../../src/shared/admin.js';
@@ -24,15 +28,30 @@ import { groupMemberId } from '../../src/shared/ids.js';
 
 // FCM stand-in: records every batch and answers by token. Tokens with
 // "dead" are unknown to FCM, "badarg" are refused; allInvalid makes the
-// whole batch fail the way a bad payload does.
-const fcm = vi.hoisted(() => ({ batches: [] as TokenMessage[][], allInvalid: false }));
+// whole batch fail the way a bad payload does. A token in `brief` fails
+// with a passing error that many more times (#41); `down` makes the next
+// that many calls throw, as when FCM can't be reached at all.
+const fcm = vi.hoisted(() => ({
+  batches: [] as TokenMessage[][],
+  allInvalid: false,
+  brief: new Map<string, number>(),
+  down: 0,
+}));
 vi.mock('../../src/shared/admin.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/shared/admin.js')>()),
   messaging: () => ({
     sendEach: async (messages: TokenMessage[]) => {
+      if (fcm.down > 0) {
+        fcm.down--;
+        throw new Error('fcm unavailable');
+      }
       fcm.batches.push(messages);
       const responses = messages.map((m) => {
-        const code = fcm.allInvalid || m.token.includes('badarg')
+        const brief = fcm.brief.get(m.token) ?? 0;
+        if (brief > 0) fcm.brief.set(m.token, brief - 1);
+        const code = brief > 0
+          ? 'messaging/server-unavailable'
+          : fcm.allInvalid || m.token.includes('badarg')
           ? 'messaging/invalid-argument'
           : m.token.includes('dead')
             ? 'messaging/registration-token-not-registered'
@@ -48,6 +67,7 @@ vi.mock('../../src/shared/admin.js', async (importOriginal) => ({
 const G = 'teamA';
 const DAY = 86_400_000;
 const pushed = () => fcm.batches.flat();
+const pushes = () => pushed().map((m) => `${m.token}:${m.notification?.body}`).sort();
 const pushedTokens = () => pushed().map((m) => m.token).sort();
 
 interface Person {
@@ -127,6 +147,10 @@ beforeEach(async () => {
   expect(res.ok).toBe(true);
   fcm.batches.length = 0;
   fcm.allInvalid = false;
+  fcm.brief.clear();
+  fcm.down = 0;
+  // Resends happen at once here (#41).
+  pushRetry.sleep = async () => undefined;
   delete process.env.FUNCTIONS_EMULATOR;
   await db().collection(Collections.groups).doc(G).set({ name: 'Thunder' });
   await person('alex', { role: 'admin' });
@@ -554,5 +578,149 @@ describe('cleanup (ARCH §6.5 devices)', () => {
     expect(await exists(`${Collections.notifications}/m2-sam`)).toBe(true);
     expect(await exists(`${Collections.notifications}/d1-sam`)).toBe(true);
     expect(await removeTargetNotifications('document', 'm1')).toBe(1);
+  });
+});
+
+describe('retries (#41)', () => {
+  const retries = () => db().collection(Collections.notifyRetries);
+  const marker = async (key: string) => (await db().collection(Collections.notifyLog).doc(key).get()).data() ?? {};
+  const markRead = (key: string, uid: string) =>
+    db().collection(Collections.notifications).doc(`${key}_${uid}`).update({ read: true });
+  const read = async (key: string, uid: string) =>
+    (await db().collection(Collections.notifications).doc(`${key}_${uid}`).get()).get('read');
+
+  it('resends a push that hit a brief error, once it goes through, and only it', async () => {
+    await person('sam');
+    await person('pat');
+    await device('pat', 'tok-pat-dead');
+    fcm.brief.set('tok-sam', 2);
+    expect((await send(input({}))).sort()).toEqual(['pat', 'sam']);
+    // Sam's phone twice more, nobody else again, and the dead token never.
+    expect(fcm.batches.map((b) => b.map((m) => m.token).sort())).toEqual([
+      ['tok-pat', 'tok-pat-dead', 'tok-sam'],
+      ['tok-sam'],
+      ['tok-sam'],
+    ]);
+    expect(await exists(`${Collections.devices}/dev-tok-pat-dead`)).toBe(false);
+    expect((await marker('m1')).state).toBe('done');
+  });
+
+  it('a send that fails is queued, and the retry finishes it without doubling anything', async () => {
+    await person('sam');
+    await person('pat');
+    fcm.down = 1;
+    const kind = input({ kind: 'documentAdded', dedupeKey: 'd1_added', body: 'Coach added Roster' });
+    // Who the push will be for, so a caller's second push leaves them out.
+    expect((await trySend(kind)).sort()).toEqual(['pat', 'sam']);
+    expect(fcm.batches).toHaveLength(0);
+    const queued = await retries().doc('d1_added').get();
+    expect(queued.data()).toMatchObject({ body: 'Coach added Roster', bodies: null, tries: 0 });
+    expect([...queued.get('recipients.uids')].sort()).toEqual(['pat', 'sam']);
+    expect((await marker('d1_added')).state).toBe('sending');
+    // The center items went in before the push failed; Sam reads his meanwhile.
+    expect(await centerFor('d1_added')).toEqual(['pat', 'sam']);
+    await markRead('d1_added', 'sam');
+
+    expect(await retryDueNotifications()).toEqual({ sent: 1, gaveUp: 0, waiting: 0 });
+    expect(pushedTokens()).toEqual(['tok-pat', 'tok-sam']);
+    expect(await read('d1_added', 'sam')).toBe(true); // still read
+    expect((await marker('d1_added')).state).toBe('done');
+    expect((await retries().doc('d1_added').get()).exists).toBe(false);
+  });
+
+  it('finishing a send pushes only to the people not pushed yet, and writes only the missing center items', async () => {
+    await person('sam');
+    await person('pat');
+    const now = Date.now();
+    // A send that wrote Sam's item, pushed to Sam, and stopped.
+    await db().collection(Collections.notifyLog).doc('d2_added').set({
+      kind: 'documentAdded', groupId: G, state: 'sending', startedAt: Timestamp.fromMillis(now - 60_000),
+      leaseUntil: Timestamp.fromMillis(0), pushed: ['sam'],
+    });
+    await db().collection(Collections.notifications).doc('d2_added_sam').set({ uid: 'sam', groupId: G, read: true });
+    await retries().doc('d2_added').set({
+      kind: 'documentAdded', groupId: G, recipients: { uids: ['sam', 'pat'] }, exclude: [], actor: null,
+      target: { type: 'document', id: 'd2' }, route: `/g/${G}/documents/d/d2`, params: {}, body: 'Roster',
+      bodies: null, teamName: 'Thunder', tries: 1, nextAt: Timestamp.fromMillis(now - 1_000),
+      createdAt: Timestamp.fromMillis(now - 60_000),
+    });
+    await retryDueNotifications();
+    expect(pushedTokens()).toEqual(['tok-pat']);
+    expect(await centerFor('d2_added')).toEqual(['pat', 'sam']);
+    expect(await read('d2_added', 'sam')).toBe(true);
+    expect(await read('d2_added', 'pat')).toBe(false);
+    expect(await marker('d2_added')).toMatchObject({ state: 'done' });
+  });
+
+  it("keeps each person's own wording for the retry", async () => {
+    await person('sam');
+    await person('pat');
+    fcm.down = 1;
+    await trySend(
+      input({
+        kind: 'eventChanged',
+        dedupeKey: 'e1_changed',
+        target: { type: 'event', id: 'e1' },
+        body: (uid) => (uid === 'sam' ? 'For Emma: Practice moved to 5:00' : 'Practice moved to 5:00'),
+      }),
+    );
+    expect((await retries().doc('e1_changed').get()).get('bodies')).toEqual({
+      sam: 'For Emma: Practice moved to 5:00',
+      pat: 'Practice moved to 5:00',
+    });
+    await retryDueNotifications();
+    expect(pushes()).toEqual(['tok-pat:Practice moved to 5:00', 'tok-sam:For Emma: Practice moved to 5:00']);
+  });
+
+  it('gives up on one 10 minutes old, and sends nothing', async () => {
+    await person('sam');
+    fcm.down = 1;
+    await trySend(input({}));
+    expect(await retryDueNotifications(Date.now() + NOTIFY_GIVE_UP_MS)).toEqual({ sent: 0, gaveUp: 1, waiting: 0 });
+    expect(fcm.batches).toHaveLength(0);
+    expect((await marker('m1')).state).toBe('gaveUp');
+    expect((await retries().doc('m1').get()).exists).toBe(false);
+    // A late second send of the key stops too.
+    expect(await send(input({}))).toEqual([]);
+  });
+
+  it('gives up after the fifth failed try', async () => {
+    await person('sam');
+    fcm.down = 1;
+    await trySend(input({}));
+    fcm.down = 99;
+    for (let i = 1; i <= 4; i++) {
+      const at = Date.now() + i * 61_000; // due, and never too late
+      await retries().doc('m1').update({ createdAt: Timestamp.fromMillis(at - 60_000) });
+      expect(await retryDueNotifications(at)).toEqual({ sent: 0, gaveUp: 0, waiting: 1 });
+      expect((await retries().doc('m1').get()).get('tries')).toBe(i);
+    }
+    const last = Date.now() + 5 * 61_000;
+    await retries().doc('m1').update({ createdAt: Timestamp.fromMillis(last - 60_000) });
+    expect(await retryDueNotifications(last)).toEqual({ sent: 0, gaveUp: 1, waiting: 0 });
+    expect((await retries().doc('m1').get()).exists).toBe(false);
+    expect((await marker('m1')).state).toBe('gaveUp');
+  });
+
+  it('a second send while the first holds the marker waits, and pushes nothing', async () => {
+    await person('sam');
+    await db().collection(Collections.notifyLog).doc('m1').set({
+      kind: 'message', groupId: G, state: 'sending', startedAt: Timestamp.now(),
+      leaseUntil: Timestamp.fromMillis(Date.now() + 60_000),
+    });
+    expect(await send(input({}))).toEqual([]);
+    expect(fcm.batches).toHaveLength(0);
+  });
+
+  it('with nothing queued, does nothing', async () => {
+    expect(await retryDueNotifications()).toEqual({ sent: 0, gaveUp: 0, waiting: 0 });
+    expect(fcm.batches).toHaveLength(0);
+  });
+
+  it('a marker from before retries, with no state, still means sent', async () => {
+    await person('sam');
+    await db().collection(Collections.notifyLog).doc('m1').set({ kind: 'message', groupId: G });
+    expect(await send(input({}))).toEqual([]);
+    expect(fcm.batches).toHaveLength(0);
   });
 });

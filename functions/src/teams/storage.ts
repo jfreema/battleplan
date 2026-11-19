@@ -4,7 +4,7 @@
 // from the bucket so any drift (a missed event, a retried trigger) heals.
 // After every change, updateStorageAlert tells admins when the team crosses
 // 90% or fills up (STORE-3, STORE-4).
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 import { HttpsError } from 'firebase-functions/v2/https';
 import { trySend } from '../notify/service.js';
@@ -78,38 +78,76 @@ export async function recomputeStorageBytes(groupId: string): Promise<number> {
   return total;
 }
 
+/** What one night's recount did (dailyCleanup). */
+export interface RecountResult {
+  teams: number;
+  /** Teams whose recount failed; the rest went on. */
+  failed: number;
+  /** It stopped before the last team, to finish inside the job's time; the next night goes on from there. */
+  cutShort: boolean;
+}
+
+/** Where the nightly recount stopped (#41): `ops/storageRecount`, Functions only. */
+const recountMarker = () => db().collection(Collections.ops).doc('storageRecount');
+
 /**
  * Recomputes every team's storage total, a page of teams at a time, and
- * brings each team's warning up to date (ARCH §6.4 dailyCleanup).
+ * brings each team's warning up to date (ARCH §6.4 dailyCleanup). Each
+ * team's recount catches its own failure (`storage_recount_failed`), so
+ * one team can't stop the rest. At [stopAtMs] it stops cleanly and keeps
+ * the last team done in `ops/storageRecount`, and the next run starts
+ * after it.
  */
-export async function reconcileAllStorage(): Promise<number> {
-  let teams = 0;
-  let last: FirebaseFirestore.QueryDocumentSnapshot | undefined;
+export async function reconcileAllStorage(
+  options: {
+    stopAtMs?: number;
+    now?: () => number;
+    /** One team's recount; tests pass their own. */
+    recompute?: (groupId: string) => Promise<number>;
+  } = {},
+): Promise<RecountResult> {
+  const now = options.now ?? Date.now;
+  const recompute = options.recompute ?? recomputeStorageBytes;
+  const out: RecountResult = { teams: 0, failed: 0, cutShort: false };
+  const resumeAfter = ((await recountMarker().get()).get('after') as string | null | undefined) ?? null;
+  let last: string | null = resumeAfter;
   for (;;) {
     let page = db().collection(Collections.groups).orderBy('__name__').limit(200);
     if (last) page = page.startAfter(last);
     const snap = await page.get();
     for (const team of snap.docs) {
-      const before = (team.get('storageBytes') as number | undefined) ?? 0;
-      const after = await recomputeStorageBytes(team.id);
-      if (before !== after) logger.warn('storage_drift', { groupId: team.id, before, after });
-      // Teams made before groups.status existed get it here (ADMIN-2).
-      const status = teamStatus(team.data());
-      if (team.get('status') !== status) {
-        await team.ref.update({ status }).catch((e: { code?: number }) => {
-          if (e.code !== 5) throw e; // 5 = NOT_FOUND
-        });
+      if (options.stopAtMs !== undefined && now() >= options.stopAtMs) {
+        out.cutShort = true;
+        await recountMarker().set({ after: last, at: Timestamp.fromMillis(now()) });
+        return out;
       }
-      // One team's failed warning mustn't stop the rest of the recount.
-      await updateStorageAlert(team.id).catch((e) =>
-        logger.error('storage_alert_failed', { groupId: team.id, error: String(e) }),
-      );
-      teams++;
+      try {
+        const before = (team.get('storageBytes') as number | undefined) ?? 0;
+        const after = await recompute(team.id);
+        if (before !== after) logger.warn('storage_drift', { groupId: team.id, before, after });
+        // Teams made before groups.status existed get it here (ADMIN-2).
+        const status = teamStatus(team.data());
+        if (team.get('status') !== status) {
+          await team.ref.update({ status }).catch((e: { code?: number }) => {
+            if (e.code !== 5) throw e; // 5 = NOT_FOUND
+          });
+        }
+        // One team's failed warning mustn't stop the rest of the recount.
+        await updateStorageAlert(team.id).catch((e) =>
+          logger.error('storage_alert_failed', { groupId: team.id, error: String(e) }),
+        );
+        out.teams++;
+      } catch (e) {
+        out.failed++;
+        logger.error('storage_recount_failed', { groupId: team.id, error: String(e) });
+      }
+      last = team.id;
     }
     if (snap.size < 200) break;
-    last = snap.docs[snap.docs.length - 1];
   }
-  return teams;
+  // All the way through: the next night starts from the first team.
+  if (resumeAfter) await recountMarker().set({ after: null, at: Timestamp.fromMillis(now()) });
+  return out;
 }
 
 /** Which storage warning a team is at (ARCH §6.2 groups.storageAlert). */

@@ -11,7 +11,7 @@ import { adminUpdateConfig } from '../../src/admin/handlers.js';
 import { adminSetGroupQuota, deleteTeamMedia, listTeamMedia } from '../../src/teams/handlers.js';
 import { createGroup } from '../../src/teams/service.js';
 import { reconcileAllStorage, updateStorageAlert } from '../../src/teams/storage.js';
-import { onGroupFileAdded, onGroupFileRemoved } from '../../src/teams/triggers.js';
+import { dailyCleanup, onGroupFileAdded, onGroupFileRemoved } from '../../src/teams/triggers.js';
 import { db, storage } from '../../src/shared/admin.js';
 import { Collections, Limits } from '../../src/shared/constants.js';
 import { groupMemberId } from '../../src/shared/ids.js';
@@ -195,6 +195,53 @@ describe('storage warnings (STORE-3, STORE-4)', () => {
     expect(pushed().map((m) => m.token).sort()).toEqual(['tok-alex', 'tok-pat']);
     await reconcileAllStorage();
     expect(pushed()).toHaveLength(2);
+  });
+});
+
+describe('the nightly recount (dailyCleanup, #41)', () => {
+  const teams = ['teamB', 'teamC', 'teamD'];
+  const marker = () => db().collection(Collections.ops).doc('storageRecount');
+  beforeEach(async () => {
+    for (const id of teams) await db().collection(Collections.groups).doc(id).set({ name: id, storageBytes: 0 });
+  });
+
+  it('has the longest time a scheduled function can run', () => {
+    expect((dailyCleanup as unknown as { __endpoint: { timeoutSeconds: number } }).__endpoint.timeoutSeconds).toBe(540);
+  });
+
+  it("one team's failing recount never stops the rest", async () => {
+    const counted: string[] = [];
+    const out = await reconcileAllStorage({
+      recompute: async (id) => {
+        if (id === 'teamB') throw new Error('bucket hiccup');
+        counted.push(id);
+        return 7;
+      },
+    });
+    expect(out).toEqual({ teams: 3, failed: 1, cutShort: false });
+    expect(counted).toEqual([G, 'teamC', 'teamD']);
+    expect((await db().collection(Collections.groups).doc('teamD').get()).get('storageBytes')).toBe(0);
+  });
+
+  it('stops cleanly when its time is up, and the next night goes on from there', async () => {
+    let clock = 0;
+    const counted: string[] = [];
+    const recompute = async (id: string) => {
+      counted.push(id);
+      clock += 1_000;
+      return 0;
+    };
+    // Time for two teams: teamA and teamB.
+    const first = await reconcileAllStorage({ stopAtMs: 2_000, now: () => clock, recompute });
+    expect(first).toEqual({ teams: 2, failed: 0, cutShort: true });
+    expect((await marker().get()).get('after')).toBe('teamB');
+    const second = await reconcileAllStorage({ now: () => clock, recompute });
+    expect(second).toEqual({ teams: 2, failed: 0, cutShort: false });
+    expect(counted).toEqual([G, 'teamB', 'teamC', 'teamD']);
+    // All the way through: the next night starts from the first team.
+    expect((await marker().get()).get('after')).toBeNull();
+    await reconcileAllStorage({ now: () => clock, recompute });
+    expect(counted.slice(4)).toEqual([G, 'teamB', 'teamC', 'teamD']);
   });
 });
 
