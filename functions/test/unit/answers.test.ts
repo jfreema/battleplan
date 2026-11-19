@@ -198,7 +198,7 @@ describe('answer links', () => {
 
 describe("who an RSVP email goes to today (today's limits, once a week)", () => {
   const DAY = 86_400_000;
-  const none = { team: 0, all: 0 };
+  const none = { team: 0, bulkLeft: Infinity };
   it('everyone, the first time', () => {
     expect(planRsvpEmails(['a', 'b'], {}, none, 0)).toEqual({ send: ['a', 'b'], skipped: 0, recent: {} });
   });
@@ -212,17 +212,17 @@ describe("who an RSVP email goes to today (today's limits, once a week)", () => 
     expect(later).toEqual({ send: ['a'], skipped: 0, recent: { b: 5 * DAY } });
   });
 
-  it("15 a team and 80 in all a day, whichever is less", () => {
+  it("15 a team, and the bulk room left in the day's email budget (#47), whichever is less", () => {
     const want = Array.from({ length: 20 }, (_, i) => `u${i}`);
     expect(planRsvpEmails(want, {}, none, 0)).toMatchObject({ skipped: 5 });
     expect(planRsvpEmails(want, {}, none, 0).send).toHaveLength(15);
-    expect(planRsvpEmails(want, {}, { team: 10, all: 0 }, 0).send).toHaveLength(5);
-    expect(planRsvpEmails(want, {}, { team: 0, all: 78 }, 0).send).toEqual(['u0', 'u1']);
-    expect(() => planRsvpEmails(want, {}, { team: 15, all: 0 }, 0)).toThrow('email-limit');
-    expect(() => planRsvpEmails(want, {}, { team: 0, all: 80 }, 0)).toThrow('email-limit');
+    expect(planRsvpEmails(want, {}, { team: 10, bulkLeft: Infinity }, 0).send).toHaveLength(5);
+    expect(planRsvpEmails(want, {}, { team: 0, bulkLeft: 2 }, 0).send).toEqual(['u0', 'u1']);
+    expect(() => planRsvpEmails(want, {}, { team: 15, bulkLeft: Infinity }, 0)).toThrow('email-limit');
+    expect(() => planRsvpEmails(want, {}, { team: 0, bulkLeft: 0 }, 0)).toThrow('email-limit');
   });
 
   it('nobody to email is no error', () => {
-    expect(planRsvpEmails([], {}, { team: 15, all: 80 }, 0)).toEqual({ send: [], skipped: 0, recent: {} });
+    expect(planRsvpEmails([], {}, { team: 15, bulkLeft: 0 }, 0)).toEqual({ send: [], skipped: 0, recent: {} });
   });
 });

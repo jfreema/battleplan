@@ -68,7 +68,7 @@ class FunctionsInviteRepository implements InviteRepository {
       _raw('revokeGroupInvite', {'groupId': groupId.value});
 
   @override
-  Future<int> sendEmailInvites(
+  Future<EmailInvitesSent> sendEmailInvites(
     GroupId groupId,
     List<String> emails, {
     String? note,
@@ -78,7 +78,11 @@ class FunctionsInviteRepository implements InviteRepository {
       'emails': emails,
       if (note != null && note.isNotEmpty) 'note': note,
     });
-    return (d['invited'] as num?)?.toInt() ?? 0;
+    return (
+      // The ones made: a send the provider refused can be resent.
+      sent: (d['invited'] as num?)?.toInt() ?? 0,
+      notSent: [for (final e in (d['notSent'] as List?) ?? const []) '$e'],
+    );
   }
 
   @override

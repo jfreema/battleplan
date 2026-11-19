@@ -550,6 +550,10 @@ Future<void> pumpTeam(
         messages: 18420,
         storageBytes: 18 * 1024 * bytesPerMb,
         openReports: 3,
+        // Today's emails (#47), under where invites stop.
+        emailsToday: 38,
+        emailBudget: 90,
+        emailBulkLimit: 63,
       ),
     ),
     size: size,

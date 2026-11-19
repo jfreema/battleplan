@@ -311,6 +311,9 @@ export const UpdateConfigInput = z.object({
   // ADMIN-9: email super admins about new accounts and teams. Optional, so
   // an admin panel from before it still saves (and leaves it as it was).
   emailAdminAlerts: z.boolean().optional(),
+  // #47: the email plan's daily limit for this project, every email
+  // counted. Optional, so an admin panel from before it still saves.
+  emailsPerDay: z.number().int().min(1).max(Limits.emailsPerDayMax).optional(),
   announcementBanner: z
     .object({
       text: z.string().trim().min(1).max(BANNER_TEXT_MAX),
@@ -324,10 +327,11 @@ export type AppConfigInput = z.infer<typeof UpdateConfigInput>;
 
 /** config/app's fields for [input] (ARCH §6.2), with the banner's end as a Timestamp. */
 export function configFields(input: AppConfigInput): Record<string, unknown> {
-  const { emailAdminAlerts, ...rest } = input;
+  const { emailAdminAlerts, emailsPerDay, ...rest } = input;
   return {
     ...rest,
     ...(emailAdminAlerts === undefined ? {} : { emailAdminAlerts }),
+    ...(emailsPerDay === undefined ? {} : { emailsPerDay }),
     announcementBanner: input.announcementBanner && {
       text: input.announcementBanner.text,
       severity: input.announcementBanner.severity,

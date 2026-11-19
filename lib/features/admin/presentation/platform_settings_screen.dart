@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/links.dart';
+import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
@@ -33,6 +35,7 @@ class _PlatformSettingsScreenState
   final _perDay = TextEditingController();
   final _quota = TextEditingController();
   final _upload = TextEditingController();
+  final _emails = TextEditingController();
   final _support = TextEditingController();
   final _bannerText = TextEditingController();
   bool _allowCreation = true;
@@ -51,6 +54,7 @@ class _PlatformSettingsScreenState
     _perDay.dispose();
     _quota.dispose();
     _upload.dispose();
+    _emails.dispose();
     _support.dispose();
     _bannerText.dispose();
     super.dispose();
@@ -63,6 +67,9 @@ class _PlatformSettingsScreenState
     _perDay.text = '${c.maxGroupsCreatedPerUserPerDay}';
     _quota.text = '${c.defaultStorageQuotaMb}';
     _upload.text = '${c.maxUploadMb}';
+    // The server's default for this project until one is set (#47).
+    final prod = ref.read(linkServiceProvider).host == LinkService.prodHost;
+    _emails.text = '${c.emailsPerDay ?? defaultEmailsPerDay(prod: prod)}';
     _support.text = c.supportEmail;
     final banner = c.announcementBanner;
     // An expired banner reads as none: it's no longer shown.
@@ -79,6 +86,7 @@ class _PlatformSettingsScreenState
     maxGroupsCreatedPerUserPerDay: int.tryParse(_perDay.text.trim()) ?? 0,
     defaultStorageQuotaMb: int.tryParse(_quota.text.trim()) ?? 0,
     maxUploadMb: int.tryParse(_upload.text.trim()) ?? 0,
+    emailsPerDay: int.tryParse(_emails.text.trim()) ?? 0,
     supportEmail: _support.text.trim(),
     emailAdminAlerts: _emailAlerts,
     announcementBanner: _bannerOn
@@ -175,7 +183,9 @@ class _PlatformSettingsScreenState
         decoration: InputDecoration(
           labelText: label,
           helperText: help,
+          helperMaxLines: 3,
           errorText: errorText,
+          errorMaxLines: 3,
         ),
       ),
     );
@@ -230,6 +240,22 @@ class _PlatformSettingsScreenState
                       error(
                         ConfigProblem.maxUpload,
                         l10n.adminRangeError(1, Limits.maxUploadMb),
+                      ),
+                    ),
+                  ],
+                ),
+                // The one daily email budget (#47): every email counts
+                // toward it, and invites and RSVP emails stop at 70%.
+                AdminSectionCard(
+                  title: l10n.adminEmailSection,
+                  children: [
+                    number(
+                      _emails,
+                      l10n.adminEmailsPerDay,
+                      l10n.adminEmailsPerDayHelp,
+                      error(
+                        ConfigProblem.emailsPerDay,
+                        l10n.adminRangeError(1, Limits.emailsPerDayMax),
                       ),
                     ),
                   ],

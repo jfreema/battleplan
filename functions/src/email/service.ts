@@ -2,6 +2,7 @@
 // Firebase Auth sends verification and password-reset emails itself.
 import { defineSecret } from 'firebase-functions/params';
 import { logger } from 'firebase-functions/v2';
+import { emailTier, takeEmailSlot, type EmailKind } from './budget.js';
 
 /** The Resend API key, in Secret Manager. Callables that send declare it. */
 export const resendApiKey = defineSecret('RESEND_API_KEY');
@@ -17,10 +18,13 @@ export interface Email {
 }
 
 /**
- * Sends one email. On the emulators (no key), it logs the email instead,
- * so flows can be tested locally without sending anything.
+ * Sends one email about [about] (#47). Every email counts toward the day's
+ * one budget ([takeEmailSlot]): with no room left for its tier it doesn't
+ * go out, and this returns false, logging `email_budget_full`. On the
+ * emulators (no key), it logs the email instead and counts nothing, so
+ * flows can be tested locally without sending anything.
  */
-export async function sendEmail(email: Email): Promise<boolean> {
+export async function sendEmail(email: Email, about: EmailKind): Promise<boolean> {
   let key = '';
   try {
     key = resendApiKey.value();
@@ -28,7 +32,11 @@ export async function sendEmail(email: Email): Promise<boolean> {
     key = '';
   }
   if (!key || process.env.FUNCTIONS_EMULATOR === 'true') {
-    logger.info('email_not_sent_emulator', { to: email.to, subject: email.subject, text: email.text });
+    logger.info('email_not_sent_emulator', { to: email.to, subject: email.subject, text: email.text, about });
+    return false;
+  }
+  if (!(await takeEmailSlot(about))) {
+    logger.warn('email_budget_full', { about, tier: emailTier(about) });
     return false;
   }
   const res = await fetch('https://api.resend.com/emails', {
@@ -37,7 +45,7 @@ export async function sendEmail(email: Email): Promise<boolean> {
     body: JSON.stringify({ from: FROM, reply_to: REPLY_TO, ...email }),
   });
   if (!res.ok) {
-    logger.error('email_send_failed', { status: res.status, body: (await res.text()).slice(0, 300) });
+    logger.error('email_send_failed', { status: res.status, about, body: (await res.text()).slice(0, 300) });
     return false;
   }
   return true;

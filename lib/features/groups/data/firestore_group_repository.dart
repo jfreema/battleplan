@@ -540,6 +540,9 @@ class FirestoreMemberRepository implements MemberRepository {
         emailFailed: [
           for (final e in (d['emailFailed'] as List?) ?? const []) '$e',
         ],
+        emailLimited: [
+          for (final e in (d['emailLimited'] as List?) ?? const []) '$e',
+        ],
       );
     } on FirebaseFunctionsException catch (e) {
       final message = serverMessage(e.message);

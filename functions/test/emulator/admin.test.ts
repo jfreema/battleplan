@@ -202,6 +202,10 @@ describe('dashboard (ADMIN-1)', () => {
       messages: 2,
       storageBytes: 325 * MB,
       openReports: 1,
+      // Today's emails (#47): none counted on the emulators, of dev's 10.
+      emailsToday: 0,
+      emailBudget: 10,
+      emailBulkLimit: 7,
     });
     expect((await db().collection(Collections.auditLogs).get()).size).toBe(0);
   });

@@ -89,6 +89,9 @@ class FunctionsAdminRepository implements AdminRepository {
       messages: _int(r['messages']),
       storageBytes: _int(r['storageBytes']),
       openReports: _int(r['openReports']),
+      emailsToday: _int(r['emailsToday']),
+      emailBudget: _int(r['emailBudget']),
+      emailBulkLimit: _int(r['emailBulkLimit']),
     );
   }
 
@@ -442,6 +445,7 @@ class FunctionsAdminRepository implements AdminRepository {
       'maxUploadMb': config.maxUploadMb,
       'supportEmail': config.supportEmail.trim(),
       'emailAdminAlerts': config.emailAdminAlerts,
+      'emailsPerDay': ?config.emailsPerDay,
       'announcementBanner': banner == null
           ? null
           : {
@@ -477,6 +481,7 @@ AppConfig appConfigFromFirestore(Map<String, dynamic> d) {
     supportEmail: d['supportEmail'] as String? ?? '',
     emailAdminAlerts:
         d['emailAdminAlerts'] as bool? ?? defaults.emailAdminAlerts,
+    emailsPerDay: (d['emailsPerDay'] as num?)?.toInt(),
     announcementBanner: banner is Map && expires != null
         ? Announcement(
             text: _str(banner['text']),

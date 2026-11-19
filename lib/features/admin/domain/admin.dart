@@ -39,6 +39,12 @@ abstract class AdminTotals with _$AdminTotals {
     /// Bytes stored across every team.
     @Default(0) int storageBytes,
     @Default(0) int openReports,
+
+    /// Emails so far today (UTC), of the day's budget, and where bulk
+    /// emails (invites, "added to team" notes, RSVP emails) stop (#47).
+    @Default(0) int emailsToday,
+    @Default(0) int emailBudget,
+    @Default(0) int emailBulkLimit,
   }) = _AdminTotals;
 }
 
@@ -373,6 +379,11 @@ abstract class AppConfig with _$AppConfig {
     /// Email super admins when someone finishes signing up and when a team
     /// is created or deleted (ADMIN-9).
     @Default(true) bool emailAdminAlerts,
+
+    /// The email plan's daily limit for this project, every email counted
+    /// (#47); null until set, when the server uses this project's default
+    /// ([defaultEmailsPerDay]).
+    int? emailsPerDay,
     Announcement? announcementBanner,
   }) = _AppConfig;
 
@@ -390,6 +401,11 @@ abstract class AppConfig with _$AppConfig {
     return email.isEmpty ? defaultSupportEmail : email;
   }
 }
+
+/// The daily email budget until Platform settings set one (#47): 90 in prod
+/// and 10 in dev, which share the email plan's 100.
+int defaultEmailsPerDay({required bool prod}) =>
+    prod ? Limits.emailsPerDayProd : Limits.emailsPerDayDev;
 
 /// The support address until platform settings name one (ADMIN-7).
 const defaultSupportEmail = 'support@getbattleplan.app';
@@ -413,6 +429,9 @@ enum ConfigProblem {
 
   /// The banner's end must be in the future.
   bannerExpiry,
+
+  /// Emails a day: 1 to [Limits.emailsPerDayMax] (#47).
+  emailsPerDay,
 }
 
 final _email = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
@@ -437,5 +456,8 @@ Set<ConfigProblem> configProblems(AppConfig config, DateTime now) {
       ConfigProblem.bannerText,
     if (banner != null && !banner.expiresAt.isAfter(now))
       ConfigProblem.bannerExpiry,
+    if (config.emailsPerDay case final n?
+        when n < 1 || n > Limits.emailsPerDayMax)
+      ConfigProblem.emailsPerDay,
   };
 }

@@ -155,7 +155,6 @@ describe("Email people who haven't RSVP'd", () => {
     const day = new Date(NOW).toISOString().slice(0, 10);
     const counter = (key: string) => db().collection(Collections.rateLimits).doc(`${key}_rsvpEmail_${day}`).get();
     expect((await counter(G)).get('count')).toBe(2);
-    expect((await counter('all')).get('count')).toBe(2);
     refused.clear();
     outbox.length = 0;
     expect(await emailService('game', coach, false, NOW + HOUR)).toMatchObject({ people: 1, failed: 0 });
@@ -184,25 +183,29 @@ describe("Email people who haven't RSVP'd", () => {
     await expect(emailService('game', coach, false, NOW + HOUR)).rejects.toMatchObject({ message: 'emailed-this-week' });
   });
 
-  it("15 a day per team and 80 in all; the rest go another day (SCHED-14)", async () => {
+  it("15 a day per team, and the bulk room left in the day's email budget; the rest go another day (SCHED-14, #47)", async () => {
     const coach = { uid: 'coach', superAdmin: false };
     const day = (ms: number) => new Date(ms).toISOString().slice(0, 10);
     const counter = (key: string, ms = NOW) => db().collection(Collections.rateLimits).doc(`${key}_rsvpEmail_${day(ms)}`);
+    // The day's one email counter (#47); dev's budget is 10, so bulk emails
+    // stop at 7.
+    const budget = (ms: number) => db().collection(Collections.rateLimits).doc(`emailBudget_${day(ms)}`);
     await counter(G).set({ count: 14 });
     expect(await emailService('game', coach, true, NOW)).toMatchObject({ people: 1, skipped: 2 });
     expect(await emailService('game', coach, false, NOW)).toMatchObject({ people: 1, skipped: 2 });
     expect(outbox).toHaveLength(1);
     expect((await counter(G).get()).get('count')).toBe(15);
-    expect((await counter('all').get()).get('count')).toBe(1);
     const limit = { code: 'resource-exhausted', message: 'email-limit' };
     await expect(emailService('game', coach, true, NOW)).rejects.toMatchObject(limit);
     await expect(emailService('game', coach, false, NOW)).rejects.toMatchObject(limit);
     // Tomorrow, the two left out, and only them.
     const tomorrow = NOW + 24 * HOUR;
-    await counter('all', tomorrow).set({ count: 79 });
+    await budget(tomorrow).set({ count: 6 });
     expect(await emailService('game', coach, false, tomorrow)).toMatchObject({ people: 1, skipped: 1 });
+    // The real send counts toward the budget as it goes; this one is faked.
+    await budget(tomorrow).set({ count: 7 });
     await expect(emailService('game', coach, false, tomorrow)).rejects.toMatchObject(limit);
-    await counter('all', tomorrow).set({ count: 0 });
+    await budget(tomorrow).set({ count: 0 });
     expect(await emailService('game', coach, false, tomorrow)).toMatchObject({ people: 1, skipped: 0 });
     expect(new Set(outbox.map((e) => e.to)).size).toBe(3);
     await expect(emailService('game', coach, false, tomorrow)).rejects.toMatchObject({ message: 'emailed-this-week' });

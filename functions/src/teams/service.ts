@@ -7,6 +7,7 @@ import { findOrProvisionUser, sendSetupEmail } from '../accounts/service.js';
 import { tryDeleteCalendarLinksOf } from '../calendar/service.js';
 import { joinedLine, postSystemMessage } from '../chat/service.js';
 import { renameDueCharges } from '../dues/service.js';
+import { emailRoom } from '../email/budget.js';
 import { sendEmail } from '../email/service.js';
 import { addedToTeamEmail } from '../email/templates.js';
 import { teamUrl } from '../links/service.js';
@@ -598,6 +599,8 @@ export interface AddMembersResult {
   problems: string[];
   /** Invited people whose setup email didn't send, often past the day's email limit; the admin can resend. */
   emailFailed: string[];
+  /** Of [emailFailed], those refused because today's email budget ran out (#47): resend tomorrow. */
+  emailLimited: string[];
 }
 
 /**
@@ -644,6 +647,7 @@ export async function addMembersByEmail(
     invitedPeople: [],
     problems: [],
     emailFailed: [],
+    emailLimited: [],
   };
   const group = await db().collection(Collections.groups).doc(groupId).get();
   const teamName = group.get('name') as string;
@@ -684,12 +688,17 @@ export async function addMembersByEmail(
       if (user.provisioned) {
         result.invited++;
         result.invitedPeople.push(person);
+        // Setup emails are essential (#47): they use the room bulk email
+        // leaves. Still added when it's gone, to resend tomorrow.
         const sent = await sendSetupEmail(person.email, teamName, actor.name).catch(() => false);
-        if (!sent) result.emailFailed.push(person.email);
+        if (!sent) {
+          result.emailFailed.push(person.email);
+          if ((await emailRoom('essential').catch(() => 1)) < 1) result.emailLimited.push(person.email);
+        }
       } else {
         // An added account joins when it first signs in (clearPendingMemberships).
         await postSystemMessage(groupId, 'joined', joinedLine(user.displayName), user.uid);
-        await sendEmail(addedToTeamEmail(entry.email, teamName, actor.name, teamUrl(groupId)));
+        await sendEmail(addedToTeamEmail(entry.email, teamName, actor.name, teamUrl(groupId)), 'addedToTeam');
         result.added++;
         result.addedPeople.push(person);
       }

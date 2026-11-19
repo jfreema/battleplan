@@ -67,7 +67,7 @@ export async function remindOpenReports(nowMs = Date.now()): Promise<number> {
   const oldest = waiting.docs[waiting.size - 1].get('createdAt') as Timestamp;
   const hours = Math.floor((nowMs - oldest.toMillis()) / HOUR);
   for (const to of await superAdminEmails()) {
-    await sendEmail(openReportsEmail(to, waiting.size, hours, appUrl('/admin/reports')));
+    await sendEmail(openReportsEmail(to, waiting.size, hours, appUrl('/admin/reports')), 'superAdminAlert');
   }
   return waiting.size;
 }

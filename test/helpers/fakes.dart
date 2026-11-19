@@ -751,11 +751,18 @@ class FakeMemberRepository implements MemberRepository {
         for (final e in entries)
           if (emailFails.contains(e.email)) e.email,
       ],
+      emailLimited: [
+        for (final e in entries)
+          if (emailFails.contains(e.email) && emailLimitReached) e.email,
+      ],
     );
   }
 
   /// Emails whose setup email doesn't send, as past the day's limit.
   final Set<String> emailFails = {};
+
+  /// Those failures were the daily email limit (#47).
+  bool emailLimitReached = false;
 
   /// Set to make resending a setup email fail, as past the day's limit.
   bool resendLimited = false;
@@ -1449,12 +1456,19 @@ class FakeInviteRepository implements InviteRepository {
 
   final List<EmailInvite> sent = [];
 
+  /// How many more invites today's email limit has room for (#47); null
+  /// is no limit.
+  int? emailRoom;
+
   @override
-  Future<int> sendEmailInvites(
+  Future<EmailInvitesSent> sendEmailInvites(
     GroupId groupId,
-    List<String> emails, {
+    List<String> all, {
     String? note,
   }) async {
+    final room = emailRoom ?? all.length;
+    final emails = all.take(room).toList();
+    if (emailRoom != null) emailRoom = emailRoom! - emails.length;
     for (final (i, e) in emails.indexed) {
       sent.insert(
         0,
@@ -1465,7 +1479,7 @@ class FakeInviteRepository implements InviteRepository {
         ),
       );
     }
-    return emails.length;
+    return (sent: emails.length, notSent: all.skip(room).toList());
   }
 
   @override
@@ -1473,8 +1487,14 @@ class FakeInviteRepository implements InviteRepository {
 
   final List<String> resent = [];
 
+  /// Thrown by resends, as when today's email limit is reached (#47).
+  AppFailure? resendFails;
+
   @override
-  Future<void> resendEmailInvite(String code) async => resent.add(code);
+  Future<void> resendEmailInvite(String code) async {
+    if (resendFails case final failure?) throw failure;
+    resent.add(code);
+  }
 
   @override
   Future<void> revokeInvite(String code) async {

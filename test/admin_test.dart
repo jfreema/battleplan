@@ -1432,6 +1432,8 @@ void main() {
             maxGroupsCreatedPerUserPerDay: 101,
             defaultStorageQuotaMb: 0,
             maxUploadMb: 11,
+            // The day's email budget (#47): 1 to 10000.
+            emailsPerDay: 0,
             supportEmail: 'x',
             announcementBanner: Announcement(
               text: 'x' * 281,

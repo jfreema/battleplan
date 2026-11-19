@@ -87,6 +87,27 @@ class AdminDashboardScreen extends ConsumerWidget {
                   icon: AppIcons.storage,
                   accent: (c) => c.lemon,
                 ),
+                // The day's one email budget (#47): its warning color once
+                // invites and RSVP emails have stopped, red when it's full.
+                // A server from before it sends no budget: no card.
+                if (value.emailBudget > 0)
+                  _Stat(
+                    label: l10n.adminStatEmails,
+                    note: l10n.adminStatEmailsNote(
+                      number.format(value.emailBulkLimit),
+                    ),
+                    value: l10n.adminStatEmailsValue(
+                      number.format(value.emailsToday),
+                      number.format(value.emailBudget),
+                    ),
+                    icon: AppIcons.email,
+                    accent: (c) => value.emailsToday >= value.emailBulkLimit
+                        ? c.lemon
+                        : c.mint,
+                    alert:
+                        value.emailBudget > 0 &&
+                        value.emailsToday >= value.emailBudget,
+                  ),
                 _Stat(
                   label: l10n.adminStatOpenReports,
                   note: value.openReports > 0

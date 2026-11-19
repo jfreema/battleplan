@@ -203,8 +203,8 @@ export async function ensureUserProfile(
   if (result.emailChangedFrom && user.email) {
     logger.info('account_email_changed', { uid });
     const change = `The email for your Battleplan account was changed to ${user.email.toLowerCase()}.`;
-    await sendEmail(securityNoticeEmail(result.emailChangedFrom, change));
-    await sendEmail(securityNoticeEmail(user.email.toLowerCase(), change));
+    await sendEmail(securityNoticeEmail(result.emailChangedFrom, change), 'securityNotice');
+    await sendEmail(securityNoticeEmail(user.email.toLowerCase(), change), 'securityNotice');
   }
 
   // AUTH-7: a method Firebase added or removed at sign-in gets the same
@@ -318,7 +318,7 @@ export async function recordSignInMethodChange(
   ];
   const email = (snap.get('email') as string | undefined) ?? user.email;
   if (email && lines.length && (await securityNoticeAllowed(uid))) {
-    await sendEmail(securityNoticeEmail(email, lines.join(' ')));
+    await sendEmail(securityNoticeEmail(email, lines.join(' ')), 'securityNotice');
   }
   return { added, removed };
 }
@@ -458,7 +458,7 @@ export async function setupLink(email: string): Promise<string> {
 export async function sendSetupEmail(email: string, teamName: string, addedBy: string): Promise<boolean> {
   const link = await setupLinkOrNull(email);
   if (!link) return false;
-  return (await sendEmail(setupEmail(email, teamName, addedBy, link))) || process.env.FUNCTIONS_EMULATOR === 'true';
+  return (await sendEmail(setupEmail(email, teamName, addedBy, link), 'setup')) || process.env.FUNCTIONS_EMULATOR === 'true';
 }
 
 /**
@@ -512,7 +512,7 @@ function isUserNotFound(e: unknown): boolean {
 export async function sendAccountSetupEmail(email: string, addedBy: string): Promise<boolean> {
   const link = await setupLinkOrNull(email);
   if (!link) return false;
-  return sendEmail(accountSetupEmail(email, addedBy, link));
+  return sendEmail(accountSetupEmail(email, addedBy, link), 'accountSetup');
 }
 
 /**
@@ -570,7 +570,7 @@ export async function sendPasswordReset(uid: string): Promise<void> {
   // After the new password is set, Continue goes to email sign-in in the
   // app (AUTH-2), which the sign-in screen doesn't link to.
   const link = await auth().generatePasswordResetLink(email, { url: appUrl('/emaillogin') });
-  await sendEmail(passwordResetEmail(email, link));
+  await sendEmail(passwordResetEmail(email, link), 'passwordReset');
 }
 
 /**

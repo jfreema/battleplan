@@ -394,6 +394,10 @@ describe('every role, spot checks the other files leave out', () => {
   it('keeps invites, rate limits, and series away from super admins too', async () => {
     await assertFails(root().doc('invites/K7XPM2QR').get());
     await assertFails(root().doc('rateLimits/alice_x').get());
+    // The day's one email counter (#47): Functions only.
+    await assertFails(root().doc('rateLimits/emailBudget_2026-11-19').get());
+    await assertFails(as('alice').doc('rateLimits/emailBudget_2026-11-19').get());
+    await assertFails(as('alice').doc('rateLimits/emailBudget_2026-11-19').set({ count: 0 }));
     // The sign-up spike counter (ADMIN-9, #52): Functions only.
     await assertFails(root().doc('ops/signupBursts').get());
     await assertFails(as('alice').doc('ops/signupBursts').get());

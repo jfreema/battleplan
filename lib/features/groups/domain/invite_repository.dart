@@ -36,8 +36,10 @@ abstract interface class InviteRepository {
   Future<void> revokeTeamInvite(GroupId groupId);
 
   /// Emails single-use invites that expire in 14 days (INV-4). Returns how
-  /// many were invited. Throws EmailNotVerified or RateLimited.
-  Future<int> sendEmailInvites(
+  /// many were sent, and the addresses today's email limit had no room for
+  /// (#47), which weren't invited, to try again tomorrow. Throws
+  /// EmailNotVerified or RateLimited.
+  Future<EmailInvitesSent> sendEmailInvites(
     GroupId groupId,
     List<String> emails, {
     String? note,
@@ -46,9 +48,14 @@ abstract interface class InviteRepository {
   /// The team's email invites, newest first (INV-4).
   Future<List<EmailInvite>> emailInvites(GroupId groupId);
 
-  /// Sends an email invite again with a fresh 14 days.
+  /// Sends an email invite again with a fresh 14 days. Throws
+  /// RateLimited('email-limit') when today's email limit is reached (#47).
   Future<void> resendEmailInvite(String code);
 
   /// Turns an invite off at once.
   Future<void> revokeInvite(String code);
 }
+
+/// What sending email invites did (INV-4, #47): how many went out, and the
+/// addresses left for another day because today's email limit was reached.
+typedef EmailInvitesSent = ({int sent, List<String> notSent});

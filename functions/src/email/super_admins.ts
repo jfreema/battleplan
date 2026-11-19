@@ -49,7 +49,7 @@ export async function emailSuperAdmins(what: string, make: (to: string) => Email
     return;
   }
   try {
-    for (const to of await superAdminEmails()) await sendEmail(make(to));
+    for (const to of await superAdminEmails()) await sendEmail(make(to), 'superAdminAlert');
   } catch (e) {
     logger.error('super_admin_email_failed', { what, error: String(e) });
   }

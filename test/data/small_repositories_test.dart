@@ -397,7 +397,12 @@ void main() {
     });
 
     test('sends, lists, resends, and revokes email invites', () async {
-      functions.handlers['sendEmailInvites'] = (_) => {'invited': 2};
+      functions.handlers['sendEmailInvites'] = (_) => {
+        'invited': 2,
+        'sent': 2,
+        // Today's email limit had no room for this one (#47).
+        'notSent': ['c@example.com'],
+      };
       functions.handlers['listEmailInvites'] = (_) => {
         'invites': [
           {
@@ -417,13 +422,13 @@ void main() {
       functions.handlers['resendEmailInvite'] = (_) => <String, dynamic>{};
       functions.handlers['revokeInvite'] = (_) => <String, dynamic>{};
       final repo = FunctionsInviteRepository(functions);
-      expect(
-        await repo.sendEmailInvites(_g, [
-          'a@example.com',
-          'b@example.com',
-        ], note: 'Hi'),
-        2,
-      );
+      final sent = await repo.sendEmailInvites(_g, [
+        'a@example.com',
+        'b@example.com',
+        'c@example.com',
+      ], note: 'Hi');
+      expect(sent.sent, 2);
+      expect(sent.notSent, ['c@example.com']);
       expect((functions.lastData('sendEmailInvites')! as Map)['note'], 'Hi');
       await repo.sendEmailInvites(_g, ['a@example.com'], note: '');
       expect(

@@ -61,6 +61,8 @@ class _EmailInvitesScreenState extends ConsumerState<EmailInvitesScreen> {
         SnackBar(
           content: Text(switch (e) {
             EmailNotVerified() => l10n.emailInvitesNeedVerified,
+            // Today's email limit (#47): a resend has to wait.
+            RateLimited(message: 'email-limit') => l10n.emailLimitTryTomorrow,
             RateLimited() => l10n.emailInvitesRateLimited,
             PermissionDenied() => l10n.invitesAdminsOnly,
             _ => l10n.errorEmailInvites,
@@ -74,16 +76,21 @@ class _EmailInvitesScreenState extends ConsumerState<EmailInvitesScreen> {
     final l10n = AppLocalizations.of(context);
     setState(() => _sending = true);
     await _run(() async {
-      final n = await ref
+      final r = await ref
           .read(inviteRepositoryProvider)
           .sendEmailInvites(
             widget.groupId,
             emailsFrom(_emails.text),
             note: _note.text.trim(),
           );
-      _emails.clear();
-      _note.clear();
-      return l10n.emailInvitesSent(n);
+      // What today's email limit had no room for stays in the box, with the
+      // note, for tomorrow (#47).
+      _emails.text = r.notSent.join('\n');
+      if (r.notSent.isEmpty) _note.clear();
+      if (r.notSent.isEmpty) return l10n.emailInvitesSent(r.sent);
+      return r.sent == 0
+          ? l10n.emailLimitTryTomorrow
+          : l10n.emailInvitesSomeSent(r.sent, r.notSent.length);
     });
     if (mounted) setState(() => _sending = false);
   }

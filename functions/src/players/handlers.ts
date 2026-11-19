@@ -503,7 +503,10 @@ export const inviteGuardian = onCall({ secrets: [resendApiKey] }, async (request
     if (user.provisioned) {
       emailFailed = !(await sendSetupEmail(email, teamName, actorName));
     } else if (!wasMember) {
-      await sendEmail(addedToTeamEmail(email.trim().toLowerCase(), teamName, actorName, teamUrl(input.groupId)));
+      await sendEmail(
+        addedToTeamEmail(email.trim().toLowerCase(), teamName, actorName, teamUrl(input.groupId)),
+        'addedToTeam',
+      );
     }
   } catch (e) {
     emailFailed = user.provisioned;

@@ -19,7 +19,9 @@ mixin _$AdminTotals {
  int get newTeams;/// Teams with a message in the last 7 days.
  int get activeTeams;/// Messages sent in the last 7 days.
  int get messages;/// Bytes stored across every team.
- int get storageBytes; int get openReports;
+ int get storageBytes; int get openReports;/// Emails so far today (UTC), of the day's budget, and where bulk
+/// emails (invites, "added to team" notes, RSVP emails) stop (#47).
+ int get emailsToday; int get emailBudget; int get emailBulkLimit;
 /// Create a copy of AdminTotals
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -31,20 +33,20 @@ $AdminTotalsCopyWith<AdminTotals> get copyWith => _$AdminTotalsCopyWithImpl<Admi
 @override
 bool operator ==(Object other) {
   final _this = this as AdminTotals;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AdminTotals&&(identical(other.users, _this.users) || other.users == _this.users)&&(identical(other.teams, _this.teams) || other.teams == _this.teams)&&(identical(other.newTeams, _this.newTeams) || other.newTeams == _this.newTeams)&&(identical(other.activeTeams, _this.activeTeams) || other.activeTeams == _this.activeTeams)&&(identical(other.messages, _this.messages) || other.messages == _this.messages)&&(identical(other.storageBytes, _this.storageBytes) || other.storageBytes == _this.storageBytes)&&(identical(other.openReports, _this.openReports) || other.openReports == _this.openReports));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AdminTotals&&(identical(other.users, _this.users) || other.users == _this.users)&&(identical(other.teams, _this.teams) || other.teams == _this.teams)&&(identical(other.newTeams, _this.newTeams) || other.newTeams == _this.newTeams)&&(identical(other.activeTeams, _this.activeTeams) || other.activeTeams == _this.activeTeams)&&(identical(other.messages, _this.messages) || other.messages == _this.messages)&&(identical(other.storageBytes, _this.storageBytes) || other.storageBytes == _this.storageBytes)&&(identical(other.openReports, _this.openReports) || other.openReports == _this.openReports)&&(identical(other.emailsToday, _this.emailsToday) || other.emailsToday == _this.emailsToday)&&(identical(other.emailBudget, _this.emailBudget) || other.emailBudget == _this.emailBudget)&&(identical(other.emailBulkLimit, _this.emailBulkLimit) || other.emailBulkLimit == _this.emailBulkLimit));
 }
 
 
 @override
 int get hashCode {
   final _this = this as AdminTotals;
-  return Object.hash(runtimeType,_this.users,_this.teams,_this.newTeams,_this.activeTeams,_this.messages,_this.storageBytes,_this.openReports);
+  return Object.hash(runtimeType,_this.users,_this.teams,_this.newTeams,_this.activeTeams,_this.messages,_this.storageBytes,_this.openReports,_this.emailsToday,_this.emailBudget,_this.emailBulkLimit);
 }
 
 @override
 String toString() {
   final _this = this as AdminTotals;
-  return 'AdminTotals(users: ${_this.users}, teams: ${_this.teams}, newTeams: ${_this.newTeams}, activeTeams: ${_this.activeTeams}, messages: ${_this.messages}, storageBytes: ${_this.storageBytes}, openReports: ${_this.openReports})';
+  return 'AdminTotals(users: ${_this.users}, teams: ${_this.teams}, newTeams: ${_this.newTeams}, activeTeams: ${_this.activeTeams}, messages: ${_this.messages}, storageBytes: ${_this.storageBytes}, openReports: ${_this.openReports}, emailsToday: ${_this.emailsToday}, emailBudget: ${_this.emailBudget}, emailBulkLimit: ${_this.emailBulkLimit})';
 }
 
 
@@ -55,7 +57,7 @@ abstract mixin class $AdminTotalsCopyWith<$Res>  {
   factory $AdminTotalsCopyWith(AdminTotals value, $Res Function(AdminTotals) _then) = _$AdminTotalsCopyWithImpl;
 @useResult
 $Res call({
- int users, int teams, int newTeams, int activeTeams, int messages, int storageBytes, int openReports
+ int users, int teams, int newTeams, int activeTeams, int messages, int storageBytes, int openReports, int emailsToday, int emailBudget, int emailBulkLimit
 });
 
 
@@ -72,7 +74,7 @@ class _$AdminTotalsCopyWithImpl<$Res>
 
 /// Create a copy of AdminTotals
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? users = null,Object? teams = null,Object? newTeams = null,Object? activeTeams = null,Object? messages = null,Object? storageBytes = null,Object? openReports = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? users = null,Object? teams = null,Object? newTeams = null,Object? activeTeams = null,Object? messages = null,Object? storageBytes = null,Object? openReports = null,Object? emailsToday = null,Object? emailBudget = null,Object? emailBulkLimit = null,}) {
   return _then(AdminTotals(
 users: null == users ? _self.users : users // ignore: cast_nullable_to_non_nullable
 as int,teams: null == teams ? _self.teams : teams // ignore: cast_nullable_to_non_nullable
@@ -81,6 +83,9 @@ as int,activeTeams: null == activeTeams ? _self.activeTeams : activeTeams // ign
 as int,messages: null == messages ? _self.messages : messages // ignore: cast_nullable_to_non_nullable
 as int,storageBytes: null == storageBytes ? _self.storageBytes : storageBytes // ignore: cast_nullable_to_non_nullable
 as int,openReports: null == openReports ? _self.openReports : openReports // ignore: cast_nullable_to_non_nullable
+as int,emailsToday: null == emailsToday ? _self.emailsToday : emailsToday // ignore: cast_nullable_to_non_nullable
+as int,emailBudget: null == emailBudget ? _self.emailBudget : emailBudget // ignore: cast_nullable_to_non_nullable
+as int,emailBulkLimit: null == emailBulkLimit ? _self.emailBulkLimit : emailBulkLimit // ignore: cast_nullable_to_non_nullable
 as int,
   ));
 }
@@ -166,10 +171,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int users,  int teams,  int newTeams,  int activeTeams,  int messages,  int storageBytes,  int openReports)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int users,  int teams,  int newTeams,  int activeTeams,  int messages,  int storageBytes,  int openReports,  int emailsToday,  int emailBudget,  int emailBulkLimit)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AdminTotals() when $default != null:
-return $default(_that.users,_that.teams,_that.newTeams,_that.activeTeams,_that.messages,_that.storageBytes,_that.openReports);case _:
+return $default(_that.users,_that.teams,_that.newTeams,_that.activeTeams,_that.messages,_that.storageBytes,_that.openReports,_that.emailsToday,_that.emailBudget,_that.emailBulkLimit);case _:
   return orElse();
 
 }
@@ -187,10 +192,10 @@ return $default(_that.users,_that.teams,_that.newTeams,_that.activeTeams,_that.m
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int users,  int teams,  int newTeams,  int activeTeams,  int messages,  int storageBytes,  int openReports)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int users,  int teams,  int newTeams,  int activeTeams,  int messages,  int storageBytes,  int openReports,  int emailsToday,  int emailBudget,  int emailBulkLimit)  $default,) {final _that = this;
 switch (_that) {
 case _AdminTotals():
-return $default(_that.users,_that.teams,_that.newTeams,_that.activeTeams,_that.messages,_that.storageBytes,_that.openReports);case _:
+return $default(_that.users,_that.teams,_that.newTeams,_that.activeTeams,_that.messages,_that.storageBytes,_that.openReports,_that.emailsToday,_that.emailBudget,_that.emailBulkLimit);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -207,10 +212,10 @@ return $default(_that.users,_that.teams,_that.newTeams,_that.activeTeams,_that.m
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int users,  int teams,  int newTeams,  int activeTeams,  int messages,  int storageBytes,  int openReports)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int users,  int teams,  int newTeams,  int activeTeams,  int messages,  int storageBytes,  int openReports,  int emailsToday,  int emailBudget,  int emailBulkLimit)?  $default,) {final _that = this;
 switch (_that) {
 case _AdminTotals() when $default != null:
-return $default(_that.users,_that.teams,_that.newTeams,_that.activeTeams,_that.messages,_that.storageBytes,_that.openReports);case _:
+return $default(_that.users,_that.teams,_that.newTeams,_that.activeTeams,_that.messages,_that.storageBytes,_that.openReports,_that.emailsToday,_that.emailBudget,_that.emailBulkLimit);case _:
   return null;
 
 }
@@ -222,7 +227,7 @@ return $default(_that.users,_that.teams,_that.newTeams,_that.activeTeams,_that.m
 
 
 class _AdminTotals implements AdminTotals {
-  const _AdminTotals({this.users = 0, this.teams = 0, this.newTeams = 0, this.activeTeams = 0, this.messages = 0, this.storageBytes = 0, this.openReports = 0});
+  const _AdminTotals({this.users = 0, this.teams = 0, this.newTeams = 0, this.activeTeams = 0, this.messages = 0, this.storageBytes = 0, this.openReports = 0, this.emailsToday = 0, this.emailBudget = 0, this.emailBulkLimit = 0});
   
 
 @override@JsonKey() final  int users;
@@ -236,6 +241,11 @@ class _AdminTotals implements AdminTotals {
 /// Bytes stored across every team.
 @override@JsonKey() final  int storageBytes;
 @override@JsonKey() final  int openReports;
+/// Emails so far today (UTC), of the day's budget, and where bulk
+/// emails (invites, "added to team" notes, RSVP emails) stop (#47).
+@override@JsonKey() final  int emailsToday;
+@override@JsonKey() final  int emailBudget;
+@override@JsonKey() final  int emailBulkLimit;
 
 /// Create a copy of AdminTotals
 /// with the given fields replaced by the non-null parameter values.
@@ -247,18 +257,18 @@ _$AdminTotalsCopyWith<_AdminTotals> get copyWith => __$AdminTotalsCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AdminTotals&&(identical(other.users, users) || other.users == users)&&(identical(other.teams, teams) || other.teams == teams)&&(identical(other.newTeams, newTeams) || other.newTeams == newTeams)&&(identical(other.activeTeams, activeTeams) || other.activeTeams == activeTeams)&&(identical(other.messages, messages) || other.messages == messages)&&(identical(other.storageBytes, storageBytes) || other.storageBytes == storageBytes)&&(identical(other.openReports, openReports) || other.openReports == openReports));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AdminTotals&&(identical(other.users, users) || other.users == users)&&(identical(other.teams, teams) || other.teams == teams)&&(identical(other.newTeams, newTeams) || other.newTeams == newTeams)&&(identical(other.activeTeams, activeTeams) || other.activeTeams == activeTeams)&&(identical(other.messages, messages) || other.messages == messages)&&(identical(other.storageBytes, storageBytes) || other.storageBytes == storageBytes)&&(identical(other.openReports, openReports) || other.openReports == openReports)&&(identical(other.emailsToday, emailsToday) || other.emailsToday == emailsToday)&&(identical(other.emailBudget, emailBudget) || other.emailBudget == emailBudget)&&(identical(other.emailBulkLimit, emailBulkLimit) || other.emailBulkLimit == emailBulkLimit));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,users,teams,newTeams,activeTeams,messages,storageBytes,openReports);
+    return Object.hash(runtimeType,users,teams,newTeams,activeTeams,messages,storageBytes,openReports,emailsToday,emailBudget,emailBulkLimit);
 }
 
 @override
 String toString() {
-    return 'AdminTotals(users: $users, teams: $teams, newTeams: $newTeams, activeTeams: $activeTeams, messages: $messages, storageBytes: $storageBytes, openReports: $openReports)';
+    return 'AdminTotals(users: $users, teams: $teams, newTeams: $newTeams, activeTeams: $activeTeams, messages: $messages, storageBytes: $storageBytes, openReports: $openReports, emailsToday: $emailsToday, emailBudget: $emailBudget, emailBulkLimit: $emailBulkLimit)';
 }
 
 
@@ -269,7 +279,7 @@ abstract mixin class _$AdminTotalsCopyWith<$Res> implements $AdminTotalsCopyWith
   factory _$AdminTotalsCopyWith(_AdminTotals value, $Res Function(_AdminTotals) _then) = __$AdminTotalsCopyWithImpl;
 @override @useResult
 $Res call({
- int users, int teams, int newTeams, int activeTeams, int messages, int storageBytes, int openReports
+ int users, int teams, int newTeams, int activeTeams, int messages, int storageBytes, int openReports, int emailsToday, int emailBudget, int emailBulkLimit
 });
 
 
@@ -286,7 +296,7 @@ class __$AdminTotalsCopyWithImpl<$Res>
 
 /// Create a copy of AdminTotals
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? users = null,Object? teams = null,Object? newTeams = null,Object? activeTeams = null,Object? messages = null,Object? storageBytes = null,Object? openReports = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? users = null,Object? teams = null,Object? newTeams = null,Object? activeTeams = null,Object? messages = null,Object? storageBytes = null,Object? openReports = null,Object? emailsToday = null,Object? emailBudget = null,Object? emailBulkLimit = null,}) {
   return _then(_AdminTotals(
 users: null == users ? _self.users : users // ignore: cast_nullable_to_non_nullable
 as int,teams: null == teams ? _self.teams : teams // ignore: cast_nullable_to_non_nullable
@@ -295,6 +305,9 @@ as int,activeTeams: null == activeTeams ? _self.activeTeams : activeTeams // ign
 as int,messages: null == messages ? _self.messages : messages // ignore: cast_nullable_to_non_nullable
 as int,storageBytes: null == storageBytes ? _self.storageBytes : storageBytes // ignore: cast_nullable_to_non_nullable
 as int,openReports: null == openReports ? _self.openReports : openReports // ignore: cast_nullable_to_non_nullable
+as int,emailsToday: null == emailsToday ? _self.emailsToday : emailsToday // ignore: cast_nullable_to_non_nullable
+as int,emailBudget: null == emailBudget ? _self.emailBudget : emailBudget // ignore: cast_nullable_to_non_nullable
+as int,emailBulkLimit: null == emailBulkLimit ? _self.emailBulkLimit : emailBulkLimit // ignore: cast_nullable_to_non_nullable
 as int,
   ));
 }
@@ -4089,7 +4102,10 @@ mixin _$AppConfig {
 
  bool get allowUserGroupCreation; int get maxGroupsCreatedPerUserPerDay; int get defaultStorageQuotaMb; int get maxUploadMb; String get supportEmail;/// Email super admins when someone finishes signing up and when a team
 /// is created or deleted (ADMIN-9).
- bool get emailAdminAlerts; Announcement? get announcementBanner;
+ bool get emailAdminAlerts;/// The email plan's daily limit for this project, every email counted
+/// (#47); null until set, when the server uses this project's default
+/// ([defaultEmailsPerDay]).
+ int? get emailsPerDay; Announcement? get announcementBanner;
 /// Create a copy of AppConfig
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -4101,20 +4117,20 @@ $AppConfigCopyWith<AppConfig> get copyWith => _$AppConfigCopyWithImpl<AppConfig>
 @override
 bool operator ==(Object other) {
   final _this = this as AppConfig;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppConfig&&(identical(other.allowUserGroupCreation, _this.allowUserGroupCreation) || other.allowUserGroupCreation == _this.allowUserGroupCreation)&&(identical(other.maxGroupsCreatedPerUserPerDay, _this.maxGroupsCreatedPerUserPerDay) || other.maxGroupsCreatedPerUserPerDay == _this.maxGroupsCreatedPerUserPerDay)&&(identical(other.defaultStorageQuotaMb, _this.defaultStorageQuotaMb) || other.defaultStorageQuotaMb == _this.defaultStorageQuotaMb)&&(identical(other.maxUploadMb, _this.maxUploadMb) || other.maxUploadMb == _this.maxUploadMb)&&(identical(other.supportEmail, _this.supportEmail) || other.supportEmail == _this.supportEmail)&&(identical(other.emailAdminAlerts, _this.emailAdminAlerts) || other.emailAdminAlerts == _this.emailAdminAlerts)&&(identical(other.announcementBanner, _this.announcementBanner) || other.announcementBanner == _this.announcementBanner));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppConfig&&(identical(other.allowUserGroupCreation, _this.allowUserGroupCreation) || other.allowUserGroupCreation == _this.allowUserGroupCreation)&&(identical(other.maxGroupsCreatedPerUserPerDay, _this.maxGroupsCreatedPerUserPerDay) || other.maxGroupsCreatedPerUserPerDay == _this.maxGroupsCreatedPerUserPerDay)&&(identical(other.defaultStorageQuotaMb, _this.defaultStorageQuotaMb) || other.defaultStorageQuotaMb == _this.defaultStorageQuotaMb)&&(identical(other.maxUploadMb, _this.maxUploadMb) || other.maxUploadMb == _this.maxUploadMb)&&(identical(other.supportEmail, _this.supportEmail) || other.supportEmail == _this.supportEmail)&&(identical(other.emailAdminAlerts, _this.emailAdminAlerts) || other.emailAdminAlerts == _this.emailAdminAlerts)&&(identical(other.emailsPerDay, _this.emailsPerDay) || other.emailsPerDay == _this.emailsPerDay)&&(identical(other.announcementBanner, _this.announcementBanner) || other.announcementBanner == _this.announcementBanner));
 }
 
 
 @override
 int get hashCode {
   final _this = this as AppConfig;
-  return Object.hash(runtimeType,_this.allowUserGroupCreation,_this.maxGroupsCreatedPerUserPerDay,_this.defaultStorageQuotaMb,_this.maxUploadMb,_this.supportEmail,_this.emailAdminAlerts,_this.announcementBanner);
+  return Object.hash(runtimeType,_this.allowUserGroupCreation,_this.maxGroupsCreatedPerUserPerDay,_this.defaultStorageQuotaMb,_this.maxUploadMb,_this.supportEmail,_this.emailAdminAlerts,_this.emailsPerDay,_this.announcementBanner);
 }
 
 @override
 String toString() {
   final _this = this as AppConfig;
-  return 'AppConfig(allowUserGroupCreation: ${_this.allowUserGroupCreation}, maxGroupsCreatedPerUserPerDay: ${_this.maxGroupsCreatedPerUserPerDay}, defaultStorageQuotaMb: ${_this.defaultStorageQuotaMb}, maxUploadMb: ${_this.maxUploadMb}, supportEmail: ${_this.supportEmail}, emailAdminAlerts: ${_this.emailAdminAlerts}, announcementBanner: ${_this.announcementBanner})';
+  return 'AppConfig(allowUserGroupCreation: ${_this.allowUserGroupCreation}, maxGroupsCreatedPerUserPerDay: ${_this.maxGroupsCreatedPerUserPerDay}, defaultStorageQuotaMb: ${_this.defaultStorageQuotaMb}, maxUploadMb: ${_this.maxUploadMb}, supportEmail: ${_this.supportEmail}, emailAdminAlerts: ${_this.emailAdminAlerts}, emailsPerDay: ${_this.emailsPerDay}, announcementBanner: ${_this.announcementBanner})';
 }
 
 
@@ -4125,7 +4141,7 @@ abstract mixin class $AppConfigCopyWith<$Res>  {
   factory $AppConfigCopyWith(AppConfig value, $Res Function(AppConfig) _then) = _$AppConfigCopyWithImpl;
 @useResult
 $Res call({
- bool allowUserGroupCreation, int maxGroupsCreatedPerUserPerDay, int defaultStorageQuotaMb, int maxUploadMb, String supportEmail, bool emailAdminAlerts, Announcement? announcementBanner
+ bool allowUserGroupCreation, int maxGroupsCreatedPerUserPerDay, int defaultStorageQuotaMb, int maxUploadMb, String supportEmail, bool emailAdminAlerts, int? emailsPerDay, Announcement? announcementBanner
 });
 
 
@@ -4142,7 +4158,7 @@ class _$AppConfigCopyWithImpl<$Res>
 
 /// Create a copy of AppConfig
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? allowUserGroupCreation = null,Object? maxGroupsCreatedPerUserPerDay = null,Object? defaultStorageQuotaMb = null,Object? maxUploadMb = null,Object? supportEmail = null,Object? emailAdminAlerts = null,Object? announcementBanner = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? allowUserGroupCreation = null,Object? maxGroupsCreatedPerUserPerDay = null,Object? defaultStorageQuotaMb = null,Object? maxUploadMb = null,Object? supportEmail = null,Object? emailAdminAlerts = null,Object? emailsPerDay = freezed,Object? announcementBanner = freezed,}) {
   return _then(AppConfig(
 allowUserGroupCreation: null == allowUserGroupCreation ? _self.allowUserGroupCreation : allowUserGroupCreation // ignore: cast_nullable_to_non_nullable
 as bool,maxGroupsCreatedPerUserPerDay: null == maxGroupsCreatedPerUserPerDay ? _self.maxGroupsCreatedPerUserPerDay : maxGroupsCreatedPerUserPerDay // ignore: cast_nullable_to_non_nullable
@@ -4150,7 +4166,8 @@ as int,defaultStorageQuotaMb: null == defaultStorageQuotaMb ? _self.defaultStora
 as int,maxUploadMb: null == maxUploadMb ? _self.maxUploadMb : maxUploadMb // ignore: cast_nullable_to_non_nullable
 as int,supportEmail: null == supportEmail ? _self.supportEmail : supportEmail // ignore: cast_nullable_to_non_nullable
 as String,emailAdminAlerts: null == emailAdminAlerts ? _self.emailAdminAlerts : emailAdminAlerts // ignore: cast_nullable_to_non_nullable
-as bool,announcementBanner: freezed == announcementBanner ? _self.announcementBanner : announcementBanner // ignore: cast_nullable_to_non_nullable
+as bool,emailsPerDay: freezed == emailsPerDay ? _self.emailsPerDay : emailsPerDay // ignore: cast_nullable_to_non_nullable
+as int?,announcementBanner: freezed == announcementBanner ? _self.announcementBanner : announcementBanner // ignore: cast_nullable_to_non_nullable
 as Announcement?,
   ));
 }
@@ -4248,10 +4265,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool allowUserGroupCreation,  int maxGroupsCreatedPerUserPerDay,  int defaultStorageQuotaMb,  int maxUploadMb,  String supportEmail,  bool emailAdminAlerts,  Announcement? announcementBanner)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool allowUserGroupCreation,  int maxGroupsCreatedPerUserPerDay,  int defaultStorageQuotaMb,  int maxUploadMb,  String supportEmail,  bool emailAdminAlerts,  int? emailsPerDay,  Announcement? announcementBanner)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AppConfig() when $default != null:
-return $default(_that.allowUserGroupCreation,_that.maxGroupsCreatedPerUserPerDay,_that.defaultStorageQuotaMb,_that.maxUploadMb,_that.supportEmail,_that.emailAdminAlerts,_that.announcementBanner);case _:
+return $default(_that.allowUserGroupCreation,_that.maxGroupsCreatedPerUserPerDay,_that.defaultStorageQuotaMb,_that.maxUploadMb,_that.supportEmail,_that.emailAdminAlerts,_that.emailsPerDay,_that.announcementBanner);case _:
   return orElse();
 
 }
@@ -4269,10 +4286,10 @@ return $default(_that.allowUserGroupCreation,_that.maxGroupsCreatedPerUserPerDay
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool allowUserGroupCreation,  int maxGroupsCreatedPerUserPerDay,  int defaultStorageQuotaMb,  int maxUploadMb,  String supportEmail,  bool emailAdminAlerts,  Announcement? announcementBanner)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool allowUserGroupCreation,  int maxGroupsCreatedPerUserPerDay,  int defaultStorageQuotaMb,  int maxUploadMb,  String supportEmail,  bool emailAdminAlerts,  int? emailsPerDay,  Announcement? announcementBanner)  $default,) {final _that = this;
 switch (_that) {
 case _AppConfig():
-return $default(_that.allowUserGroupCreation,_that.maxGroupsCreatedPerUserPerDay,_that.defaultStorageQuotaMb,_that.maxUploadMb,_that.supportEmail,_that.emailAdminAlerts,_that.announcementBanner);case _:
+return $default(_that.allowUserGroupCreation,_that.maxGroupsCreatedPerUserPerDay,_that.defaultStorageQuotaMb,_that.maxUploadMb,_that.supportEmail,_that.emailAdminAlerts,_that.emailsPerDay,_that.announcementBanner);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -4289,10 +4306,10 @@ return $default(_that.allowUserGroupCreation,_that.maxGroupsCreatedPerUserPerDay
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool allowUserGroupCreation,  int maxGroupsCreatedPerUserPerDay,  int defaultStorageQuotaMb,  int maxUploadMb,  String supportEmail,  bool emailAdminAlerts,  Announcement? announcementBanner)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool allowUserGroupCreation,  int maxGroupsCreatedPerUserPerDay,  int defaultStorageQuotaMb,  int maxUploadMb,  String supportEmail,  bool emailAdminAlerts,  int? emailsPerDay,  Announcement? announcementBanner)?  $default,) {final _that = this;
 switch (_that) {
 case _AppConfig() when $default != null:
-return $default(_that.allowUserGroupCreation,_that.maxGroupsCreatedPerUserPerDay,_that.defaultStorageQuotaMb,_that.maxUploadMb,_that.supportEmail,_that.emailAdminAlerts,_that.announcementBanner);case _:
+return $default(_that.allowUserGroupCreation,_that.maxGroupsCreatedPerUserPerDay,_that.defaultStorageQuotaMb,_that.maxUploadMb,_that.supportEmail,_that.emailAdminAlerts,_that.emailsPerDay,_that.announcementBanner);case _:
   return null;
 
 }
@@ -4304,7 +4321,7 @@ return $default(_that.allowUserGroupCreation,_that.maxGroupsCreatedPerUserPerDay
 
 
 class _AppConfig extends AppConfig {
-  const _AppConfig({this.allowUserGroupCreation = true, this.maxGroupsCreatedPerUserPerDay = Limits.groupsCreatedPerUserPerDay, this.defaultStorageQuotaMb = Limits.defaultStorageQuotaMb, this.maxUploadMb = Limits.maxUploadMb, this.supportEmail = '', this.emailAdminAlerts = true, this.announcementBanner}): super._();
+  const _AppConfig({this.allowUserGroupCreation = true, this.maxGroupsCreatedPerUserPerDay = Limits.groupsCreatedPerUserPerDay, this.defaultStorageQuotaMb = Limits.defaultStorageQuotaMb, this.maxUploadMb = Limits.maxUploadMb, this.supportEmail = '', this.emailAdminAlerts = true, this.emailsPerDay, this.announcementBanner}): super._();
   
 
 @override@JsonKey() final  bool allowUserGroupCreation;
@@ -4315,6 +4332,10 @@ class _AppConfig extends AppConfig {
 /// Email super admins when someone finishes signing up and when a team
 /// is created or deleted (ADMIN-9).
 @override@JsonKey() final  bool emailAdminAlerts;
+/// The email plan's daily limit for this project, every email counted
+/// (#47); null until set, when the server uses this project's default
+/// ([defaultEmailsPerDay]).
+@override final  int? emailsPerDay;
 @override final  Announcement? announcementBanner;
 
 /// Create a copy of AppConfig
@@ -4327,18 +4348,18 @@ _$AppConfigCopyWith<_AppConfig> get copyWith => __$AppConfigCopyWithImpl<_AppCon
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppConfig&&(identical(other.allowUserGroupCreation, allowUserGroupCreation) || other.allowUserGroupCreation == allowUserGroupCreation)&&(identical(other.maxGroupsCreatedPerUserPerDay, maxGroupsCreatedPerUserPerDay) || other.maxGroupsCreatedPerUserPerDay == maxGroupsCreatedPerUserPerDay)&&(identical(other.defaultStorageQuotaMb, defaultStorageQuotaMb) || other.defaultStorageQuotaMb == defaultStorageQuotaMb)&&(identical(other.maxUploadMb, maxUploadMb) || other.maxUploadMb == maxUploadMb)&&(identical(other.supportEmail, supportEmail) || other.supportEmail == supportEmail)&&(identical(other.emailAdminAlerts, emailAdminAlerts) || other.emailAdminAlerts == emailAdminAlerts)&&(identical(other.announcementBanner, announcementBanner) || other.announcementBanner == announcementBanner));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppConfig&&(identical(other.allowUserGroupCreation, allowUserGroupCreation) || other.allowUserGroupCreation == allowUserGroupCreation)&&(identical(other.maxGroupsCreatedPerUserPerDay, maxGroupsCreatedPerUserPerDay) || other.maxGroupsCreatedPerUserPerDay == maxGroupsCreatedPerUserPerDay)&&(identical(other.defaultStorageQuotaMb, defaultStorageQuotaMb) || other.defaultStorageQuotaMb == defaultStorageQuotaMb)&&(identical(other.maxUploadMb, maxUploadMb) || other.maxUploadMb == maxUploadMb)&&(identical(other.supportEmail, supportEmail) || other.supportEmail == supportEmail)&&(identical(other.emailAdminAlerts, emailAdminAlerts) || other.emailAdminAlerts == emailAdminAlerts)&&(identical(other.emailsPerDay, emailsPerDay) || other.emailsPerDay == emailsPerDay)&&(identical(other.announcementBanner, announcementBanner) || other.announcementBanner == announcementBanner));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,allowUserGroupCreation,maxGroupsCreatedPerUserPerDay,defaultStorageQuotaMb,maxUploadMb,supportEmail,emailAdminAlerts,announcementBanner);
+    return Object.hash(runtimeType,allowUserGroupCreation,maxGroupsCreatedPerUserPerDay,defaultStorageQuotaMb,maxUploadMb,supportEmail,emailAdminAlerts,emailsPerDay,announcementBanner);
 }
 
 @override
 String toString() {
-    return 'AppConfig(allowUserGroupCreation: $allowUserGroupCreation, maxGroupsCreatedPerUserPerDay: $maxGroupsCreatedPerUserPerDay, defaultStorageQuotaMb: $defaultStorageQuotaMb, maxUploadMb: $maxUploadMb, supportEmail: $supportEmail, emailAdminAlerts: $emailAdminAlerts, announcementBanner: $announcementBanner)';
+    return 'AppConfig(allowUserGroupCreation: $allowUserGroupCreation, maxGroupsCreatedPerUserPerDay: $maxGroupsCreatedPerUserPerDay, defaultStorageQuotaMb: $defaultStorageQuotaMb, maxUploadMb: $maxUploadMb, supportEmail: $supportEmail, emailAdminAlerts: $emailAdminAlerts, emailsPerDay: $emailsPerDay, announcementBanner: $announcementBanner)';
 }
 
 
@@ -4349,7 +4370,7 @@ abstract mixin class _$AppConfigCopyWith<$Res> implements $AppConfigCopyWith<$Re
   factory _$AppConfigCopyWith(_AppConfig value, $Res Function(_AppConfig) _then) = __$AppConfigCopyWithImpl;
 @override @useResult
 $Res call({
- bool allowUserGroupCreation, int maxGroupsCreatedPerUserPerDay, int defaultStorageQuotaMb, int maxUploadMb, String supportEmail, bool emailAdminAlerts, Announcement? announcementBanner
+ bool allowUserGroupCreation, int maxGroupsCreatedPerUserPerDay, int defaultStorageQuotaMb, int maxUploadMb, String supportEmail, bool emailAdminAlerts, int? emailsPerDay, Announcement? announcementBanner
 });
 
 
@@ -4366,7 +4387,7 @@ class __$AppConfigCopyWithImpl<$Res>
 
 /// Create a copy of AppConfig
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? allowUserGroupCreation = null,Object? maxGroupsCreatedPerUserPerDay = null,Object? defaultStorageQuotaMb = null,Object? maxUploadMb = null,Object? supportEmail = null,Object? emailAdminAlerts = null,Object? announcementBanner = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? allowUserGroupCreation = null,Object? maxGroupsCreatedPerUserPerDay = null,Object? defaultStorageQuotaMb = null,Object? maxUploadMb = null,Object? supportEmail = null,Object? emailAdminAlerts = null,Object? emailsPerDay = freezed,Object? announcementBanner = freezed,}) {
   return _then(_AppConfig(
 allowUserGroupCreation: null == allowUserGroupCreation ? _self.allowUserGroupCreation : allowUserGroupCreation // ignore: cast_nullable_to_non_nullable
 as bool,maxGroupsCreatedPerUserPerDay: null == maxGroupsCreatedPerUserPerDay ? _self.maxGroupsCreatedPerUserPerDay : maxGroupsCreatedPerUserPerDay // ignore: cast_nullable_to_non_nullable
@@ -4374,7 +4395,8 @@ as int,defaultStorageQuotaMb: null == defaultStorageQuotaMb ? _self.defaultStora
 as int,maxUploadMb: null == maxUploadMb ? _self.maxUploadMb : maxUploadMb // ignore: cast_nullable_to_non_nullable
 as int,supportEmail: null == supportEmail ? _self.supportEmail : supportEmail // ignore: cast_nullable_to_non_nullable
 as String,emailAdminAlerts: null == emailAdminAlerts ? _self.emailAdminAlerts : emailAdminAlerts // ignore: cast_nullable_to_non_nullable
-as bool,announcementBanner: freezed == announcementBanner ? _self.announcementBanner : announcementBanner // ignore: cast_nullable_to_non_nullable
+as bool,emailsPerDay: freezed == emailsPerDay ? _self.emailsPerDay : emailsPerDay // ignore: cast_nullable_to_non_nullable
+as int?,announcementBanner: freezed == announcementBanner ? _self.announcementBanner : announcementBanner // ignore: cast_nullable_to_non_nullable
 as Announcement?,
   ));
 }

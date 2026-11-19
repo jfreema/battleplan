@@ -205,6 +205,7 @@ class AddMembersResult {
     this.invitedPeople = const [],
     this.problems = const [],
     this.emailFailed = const [],
+    this.emailLimited = const [],
   });
 
   final int added;
@@ -223,4 +224,8 @@ class AddMembersResult {
   /// Emails of invited people whose setup email didn't send, most often
   /// past the day's email limit; they're on the team all the same.
   final List<String> emailFailed;
+
+  /// Of [emailFailed], those today's email limit had no room for (#47), to
+  /// resend tomorrow.
+  final List<String> emailLimited;
 }

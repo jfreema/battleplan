@@ -500,6 +500,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - Add one person at a time, or paste a list of "Name, email" lines (up to 100).
   - People who already have accounts are added and notified. New emails get an account and a setup email (AUTH-6).
   - A results screen lists who was added, who was invited, and any problems. People whose setup email didn't send (most often past the day's email limit) are added all the same and listed under **Added, but the setup email didn't send**, with "Try again tomorrow when the limits are reset, with Resend setup email on their card." Adding a guardian by email (PLAYER-5) and **Resend setup email** say the same when the email doesn't send.
+  - **Today's email limit** (#47): setup emails are essential, so they use the room kept back from invites and RSVP emails; past the whole day's budget they wait, the people are still added, and the results say "2 setup emails couldn't be sent today because of the daily email limit. Use Resend setup email on each tomorrow." "Added to team" notes are bulk: when they can't go, the person is still added and gets the in-app notification.
   - To fill the Players section, admins add players with the player's or their parents' emails instead (PLAYER-1).
 - **TEAM-8 · MVP · Leave a team.**
   - Anyone can leave, from their own card on the roster (the **Team** tab → their name → **Leave team**), after confirming. It isn't in Team settings, as it once was in the team menu, where it was too easy to tap by mistake (2026-10-15, at the owner's request).
@@ -661,6 +662,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - Each address gets its own single-use link that expires in 14 days.
   - A list shows Pending, Joined, and Expired invites, with Resend and Revoke.
   - Requires a verified email. Daily limits apply per person and per team.
+  - **Today's email limit** (#47): invites are bulk email, so they send only as many as today's room allows, and the rest stay in the box for tomorrow, not invited and not counted: "Sent 12. Today's email limit is reached, so the other 8 weren't sent. Try again tomorrow." With no room, nothing is sent ("Today's email limit is reached. Try again tomorrow."), and a Resend says the same.
 - **INV-5 · MVP · Joining.**
   1. Open a link. It opens the app if installed, otherwise the web app (WEB-4).
   2. Sign in or create an account if needed; the app continues automatically afterward.
@@ -941,7 +943,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - Season availability surveys.
 - **SCHED-14 · v1.1 · Answering without opening the app.** The people who don't answer tend to be the ones who rarely open the app, so they can answer from an email (ARCH §6.15). Built for now as a button (task 286), at the owner's request: emails go out only when a coach sends them.
   - **Email people who haven't RSVP'd**, in the event's menu, for team admins and the event's creator, while the event takes RSVPs, hasn't started, and is before its deadline. It emails everyone linked to a player with no answer yet (the player, when they're on the team, and their guardians), one email per person naming their players, but not the person sending. It asks first, with the count ("Email 3 people who haven't RSVP'd?"), and says when there's no one to email. Each person gets at most one a week per event; sending again that week emails only people who haven't had one (2026-11-01, the owner's request).
-  - **Daily limits:** 15 RSVP emails a day per team, and 80 a day for all teams together, which leaves room in the platform's 100 a day for setup and account emails. An email that doesn't send doesn't count: that person can be emailed again. When today's limit leaves some out, the question and the result say so ("Try again tomorrow when the limits are reset to email 4 more."), and sending again on a later day emails only the people left out. With none left today: "Today's RSVP emails are used up. Try again tomorrow when the limits are reset."
+  - **Daily limits:** 15 RSVP emails a day per team, within the bulk room left in the day's one email budget (#47, ADMIN-7), which keeps the rest for setup and account emails. An email that doesn't send doesn't count: that person can be emailed again. When today's limit leaves some out, the question and the result say so ("Try again tomorrow when the limits are reset to email 4 more."), and sending again on a later day emails only the people left out. With none left today: "Today's RSVP emails are used up. Try again tomorrow when the limits are reset."
   - **The email** names the team, the event, its time and place, and asks about each of the person's players on their own (PLAYER-11): "Is Emma going?" ("Are you going?" for their own player), each with their own **Going**, **Maybe** (when the team allows it, TEAM-5), and **Not going**, and says who sent it.
   - **Answering:** each answer opens a small page on getbattleplan.app that lists each player on their own, with their own answers and optional note: the answer tapped is picked for that player, and the others show what's saved. **Send** saves each player given an answer and leaves the rest as they were. Opening the link never answers by itself, because email services open links to check them; Send does. No sign-in: the link works only for that person, that event, and the players it names, until the event starts or its deadline passes, and it can change the answer until then. The page says who's answering, and offers to open the event in Battleplan.
   - Every answer follows SCHED-5 (the deadline, whether Maybe is allowed, who may answer for whom) and is recorded as that person's answer.
@@ -1097,7 +1099,8 @@ This is for platform operators (super admins) to manage every team and user.
   - active teams (a message in the last 7 days);
   - messages in the last 7 days;
   - total storage;
-  - open reports.
+  - open reports;
+  - **Emails today** (#47): "38 of 90" of the day's budget, saying "Invites and RSVP emails stop at 63. Setup emails can use the rest." Its badge is mint, the warning yellow once invites and RSVP emails have stopped, and red with the number when the day is full.
   - **Each total is a card across the page** (owner's report 2026-11-18, #66: the cards filled only half a phone's width; then "the teams listing may be a better example of the look"), in the look of the team cards on Teams: its icon on a 48 px badge of its color, the label (Users, Teams, New teams, Active teams, Messages, Storage, Open reports) over a muted line saying what it counts ("Made in the last 7 days"), and the number at the card's end, or under the line with large text. One column on a phone, two from 600 px, three from 900, so all seven fit on one phone screen. Users, Teams, and Open reports open their lists, with the card's chevron; waiting reports turn that badge and number the warning red, and its line says "Waiting for a decision" (else "None waiting"). Screen readers hear each as "New teams: 4. Made in the last 7 days."
 - **ADMIN-2 · MVP · Teams.**
   - Search by name.
@@ -1140,6 +1143,7 @@ This is for platform operators (super admins) to manage every team and user.
   - Storage per team, for every team without its own limit (STORE-1, STORE-6), and maximum upload size.
   - Support email.
   - Whether super admins get alert emails about new accounts and teams (ADMIN-9).
+  - **Emails a day** (#47): the email plan's daily limit for this project, "Dev and prod share Resend's 100": 90 in prod and 10 in dev until set, 1 to 10,000. Every email the server sends counts toward it, one total per UTC day. Essential emails (setup and account setup links, password resets, security notices, super admins' alerts) may use all of it; bulk ones (email invites, "added to team" notes, RSVP emails) stop at 70%, so the rest is always there for the emails that let people in. An email past its room doesn't go out, and a refused one still counts, as the provider counts.
   - A banner announcement for all users, with text, severity, and an end date. Screen readers read it, and its Dismiss, before the page, and announce it when it appears (§7.6).
 - **ADMIN-8 · MVP · Safeguards.**
   - Destructive actions require confirmation.

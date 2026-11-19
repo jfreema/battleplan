@@ -118,6 +118,10 @@ abstract final class Limits {
   static const int clientErrorsPerIpPerHour = 30;
   static const int securityNoticesPerUserPerDay = 10;
   static const int superAdminEmailsPerDay = 50;
+  static const int emailsPerDayProd = 90;
+  static const int emailsPerDayDev = 10;
+  static const int emailsPerDayMax = 10000;
+  static const int emailBulkPercent = 70;
   static const int avatarFilesPerUserMax = 3;
   static const int queryLimitMax = 100;
   static const int unreadCountCap = 100;
@@ -147,7 +151,6 @@ abstract final class Limits {
   static const int calendarFetchedEveryMinutes = 60;
   static const int rsvpEmailPeopleMax = 100;
   static const int rsvpEmailsPerTeamPerDay = 15;
-  static const int rsvpEmailsPerDay = 80;
   static const int rsvpEmailRepeatDays = 7;
   static const int answerLinkTriesPerHour = 20;
 }

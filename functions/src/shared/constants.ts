@@ -115,6 +115,10 @@ export const Limits = {
   clientErrorsPerIpPerHour: 30,
   securityNoticesPerUserPerDay: 10,
   superAdminEmailsPerDay: 50,
+  emailsPerDayProd: 90,
+  emailsPerDayDev: 10,
+  emailsPerDayMax: 10000,
+  emailBulkPercent: 70,
   avatarFilesPerUserMax: 3,
   queryLimitMax: 100,
   unreadCountCap: 100,
@@ -144,7 +148,6 @@ export const Limits = {
   calendarFetchedEveryMinutes: 60,
   rsvpEmailPeopleMax: 100,
   rsvpEmailsPerTeamPerDay: 15,
-  rsvpEmailsPerDay: 80,
   rsvpEmailRepeatDays: 7,
   answerLinkTriesPerHour: 20,
 } as const;

@@ -14,6 +14,7 @@ import { auth, db } from '../shared/admin.js';
 import { applyDefaultQuota, defaultQuotaMbOf } from '../teams/storage.js';
 import { Collections, Limits } from '../shared/constants.js';
 import { teamMembershipsOf } from '../shared/roles.js';
+import { emailsToday } from '../email/budget.js';
 import {
   configFields,
   iso,
@@ -73,6 +74,10 @@ export interface DashboardTotals {
   messages: number;
   storageBytes: number;
   openReports: number;
+  /** Emails so far today, of the day's budget, and where bulk ones stop (#47). */
+  emailsToday: number;
+  emailBudget: number;
+  emailBulkLimit: number;
 }
 
 /**
@@ -87,7 +92,7 @@ export async function dashboard(now = Date.now()): Promise<DashboardTotals> {
   const count = async (q: Query) => (await q.count().get()).data().count;
   const groups = db().collection(Collections.groups);
   const direct = groups.where('kind', '==', 'direct');
-  const [users, groupCount, newGroups, activeGroups, chats, newChats, activeChats, messages, openReports, storage] =
+  const [users, groupCount, newGroups, activeGroups, chats, newChats, activeChats, messages, openReports, storage, emails] =
     await Promise.all([
       count(db().collection(Collections.users)),
       count(groups),
@@ -99,6 +104,7 @@ export async function dashboard(now = Date.now()): Promise<DashboardTotals> {
       count(db().collection(Collections.messages).where('createdAt', '>=', weekAgo)),
       count(db().collection(Collections.reports).where('status', '==', 'open')),
       groups.aggregate({ bytes: AggregateField.sum('storageBytes') }).get(),
+      emailsToday(new Date(now)),
     ]);
   return {
     users,
@@ -108,6 +114,9 @@ export async function dashboard(now = Date.now()): Promise<DashboardTotals> {
     messages,
     storageBytes: storage.data().bytes ?? 0,
     openReports,
+    emailsToday: emails.sent,
+    emailBudget: emails.budget,
+    emailBulkLimit: emails.bulkLimit,
   };
 }
 
@@ -814,6 +823,7 @@ const CONFIG_KEYS = [
   'maxUploadMb',
   'supportEmail',
   'emailAdminAlerts',
+  'emailsPerDay',
   'announcementBanner',
 ] as const;
 

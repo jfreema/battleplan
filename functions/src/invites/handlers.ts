@@ -15,6 +15,7 @@ import { normalizeCode } from './codes.js';
 import { requireAuth } from '../shared/guards.js';
 import { requireOpenTeam, requireTeamAdmin, roleOf, teamCountOf } from '../shared/roles.js';
 import { parse } from '../shared/validate.js';
+import { emailRoom } from '../email/budget.js';
 import { resendApiKey, sendEmail } from '../email/service.js';
 import { inviteEmail } from '../email/templates.js';
 import { APP_PREFIX, joinUrl, linkHost } from '../links/service.js';
@@ -227,7 +228,9 @@ const SendInvitesInput = z.object({
 
 /**
  * Emails single-use invites that expire in 14 days (INV-4). Needs a verified
- * email; 50 a day per person and 200 a day per team.
+ * email; 50 a day per person and 200 a day per team. Invites are bulk email
+ * (#47): only as many as fit in today's room are made and sent, and the rest
+ * come back in `notSent`, for the app to keep for tomorrow, uncounted.
  */
 export const sendEmailInvites = onCall({ secrets: [resendApiKey] }, async (request) => {
   const uid = requireAuth(request);
@@ -237,7 +240,13 @@ export const sendEmailInvites = onCall({ secrets: [resendApiKey] }, async (reque
   if (request.auth?.token.email_verified !== true) {
     throw new HttpsError('failed-precondition', 'email-not-verified');
   }
-  const emails = [...new Set(input.emails.map((e) => e.toLowerCase()))];
+  const all = [...new Set(input.emails.map((e) => e.toLowerCase()))];
+  // What today's email budget has room for (#47); the emulators send
+  // nothing and count nothing, so they never run out.
+  const room = process.env.FUNCTIONS_EMULATOR === 'true' ? all.length : await emailRoom('bulk');
+  const emails = all.slice(0, room);
+  const notSent = all.slice(room);
+  if (!emails.length) return { invited: 0, sent: 0, notSent };
   await consumeRateLimits([
     { key: uid, action: 'emailInvite', max: Limits.emailInvitesPerUserPerDay, count: emails.length },
     { key: input.groupId, action: 'emailInvite', max: Limits.emailInvitesPerGroupPerDay, count: emails.length },
@@ -248,9 +257,10 @@ export const sendEmailInvites = onCall({ secrets: [resendApiKey] }, async (reque
   let sent = 0;
   for (const email of emails) {
     const code = await createEmailInvite(input.groupId, email, uid);
-    if (await sendEmail(inviteEmail(email, group.get('name') as string, inviterName, joinUrl(code), input.note))) sent++;
+    const message = inviteEmail(email, group.get('name') as string, inviterName, joinUrl(code), input.note);
+    if (await sendEmail(message, 'invite')) sent++;
   }
-  return { invited: emails.length, sent };
+  return { invited: emails.length, sent, notSent };
 });
 
 /** The team's email invites with their state (INV-4). */
@@ -318,6 +328,10 @@ export const resendEmailInvite = onCall({ secrets: [resendApiKey] }, async (requ
   await requireInviter(groupId, uid, request.auth?.token.superAdmin === true);
   await requireOpenTeam(groupId, request.auth?.token.superAdmin === true);
   if ((invite.get('useCount') ?? 0) >= 1) throw new HttpsError('failed-precondition', 'already-joined');
+  // Today's email budget has no room for another invite (#47).
+  if (process.env.FUNCTIONS_EMULATOR !== 'true' && (await emailRoom('bulk')) < 1) {
+    throw new HttpsError('resource-exhausted', 'email-limit');
+  }
   await consumeRateLimit(uid, 'emailInvite', Limits.emailInvitesPerUserPerDay);
   await ref.update({
     revokedAt: null,
@@ -332,6 +346,7 @@ export const resendEmailInvite = onCall({ secrets: [resendApiKey] }, async (requ
       (inviter.get('displayName') as string | undefined) ?? 'A teammate',
       joinUrl(invite.id),
     ),
+    'invite',
   );
   return { ok: true };
 });

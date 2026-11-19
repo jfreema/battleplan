@@ -87,7 +87,10 @@ class _AddMembersScreenState extends ConsumerState<AddMembersScreen> {
                 if (r.emailFailed.contains(p.email)) person(p),
             ],
             problem: true,
-            note: l10n.resultsEmailFailedNote,
+            // Today's email limit (#47) says so, with when to resend.
+            note: r.emailLimited.isEmpty
+                ? l10n.resultsEmailFailedNote
+                : l10n.resultsEmailLimitedNote(r.emailLimited.length),
           ),
           ResultSection(l10n.resultsAlreadyMembers, [
             if (r.alreadyMembers > 0)

@@ -7,6 +7,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { FieldPath, FieldValue, Timestamp, type DocumentData } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 import { HttpsError } from 'firebase-functions/v2/https';
+import { bulkLimitOf, dailyEmailBudget, emailBudgetDocId } from '../email/budget.js';
 import { sendEmail } from '../email/service.js';
 import { rsvpReminderEmail } from '../email/templates.js';
 import { appUrl, linkHost } from '../links/service.js';
@@ -121,16 +122,16 @@ const DAY_MS = 86_400_000;
 /**
  * Who [want] can email now (SCHED-14): each person at most once a week per
  * event ([emailedAt] is when each was last emailed about it), and within
- * today's limits: 15 RSVP emails a team and 80 in all, which leaves room in
- * the platform's 100 a day for setup and account emails. Throws
- * `emailed-this-week` when everyone was emailed in the last week, and
- * `email-limit` when today's are used up. [recent] is [emailedAt] without
- * the times more than a week old.
+ * today's limits: 15 RSVP emails a team, and the bulk room left in the
+ * day's one email budget ([bulkLeft], #47), which keeps the rest for setup
+ * and account emails. Throws `emailed-this-week` when everyone was emailed
+ * in the last week, and `email-limit` when today's are used up. [recent] is
+ * [emailedAt] without the times more than a week old.
  */
 export function planRsvpEmails(
   want: string[],
   emailedAt: Record<string, number>,
-  used: { team: number; all: number },
+  used: { team: number; bulkLeft: number },
   nowMs: number,
 ): { send: string[]; skipped: number; recent: Record<string, number> } {
   const recent = Object.fromEntries(
@@ -138,7 +139,7 @@ export function planRsvpEmails(
   );
   const due = want.filter((uid) => !(uid in recent));
   if (want.length && !due.length) throw new HttpsError('resource-exhausted', 'emailed-this-week');
-  const room = Math.max(0, Math.min(Limits.rsvpEmailsPerTeamPerDay - used.team, Limits.rsvpEmailsPerDay - used.all));
+  const room = Math.max(0, Math.min(Limits.rsvpEmailsPerTeamPerDay - used.team, used.bulkLeft));
   if (due.length && !room) throw new HttpsError('resource-exhausted', 'email-limit');
   const send = due.slice(0, room);
   return { send, skipped: due.length - send.length, recent };
@@ -188,16 +189,19 @@ export async function emailRsvpReminder(
   const asked = new Set(reachable.flatMap((u) => people.get(u.id)!.map((p) => p.id)));
   if (!reachable.length) return { people: 0, players: 0, unreachable: open, failed: 0, skipped: 0 };
 
-  // When each person was last emailed about this event, and today's counts
-  // for the team and in all.
+  // When each person was last emailed about this event, today's count for
+  // the team, and the day's one email budget (#47): its bulk room is what
+  // RSVP emails may use. Each email counts toward the budget as it goes
+  // (sendEmail), so the plan only reads it.
   const now = new Date(nowMs);
   const limits = db().collection(Collections.rateLimits);
   const logRef = limits.doc(`${eventId}_eventRsvpEmail_week`);
   const teamRef = limits.doc(rateLimitDocId({ key: groupId, action: 'rsvpEmail', max: 0 }, now));
-  const allRef = limits.doc(rateLimitDocId({ key: 'all', action: 'rsvpEmail', max: 0 }, now));
+  const budgetRef = limits.doc(emailBudgetDocId(now));
+  const bulkLimit = bulkLimitOf(await dailyEmailBudget());
   type Get = (ref: FirebaseFirestore.DocumentReference) => Promise<FirebaseFirestore.DocumentSnapshot>;
   const plan = async (get: Get) => {
-    const [log, team, all] = await Promise.all([get(logRef), get(teamRef), get(allRef)]);
+    const [log, team, budget] = await Promise.all([get(logRef), get(teamRef), get(budgetRef)]);
     const count = (s: FirebaseFirestore.DocumentSnapshot) => (s.get('count') as number | undefined) ?? 0;
     const emailedAt = Object.fromEntries(
       Object.entries((log.get('emailedAt') as Record<string, unknown> | undefined) ?? {}).map(([uid, at]) => [uid, msOf(at)]),
@@ -209,7 +213,11 @@ export async function emailRsvpReminder(
     return planRsvpEmails(
       reachable.map((u) => u.id),
       emailedAt,
-      { team: count(team), all: count(all) },
+      // The emulators count no emails, so their room never runs out.
+      {
+        team: count(team),
+        bulkLeft: process.env.FUNCTIONS_EMULATOR === 'true' ? Infinity : Math.max(0, bulkLimit - count(budget)),
+      },
       nowMs,
     );
   };
@@ -222,7 +230,6 @@ export async function emailRsvpReminder(
     : await db().runTransaction(async (tx) => {
         const p = await plan((ref) => tx.get(ref));
         tx.set(teamRef, counted(p.send.length), { merge: true });
-        tx.set(allRef, counted(p.send.length), { merge: true });
         const emailedAt = { ...p.recent, ...Object.fromEntries(p.send.map((uid) => [uid, nowMs])) };
         tx.set(logRef, {
           emailedAt: Object.fromEntries(Object.entries(emailedAt).map(([uid, at]) => [uid, Timestamp.fromMillis(at)])),
@@ -238,7 +245,6 @@ export async function emailRsvpReminder(
     await Promise.all([
       logRef.update(forgotten[0] as FieldPath, forgotten[1], ...forgotten.slice(2)),
       teamRef.set(counted(-uids.length), { merge: true }),
-      allRef.set(counted(-uids.length), { merge: true }),
     ]).catch((e: unknown) => logger.error('rsvp_email_give_back_failed', { eventId, error: String(e) }));
   };
   const sending = new Set(send);
@@ -298,7 +304,7 @@ export async function emailRsvpReminder(
   for (const [i, email] of emails.entries()) {
     // The emulators log emails instead of sending them; that counts as sent.
     // A send that throws (the network) is a failure too, given back below.
-    const sent = (await sendEmail(email).catch(() => false)) || process.env.FUNCTIONS_EMULATOR === 'true';
+    const sent = (await sendEmail(email, 'rsvpReminder').catch(() => false)) || process.env.FUNCTIONS_EMULATOR === 'true';
     if (!sent) failed.push(recipients[i].id);
   }
   result.failed = failed.length;
