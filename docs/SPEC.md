@@ -1085,6 +1085,7 @@ This is for platform operators (super admins) to manage every team and user.
   - messages in the last 7 days;
   - total storage;
   - open reports.
+  - **Each total is a card across the page** (owner's report 2026-11-18, #66: the cards filled only half a phone's width; then "the teams listing may be a better example of the look"), in the look of the team cards on Teams: its icon on a 48 px badge of its color, the label (Users, Teams, New teams, Active teams, Messages, Storage, Open reports) over a muted line saying what it counts ("Made in the last 7 days"), and the number at the card's end, or under the line with large text. One column on a phone, two from 600 px, three from 900, so all seven fit on one phone screen. Users, Teams, and Open reports open their lists, with the card's chevron; waiting reports turn that badge and number the warning red, and its line says "Waiting for a decision" (else "None waiting"). Screen readers hear each as "New teams: 4. Made in the last 7 days."
 - **ADMIN-2 · MVP · Teams.**
   - Search by name.
   - Sort by any column either way (owner's request 2026-11-14: "similarly, in the admin panel make the teams and audit logs both sortable by each column"), as the users list does (ADMIN-4): tap a heading on a computer, or **Sort by** and the direction button on a phone. Newest first by default. Names, sports, owners, and status start A to Z (Active, Archived, Suspended), members, storage, and the dates largest or newest first; teams with no owner or no messages yet come last.

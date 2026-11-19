@@ -207,18 +207,21 @@ void main() {
       ),
     );
     await open(tester, '/admin', admin: admin);
-    for (final (label, value) in [
-      ('Users', '1,234'),
-      ('Teams', '87'),
-      ('New teams this week', '6'),
-      ('Active teams (7 days)', '40'),
-      ('Messages (7 days)', '5,321'),
-      ('Total storage', '3.0 GB'),
-      ('Open reports', '2'),
+    // Each heard as its total, then what it counts (#66).
+    for (final (label, value, note) in [
+      ('Users', '1,234', 'Every account'),
+      ('Teams', '87', 'Teams and groups'),
+      ('New teams', '6', 'Made in the last 7 days'),
+      ('Active teams', '40', 'A message in the last 7 days'),
+      ('Messages', '5,321', 'Sent in the last 7 days'),
+      ('Storage', '3.0 GB', 'Photos and files'),
+      ('Open reports', '2', 'Waiting for a decision'),
     ]) {
-      expect(find.bySemanticsLabel('$label: $value'), findsOneWidget);
+      expect(find.bySemanticsLabel('$label: $value. $note.'), findsOneWidget);
     }
-    await tester.tap(find.bySemanticsLabel('Open reports: 2'));
+    await tester.tap(
+      find.bySemanticsLabel('Open reports: 2. Waiting for a decision.'),
+    );
     await tester.pumpAndSettle();
     expect(find.text('No open reports.'), findsOneWidget);
   });

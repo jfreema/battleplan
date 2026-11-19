@@ -1,5 +1,9 @@
 import 'package:battleplan/core/design/app_icons.dart';
-import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/design/fonts.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/gumdrop_style.dart';
+import 'package:battleplan/core/design/team_theme.dart';
+import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/admin/presentation/admin_widgets.dart';
@@ -10,7 +14,11 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// ADMIN-1 at `/admin`: the platform's totals, each opening its list.
+/// ADMIN-1 at `/admin`: the platform's totals, each opening its list. Each
+/// is a card across the page in the look of the team cards on Teams (#66,
+/// owner's request 2026-11-18): its icon on a badge of its color, the
+/// label over a muted line saying what it counts, and the number at the
+/// end. One column on a phone, two or three on wider screens.
 class AdminDashboardScreen extends ConsumerWidget {
   const new({super.key});
 
@@ -32,46 +40,60 @@ class AdminDashboardScreen extends ConsumerWidget {
       body: switch (totals) {
         AsyncValue(:final AdminTotals value) => AdminBody(
           children: [
-            Wrap(
-              spacing: Space.lg,
-              runSpacing: Space.lg,
-              children: [
+            _StatGrid(
+              stats: [
                 _Stat(
                   label: l10n.adminStatUsers,
+                  note: l10n.adminStatUsersNote,
                   value: number.format(value.users),
                   icon: AppIcons.person,
+                  accent: (c) => c.blueRaspberry,
                   route: AdminSection.users.path,
                 ),
                 _Stat(
                   label: l10n.adminStatTeams,
+                  note: l10n.adminStatTeamsNote,
                   value: number.format(value.teams),
                   icon: AppIcons.group,
+                  accent: (c) => c.grape,
                   route: AdminSection.teams.path,
                 ),
                 _Stat(
                   label: l10n.adminStatNewTeams,
+                  note: l10n.adminStatNewTeamsNote,
                   value: number.format(value.newTeams),
                   icon: AppIcons.add,
+                  accent: (c) => c.mint,
                 ),
                 _Stat(
                   label: l10n.adminStatActiveTeams,
+                  note: l10n.adminStatActiveTeamsNote,
                   value: number.format(value.activeTeams),
                   icon: AppIcons.chat,
+                  accent: (c) => c.tangerine,
                 ),
                 _Stat(
                   label: l10n.adminStatMessages,
+                  note: l10n.adminStatMessagesNote,
                   value: number.format(value.messages),
                   icon: AppIcons.send,
+                  accent: (c) => c.bubblegum,
                 ),
                 _Stat(
                   label: l10n.adminStatStorage,
+                  note: l10n.adminStatStorageNote,
                   value: formatBytes(value.storageBytes),
                   icon: AppIcons.storage,
+                  accent: (c) => c.lemon,
                 ),
                 _Stat(
                   label: l10n.adminStatOpenReports,
+                  note: value.openReports > 0
+                      ? l10n.adminStatReportsWaiting
+                      : l10n.adminStatReportsNone,
                   value: number.format(value.openReports),
                   icon: AppIcons.report,
+                  accent: (c) => c.blueRaspberry,
                   route: AdminSection.reports.path,
                   alert: value.openReports > 0,
                 ),
@@ -86,55 +108,174 @@ class AdminDashboardScreen extends ConsumerWidget {
   }
 }
 
-/// One total; tapping it opens its list when there is one.
+/// The totals in one column on a phone, two from 600 px, and three from
+/// 900, the cards in a line the same height.
+class _StatGrid extends StatelessWidget {
+  const new({required this.stats});
+
+  final List<_Stat> stats;
+
+  static const _gap = 12.0;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, box) {
+      final columns = box.maxWidth >= 900
+          ? 3
+          : box.maxWidth >= 600
+          ? 2
+          : 1;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < stats.length; i += columns)
+            Padding(
+              padding: const EdgeInsets.only(bottom: _gap),
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (var j = 0; j < columns; j++) ...[
+                      if (j > 0) const SizedBox(width: _gap),
+                      Expanded(
+                        child: i + j < stats.length
+                            ? stats[i + j]
+                            : const SizedBox.shrink(),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+        ],
+      );
+    },
+  );
+}
+
+/// One total as a team card (Teams, SPEC §5.1): a 48 px badge with its icon
+/// on [accent]'s face, the label in the card's title style over [note], and
+/// the number at the end, or under the note with large text. A total with
+/// a list ([route]) opens it, with the card's chevron.
 class _Stat extends StatelessWidget {
   const new({
     required this.label,
+    required this.note,
     required this.value,
     required this.icon,
+    required this.accent,
     this.route,
     this.alert = false,
   });
 
   final String label;
+
+  /// What it counts: "Made in the last 7 days".
+  final String note;
   final String value;
   final IconData icon;
+  final GumdropAccent Function(GumdropColors colors) accent;
   final String? route;
 
-  /// Open reports waiting (SAFE-4's 24-hour goal): drawn in the error color.
+  /// Open reports waiting (SAFE-4's 24-hour goal): the warning red, on its
+  /// badge and its number.
   final bool alert;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final color = alert ? theme.colorScheme.error : theme.colorScheme.primary;
+    final page = GumdropColors.of(context);
+    final c = page.card;
+    final style = GumdropStyle.of(context);
+    final color = alert ? page.cherry : accent(page);
     final target = route;
-    return SizedBox(
-      width: 200,
-      child: Card.outlined(
-        margin: EdgeInsets.zero,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: target == null ? null : () => context.go(target),
-          child: Padding(
-            padding: const EdgeInsets.all(Space.lg),
-            child: Semantics(
-              label: '$label: $value',
-              excludeSemantics: true,
-              button: target != null,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(icon, color: color),
-                  const SizedBox(height: Space.sm),
-                  Text(
-                    value,
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      color: alert ? color : null,
+    final stacked = MediaQuery.textScalerOf(context).scale(1) > 1.5;
+    final name = Text(
+      label,
+      style: TextStyle(
+        fontFamily: AppFonts.body,
+        fontWeight: FontWeight.w800,
+        fontSize: 18,
+        height: 22 / 18,
+        color: c.textPrimary,
+      ),
+    );
+    final what = Text(
+      note,
+      style: TextStyle(
+        fontFamily: AppFonts.body,
+        fontWeight: FontWeight.w600,
+        fontSize: 15,
+        height: 19 / 15,
+        letterSpacing: -0.2,
+        color: c.textMuted,
+      ),
+    );
+    final total = Text(
+      value,
+      style: TextStyle(
+        fontFamily: AppFonts.body,
+        fontWeight: FontWeight.w900,
+        fontSize: 22,
+        height: 26 / 22,
+        color: alert ? c.cherry.text : c.textPrimary,
+      ),
+    );
+    final words = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [name, what, if (stacked) total],
+    );
+    return Semantics(
+      // One item each: "New teams: 4. Made in the last 7 days."
+      container: true,
+      button: target != null,
+      label: '$label: $value. $note.',
+      excludeSemantics: true,
+      child: Material(
+        color: Colors.transparent,
+        child: Ink(
+          decoration: style.cardDecoration(
+            c.surface,
+            18,
+            side: BorderSide(color: c.surfaceBorder, width: 2),
+          ),
+          child: FocusRingInk(
+            onTap: target == null ? null : () => context.go(target),
+            radius: BorderRadius.circular(18),
+            child: GumdropSurface(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: color.face,
+                        // The team badge's corners.
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(icon, size: 24, color: c.inkOn(color)),
                     ),
-                  ),
-                  Text(label, style: theme.textTheme.bodyMedium),
-                ],
+                    const SizedBox(width: 12),
+                    Expanded(child: words),
+                    if (!stacked) ...[const SizedBox(width: 12), total],
+                    const SizedBox(width: 8),
+                    // Room kept where there's no list, so the numbers line
+                    // up.
+                    SizedBox(
+                      width: 20,
+                      child: target == null
+                          ? null
+                          : Icon(
+                              AppIcons.chevronRight,
+                              size: 20,
+                              weight: 700,
+                              color: c.textMuted,
+                            ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
