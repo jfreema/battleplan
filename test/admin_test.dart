@@ -155,7 +155,7 @@ void main() {
               .path;
       const menu = 'Open navigation menu';
       // One tap from the team's header (SPEC §6.11 Access).
-      await tester.tap(find.byTooltip('Admin panel'));
+      await tester.tap(find.byTooltip('Super Admin Panel'));
       await tester.pumpAndSettle();
       expect(path(), '/admin');
       expect(find.byTooltip(menu), findsOneWidget);
@@ -186,7 +186,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(path(), '/admin/teams');
       // Out of the panel, back to the team.
-      await tester.tap(find.byTooltip('Leave the admin panel'));
+      await tester.tap(find.byTooltip('Leave the Super Admin Panel'));
       await tester.pumpAndSettle();
       expect(path(), '/g/a/chat');
     });
@@ -1582,7 +1582,7 @@ void main() {
       expect(admin.opened, ['t1']);
 
       // Back to the team's admin page.
-      await tester.tap(find.text('Back to admin panel'));
+      await tester.tap(find.text('Back to the Super Admin Panel'));
       await tester.pumpAndSettle();
       expect(find.text('View team'), findsOneWidget);
     });

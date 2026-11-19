@@ -259,7 +259,7 @@ void main() {
     await openProfile(tester);
     expect(find.text('Your icon'), findsOneWidget);
     expect(find.text('Themes'), findsNothing);
-    expect(find.text('Admin panel'), findsNothing);
+    expect(find.text('Super Admin Panel'), findsNothing);
     // The name my teams see, in a dialog, saved when it changes.
     await tester.tap(find.text('Your name'));
     await tester.pumpAndSettle();
@@ -412,7 +412,7 @@ void main() {
       for (final tab in ['Chat', 'Schedule', 'Docs', 'Plays']) {
         await tester.tap(find.text(tab).last);
         await tester.pumpAndSettle();
-        final button = find.byTooltip('Admin panel');
+        final button = find.byTooltip('Super Admin Panel');
         expect(button, findsOneWidget, reason: tab);
         expect(
           tester.getCenter(button).dx,
@@ -426,7 +426,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // One tap: the dashboard, over the team.
-      await tester.tap(find.byTooltip('Admin panel'));
+      await tester.tap(find.byTooltip('Super Admin Panel'));
       await tester.pumpAndSettle();
       expect(path(tester), '/admin');
       expect(find.text('Dashboard'), findsWidgets);
@@ -443,7 +443,7 @@ void main() {
       await tester.tap(backToTeams());
       await tester.pumpAndSettle();
       expect(path(tester), '/teams');
-      final button = find.byTooltip('Admin panel');
+      final button = find.byTooltip('Super Admin Panel');
       expect(button, findsOneWidget);
       expect(
         tester.getCenter(button).dx,
@@ -458,8 +458,8 @@ void main() {
 
       await tester.tap(find.text('Profile'));
       await tester.pumpAndSettle();
-      expect(find.text('Admin panel'), findsOneWidget);
-      await tester.tap(find.text('Admin panel'));
+      expect(find.text('Super Admin Panel'), findsOneWidget);
+      await tester.tap(find.text('Super Admin Panel'));
       await tester.pumpAndSettle();
       expect(path(tester), '/admin');
     });
@@ -468,11 +468,11 @@ void main() {
         "team's tabs, Teams, and Profile", (tester) async {
       await pump(tester, boss, size: wide);
       // Not in the header: the rail has it.
-      expect(find.byTooltip('Admin panel'), findsNothing);
+      expect(find.byTooltip('Super Admin Panel'), findsNothing);
       final rail = find.byType(OpenFieldRail);
       final link = find.descendant(
         of: rail,
-        matching: find.text('Admin panel'),
+        matching: find.text('Super Admin Panel'),
       );
       expect(link, findsOneWidget);
       // Below the tabs.
@@ -496,10 +496,10 @@ void main() {
 
       for (final top in ['/teams', '/profile']) {
         await go(tester, top);
-        expect(find.byTooltip('Admin panel'), findsNothing, reason: top);
+        expect(find.byTooltip('Super Admin Panel'), findsNothing, reason: top);
         final link = find.descendant(
           of: find.byType(OpenFieldRail),
-          matching: find.text('Admin panel'),
+          matching: find.text('Super Admin Panel'),
         );
         expect(link, findsOneWidget, reason: top);
         await tester.tap(link);
@@ -515,8 +515,8 @@ void main() {
         await pump(tester, coach, size: size);
         for (final at in ['/g/a/chat', '/g/a/schedule', '/teams', '/profile']) {
           await go(tester, at);
-          expect(find.byTooltip('Admin panel'), findsNothing, reason: at);
-          expect(find.text('Admin panel'), findsNothing, reason: at);
+          expect(find.byTooltip('Super Admin Panel'), findsNothing, reason: at);
+          expect(find.text('Super Admin Panel'), findsNothing, reason: at);
           expect(find.byIcon(AppIcons.admin), findsNothing, reason: at);
         }
       }

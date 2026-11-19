@@ -113,13 +113,13 @@ void main() {
     'super admin chat':
         (WidgetTester tester, {required TeamScheme scheme}) async {
           await pumpTeam(tester, scheme: scheme, user: boss);
-          expect(find.byTooltip('Admin panel'), findsOneWidget);
+          expect(find.byTooltip('Super Admin Panel'), findsOneWidget);
         },
     'super admin teams':
         (WidgetTester tester, {required TeamScheme scheme}) async {
           await pumpTeam(tester, scheme: scheme, user: boss);
           await goTo(tester, '/teams');
-          expect(find.byTooltip('Admin panel'), findsOneWidget);
+          expect(find.byTooltip('Super Admin Panel'), findsOneWidget);
         },
     'super admin teams, its rows':
         (WidgetTester tester, {required TeamScheme scheme}) async {
@@ -130,7 +130,7 @@ void main() {
     'super admin wide chat':
         (WidgetTester tester, {required TeamScheme scheme}) async {
           await pumpTeam(tester, scheme: scheme, user: boss, size: wideSize);
-          expect(find.text('Admin panel'), findsOneWidget);
+          expect(find.text('Super Admin Panel'), findsOneWidget);
         },
     // Pushed screens open as the app opens them, so the back row is
     // checked too (SPEC §5.4.1).
@@ -464,9 +464,9 @@ void main() {
       final handle = tester.ensureSemantics();
       await pumpTeam(tester, scheme: TeamScheme.army, user: boss);
       expect(
-        tester.getSemantics(find.byTooltip('Admin panel')),
+        tester.getSemantics(find.byTooltip('Super Admin Panel')),
         isSemantics(
-          tooltip: 'Admin panel',
+          tooltip: 'Super Admin Panel',
           isButton: true,
           hasTapAction: true,
           isEnabled: true,
@@ -480,7 +480,9 @@ void main() {
         user: boss,
         size: wideSize,
       );
-      final link = tester.getSemantics(find.bySemanticsLabel('Admin panel'));
+      final link = tester.getSemantics(
+        find.bySemanticsLabel('Super Admin Panel'),
+      );
       expect(link, isSemantics(isButton: true, hasTapAction: true));
       expect(link.flagsCollection.isSelected.toBoolOrNull(), isNull);
       // The tabs still count five.
@@ -841,12 +843,12 @@ void main() {
                   .findAncestorWidgetOfExactType<Semantics>()
                   ?.properties
                   .label;
-          if (label == 'Admin panel') {
+          if (label == 'Super Admin Panel') {
             reached = true;
             expectFocusRing(tester, '$label ($size)');
           }
         }
-        expect(reached, isTrue, reason: 'Admin panel ($size)');
+        expect(reached, isTrue, reason: 'Super Admin Panel ($size)');
       }
     });
 

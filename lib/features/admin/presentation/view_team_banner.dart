@@ -29,28 +29,45 @@ class ViewingAsSuperAdminBanner extends ConsumerWidget {
       child: Padding(
         padding: EdgeInsets.only(left: Space.gutter(width), right: Space.xs),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(AppIcons.admin, size: 20, color: scheme.onTertiaryContainer),
-            const SizedBox(width: Space.sm),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: Space.sm),
-                child: Text(
-                  l10n.viewingAsSuperAdmin,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: scheme.onTertiaryContainer,
-                  ),
-                ),
+            Padding(
+              // Level with the words' first line.
+              padding: const EdgeInsets.only(top: 10),
+              child: Icon(
+                AppIcons.admin,
+                size: 20,
+                color: scheme.onTertiaryContainer,
               ),
             ),
-            TextButton(
-              style: TextButton.styleFrom(
-                foregroundColor: scheme.onTertiaryContainer,
+            const SizedBox(width: Space.sm),
+            // The words, then the button beside them, or under them when
+            // there's no room ("Back to the Super Admin Panel", #67).
+            Expanded(
+              child: Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: Space.sm),
+                    child: Text(
+                      l10n.viewingAsSuperAdmin,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: scheme.onTertiaryContainer,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      foregroundColor: scheme.onTertiaryContainer,
+                    ),
+                    onPressed: () => context.canPop()
+                        ? context.pop()
+                        : context.go('/admin/teams/${groupId.value}'),
+                    child: Text(l10n.backToAdminPanel),
+                  ),
+                ],
               ),
-              onPressed: () => context.canPop()
-                  ? context.pop()
-                  : context.go('/admin/teams/${groupId.value}'),
-              child: Text(l10n.backToAdminPanel),
             ),
           ],
         ),

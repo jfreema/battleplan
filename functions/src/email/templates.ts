@@ -172,7 +172,7 @@ export function newAccountEmail(
         `${account.name} (${account.email}) finished signing up for Battleplan${how}.`,
         ...(account.addedByAdmin ? ['A team admin added them first.'] : []),
       ],
-      { label: 'Open in the admin panel', url },
+      { label: 'Open in the Super Admin Panel', url },
     ),
   };
 }
@@ -219,7 +219,7 @@ export function teamCreatedEmail(
     to,
     subject: `${group ? 'New group' : 'New team'}: ${team.name}`,
     ...layout([`${owner} created ${team.name}, ${group ? 'a group' : aTeam(team.sport)}.`], {
-      label: 'Open in the admin panel',
+      label: 'Open in the Super Admin Panel',
       url,
     }),
   };

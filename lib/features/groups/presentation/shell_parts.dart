@@ -195,10 +195,24 @@ class OpenFieldRail extends StatelessWidget {
           badge: null,
         ),
     ];
-    // One size for every label, the whole label, as the tab bar's (#64).
+    // One size for every label, the whole label, as the tab bar's (#64). A
+    // link may wrap ("Super Admin / Panel", #67), so only its longest word
+    // has to fit.
     final scale = OpenFieldTabBar.labelScale(
       context,
-      [...tabs, ...linkTabs],
+      [
+        ...tabs,
+        for (final link in linkTabs)
+          (
+            icon: link.icon,
+            selectedIcon: link.selectedIcon,
+            label: link.label
+                .split(' ')
+                .reduce((a, b) => b.length > a.length ? b : a),
+            short: null,
+            badge: null,
+          ),
+      ],
       cell: width,
       asked:
           MediaQuery.textScalerOf(context).scale(_Tab.labelSize) /
@@ -252,6 +266,9 @@ class OpenFieldRail extends StatelessWidget {
                             onTap: link.onTap,
                             marker: Alignment.centerLeft,
                             labelScale: scale,
+                            // "Super Admin / Panel", or a word a line with
+                            // large text (#67).
+                            lines: 3,
                           ),
                         ),
                       const SizedBox(height: 12),
@@ -277,6 +294,7 @@ class _Tab extends StatelessWidget {
     this.count,
     this.labelScale,
     this.short = false,
+    this.lines = 1,
   });
 
   /// A label's size before the text size scales it.
@@ -301,6 +319,10 @@ class _Tab extends StatelessWidget {
 
   /// The phone bar's shorter label where there is one ("Docs").
   final bool short;
+
+  /// How many lines the label may take: one for a tab, more for a rail
+  /// link ("Super Admin / Panel", #67).
+  final int lines;
 
   /// Which tab this is, of [count]; both null for a rail link, which isn't
   /// a tab.
@@ -365,19 +387,31 @@ class _Tab extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                         horizontal: OpenFieldTabBar.labelGap,
                       ),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          short ? tab.short ?? tab.label : tab.label,
-                          maxLines: 1,
-                          textAlign: TextAlign.center,
-                          textScaler: switch (labelScale) {
-                            final scale? => TextScaler.linear(scale),
-                            null => null,
-                          },
-                          style: labelStyle(context, color: color),
-                        ),
-                      ),
+                      child: lines > 1
+                          ? Text(
+                              tab.label,
+                              maxLines: lines,
+                              textAlign: TextAlign.center,
+                              overflow: TextOverflow.ellipsis,
+                              textScaler: switch (labelScale) {
+                                final scale? => TextScaler.linear(scale),
+                                null => null,
+                              },
+                              style: labelStyle(context, color: color),
+                            )
+                          : FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                short ? tab.short ?? tab.label : tab.label,
+                                maxLines: 1,
+                                textAlign: TextAlign.center,
+                                textScaler: switch (labelScale) {
+                                  final scale? => TextScaler.linear(scale),
+                                  null => null,
+                                },
+                                style: labelStyle(context, color: color),
+                              ),
+                            ),
                     ),
                   ],
                 ),
