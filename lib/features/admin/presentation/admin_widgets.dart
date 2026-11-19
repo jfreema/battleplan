@@ -7,6 +7,7 @@ import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/services/time_zones.dart';
+import 'package:battleplan/core/widgets/back_chevron.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/info_tag.dart';
@@ -32,11 +33,13 @@ enum AdminSection {
   final String path;
 }
 
-/// The admin panel's frame (ADMIN, "designed for a desktop browser but
-/// works on phones"): a left rail of sections on wide screens, a drawer on
-/// phones. On phones every section has the drawer's menu, even when the
-/// panel opened over another page (the Admin panel button, Profile), so
-/// any section is two taps away; a [detail] page shows Back instead.
+/// The Super Admin Panel's frame (ADMIN, "designed for a desktop browser
+/// but works on phones"): a left rail of sections on wide screens, a menu
+/// on phones. Back is at the top left on every page, as everywhere in the
+/// app (#68, owner's request 2026-11-18): to the page before, or out of the
+/// panel when there's none. On phones the menu is at the top right, on
+/// every page, its sections sliding in from that side, so any section is
+/// two taps away.
 class AdminScaffold extends StatelessWidget {
   const new({
     required this.section,
@@ -44,7 +47,6 @@ class AdminScaffold extends StatelessWidget {
     required this.body,
     this.actions = const [],
     this.floatingActionButton,
-    this.detail = false,
     super.key,
   });
 
@@ -53,10 +55,6 @@ class AdminScaffold extends StatelessWidget {
   final Widget body;
   final List<Widget> actions;
   final Widget? floatingActionButton;
-
-  /// A page opened from a section, like a team's or a person's page: Back
-  /// goes to where it was opened from, in place of the menu on phones.
-  final bool detail;
 
   static IconData _icon(AdminSection s) => switch (s) {
     AdminSection.dashboard => AppIcons.dashboard,
@@ -77,15 +75,24 @@ class AdminScaffold extends StatelessWidget {
     }
 
     final appBar = AppBar(
+      // Back to the page before; with none, out of the panel, to the team
+      // and tab last open, or Teams (#68).
+      leading: BackChevron(
+        onPressed: canPop ? null : () => context.go('/'),
+        semanticLabel: canPop ? null : l10n.adminExit,
+      ),
       title: Text(title),
       actions: [
         ...actions,
-        // Out of the panel, back to the person's teams.
-        IconButton(
-          tooltip: l10n.adminExit,
-          icon: const Icon(AppIcons.leave),
-          onPressed: () => context.go('/'),
-        ),
+        // The sections, from the top right on a phone.
+        if (!wide)
+          Builder(
+            builder: (context) => IconButton(
+              tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
+              icon: const Icon(AppIcons.menu),
+              onPressed: () => Scaffold.of(context).openEndDrawer(),
+            ),
+          ),
       ],
     );
     if (wide) {
@@ -116,45 +123,43 @@ class AdminScaffold extends StatelessWidget {
     return Scaffold(
       appBar: appBar,
       floatingActionButton: floatingActionButton,
-      drawer: detail && canPop
-          ? null
-          : NavigationDrawer(
-              selectedIndex: section.index,
-              onDestinationSelected: (i) {
-                Navigator.of(context).pop();
-                open(AdminSection.values[i]);
-              },
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    Space.xl,
-                    Space.lg,
-                    Space.lg,
-                    Space.sm,
-                  ),
-                  child: Text(
-                    l10n.adminPanel,
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                ),
-                for (final s in AdminSection.values)
-                  NavigationDrawerDestination(
-                    icon: Icon(_icon(s)),
-                    selectedIcon: Icon(_icon(s), fill: 1),
-                    // The drawer's row doesn't shrink its label, so a long
-                    // one at a large text size ends in an ellipsis rather
-                    // than overflowing.
-                    label: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 220),
-                      child: Text(
-                        adminSectionLabel(l10n, s),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ),
-              ],
+      endDrawer: NavigationDrawer(
+        selectedIndex: section.index,
+        onDestinationSelected: (i) {
+          Navigator.of(context).pop();
+          open(AdminSection.values[i]);
+        },
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              Space.xl,
+              Space.lg,
+              Space.lg,
+              Space.sm,
             ),
+            child: Text(
+              l10n.adminPanel,
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+          ),
+          for (final s in AdminSection.values)
+            NavigationDrawerDestination(
+              icon: Icon(_icon(s)),
+              selectedIcon: Icon(_icon(s), fill: 1),
+              // The drawer's row doesn't shrink its label, so a long
+              // one at a large text size ends in an ellipsis rather
+              // than overflowing.
+              label: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 220),
+                child: Text(
+                  adminSectionLabel(l10n, s),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+        ],
+      ),
       body: body,
     );
   }

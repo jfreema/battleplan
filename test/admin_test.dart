@@ -8,6 +8,7 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/color_math.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/widgets/back_chevron.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
@@ -140,8 +141,9 @@ void main() {
       expect(find.text('Search teams by name'), findsNothing);
     });
 
-    testWidgets('on a phone every section has the menu, also when the panel '
-        "opened over a team, and a team's page has Back", (tester) async {
+    testWidgets('on a phone Back is at the top left of every page and the '
+        'menu at the top right, also when the panel opened over a team '
+        '(#68)', (tester) async {
       await open(
         tester,
         '/g/a/chat',
@@ -154,11 +156,28 @@ void main() {
               .uri
               .path;
       const menu = 'Open navigation menu';
-      // One tap from the team's header (SPEC §6.11 Access).
+      void sides(String where) {
+        final back = find.byType(BackChevron);
+        expect(back, findsOneWidget, reason: where);
+        expect(tester.getRect(back).left, lessThan(60), reason: where);
+        expect(
+          tester.getRect(find.byTooltip(menu)).right,
+          greaterThan(400 - 60),
+          reason: where,
+        );
+      }
+
+      // One tap from the team's header (SPEC §6.11 Access); Back returns
+      // there.
       await tester.tap(find.byTooltip('Super Admin Panel'));
       await tester.pumpAndSettle();
       expect(path(), '/admin');
-      expect(find.byTooltip(menu), findsOneWidget);
+      sides('the dashboard');
+      await tester.tap(find.byType(BackChevron));
+      await tester.pumpAndSettle();
+      expect(path(), '/g/a/chat');
+      await tester.tap(find.byTooltip('Super Admin Panel'));
+      await tester.pumpAndSettle();
       // Any section in two more: the menu, then the section.
       for (final (label, at) in [
         ('Audit log', '/admin/audit'),
@@ -167,6 +186,8 @@ void main() {
       ]) {
         await tester.tap(find.byTooltip(menu));
         await tester.pumpAndSettle();
+        // From the right, the menu's side.
+        expect(tester.getRect(find.byType(NavigationDrawer)).right, 400);
         await tester.tap(
           find.descendant(
             of: find.byType(NavigationDrawer),
@@ -175,18 +196,27 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect(path(), at);
-        expect(find.byTooltip(menu), findsOneWidget, reason: label);
+        sides(label);
       }
-      // A team's page goes back to the list.
+      // A team's page has both too, and Back goes to the list.
       await tester.tap(find.text('Thunder'));
       await tester.pumpAndSettle();
       expect(path(), '/admin/teams/t1');
-      expect(find.byTooltip(menu), findsNothing);
-      await tester.tap(find.byTooltip('Back'));
+      sides("a team's page");
+      await tester.tap(find.byType(BackChevron));
       await tester.pumpAndSettle();
       expect(path(), '/admin/teams');
-      // Out of the panel, back to the team.
-      await tester.tap(find.byTooltip('Leave the Super Admin Panel'));
+      // A section goes up to the Dashboard.
+      await tester.tap(find.byType(BackChevron));
+      await tester.pumpAndSettle();
+      expect(path(), '/admin');
+      // With no page before, Back leaves the panel, back to the team, and
+      // says so.
+      expect(
+        tester.widget<BackChevron>(find.byType(BackChevron)).semanticLabel,
+        'Leave the Super Admin Panel',
+      );
+      await tester.tap(find.byType(BackChevron));
       await tester.pumpAndSettle();
       expect(path(), '/g/a/chat');
     });

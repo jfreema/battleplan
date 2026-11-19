@@ -46,7 +46,6 @@ class AdminUserScreen extends ConsumerWidget {
     final name = detail.value?.user.displayName;
     return AdminScaffold(
       section: AdminSection.users,
-      detail: true,
       title: name == null || name.isEmpty ? l10n.adminUsers : name,
       actions: [
         IconButton(
