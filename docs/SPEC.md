@@ -977,7 +977,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - If the team's storage is full, uploading is disabled with the message from STORE-4.
 - **DOC-3 · MVP · Add links.** A name and a URL, such as a Google Drive folder, a sign-up form, or a league website. Links open in the browser.
 - **DOC-4 · MVP · Open.**
-  - PDFs and images open in an in-app viewer.
+  - PDFs and images open in an in-app viewer. A photo shows on black, and its bar is black with the name, Back, Download, Share, and the menu in white, with no title drop, in every color scheme (#71, owner's report 2026-11-20: in Light blue the name was navy with a white outline on the black bar, and Back nearly invisible).
   - Other types open in the phone's default app, or download in the browser.
   - Share and Download work everywhere.
 - **DOC-5 · MVP · Manage.**

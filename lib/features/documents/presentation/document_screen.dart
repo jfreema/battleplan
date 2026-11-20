@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
@@ -15,6 +14,7 @@ import 'package:battleplan/features/documents/presentation/document_row.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -75,17 +75,24 @@ class DocumentScreen extends ConsumerWidget {
     // HEIC photos show as details on the web, which can't decode them.
     final web = ref.watch(fileChooserProvider).downloadsInsteadOfOpening;
     final viewer = d.opensInAppOn(web: web) && d.path != null;
+    // A photo shows on black, in every color scheme: white on its bar too.
+    // The theme's own title (its color and the scheme's drop, navy with a
+    // white drop in Light blue) and icon colors would win over a plain
+    // foregroundColor, and read dark on black (#71), so they're set here.
+    final photo = viewer && d.type == DocumentType.image;
+    const onBlack = Colors.white;
+    final titleStyle = Theme.of(context).appBarTheme.titleTextStyle;
     return Scaffold(
-      backgroundColor: viewer && d.type == DocumentType.image
-          ? Colors.black
-          : null,
+      backgroundColor: photo ? Colors.black : null,
       appBar: AppBar(
-        backgroundColor: viewer && d.type == DocumentType.image
-            ? Colors.black
+        backgroundColor: photo ? Colors.black : null,
+        foregroundColor: photo ? onBlack : null,
+        iconTheme: photo ? const IconThemeData(color: onBlack) : null,
+        actionsIconTheme: photo ? const IconThemeData(color: onBlack) : null,
+        titleTextStyle: photo
+            ? titleStyle?.copyWith(color: onBlack, shadows: const [])
             : null,
-        foregroundColor: viewer && d.type == DocumentType.image
-            ? Colors.white
-            : null,
+        systemOverlayStyle: photo ? SystemUiOverlayStyle.light : null,
         title: Text(d.name, maxLines: 1, overflow: TextOverflow.ellipsis),
         actions: [
           if (!d.isLink)
