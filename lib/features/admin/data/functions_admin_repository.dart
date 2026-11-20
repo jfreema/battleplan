@@ -213,6 +213,7 @@ class FunctionsAdminRepository implements AdminRepository {
     GroupSettings? settings,
     ChatTheme? chatTheme,
     TeamScheme? colorScheme,
+    bool clearColorScheme = false,
     NotificationLevel? newMemberNotificationLevel,
     String? photoPath,
   }) => _call('adminUpdateGroup', {
@@ -240,7 +241,11 @@ class FunctionsAdminRepository implements AdminRepository {
         'background': chatTheme.background.name,
         'backgroundPath': chatTheme.backgroundPath,
       },
-    'colorScheme': ?colorScheme?.value,
+    // Null is System default (#73), as the server and the rules take it.
+    if (clearColorScheme)
+      'colorScheme': null
+    else
+      'colorScheme': ?colorScheme?.value,
     'newMemberNotificationLevel': ?newMemberNotificationLevel?.value,
     'photoPath': ?photoPath,
   });

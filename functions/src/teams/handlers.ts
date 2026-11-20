@@ -31,6 +31,7 @@ import { tryClearAssignmentsOf } from '../schedule/assignments.js';
 import {
   addMembersByEmail,
   canChangeRole,
+  clearColorSchemePicks,
   canRemove,
   clearTeamNotifications,
   convertGroupToTeam,
@@ -424,6 +425,29 @@ export const archiveGroup = onCall(async (request) => {
     after: { archived: input.archived },
   });
   return { ok: true };
+});
+
+/**
+ * Resets everyone's color scheme for a team (SET-2, #73, owner's request
+ * 2026-11-20): takes back each member's own pick, so all see the team's
+ * default, or with none (System default) their own default, and can pick
+ * again. Its admins, or a super admin, on an open team. Audited with how
+ * many picks it took back, which it returns as `reset`.
+ */
+export const resetColorSchemes = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const input = parse(GroupOnly, request.data);
+  await requireTeamAdmin(input.groupId, uid, request.auth?.token.superAdmin === true);
+  const reset = await clearColorSchemePicks(input.groupId);
+  await audit({
+    actorId: uid,
+    action: 'resetColorSchemes',
+    groupId: input.groupId,
+    targetType: 'group',
+    targetId: input.groupId,
+    after: { reset },
+  });
+  return { reset };
 });
 
 /**

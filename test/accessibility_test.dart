@@ -197,18 +197,15 @@ void main() {
             path: '/g/a/settings',
           );
           await pushTo(tester, '/g/a/settings/color-scheme');
-          final last = find.text('Light blue');
+          // The page's foot: Reset for everyone (#73).
+          final last = find.text('Reset for everyone');
           await tester.scrollUntilVisible(
             last,
             200,
             scrollable: find.byType(Scrollable).last,
           );
           await tester.pumpAndSettle();
-          // The page's last line, none being set.
-          expect(
-            find.text('None set yet: everyone sees their own default.'),
-            findsOneWidget,
-          );
+          expect(last, findsOneWidget);
         },
     // Admin settings → Look → Chat look (CHAT-18, #32).
     'chat look': (WidgetTester tester, {required TeamScheme scheme}) async {

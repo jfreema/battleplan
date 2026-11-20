@@ -50,6 +50,7 @@ export {
   listTeamMedia,
   removeMember,
   resendSetupEmail,
+  resetColorSchemes,
   startNewSeason,
   transferOwnership,
   updateGroupMember,

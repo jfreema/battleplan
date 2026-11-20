@@ -196,6 +196,12 @@ void main() {
         (functions.lastData('adminUpdateGroup')! as Map)['colorScheme'],
         'navy',
       );
+      // System default (#73): null, as the server and the rules take it.
+      await repo.updateGroup(_g, clearColorScheme: true);
+      expect(functions.lastData('adminUpdateGroup'), {
+        'groupId': 'g1',
+        'colorScheme': null,
+      });
       // Where new members' notifications start (TEAM-5, NOTIF-3).
       await repo.updateGroup(
         _g,

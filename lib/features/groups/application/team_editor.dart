@@ -66,9 +66,14 @@ class TeamEditor {
       ? _admin.updateGroup(id, chatTheme: theme)
       : _groups.updateChatTheme(id, theme);
 
-  /// Sets the team's default color scheme (SET-2).
-  Future<void> updateColorScheme(GroupId id, TeamScheme scheme) => asSuperAdmin
-      ? _admin.updateGroup(id, colorScheme: scheme)
+  /// Sets the team's default color scheme (SET-2), or with null System
+  /// default (#73): none, so each member sees their own default.
+  Future<void> updateColorScheme(GroupId id, TeamScheme? scheme) => asSuperAdmin
+      ? _admin.updateGroup(
+          id,
+          colorScheme: scheme,
+          clearColorScheme: scheme == null,
+        )
       : _groups.updateColorScheme(id, scheme);
 
   /// Sets where team notifications start for people who join (TEAM-5,

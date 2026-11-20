@@ -382,11 +382,11 @@ class FakeGroupRepository implements GroupRepository {
     updates.add('chatTheme');
   }
 
-  /// Sets the team's default scheme as the server would, telling anyone
-  /// watching (SET-2).
+  /// Sets the team's default scheme as the server would, or none (System
+  /// default, #73), telling anyone watching (SET-2).
   @override
-  Future<void> updateColorScheme(GroupId id, TeamScheme scheme) async {
-    updates.add('colorScheme ${scheme.value}');
+  Future<void> updateColorScheme(GroupId id, TeamScheme? scheme) async {
+    updates.add('colorScheme ${scheme?.value ?? 'none'}');
     final g = groups[id.value];
     if (g != null) setGroup(g.copyWith(colorScheme: scheme));
   }
@@ -641,6 +641,25 @@ class FakeMemberRepository implements MemberRepository {
   Future<void> clearMyColorScheme(GroupId groupId, UserId uid) async {
     calls.add('scheme ${groupId.value} cleared');
     _updateMine(groupId, uid, (m) => m.copyWith(colorScheme: null));
+  }
+
+  /// What resetColorSchemes refuses with, if anything.
+  AppFailure? resetSchemesFails;
+
+  /// Takes back everyone's pick on the team, as `resetColorSchemes` would
+  /// (#73), and says how many.
+  @override
+  Future<int> resetColorSchemes(GroupId groupId) async {
+    calls.add('schemes ${groupId.value} reset');
+    if (resetSchemesFails case final failure?) throw failure;
+    var reset = 0;
+    for (final (i, m) in memberships.indexed) {
+      if (m.groupId != groupId || m.colorScheme == null) continue;
+      memberships[i] = m.copyWith(colorScheme: null);
+      reset++;
+    }
+    _changes.add(null);
+    return reset;
   }
 
   @override
@@ -3616,6 +3635,7 @@ class FakeAdminRepository implements AdminRepository {
     GroupSettings? settings,
     ChatTheme? chatTheme,
     TeamScheme? colorScheme,
+    bool clearColorScheme = false,
     NotificationLevel? newMemberNotificationLevel,
     String? photoPath,
   }) => _act(
@@ -3629,6 +3649,7 @@ class FakeAdminRepository implements AdminRepository {
       if (settings != null) 'settings',
       if (chatTheme != null) 'chatTheme=${_theme(chatTheme)}',
       if (colorScheme != null) 'colorScheme=${colorScheme.value}',
+      if (clearColorScheme) 'colorScheme=none',
       if (newMemberNotificationLevel != null)
         'newMemberNotificationLevel=${newMemberNotificationLevel.value}',
       if (photoPath != null) 'photoPath=$photoPath',

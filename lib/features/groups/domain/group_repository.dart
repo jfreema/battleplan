@@ -32,8 +32,9 @@ abstract interface class GroupRepository {
   Future<void> updateChatTheme(GroupId id, ChatTheme theme);
 
   /// Sets the team's default color scheme (SET-2): what members who haven't
-  /// picked their own see. Admins only.
-  Future<void> updateColorScheme(GroupId id, TeamScheme scheme);
+  /// picked their own see. Null is System default (#73): no team default, so
+  /// each member sees their own default. Admins only.
+  Future<void> updateColorScheme(GroupId id, TeamScheme? scheme);
 
   /// Sets where team notifications start for people who join (TEAM-5,
   /// NOTIF-3). Admins only.
@@ -171,6 +172,12 @@ abstract interface class MemberRepository {
   /// Takes back my pick for this team (SET-2), deleting it, so I see the
   /// team's default (and any later change to it), else my own default.
   Future<void> clearMyColorScheme(GroupId groupId, UserId uid);
+
+  /// Takes back everyone's own pick for this team (SET-2, #73): Reset for
+  /// everyone, by its admins or a super admin, through `resetColorSchemes`.
+  /// Everyone then sees the team's default, else their own default, until
+  /// they pick again. Returns how many picks it took back.
+  Future<int> resetColorSchemes(GroupId groupId);
 
   /// What I said to "Who are you here for?" on this team without picking a
   /// player (PLAYER-3): Not now, or that I'm a coach or another adult.

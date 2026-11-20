@@ -279,6 +279,13 @@ void main() {
       await repo.updateColorScheme(_g, TeamScheme.navy);
       expect((await db.doc('groups/g1').get()).data()!['colorScheme'], 'navy');
       expect((await repo.watchGroup(_g).first)!.colorScheme, TeamScheme.navy);
+      // System default (#73): none, deleted.
+      await repo.updateColorScheme(_g, null);
+      expect(
+        (await db.doc('groups/g1').get()).data()!.containsKey('colorScheme'),
+        isFalse,
+      );
+      expect((await repo.watchGroup(_g).first)!.colorScheme, isNull);
       expect(
         groupFromFirestore('x', const {'colorScheme': 'olive'}).colorScheme,
         isNull,
@@ -677,6 +684,17 @@ void main() {
         });
         await repo.removeMember(_g, const UserId('sam'));
         await repo.resendSetupEmail(_g, const UserId('sam'));
+        // Reset for everyone (SET-2, #73): how many picks it took back.
+        functions.handlers['resetColorSchemes'] = (_) => {'reset': 3};
+        expect(await repo.resetColorSchemes(_g), 3);
+        expect(functions.lastData('resetColorSchemes'), {'groupId': 'g1'});
+        functions.handlers.remove('resetColorSchemes');
+        expect(await repo.resetColorSchemes(_g), 0);
+        functions.fail('resetColorSchemes', 'permission-denied');
+        await expectLater(
+          repo.resetColorSchemes(_g),
+          throwsA(isA<PermissionDenied>()),
+        );
         final added = await repo.addByEmail(_g, const [
           (name: 'Pat', email: 'pat@example.com'),
         ]);

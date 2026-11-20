@@ -285,6 +285,23 @@ export async function deleteSharedContact(groupId: string, uid: string): Promise
   await db().collection(Collections.memberContacts).doc(groupMemberId(groupId, uid)).delete();
 }
 
+/**
+ * Takes back every member's own color scheme for a team (SET-2, #73): the
+ * `colorScheme` each picked in Team settings → Color scheme, so everyone
+ * sees the team's default, or with none their own default, until they pick
+ * again. Pages through the team's memberships, 400 to a batch. Returns how
+ * many it took back.
+ */
+export async function clearColorSchemePicks(groupId: string): Promise<number> {
+  let cleared = 0;
+  await forEachPage(db().collection(Collections.groupMembers).where('groupId', '==', groupId), (batch, doc) => {
+    if (doc.get('colorScheme') == null) return;
+    batch.update(doc.ref, { colorScheme: FieldValue.delete() });
+    cleared++;
+  });
+  return cleared;
+}
+
 /** Recomputes a team's member count (D12: recompute, never increment). */
 export async function refreshMemberCount(groupId: string): Promise<void> {
   const count = await db().collection(Collections.groupMembers).where('groupId', '==', groupId).count().get();

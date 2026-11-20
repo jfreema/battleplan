@@ -736,22 +736,20 @@ void main() {
       GoRouter.of(tester.element(find.byType(Scaffold).first))
           .go('/g/a/settings');
       await tester.pumpAndSettle();
-      // Under Look, saying none is set; its page has the five (#32).
-      expect(
-        find.text('Not set: everyone sees their own default'),
-        findsOneWidget,
-      );
+      // Under Look, saying none is set (System default, #73); its page
+      // has the six (#32).
+      expect(find.text('System default'), findsOneWidget);
       await tester.tap(find.text('Team color scheme'));
       await tester.pumpAndSettle();
       expect(
         find.widgetWithText(PageTitle, 'Team color scheme'),
         findsOneWidget,
       );
+      // System default is checked until one is set.
       expect(
-        find.text('None set yet: everyone sees their own default.'),
-        findsOneWidget,
+        tester.getSemantics(find.bySemanticsLabel(RegExp('^System default, '))),
+        isSemantics(isSelected: true, isButton: true, hasTapAction: true),
       );
-      // None is checked until one is set.
       expect(
         tester.getSemantics(find.bySemanticsLabel(RegExp('^Navy, '))),
         isSemantics(isSelected: false, isButton: true, hasTapAction: true),

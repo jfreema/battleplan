@@ -44,7 +44,8 @@ abstract interface class AdminRepository {
   /// SET-2), with the limits its own
   /// admins have, and audited. [photoPath] names a logo already uploaded to
   /// the team's `avatar/` folder; a chat background photo is in
-  /// [chatTheme], uploaded to its `theme/` folder.
+  /// [chatTheme], uploaded to its `theme/` folder. [clearColorScheme] sets
+  /// the default color scheme to System default (none, #73).
   Future<void> updateGroup(
     GroupId id, {
     String? name,
@@ -55,6 +56,7 @@ abstract interface class AdminRepository {
     GroupSettings? settings,
     ChatTheme? chatTheme,
     TeamScheme? colorScheme,
+    bool clearColorScheme = false,
     NotificationLevel? newMemberNotificationLevel,
     String? photoPath,
   });

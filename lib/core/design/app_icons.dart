@@ -50,6 +50,9 @@ abstract final class AppIcons {
   static const IconData photo = Symbols.photo_library_rounded;
   static const IconData camera = Symbols.photo_camera_rounded;
   static const IconData retry = Symbols.refresh_rounded;
+
+  /// Reset for everyone: the team's color scheme (#73).
+  static const IconData reset = Symbols.restart_alt_rounded;
   static const IconData addReaction = Symbols.add_reaction_rounded;
   static const IconData copy = Symbols.content_copy_rounded;
   static const IconData payments = Symbols.payments_rounded;
@@ -190,6 +193,7 @@ abstract final class AppIcons {
   static const IconData toolText = Symbols.text_fields_rounded;
   static const IconData toolErase = Symbols.ink_eraser_rounded;
   static const IconData undo = Symbols.undo_rounded;
+
   static const IconData redo = Symbols.redo_rounded;
   static const IconData stepBack = Symbols.skip_previous_rounded;
   static const IconData stepNext = Symbols.skip_next_rounded;

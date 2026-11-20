@@ -185,10 +185,11 @@ class FirestoreGroupRepository implements GroupRepository {
   }
 
   @override
-  Future<void> updateColorScheme(GroupId id, TeamScheme scheme) async {
+  Future<void> updateColorScheme(GroupId id, TeamScheme? scheme) async {
     try {
       await _db.collection(Collections.groups).doc(id.value).update({
-        'colorScheme': scheme.value,
+        // None: System default (#73), which the rules take as a delete.
+        'colorScheme': scheme?.value ?? FieldValue.delete(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
     } on FirebaseException catch (e) {
@@ -469,6 +470,17 @@ class FirestoreMemberRepository implements MemberRepository {
       _updateMine(groupId, uid, {'colorScheme': FieldValue.delete()});
 
   @override
+  Future<int> resetColorSchemes(GroupId groupId) async {
+    final data = await _callFor('resetColorSchemes', {
+      'groupId': groupId.value,
+    });
+    return switch (data) {
+      {'reset': final num reset} => reset.toInt(),
+      _ => 0,
+    };
+  }
+
+  @override
   Future<void> setMyHereFor(GroupId groupId, UserId uid, HereFor answer) =>
       _updateMine(groupId, uid, {'hereFor': answer.value});
 
@@ -612,8 +624,13 @@ class FirestoreMemberRepository implements MemberRepository {
       _call('resendSetupEmail', {'groupId': groupId.value, 'uid': uid.value});
 
   Future<void> _call(String name, Map<String, Object?> data) async {
+    await _callFor(name, data);
+  }
+
+  /// [name] with [data], and what it returns.
+  Future<Object?> _callFor(String name, Map<String, Object?> data) async {
     try {
-      await _functions.httpsCallable(name).call<void>(data);
+      return (await _functions.httpsCallable(name).call<Object?>(data)).data;
     } on FirebaseFunctionsException catch (e) {
       final message = serverMessage(e.message);
       throw switch (e.code) {

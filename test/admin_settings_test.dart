@@ -294,10 +294,13 @@ void main() {
     });
 
     testWidgets('Team color scheme opens its page, and its row says the '
-        'default, or that none is set', (tester) async {
+        'default, or System default when none is set', (tester) async {
       final groups = await open(tester);
       expect(
-        find.text('Not set: everyone sees their own default'),
+        find.descendant(
+          of: find.widgetWithText(SettingsRow, 'Team color scheme'),
+          matching: find.text('System default'),
+        ),
         findsOneWidget,
       );
       await tester.tap(find.text('Team color scheme'));

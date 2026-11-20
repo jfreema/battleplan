@@ -1361,3 +1361,49 @@ describe("where team notifications start for people who join (TEAM-5, NOTIF-3)",
     expect(await levelOf('open', 'sam')).toBe('all');
   });
 });
+
+describe("Reset for everyone: each member's own color scheme (SET-2, #73)", () => {
+  const schemeOf = async (g: string, uid: string) => (await members().doc(`${g}_${uid}`).get()).get('colorScheme');
+
+  beforeEach(async () => {
+    await groups().doc('open').update({ colorScheme: 'navy' });
+    await members().doc('open_pat').update({ colorScheme: 'army' });
+    await members().doc('open_sam').update({ colorScheme: 'dark' });
+    await members().doc('archived_sam').update({ colorScheme: 'light' });
+  });
+
+  it("takes back every pick on the team, and only there, keeping the team's own default, audited", async () => {
+    await expect(run(teams.resetColorSchemes, 'ada', { groupId: 'open' })).resolves.toEqual({ reset: 2 });
+    for (const uid of ['pat', 'ada', 'sam']) expect(await schemeOf('open', uid)).toBeUndefined();
+    // Another team's pick, and the team's default, stay.
+    expect(await schemeOf('archived', 'sam')).toBe('light');
+    expect((await groups().doc('open').get()).get('colorScheme')).toBe('navy');
+    const logs = await db().collection(Collections.auditLogs).where('action', '==', 'resetColorSchemes').get();
+    expect(logs.docs.map((d) => [d.get('actorId'), d.get('groupId'), d.get('after')])).toEqual([
+      ['ada', 'open', { reset: 2 }],
+    ]);
+    // Again: nothing left to take back.
+    await expect(run(teams.resetColorSchemes, 'pat', { groupId: 'open' })).resolves.toEqual({ reset: 0 });
+  });
+
+  it("is its admins' and super admins', on a team that takes changes", async () => {
+    await expect(run(teams.resetColorSchemes, 'sam', { groupId: 'open' })).rejects.toMatchObject({ code: 'permission-denied' });
+    await expect(run(teams.resetColorSchemes, 'lee', { groupId: 'open' })).rejects.toMatchObject({ code: 'permission-denied' });
+    expect(await schemeOf('open', 'sam')).toBe('dark');
+    await expect(run(teams.resetColorSchemes, 'pat', { groupId: 'archived' })).rejects.toMatchObject({ message: 'team-archived' });
+    expect(await schemeOf('archived', 'sam')).toBe('light');
+    await expect(run(teams.resetColorSchemes, 'root', { groupId: 'open' }, ROOT)).resolves.toEqual({ reset: 2 });
+  });
+
+  it('pages through a big team', async () => {
+    const batch = db().batch();
+    for (let i = 0; i < 450; i++) {
+      batch.set(members().doc(`open_m${i}`), { groupId: 'open', uid: `m${i}`, role: 'member', colorScheme: i % 3 ? 'light' : null });
+    }
+    await batch.commit();
+    // 300 of the 450 picked one, and pat and sam.
+    await expect(run(teams.resetColorSchemes, 'pat', { groupId: 'open' })).resolves.toEqual({ reset: 302 });
+    const left = await members().where('groupId', '==', 'open').where('colorScheme', '==', 'light').count().get();
+    expect(left.data().count).toBe(0);
+  });
+});
