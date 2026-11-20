@@ -636,8 +636,8 @@ void main() {
       expect(saved.notifyTeam, isTrue);
       // It stays out of the chat unless asked (owner's request 2026-11-10).
       expect(saved.postToChat, isFalse);
-      // The event's page.
-      expect(find.text('@ Eagles'), findsOneWidget);
+      // The event's page, "@" kept with the name by a no-break space (#74).
+      expect(find.text('@\u00A0Eagles'), findsOneWidget);
       expect(find.text('Directions'), findsOneWidget);
     });
 
@@ -1389,8 +1389,9 @@ void main() {
       expect(find.text('0 of 1 players going'), findsOneWidget);
       // Straight under the details, with no second line or gap: its row
       // sits under their line as it does under its own after a section.
+      // A Wrap, so the button can go under the heading (#74).
       final whosGoingRow = find
-          .ancestor(of: find.text("Who's going"), matching: find.byType(Row))
+          .ancestor(of: find.text("Who's going"), matching: find.byType(Wrap))
           .first;
       expect(below(tester, whosGoingRow), 6);
 

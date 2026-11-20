@@ -19,6 +19,7 @@ import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/core/widgets/whole_words.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
@@ -431,12 +432,20 @@ class _Details extends ConsumerWidget {
 
 /// The top of the event (SPEC §7.3): the stencil eyebrow (the type, and
 /// Home or Away) with how soon on the right, the opponent's crest and name
-/// in Lilita 48 for a game (else the title in Lilita 32), and when.
+/// in Lilita 36 for a game (else the title in Lilita 32), and when. A long
+/// word steps the size down, so no word ever breaks in two (#74).
 class _Hero extends StatelessWidget {
   const new({required this.event, required this.zone});
 
   final Event event;
   final String zone;
+
+  /// The opponent's name, largest first (48 until #74, owner's report
+  /// 2026-11-20: "makes event header too big"; "Springfield" broke in two).
+  static const nameSizes = [36.0, 32.0, 28.0, 25.0];
+
+  /// Any other title, as a page's title steps down ([PageTitle.sizes]).
+  static const titleSizes = [32.0, 28.0, 25.0];
 
   @override
   Widget build(BuildContext context) {
@@ -537,30 +546,56 @@ class _Hero extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text.rich(
-                  TextSpan(
-                    children: [
-                      if (prefix != null)
-                        TextSpan(
-                          text: '$prefix ',
-                          style: style.label(
-                            TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                              color: c.textMutedOnPage,
-                              shadows: const [],
+                child: LayoutBuilder(
+                  builder: (context, box) {
+                    TextStyle? nameAt(double size) =>
+                        theme.textTheme.displayMedium?.copyWith(
+                          fontSize: size,
+                          height: (size + 3) / size,
+                          decoration: strike,
+                        );
+                    // "vs." or "@", kept on the line of the name's first
+                    // word by a no-break space.
+                    final lead = prefix == null
+                        ? null
+                        : TextSpan(
+                            text: '$prefix\u00A0',
+                            style: style.label(
+                              TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: c.textMutedOnPage,
+                                shadows: const [],
+                              ),
                             ),
+                          );
+                    final words = wordsOf(crestName);
+                    final size = wholeWordSize(
+                      context,
+                      maxWidth: box.maxWidth,
+                      sizes: nameSizes,
+                      words: (size) => [
+                        for (final (i, word) in words.indexed)
+                          TextSpan(
+                            style: nameAt(size),
+                            children: [
+                              if (i == 0 && lead != null) lead,
+                              TextSpan(text: word),
+                            ],
                           ),
-                        ),
-                      TextSpan(text: crestName),
-                    ],
-                  ),
-                  semanticsLabel: event.title,
-                  style: theme.textTheme.displayMedium?.copyWith(
-                    fontSize: 48,
-                    height: 50 / 48,
-                    decoration: strike,
-                  ),
+                      ],
+                    );
+                    return Text.rich(
+                      TextSpan(
+                        children: [
+                          ?lead,
+                          TextSpan(text: crestName),
+                        ],
+                      ),
+                      semanticsLabel: event.title,
+                      style: nameAt(size),
+                    );
+                  },
                 ),
               ),
             ],
@@ -568,13 +603,25 @@ class _Hero extends StatelessWidget {
         else
           Semantics(
             header: true,
-            child: Text(
-              event.title,
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontSize: 32,
-                height: 36 / 32,
-                decoration: strike,
-              ),
+            child: LayoutBuilder(
+              builder: (context, box) {
+                TextStyle? titleAt(double size) =>
+                    theme.textTheme.headlineMedium?.copyWith(
+                      fontSize: size,
+                      height: (size + 4) / size,
+                      decoration: strike,
+                    );
+                final size = wholeWordSize(
+                  context,
+                  maxWidth: box.maxWidth,
+                  sizes: titleSizes,
+                  words: (size) => [
+                    for (final word in wordsOf(event.title))
+                      TextSpan(text: word, style: titleAt(size)),
+                  ],
+                );
+                return Text(event.title, style: titleAt(size));
+              },
             ),
           ),
         const SizedBox(height: 7),
@@ -878,10 +925,16 @@ class _RsvpSection extends ConsumerWidget {
           ],
           Padding(
             padding: EdgeInsets.only(top: bare && !canSet ? 14 : 6),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Semantics(
+            // Side by side while both fit, the button at the right; with
+            // large text or a small phone the button goes under the
+            // heading, rather than squeezing both onto two lines each (#74).
+            child: SizedBox(
+              width: double.infinity,
+              child: Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Semantics(
                     header: true,
                     child: Text(
                       // On an event that's over, what people said, not who
@@ -895,13 +948,8 @@ class _RsvpSection extends ConsumerWidget {
                       ),
                     ),
                   ),
-                ),
-                if (canSet)
-                  ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxWidth: MediaQuery.sizeOf(context).width * 0.5,
-                    ),
-                    child: TextButton.icon(
+                  if (canSet)
+                    TextButton.icon(
                       style: TextButton.styleFrom(
                         minimumSize: const Size(48, 48),
                       ),
@@ -913,8 +961,8 @@ class _RsvpSection extends ConsumerWidget {
                         isTeam ? l10n.eventRsvpForPlayer : l10n.eventSetRsvpFor,
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 8),
