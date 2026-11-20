@@ -102,7 +102,8 @@ void main() {
 
   group('the title and the line (TEAM-1, INV-1)', () {
     testWidgets('right after Create: "Thunder is ready!", what to do, and '
-        'Continue as plain text into the chat', (tester) async {
+        'Continue as the third button, under Share and Copy link, into the '
+        'chat (#69)', (tester) async {
       await pump(tester);
       await openAfterCreate(tester);
       expect(
@@ -113,7 +114,7 @@ void main() {
         find.text('Send this link to your families so they can join.'),
         findsOneWidget,
       );
-      final go = find.widgetWithText(TextButton, 'Continue to Thunder');
+      final go = find.widgetWithText(OutlinedButton, 'Continue to Thunder');
       expect(go, findsOneWidget);
       // Not a second coral button.
       expect(
@@ -121,6 +122,33 @@ void main() {
         findsNothing,
       );
       expect(tester.getSize(go).height, greaterThanOrEqualTo(48));
+      // Right under Copy link, as wide.
+      final copy = find.widgetWithText(OutlinedButton, 'Copy link');
+      expect(
+        tester.getTopLeft(go).dy,
+        greaterThan(tester.getBottomLeft(copy).dy),
+      );
+      expect(
+        tester.getTopLeft(go).dy - tester.getBottomLeft(copy).dy,
+        lessThan(24),
+      );
+      expect(tester.getSize(go).width, tester.getSize(copy).width);
+      // No second way at the foot of the page.
+      expect(find.text('Continue to Thunder'), findsOneWidget);
+      await tester.ensureVisible(go);
+      await tester.pumpAndSettle();
+      await tester.tap(go);
+      await tester.pumpAndSettle();
+      expect(path(tester), '/g/a/chat');
+    });
+
+    testWidgets('with no link to show, the way into the team stays at the '
+        'foot of the page (#69)', (tester) async {
+      final fakes = await pump(tester);
+      fakes.invites.linkOff = true;
+      await openAfterCreate(tester);
+      final go = find.widgetWithText(TextButton, 'Continue to Thunder');
+      expect(go, findsOneWidget);
       await tester.tap(go);
       await tester.pumpAndSettle();
       expect(path(tester), '/g/a/chat');
@@ -151,7 +179,7 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.widgetWithText(TextButton, 'Continue to Thunder'),
+        find.widgetWithText(OutlinedButton, 'Continue to Thunder'),
         findsOneWidget,
       );
     });

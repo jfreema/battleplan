@@ -39,7 +39,8 @@ class InviteAfterCreate {
 /// ready!" right after Create, else "Invite to Hornets"), the QR code,
 /// which opens full screen to hold up at practice, the code and the link,
 /// then Share, the one coral button (Copy link where the browser can't
-/// share), and Copy link. Email invites (INV-4) and, for admins, Add
+/// share), and Copy link, and with nothing under the screen (right after
+/// Create) a third, Continue to the team (#69). Email invites (INV-4) and, for admins, Add
 /// people by email (TEAM-7) each say what they do, and admins find the
 /// link's expiry, uses, Reset and Turn off behind Link settings (INV-2),
 /// which Admin settings opens too (TEAM-5).
@@ -62,6 +63,10 @@ class InviteScreen extends ConsumerWidget {
     // With nothing under the screen (right after Create, or a reload), a
     // clear way into the team: its chat, where the setup card waits (#3).
     final dead = !context.canPop();
+    void continueToTeam() => context.go('/g/${groupId.value}/chat');
+    final continueLabel = name.isEmpty
+        ? l10n.inviteContinue
+        : l10n.inviteContinueTo(name);
     return GumdropScaffold(
       title: name.isEmpty
           ? l10n.inviteMenu
@@ -76,7 +81,10 @@ class InviteScreen extends ConsumerWidget {
       ),
       // Its column, so the title lines up with it on a wide screen.
       maxWidth: _columnMaxWidth,
-      bottomNavigationBar: dead
+      // Continue is the third button, under Share and Copy link (#69); this
+      // bar is the way into the team only while there's no invite to show
+      // (loading, refused, or the link turned off).
+      bottomNavigationBar: dead && !invite.hasValue
           ? DecoratedBox(
               // A hairline over it, so the list ends there instead of
               // looking cut off.
@@ -94,19 +102,15 @@ class InviteScreen extends ConsumerWidget {
                 ),
                 child: Center(
                   heightFactor: 1,
-                  // Plain text, so the page's one coral button stays Share
-                  // and Continue doesn't invite the coach to skip it (#16).
                   child: TextButton.icon(
                     style: TextButton.styleFrom(
                       minimumSize: const Size(48, 48),
                     ),
                     iconAlignment: IconAlignment.end,
                     icon: const Icon(AppIcons.chevronRight),
-                    onPressed: () => context.go('/g/${groupId.value}/chat'),
+                    onPressed: continueToTeam,
                     label: Text(
-                      name.isEmpty
-                          ? l10n.inviteContinue
-                          : l10n.inviteContinueTo(name),
+                      continueLabel,
                       textAlign: TextAlign.center,
                       // A long name with large text: two lines at most.
                       maxLines: 2,
@@ -135,6 +139,8 @@ class InviteScreen extends ConsumerWidget {
               ? (isGroup ? l10n.inviteReadyLineGroup : l10n.inviteReadyLine)
               : l10n.inviteAnyoneLine,
           isGroup: isGroup,
+          onContinue: dead ? continueToTeam : null,
+          continueLabel: continueLabel,
         ),
       ),
     );
@@ -172,6 +178,8 @@ class _InviteBody extends ConsumerWidget {
     required this.isAdmin,
     required this.line,
     required this.isGroup,
+    this.onContinue,
+    this.continueLabel = '',
   });
 
   final TeamInvite invite;
@@ -182,6 +190,11 @@ class _InviteBody extends ConsumerWidget {
   /// What to do, under the title.
   final String line;
   final bool isGroup;
+
+  /// Into the team, when there's nothing under the screen (right after
+  /// Create, or a reload): the third button, "Continue to Thunder" (#69).
+  final VoidCallback? onContinue;
+  final String continueLabel;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -278,6 +291,28 @@ class _InviteBody extends ConsumerWidget {
                 const SizedBox(height: Space.sm),
               ],
               _CopyLinkButton(link: link, main: !canShare),
+              // The third button, as easy to see as the other two, and
+              // outlined, so Share stays the one coral button (#69, owner's
+              // report 2026-11-19: "the continue to group/team button is not
+              // as obvious").
+              if (onContinue case final go?) ...[
+                const SizedBox(height: Space.sm),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                  ),
+                  iconAlignment: IconAlignment.end,
+                  onPressed: go,
+                  icon: const Icon(AppIcons.chevronRight),
+                  label: Text(
+                    continueLabel,
+                    textAlign: TextAlign.center,
+                    // A long name with large text: two lines at most.
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ],
           ),
         ),

@@ -407,9 +407,12 @@ void main() {
         .go('/g/a/invite', extra: const InviteAfterCreate());
     await tester.pumpAndSettle();
     expect(find.text('Thunder is ready!'), findsOneWidget);
-    // Plain text, so Share is the page's one coral button.
-    final go = find.widgetWithText(TextButton, 'Continue to Thunder');
+    // The third button, outlined, so Share is the page's one coral button
+    // (#69).
+    final go = find.widgetWithText(OutlinedButton, 'Continue to Thunder');
     expect(go, findsOneWidget);
+    await tester.ensureVisible(go);
+    await tester.pumpAndSettle();
     await tester.tap(go);
     await tester.pumpAndSettle();
     expect(find.byTooltip('Add photos or a poll'), findsOneWidget);
