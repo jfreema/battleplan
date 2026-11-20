@@ -292,8 +292,8 @@ class RsvpChoice extends StatelessWidget {
   final ValueChanged<RsvpStatus>? onChanged;
   final bool compact;
 
-  /// A tap on the chosen answer: clears it, where given (the schedule
-  /// list); otherwise the answer stays.
+  /// A tap on the chosen answer clears it (RsvpButtons gives this
+  /// wherever an answer can be changed, #44); without it the answer stays.
   final VoidCallback? onCleared;
 
   static const double _gap = 10;

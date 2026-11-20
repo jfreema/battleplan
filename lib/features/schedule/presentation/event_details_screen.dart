@@ -31,6 +31,7 @@ import 'package:battleplan/features/schedule/application/providers.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/domain/event_draft.dart';
 import 'package:battleplan/features/schedule/domain/rsvp.dart';
+import 'package:battleplan/features/schedule/domain/rsvp_repository.dart';
 import 'package:battleplan/features/schedule/domain/schedule_rules.dart';
 import 'package:battleplan/features/schedule/presentation/event_actions.dart';
 import 'package:battleplan/features/schedule/presentation/event_assignments.dart';
@@ -980,9 +981,11 @@ class _RsvpSection extends ConsumerWidget {
 }
 
 /// Big Going / Maybe / Not going buttons for one person, with an optional
-/// note ("Leaving at halftime") and Clear, back to "No reply" (SCHED-5).
-/// Tapping the chosen answer again keeps it, or with [clearOnRepeat] (the
-/// schedule list) clears it.
+/// note ("Leaving at halftime") on the event's page (SCHED-5). Everywhere
+/// they show (the event's page, the chat's event card, the schedule list,
+/// and Your schedule) tapping the chosen answer again clears it, back to
+/// "No reply", followed by "Answer cleared · Undo", so a double tap that
+/// clears an answer is never silent (#44).
 class RsvpButtons extends ConsumerWidget {
   const new({
     required this.event,
@@ -992,7 +995,6 @@ class RsvpButtons extends ConsumerWidget {
     this.label,
     this.allowMaybe = true,
     this.compact = false,
-    this.clearOnRepeat = false,
     super.key,
   });
 
@@ -1008,9 +1010,6 @@ class RsvpButtons extends ConsumerWidget {
   /// The chat card's smaller buttons (SPEC §5.4): no icons and no note,
   /// which the event's page has.
   final bool compact;
-
-  /// A tap on the chosen answer clears it, back to "No reply".
-  final bool clearOnRepeat;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1028,9 +1027,18 @@ class RsvpButtons extends ConsumerWidget {
     }
 
     final onChanged = enabled ? pick : null;
-    final onCleared = enabled && clearOnRepeat
-        ? () =>
-              unawaited(clearRsvpWithFeedback(context, ref, event, participant))
+    // One rule everywhere (#44): a tap on the chosen answer clears it, and
+    // the snack bar's Undo puts back the answer and its note.
+    final onCleared = enabled
+        ? () => unawaited(
+            clearRsvpWithFeedback(
+              context,
+              ref,
+              event,
+              participant,
+              previous: answer,
+            ),
+          )
         : null;
     if (compact) {
       return _CardRsvpRow(
@@ -1060,17 +1068,8 @@ class RsvpButtons extends ConsumerWidget {
           statuses: statuses,
           current: current,
           compact: compact,
-          onChanged: enabled
-              ? (s) {
-                  Haptics.selection();
-                  unawaited(_answer(context, ref, s, answer?.note ?? ''));
-                }
-              : null,
-          onCleared: enabled && clearOnRepeat
-              ? () => unawaited(
-                  clearRsvpWithFeedback(context, ref, event, participant),
-                )
-              : null,
+          onChanged: onChanged,
+          onCleared: onCleared,
         ),
         if (!compact && (answer?.note.isNotEmpty ?? false))
           Padding(
@@ -1084,40 +1083,26 @@ class RsvpButtons extends ConsumerWidget {
               ),
             ),
           ),
-        // The links row: Add a note on the left, Clear on the right.
+        // Add a note under the answer. There's no separate Clear link:
+        // tapping the chosen answer again clears it, as everywhere (#44).
         if (!compact && enabled && current != null)
           ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 48),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Flexible(
-                  child: TextButton.icon(
-                    style: TextButton.styleFrom(
-                      minimumSize: const Size(48, 48),
-                      padding: EdgeInsets.zero,
-                    ),
-                    onPressed: () =>
-                        unawaited(_editNote(context, ref, current)),
-                    icon: const Icon(AppIcons.edit, size: 18),
-                    label: Text(
-                      answer?.note.isNotEmpty ?? false
-                          ? l10n.eventEditNote
-                          : l10n.eventAddNote,
-                    ),
-                  ),
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: TextButton.icon(
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(48, 48),
+                  padding: EdgeInsets.zero,
                 ),
-                TextButton(
-                  style: TextButton.styleFrom(
-                    minimumSize: const Size(48, 48),
-                    foregroundColor: GumdropColors.of(context).textMutedOnPage,
-                  ),
-                  onPressed: () => unawaited(
-                    clearRsvpWithFeedback(context, ref, event, participant),
-                  ),
-                  child: Text(l10n.eventClearAnswer),
+                onPressed: () => unawaited(_editNote(context, ref, current)),
+                icon: const Icon(AppIcons.edit, size: 18),
+                label: Text(
+                  answer?.note.isNotEmpty ?? false
+                      ? l10n.eventEditNote
+                      : l10n.eventAddNote,
                 ),
-              ],
+              ),
             ),
           ),
       ],
@@ -1173,24 +1158,100 @@ Future<void> setRsvpWithFeedback(
   }
 }
 
-/// Clears [participant]'s answer (SCHED-5) and says so if it's refused or
-/// fails.
+/// Clears [participant]'s answer (SCHED-5) and says so: "Answer cleared"
+/// with Undo, which writes [previous] (its answer and note) back (#44), or
+/// why it was refused or failed.
+///
+/// The repository, the uid, the messenger, and the words are taken before
+/// anything is awaited: once the answer is gone its buttons may rebuild or
+/// leave (an event card scrolled away, say), and Undo still has to work.
 Future<void> clearRsvpWithFeedback(
   BuildContext context,
   WidgetRef ref,
   Event event,
-  Participant participant,
-) async {
+  Participant participant, {
+  Rsvp? previous,
+}) async {
   final l10n = AppLocalizations.of(context);
+  final messenger = ScaffoldMessenger.of(context);
+  final repo = ref.read(rsvpRepositoryProvider);
+  final uid = ref.read(authUserProvider).value?.uid;
   Haptics.selection();
   try {
-    await ref.read(rsvpRepositoryProvider).clearRsvp(event, participant);
+    await repo.clearRsvp(event, participant);
   } on AppFailure catch (e) {
-    if (!context.mounted) return;
-    showAppSnackBar(
-      context,
-      e is PermissionDenied ? l10n.eventRsvpRefused : l10n.eventRsvpFailed,
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            e is PermissionDenied
+                ? l10n.eventRsvpRefused
+                : l10n.eventRsvpFailed,
+          ),
+        ),
+      );
+    return;
+  }
+  // Nothing to put back: no Undo, only the word that it's cleared.
+  final undo = previous == null || uid == null
+      ? null
+      : SnackBarAction(
+          label: l10n.eventAnswerClearedUndo,
+          onPressed: () => unawaited(
+            _restoreRsvp(
+              repo,
+              messenger,
+              l10n,
+              event,
+              RsvpAnswer(
+                participant: participant,
+                status: previous.status,
+                note: previous.note,
+              ),
+              UserId(uid),
+            ),
+          ),
+        );
+  messenger
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(
+        content: Text(l10n.eventAnswerCleared),
+        action: undo,
+        // Long enough to notice a slip and reach Undo, then it goes on its
+        // own like any other snack bar, rather than waiting to be closed.
+        duration: const Duration(seconds: 6),
+        persist: false,
+      ),
     );
+}
+
+/// Undo for a cleared answer (#44): writes it back, and says so if the
+/// rules refuse (the deadline passed in between) or it fails.
+Future<void> _restoreRsvp(
+  RsvpRepository repo,
+  ScaffoldMessengerState messenger,
+  AppLocalizations l10n,
+  Event event,
+  RsvpAnswer answer,
+  UserId by,
+) async {
+  Haptics.selection();
+  try {
+    await repo.setRsvp(event, answer, by: by);
+  } on AppFailure catch (e) {
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            e is PermissionDenied
+                ? l10n.eventRsvpRefused
+                : l10n.eventRsvpFailed,
+          ),
+        ),
+      );
   }
 }
 

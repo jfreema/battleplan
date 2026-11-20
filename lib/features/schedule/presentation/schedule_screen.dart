@@ -803,7 +803,6 @@ class ScheduleEventRow extends ConsumerWidget {
                     enabled: canAnswer,
                     allowMaybe: group.settings.allowMaybe,
                     compact: true,
-                    clearOnRepeat: true,
                   ),
               ],
             )

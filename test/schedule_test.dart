@@ -422,10 +422,15 @@ void main() {
       await tester.tap(answer('Maybe'));
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.status, RsvpStatus.maybe);
-      // The chosen one again: back to no answer.
+      // The chosen one again: back to no answer, and it says so with
+      // Undo (#44), which puts Maybe back.
       await tester.tap(answer('Maybe'));
       await tester.pumpAndSettle();
       expect(rsvps.rsvps, isEmpty);
+      expect(find.text('Answer cleared'), findsOneWidget);
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+      expect(rsvps.rsvps.single.status, RsvpStatus.maybe);
       // The rest of the card opens the event.
       await tester.tap(find.text('Practice'));
       await tester.pumpAndSettle();
@@ -1789,7 +1794,8 @@ void main() {
       expect(rsvps.rsvps.single.participantId, 'p1');
     });
 
-    testWidgets('Clear takes an answer back to No reply (SCHED-5)', (
+    testWidgets('tapping the chosen answer again takes it back to No '
+        'reply, with Undo putting back the answer and note (SCHED-5, #44)', (
       tester,
     ) async {
       final rsvps = await openSchedule(
@@ -1798,19 +1804,37 @@ void main() {
         events: [event('e1')],
       );
       await openDetails(tester, 'Practice');
-      expect(find.text('Clear'), findsNothing);
-      await tester.tap(find.text('Going').first);
+      Finder going() => find.descendant(
+        of: find.byType(RsvpButtons),
+        matching: find.text('Going'),
+      );
+      await tester.tap(going());
       await tester.pumpAndSettle();
       expect(rsvps.rsvps, hasLength(1));
-      await tester.tap(find.text('Clear'));
+      // No separate Clear link any more: one rule everywhere.
+      expect(find.text('Clear'), findsNothing);
+      // A note, so Undo has more than the answer to put back.
+      await tester.tap(find.text('Add a note'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'Leaving at halftime');
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(rsvps.rsvps.single.note, 'Leaving at halftime');
+
+      await tester.tap(going());
       await tester.pumpAndSettle();
       expect(rsvps.cleared, ['coach']);
       expect(rsvps.rsvps, isEmpty);
-      expect(find.text('Clear'), findsNothing);
+      expect(find.text('Answer cleared'), findsOneWidget);
       final buttons = tester.widget<SegmentedButton<RsvpStatus>>(
         find.byType(SegmentedButton<RsvpStatus>),
       );
       expect(buttons.selected, isEmpty);
+
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+      expect(rsvps.rsvps.single.status, RsvpStatus.going);
+      expect(rsvps.rsvps.single.note, 'Leaving at halftime');
     });
 
     testWidgets('a member who is a player answers on their own row, with no '
@@ -2480,6 +2504,11 @@ void main() {
       expect(find.text('1/20 going', findRichText: true), findsOneWidget);
       // Still in the chat: answering doesn't open the event.
       expect(find.text('Directions'), findsNothing);
+      // Going again clears it, as on the schedule (#44).
+      await tester.tap(onCard(find.text('Going')));
+      await tester.pumpAndSettle();
+      expect(rsvps.rsvps, isEmpty);
+      expect(find.text('Answer cleared'), findsOneWidget);
     });
 
     testWidgets('guardians answer for each player on the card (PLAYER-6)', (
