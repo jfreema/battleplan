@@ -1,0 +1,9 @@
+# actionlint's settings, for checking the workflows on a Mac (CI doesn't run
+# it). Release iOS runs on GitHub's "xcode-27" machine (macOS 27 with Xcode
+# 27, a GitHub-hosted public preview as of 2026-11-20), whose label actionlint
+# doesn't know yet; this is actionlint's one place to name extra labels, even
+# though the machine isn't self-hosted. Remove it when Release iOS moves to
+# macos-27.
+self-hosted-runner:
+  labels:
+    - xcode-27

@@ -67,7 +67,7 @@ Setting it up (the key and Services ID, task 107) happens in your Apple Develope
 - ✅ 3.2 👤 **Create the app in App Store Connect** under the name "Battleplan." The name has to be free on the App Store.
 - ✅ 3.3 **iPhone release builds** (task 209). *Release iOS in the Actions tab; its first good run (2026-10-17) uploaded version 0.1.0, build 272, to TestFlight, after an iPhone was registered on the team so automatic signing could work:*
   - signed for the App Store;
-  - built with Xcode 26 or later and the iOS 26 SDK, required since April 28, 2026 (this Mac has Xcode 27);
+  - built with Xcode 26 or later and the iOS 26 SDK, required since April 28, 2026, and with Xcode 27 and the iOS 27 SDK from April 2027 (Apple's ITMS-90725 notice on 1.4.3 build 531, 2026-11-20). Release iOS builds on GitHub's `xcode-27` machine since 2026-11-20 and stops early if its iOS SDK is older than 27 (this Mac has Xcode 27 too);
   - built with `FIREBASE_ANALYTICS_WITHOUT_ADID=true`, as Info.plist notes, so Analytics carries no advertising ID;
   - uploaded to TestFlight.
 - ⬜ 3.4 👤 **App Privacy labels** from the phase 1 answers, [STORE-PRIVACY.md](STORE-PRIVACY.md) (task 130).

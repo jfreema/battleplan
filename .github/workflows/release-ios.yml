@@ -26,6 +26,10 @@ on:
 env:
   # The same Flutter as ci.yml and release.yml.
   FLUTTER_VERSION: 3.50.0
+  # The oldest iOS SDK the Xcode step lets build: App Store uploads need the
+  # iOS 27 SDK from April 2027. Falling back to macos-26 (Xcode 26) before
+  # then means setting this to 26 as well.
+  MIN_IOS_SDK: 27
   # The Apple Developer team (individual membership).
   TEAM_ID: 885XHF7XLL
   # Analytics without the advertising ID (Info.plist, store checklist 3.3).
@@ -74,9 +78,14 @@ jobs:
   release:
     name: Build and upload to TestFlight
     needs: checks
-    # macOS 26 with Xcode 26: App Store uploads need the iOS 26 SDK or later
-    # (store checklist 3.3).
-    runs-on: macos-26
+    # Xcode 27 and the iOS 27 SDK, which App Store uploads need from April
+    # 2027 (Apple's ITMS-90725 notice on 1.4.3 build 531; store checklist
+    # 3.3). GitHub has Xcode 27 only on its "xcode-27" machine (macOS 27, a
+    # public preview as of 2026-11-20); macos-26 stays on Xcode 26, one major
+    # Xcode per macOS. Move to macos-27 once GitHub offers that label. If the
+    # preview machine misbehaves, macos-26 still uploads until April 2027,
+    # with MIN_IOS_SDK at 26.
+    runs-on: xcode-27
     timeout-minutes: 60
     permissions:
       contents: read
@@ -92,8 +101,23 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
+      # The machine's default Xcode, not a pinned /Applications/Xcode_27.x
+      # path, which GitHub removes as patch versions come and go. Stops here,
+      # before the 15-minute build, if its iOS SDK is older than MIN_IOS_SDK
+      # (27: App Store Connect refuses older from April 2027). It fails
+      # closed: an SDK version it can't read stops the run too.
       - name: Xcode
-        run: xcodebuild -version
+        run: |
+          xcodebuild -version
+          sdk=$(xcrun --sdk iphoneos --show-sdk-version)
+          echo "iOS SDK $sdk"
+          echo "IOS_SDK=$sdk" >> "$GITHUB_ENV"
+          if [ "${sdk%%.*}" -ge "$MIN_IOS_SDK" ] 2>/dev/null; then
+            echo "Building with the iOS $sdk SDK."
+          else
+            echo "::error::This machine's iOS SDK is '$sdk', and Release iOS needs the iOS $MIN_IOS_SDK SDK or later (App Store uploads need 27 from April 2027)."
+            exit 1
+          fi
 
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
@@ -184,4 +208,4 @@ jobs:
 
       - name: Summary
         run: |
-          echo "Uploaded prod build **$BUILD_NUMBER** (\`${GITHUB_SHA:0:7}\`) to App Store Connect. It shows in TestFlight once Apple finishes processing it, usually within an hour." >> "$GITHUB_STEP_SUMMARY"
+          echo "Uploaded prod build **$BUILD_NUMBER** (\`${GITHUB_SHA:0:7}\`), built with the iOS $IOS_SDK SDK, to App Store Connect. It shows in TestFlight once Apple finishes processing it, usually within an hour." >> "$GITHUB_STEP_SUMMARY"
