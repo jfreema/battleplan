@@ -6,11 +6,14 @@
 // the phone is a wide one so the small title has room.
 
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/widgets/back_chevron.dart';
 import 'package:battleplan/core/widgets/team_switcher_button.dart';
 import 'package:battleplan/features/chat/presentation/messages_button.dart';
 import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/groups/presentation/teams_screen.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'helpers/scenes.dart';
@@ -293,6 +296,75 @@ void main() {
     // Both have the 20 px margin inside, so their edges meet.
     expect(tester.getTopLeft(title).dx, tester.getTopLeft(column).dx);
     expect(tester.getSize(title).width, tester.getSize(column).width);
+  });
+
+  // #29 (owner's go 2026-11-20): on a computer the back row's chevron and
+  // icons stood at the window's edges, far from the page's column, and
+  // Messages and Notifications stretched across the window.
+  testWidgets('on a wide screen the back row, the page and its button keep '
+      "to the page's column", (tester) async {
+    await pumpTeam(tester, scheme: TeamScheme.army, size: wideSize);
+    await goTo(tester, '/teams');
+    for (final (route, title) in [
+      ('/notifications', 'Notifications'),
+      ('/messages', 'Messages'),
+    ]) {
+      await pushTo(tester, route);
+      final column = tester.getRect(find.widgetWithText(PageTitle, title));
+      expect(column.width, 560);
+      expect(column.center.dx, closeTo(wideSize.width / 2, 0.01));
+      // The chevron at the column's left, the icons inside its right.
+      final back = tester.getRect(find.byType(BackChevron));
+      expect(back.left, greaterThanOrEqualTo(column.left));
+      expect(back.left, lessThan(column.left + 20));
+      for (final icon in [
+        ...tester.widgetList(find.byType(IconButton)),
+        ...tester.widgetList(find.byType(FloatingActionButton)),
+      ]) {
+        final rect = tester.getRect(find.byWidget(icon));
+        expect(rect.left, greaterThanOrEqualTo(column.left), reason: title);
+        expect(rect.right, lessThanOrEqualTo(column.right), reason: title);
+      }
+      tester.element(find.byType(PageTitle)).pop();
+      await tester.pumpAndSettle();
+    }
+  });
+
+  testWidgets("on a wide screen Teams' and Profile's titles and icons keep "
+      "to the page's column", (tester) async {
+    await pumpTeam(tester, scheme: TeamScheme.army, size: wideSize);
+    for (final route in ['/teams', '/profile']) {
+      await goTo(tester, route);
+      final bar = tester.getRect(
+        find
+            .descendant(
+              of: find.byType(TopLevelBar),
+              matching: find.byType(ConstrainedBox),
+            )
+            .first,
+      );
+      final page = tester.getRect(find.byType(ListView).first);
+      expect(bar.width, 560, reason: route);
+      expect(bar.left, page.left, reason: route);
+      expect(bar.right, page.right, reason: route);
+    }
+  });
+
+  testWidgets("on a wide screen a team's header keeps to the chat's column, "
+      'everything in it still there', (tester) async {
+    await pumpTeam(tester, scheme: TeamScheme.army, size: wideSize);
+    final chat = tester.getRect(find.byType(StatefulNavigationShell));
+    expect(chat.width, Breakpoints.contentMax);
+    for (final part in [
+      find.byType(BackChevron),
+      find.byType(TeamSwitcherButton),
+      find.byType(MessagesButton),
+      find.byTooltip('Team settings'),
+    ]) {
+      final rect = tester.getRect(part.first);
+      expect(rect.left, greaterThanOrEqualTo(chat.left));
+      expect(rect.right, lessThanOrEqualTo(chat.right));
+    }
   });
 
   testWidgets('the small title stays out where it would crowd the back '

@@ -93,7 +93,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         bottom: false,
         child: Column(
           children: [
-            TopLevelBar(title: l10n.profile),
+            // Over the rows' column on a wide screen (#29).
+            TopLevelBar(title: l10n.profile, maxWidth: 560),
             Expanded(
               child: Align(
                 alignment: Alignment.topCenter,

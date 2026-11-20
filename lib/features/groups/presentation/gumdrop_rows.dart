@@ -57,7 +57,10 @@ class GumdropScaffold extends StatefulWidget {
   /// a body that keeps to one (560 for most, as [PageList]): the big
   /// title sits in a column as wide, centered, so on a wide screen or in a
   /// side panel it lines up with the page instead of standing at the
-  /// edge (#14, 2026-11-16). Null for a body as wide as the screen.
+  /// edge (#14, 2026-11-16). The back row keeps to the same column, the
+  /// chevron at its left and the actions at its right, rather than the
+  /// window's far edges (#29, 2026-11-20). Null for a body as wide as the
+  /// screen.
   final double? maxWidth;
 
   @override
@@ -105,44 +108,53 @@ class _GumdropScaffoldState extends State<GumdropScaffold> {
           };
     final actions = widget.actions ?? const <Widget>[];
     return Scaffold(
-      appBar: AppBar(
-        toolbarHeight: 48,
-        automaticallyImplyLeading: false,
-        // The back row isn't the heading; the title is, and names the
-        // route.
-        excludeHeaderSemantics: true,
-        titleSpacing: 4,
-        title: back == null
-            ? null
-            : Align(alignment: AlignmentDirectional.centerStart, child: back),
-        actions: actions,
-        actionsPadding: const EdgeInsets.only(right: 4),
-        // A hairline under the row once the page scrolls under it, so its
-        // edge shows; none at the top, where the title sits below it.
-        shape: _away
-            ? Border(
-                bottom: BorderSide(color: GumdropColors.of(context).divider),
-              )
-            : null,
-        flexibleSpace: SafeArea(
-          bottom: false,
-          child: SizedBox(
-            height: 48,
-            child: _SmallTitle(
-              title: widget.title,
-              shown: _away,
-              // Where the back button and the actions are, so the small
-              // title, centered, never runs into either.
-              left: back == null
-                  ? 4
-                  : 4 + BackChevron.widthOf(context, backLabel),
-              right: 4 + 48.0 * actions.length,
+      appBar: _ColumnBar(
+        maxWidth: widget.maxWidth,
+        bar: AppBar(
+          toolbarHeight: 48,
+          automaticallyImplyLeading: false,
+          // The back row isn't the heading; the title is, and names the
+          // route.
+          excludeHeaderSemantics: true,
+          titleSpacing: 4,
+          title: back == null
+              ? null
+              : Align(alignment: AlignmentDirectional.centerStart, child: back),
+          actions: actions,
+          actionsPadding: const EdgeInsets.only(right: 4),
+          // A hairline under the row once the page scrolls under it, so its
+          // edge shows; none at the top, where the title sits below it. As
+          // wide as the column, as the team header's is.
+          shape: _away
+              ? Border(
+                  bottom: BorderSide(color: GumdropColors.of(context).divider),
+                )
+              : null,
+          flexibleSpace: SafeArea(
+            bottom: false,
+            child: SizedBox(
+              height: 48,
+              child: _SmallTitle(
+                title: widget.title,
+                shown: _away,
+                // Where the back button and the actions are, so the small
+                // title, centered, never runs into either.
+                left: back == null
+                    ? 4
+                    : 4 + BackChevron.widthOf(context, backLabel),
+                right: 4 + 48.0 * actions.length,
+              ),
             ),
           ),
         ),
       ),
       bottomNavigationBar: widget.bottomNavigationBar,
       floatingActionButton: widget.floatingActionButton,
+      // The button at the column's corner, not the window's (#29).
+      floatingActionButtonLocation: switch (widget.maxWidth) {
+        final max? => _ColumnEndFloat(max),
+        null => null,
+      },
       body: NestedScrollView(
         controller: _outer,
         headerSliverBuilder: (context, _) => [
@@ -174,6 +186,60 @@ class _GumdropScaffoldState extends State<GumdropScaffold> {
         ),
       ),
     );
+  }
+}
+
+/// [GumdropScaffold]'s back row in the page's centered column of
+/// [maxWidth] on a wide screen (#29, 2026-11-20): on a computer or an iPad
+/// the chevron stood at the window's left edge and the icons at its right,
+/// far from a 560 px page in the middle. The margins are the page's own
+/// color, as the bar is. As wide as the window when [maxWidth] is null or
+/// the window is no wider than it.
+class _ColumnBar extends StatelessWidget implements PreferredSizeWidget {
+  const new({required this.bar, this.maxWidth});
+
+  final AppBar bar;
+  final double? maxWidth;
+
+  @override
+  Size get preferredSize => bar.preferredSize;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, box) => Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: _margin(box.maxWidth, maxWidth),
+      ),
+      child: bar,
+    ),
+  );
+}
+
+/// The even margin either side of a centered column of [column] in
+/// [width]: none on a phone, or with no column.
+double _margin(double width, double? column) =>
+    column == null ? 0 : math.max<double>(0, (width - column) / 2);
+
+/// [GumdropScaffold]'s floating button at the bottom corner of the page's
+/// centered column of [maxWidth] rather than the window's (#29,
+/// 2026-11-20): Messages' New message stood far from its rows on a
+/// computer. Where Material puts it on a phone.
+class _ColumnEndFloat extends FloatingActionButtonLocation {
+  const new(this.maxWidth);
+
+  final double maxWidth;
+
+  @override
+  Offset getOffset(ScaffoldPrelayoutGeometry scaffoldGeometry) {
+    final end = FloatingActionButtonLocation.endFloat.getOffset(
+      scaffoldGeometry,
+    );
+    final margin = _margin(scaffoldGeometry.scaffoldSize.width, maxWidth);
+    // The end is the right in left-to-right text, the left otherwise.
+    return switch (scaffoldGeometry.textDirection) {
+      TextDirection.ltr => end.translate(-margin, 0),
+      TextDirection.rtl => end.translate(margin, 0),
+    };
   }
 }
 
@@ -428,37 +494,53 @@ String? backLabelFrom(BuildContext context, String usual) {
 /// Lilita 27 with the scheme's drop, 20 px from the left, and [actions]
 /// (48 px icon buttons) on the right.
 class TopLevelBar extends StatelessWidget {
-  const new({required this.title, this.actions = const [], super.key});
+  const new({
+    required this.title,
+    this.actions = const [],
+    this.maxWidth,
+    super.key,
+  });
 
   final String title;
   final List<Widget> actions;
 
+  /// The width of the page's centered column under the bar, for a page
+  /// that keeps to one (Teams and Profile, 560): the title and icons keep
+  /// to it on a wide screen, at its left and right, instead of the
+  /// window's far edges (#29, 2026-11-20). Null for the whole width.
+  final double? maxWidth;
+
   @override
-  Widget build(BuildContext context) => ConstrainedBox(
-    constraints: const BoxConstraints(minHeight: 52),
-    child: Padding(
-      padding: const EdgeInsets.only(left: 20, right: 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: Semantics(
-              header: true,
-              child: Padding(
-                // Level with the icons' center.
-                padding: const EdgeInsets.only(top: 3),
-                child: Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  // From the 32 px style, for its 2 px drop.
-                  style: Theme.of(context).textTheme.headlineMedium
-                      ?.copyWith(fontSize: 27, height: 30 / 27),
+  Widget build(BuildContext context) => Center(
+    child: ConstrainedBox(
+      constraints: BoxConstraints(
+        minHeight: 52,
+        maxWidth: maxWidth ?? double.infinity,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.only(left: 20, right: 8),
+        child: Row(
+          children: [
+            Expanded(
+              child: Semantics(
+                header: true,
+                child: Padding(
+                  // Level with the icons' center.
+                  padding: const EdgeInsets.only(top: 3),
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    // From the 32 px style, for its 2 px drop.
+                    style: Theme.of(context).textTheme.headlineMedium
+                        ?.copyWith(fontSize: 27, height: 30 / 27),
+                  ),
                 ),
               ),
             ),
-          ),
-          ...actions,
-        ],
+            ...actions,
+          ],
+        ),
       ),
     ),
   );

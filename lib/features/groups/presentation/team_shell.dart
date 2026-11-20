@@ -394,7 +394,18 @@ class _TeamShellState extends ConsumerState<TeamShell> {
                   bottom: false,
                   child: Column(
                     children: [
-                      header,
+                      // The header keeps to the chat's column, its name
+                      // over the messages and its icons at the column's
+                      // right, rather than the window's far edges (#29,
+                      // 2026-11-20). Everything in it stays.
+                      Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            maxWidth: Breakpoints.contentMax,
+                          ),
+                          child: header,
+                        ),
+                      ),
                       banner,
                       Expanded(
                         child: Center(

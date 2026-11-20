@@ -35,6 +35,10 @@ class MessagesScreen extends ConsumerWidget {
     // The app's frame (#14, 2026-11-16; it had a plain bar), back to the
     // team whose header opened it, or to Teams.
     return GumdropScaffold(
+      // In the 560 px column that Settings and Teams keep to on a wide
+      // screen, the title and back row over it, rather than rows stretched
+      // across the window with the time at its far right (#29).
+      maxWidth: 560,
       title: l10n.messagesTitle,
       backLabel: backLabelFrom(context, l10n.tabTeams),
       floatingActionButton: FloatingActionButton.extended(
@@ -48,31 +52,49 @@ class MessagesScreen extends ConsumerWidget {
         icon: const Icon(AppIcons.newMessage),
         label: Text(l10n.newMessage),
       ),
-      body: switch (chats) {
-        AsyncValue(value: final list?) when list.isEmpty => EmptyState(
-          icon: AppIcons.directMessage,
-          message: l10n.messagesEmpty,
-        ),
-        AsyncValue(value: final list?) => ListView.builder(
-          // Plain rows on the page between hairlines (SPEC §7.3), with room
-          // under the last for New message.
-          padding: const EdgeInsets.fromLTRB(Space.page, 0, Space.page, 96),
-          itemCount: list.length,
-          itemBuilder: (_, i) => PageListRow(
-            index: i,
-            child: _ChatRow(chat: list[i]),
+      body: _Column(
+        child: switch (chats) {
+          AsyncValue(value: final list?) when list.isEmpty => EmptyState(
+            icon: AppIcons.directMessage,
+            message: l10n.messagesEmpty,
           ),
-        ),
-        AsyncError() => LoadError(
-          message: l10n.messagesLoadError,
-          // The conversations come from my memberships' stream: read it
-          // again.
-          onRetry: () => ref.invalidate(myDirectMembershipsProvider),
-        ),
-        _ => const SkeletonList(),
-      },
+          AsyncValue(value: final list?) => ListView.builder(
+            // Plain rows on the page between hairlines (SPEC §7.3), with room
+            // under the last for New message.
+            padding: const EdgeInsets.fromLTRB(Space.page, 0, Space.page, 96),
+            itemCount: list.length,
+            itemBuilder: (_, i) => PageListRow(
+              index: i,
+              child: _ChatRow(chat: list[i]),
+            ),
+          ),
+          AsyncError() => LoadError(
+            message: l10n.messagesLoadError,
+            // The conversations come from my memberships' stream: read it
+            // again.
+            onRetry: () => ref.invalidate(myDirectMembershipsProvider),
+          ),
+          _ => const SkeletonList(),
+        },
+      ),
     );
   }
+}
+
+/// [child] in the page's 560 px column, centered, on a wide screen (#29).
+class _Column extends StatelessWidget {
+  const new({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Align(
+    alignment: Alignment.topCenter,
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 560),
+      child: child,
+    ),
+  );
 }
 
 /// One conversation in Messages: photo, name, the newest message ("You:"

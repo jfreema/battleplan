@@ -149,6 +149,8 @@ class TeamsScreen extends ConsumerWidget {
             // Admin panel for super admins.
             TopLevelBar(
               title: l10n.tabTeams,
+              // Over the cards' column on a wide screen (#29).
+              maxWidth: 560,
               actions: const [
                 AdminPanelButton(),
                 MessagesButton(),

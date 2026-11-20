@@ -196,6 +196,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         ? null
         : ref.watch(groupProvider(groupId)).value?.name;
     return GumdropScaffold(
+      // In the 560 px column that Settings and Teams keep to on a wide
+      // screen, the title and back row over it, rather than rows stretched
+      // across the window with "1h" at its far right (#29).
+      maxWidth: 560,
       title: l10n.notificationsTooltip,
       backLabel: groupId == null
           ? backLabelFrom(context, l10n.tabTeams)
@@ -231,7 +235,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             label: Text(l10n.markAllRead),
           ),
       ],
-      body: body,
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: body,
+        ),
+      ),
     );
   }
 }

@@ -327,6 +327,8 @@ go_router routes. The same paths are used for web URLs, Universal/App Links, and
   | < 840 px (phones, narrow browser windows) | **Bottom navigation bar** with Chat · Schedule · Documents · Plays | |
   | ≥ 840 px (desktop browsers, tablets in landscape) | Same four destinations, same order and icons, as a **left navigation rail** | Content width is capped (~840 px for chat) so it stays readable. *(Decision D9; can be overridden to keep the bottom bar everywhere.)* |
 
+  On wide screens each page keeps to one centered column, its bar included (#29, 2026-11-20): `TopLevelBar` (Teams, Profile) and `GumdropScaffold` take a `maxWidth` (560 for lists and settings, Messages and Notifications among them) and center their title and icons in it; `GumdropScaffold` pads its `AppBar` evenly either side (`_ColumnBar`) and puts a floating button at the column's corner (`_ColumnEndFloat`); the team shell centers its header in the chat's `Breakpoints.contentMax` (840) column. Below those widths nothing changes.
+
 ### 5.6 Offline and performance
 
 - Firestore offline persistence is on: the default on mobile, enabled explicitly on web.
