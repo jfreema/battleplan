@@ -4,6 +4,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
@@ -382,7 +383,13 @@ class _AssignmentTile extends ConsumerWidget {
         ? (mine ? who : l10n.assignmentVolunteered(who))
         : l10n.assignmentAssigned(who);
     final accent = _kindAccent(c, a.kind);
-    final buttons = GumdropButtons.of(context);
+    // On the card below, in its colors (Candy Pop's differ from the page's,
+    // #72).
+    final buttons = GumdropButtons(
+      card,
+      focusRing: card.textOnPage,
+      style: GumdropStyle.of(context),
+    );
 
     return GumdropCard(
       padding: const EdgeInsets.fromLTRB(12, 10, 6, 10),

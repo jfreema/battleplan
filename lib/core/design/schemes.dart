@@ -30,7 +30,8 @@ abstract final class CandyFaces {
 
 /// The 32 color roles of one Open Field color scheme (SPEC SET-2, §7.4),
 /// from the design's schemes.json, plus the eight values the app derives
-/// for colors the design doesn't draw. [GumdropColors.forScheme] fills the
+/// for colors the design doesn't draw, and four for cards whose colors
+/// aren't the page's (Candy Pop's white cards, #72). [GumdropColors.forScheme] fills the
 /// theme from them.
 @immutable
 class SchemeRoles {
@@ -49,6 +50,10 @@ class SchemeRoles {
     required this.cardMuted,
     required this.cardTrack,
     required this.cardOutline,
+    required this.cardText,
+    required this.cardField,
+    required this.cardMaybeText,
+    required this.popup,
     required this.candyInk,
     required this.candyLipCoral,
     required this.candyLipMint,
@@ -80,7 +85,7 @@ class SchemeRoles {
   /// Page fill; ring around the unread dot and the badge; the game screen's bottom fade.
   final Color page;
 
-  /// Main text and icons on the page, on cards and in the tab bar; status bar; home indicator; ring around the picked icon color.
+  /// Main text and icons on the page and in the tab bar (and on cards, but in Candy Pop: [cardText]); status bar; home indicator; ring around the picked icon color.
   final Color text;
 
   /// Secondary text and icons on the page (times, jersey numbers, chevrons, labels, descriptions); idle tabs; composer hint.
@@ -118,6 +123,26 @@ class SchemeRoles {
 
   /// Outline of the three choices on a card nobody has answered.
   final Color cardOutline;
+
+  /// Main text and icons on a card, a sheet, a dialog and a panel: [text]
+  /// in every scheme but Candy Pop, whose cards are white with TeamRank's
+  /// navy ink on a blue page (#72).
+  final Color cardText;
+
+  /// Text fields on a card, a sheet or a dialog: [field] in every scheme
+  /// but Candy Pop's, TeamRank's pale sky blue under navy type.
+  final Color cardField;
+
+  /// Maybe on a card: the Maybe count, the ? on unpicked Maybe buttons
+  /// ([maybeText] in every scheme but Candy Pop, whose page needs a light
+  /// yellow and whose white cards a dark one).
+  final Color cardMaybeText;
+
+  /// Material's own pop-ups opened from the page, whose rows take the
+  /// page's text color: menus, and the date and time pickers. The [card]
+  /// in every scheme but Candy Pop, where a white menu would hide its
+  /// white rows, so they keep the deeper blue.
+  final Color popup;
 
   /// Text, icons and marks on candy faces: icons, team badges, badge and unread count, your poll bubble, picked RSVP, send, +, crest, picked color's check.
   final Color candyInk;
@@ -213,6 +238,10 @@ class SchemeRoles {
     cardMuted: Color(0xE0F4EAD0),
     cardTrack: Color(0x38F4EAD0),
     cardOutline: Color(0x73F4EAD0),
+    cardText: Color(0xFFF4EAD0),
+    cardField: Color(0xFF2B2F18),
+    cardMaybeText: Color(0xFFF8D84A),
+    popup: Color(0xFF575A3A),
     candyInk: Color(0xFF1A1A18),
     candyLipCoral: Color(0xFF1A1A18),
     candyLipMint: Color(0xFF1A1A18),
@@ -256,6 +285,10 @@ class SchemeRoles {
     cardMuted: Color(0xFF5F5A4D),
     cardTrack: Color(0x1F1A1A18),
     cardOutline: Color(0x661A1A18),
+    cardText: Color(0xFF1A1A18),
+    cardField: Color(0xFFEFE6CC),
+    cardMaybeText: Color(0xFF8F6500),
+    popup: Color(0xFFFFFFFF),
     candyInk: Color(0xFF1A1A18),
     candyLipCoral: Color(0xFF1A1A18),
     candyLipMint: Color(0xFF1A1A18),
@@ -299,6 +332,10 @@ class SchemeRoles {
     cardMuted: Color(0xC7F4EAD0),
     cardTrack: Color(0x2EF4EAD0),
     cardOutline: Color(0x73F4EAD0),
+    cardText: Color(0xFFF4EAD0),
+    cardField: Color(0xFF1F1F1C),
+    cardMaybeText: Color(0xFFF8D84A),
+    popup: Color(0xFF1B1B19),
     candyInk: Color(0xFF1A1A18),
     candyLipCoral: Color(0xFFC0262F),
     candyLipMint: Color(0xFF137236),
@@ -342,6 +379,10 @@ class SchemeRoles {
     cardMuted: Color(0xFFC2CCE8),
     cardTrack: Color(0x38F2F6FF),
     cardOutline: Color(0x73F2F6FF),
+    cardText: Color(0xFFF2F6FF),
+    cardField: Color(0xFF07102A),
+    cardMaybeText: Color(0xFFF8D84A),
+    popup: Color(0xFF18284C),
     candyInk: Color(0xFF050C1F),
     candyLipCoral: Color(0xFFC0262F),
     candyLipMint: Color(0xFF137236),
@@ -385,6 +426,10 @@ class SchemeRoles {
     cardMuted: Color(0xFF34476E),
     cardTrack: Color(0x1F0B1531),
     cardOutline: Color(0x660B1531),
+    cardText: Color(0xFF0B1531),
+    cardField: Color(0xFFE3EEFA),
+    cardMaybeText: Color(0xFF785200),
+    popup: Color(0xFFFFFFFF),
     candyInk: Color(0xFF0B1531),
     candyLipCoral: Color(0xFF0B1531),
     candyLipMint: Color(0xFF0B1531),
@@ -416,9 +461,13 @@ class SchemeRoles {
   /// Candy Pop (#70, owner's request 2026-11-20: "add a scheme that uses
   /// the colors from the TeamRank app"): TeamRank's loud blue page (a shade
   /// deeper than its 1E5BFF, so tinted text reads at 4.5:1), white type,
-  /// its navy ink for every outline, lip and hard drop, and deeper blue
-  /// cards. TeamRank's own cards are white, but here sheets, dialogs, and
-  /// menus share the page's text color, so cards stay dark enough for it.
+  /// and its navy ink for every outline, lip and hard drop. Its cards,
+  /// sheets and dialogs are white with navy type, as TeamRank's are (#72,
+  /// owner's report 2026-11-20: "The candy pop theme should have white
+  /// backgrounds inside the bubbles, like it does on the teamrank site"),
+  /// so it's the one scheme whose cards take their own text colors; its
+  /// fields on a card are TeamRank's sky blue. Material's menus and
+  /// pickers keep the deeper blue ([popup]).
   static const candypop = SchemeRoles(
     page: Color(0xFF1748D4),
     text: Color(0xFFFFFFFF),
@@ -429,11 +478,15 @@ class SchemeRoles {
     tabbarLine: Color(0xFF0B1640),
     field: Color(0xFF1238A8),
     fieldRim: Color(0x33FFFFFF),
-    card: Color(0xFF1238A8),
+    card: Color(0xFFFFFFFF),
     cardRim: Color(0xFF0B1640),
-    cardMuted: Color(0xFFDCE6FF),
-    cardTrack: Color(0x38FFFFFF),
-    cardOutline: Color(0x80FFFFFF),
+    cardMuted: Color(0xFF4B5A8C),
+    cardTrack: Color(0x1F0B1640),
+    cardOutline: Color(0x660B1640),
+    cardText: Color(0xFF0B1640),
+    cardField: Color(0xFFDDE8FF),
+    cardMaybeText: Color(0xFF785200),
+    popup: Color(0xFF1238A8),
     candyInk: Color(0xFF0B1640),
     candyLipCoral: Color(0xFF0B1640),
     candyLipMint: Color(0xFF0B1640),
@@ -446,16 +499,16 @@ class SchemeRoles {
     notGoingIcon: Color(0xFFFFC7C7),
     goingText: Color(0xFFB5FAD0),
     maybeText: Color(0xFFFFE45C),
-    cardGoingText: Color(0xFFB5FAD0),
-    cardAccentText: Color(0xFFFFC7C7),
+    cardGoingText: Color(0xFF137236),
+    cardAccentText: Color(0xFFC0262F),
     gameText: Color(0xFFFFCB99),
-    typeGame: Color(0xFFFFCB99),
-    typePractice: Color(0xFFDDD0FF),
-    typeOther: Color(0xFFFFC7E6),
+    typeGame: Color(0xFF9E4B0A),
+    typePractice: Color(0xFF6C46CC),
+    typeOther: Color(0xFFAE2770),
     grapePageText: Color(0xFFDDD0FF),
     bubblegumPageText: Color(0xFFFFC7E6),
     blueRaspberryPageText: Color(0xFFCFE3FF),
-    blueRaspberryCardText: Color(0xFFCFE3FF),
+    blueRaspberryCardText: Color(0xFF1748D4),
     grapeLip: Color(0xFF0B1640),
     bubblegumLip: Color(0xFF0B1640),
     blueRaspberryLip: Color(0xFF0B1640),
@@ -475,8 +528,9 @@ class SchemeRoles {
 
 /// What each scheme is called, and whether its page is dark.
 extension TeamSchemeLook on TeamScheme {
-  /// Light text on a dark page and dark cards (Army green, Dark, Navy,
-  /// and Candy Pop's deep blue).
+  /// Light text on a dark page (Army green, Dark, Navy, and Candy Pop's
+  /// deep blue). The cards are dark too, but Candy Pop's, which are white
+  /// ([GumdropColors.brightness] tells a card's own).
   bool get isDark =>
       this == TeamScheme.army ||
       this == TeamScheme.dark ||

@@ -61,6 +61,7 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
     required this.roles,
     required this.page,
     required this.surface,
+    required this.popup,
     required this.surfaceBorder,
     required this.surfaceBorderWidth,
     required this.raisedFace,
@@ -137,6 +138,9 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
       onCard: onCard,
       page: r.page,
       surface: r.card,
+      // On a card, pop-ups are cards too; from the page, Candy Pop's keep
+      // the deeper blue its white rows read on (#72).
+      popup: onCard ? r.card : r.popup,
       surfaceBorder: r.cardRim,
       surfaceBorderWidth: 2,
       raisedFace: const Color(0x00000000),
@@ -145,22 +149,24 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
       raisedHighlight: const Color(0x00000000),
       raisedLip: const Color(0x00000000),
       well: onCard ? r.cardTrack : r.field,
-      inputFill: r.field,
+      inputFill: onCard ? r.cardField : r.field,
       inputBorder: onCard ? r.cardOutline : r.outline,
       divider: onCard ? r.cardTrack : r.hairline,
       switchOffTrack: onCard ? r.cardTrack : r.field,
-      textPrimary: r.text,
+      // A card's own text where it isn't the page's (Candy Pop's navy on
+      // white, #72).
+      textPrimary: onCard ? r.cardText : r.text,
       textMuted: r.cardMuted,
-      textOnPage: r.text,
+      textOnPage: onCard ? r.cardText : r.text,
       textMutedOnPage: onCard ? r.cardMuted : r.pageMuted,
       successOnPage: onCard ? r.cardGoingText : r.goingText,
       ink: r.candyInk,
-      headingText: r.text,
+      headingText: onCard ? r.cardText : r.text,
       headingShadow: onCard ? const Color(0x00000000) : r.titleDrop,
-      headingTextOnCard: r.text,
+      headingTextOnCard: r.cardText,
       headingShadowOnCard: const Color(0x00000000),
       pageShadow: r.cardRim,
-      selectedRingOuter: r.text,
+      selectedRingOuter: onCard ? r.cardText : r.text,
       swatchInsetRing: onCard ? r.cardOutline : r.outline,
       badgeRing: onCard ? r.card : r.page,
       outline: onCard ? r.cardOutline : r.outline,
@@ -191,7 +197,12 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
         r.goingText,
         r.cardGoingText,
       ),
-      lemon: candy(CandyFaces.lemon, r.candyLipLemon, r.maybeText, r.maybeText),
+      lemon: candy(
+        CandyFaces.lemon,
+        r.candyLipLemon,
+        r.maybeText,
+        r.cardMaybeText,
+      ),
       tangerine: candy(
         CandyFaces.tangerine,
         r.candyLipTangerine,
@@ -250,6 +261,11 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
   /// Cards, sheets, dialogs.
   final Color surface;
 
+  /// Material's menus and date and time pickers: [surface], but from
+  /// Candy Pop's page, the deeper blue its rows' white reads on
+  /// ([SchemeRoles.popup]).
+  final Color popup;
+
   /// A card's 2 px rim, and its hard lip.
   final Color surfaceBorder;
 
@@ -286,13 +302,14 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
   /// An off switch's track.
   final Color switchOffTrack;
 
-  /// Text on cards and on the page.
+  /// Text in this context: on the page, or on a card.
   final Color textPrimary;
 
   /// Secondary text on a card.
   final Color textMuted;
 
-  /// Text straight on the page.
+  /// Text straight on what this context is drawn on (the page, or in the
+  /// card context the card): Material's onSurface.
   final Color textOnPage;
 
   /// Secondary text straight on the page.
@@ -386,10 +403,14 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
   /// stencil eyebrows are muted text since #12.)
   final GumdropAccent sticker;
 
-  /// Light, or dark, for Material and the status bar: the page and the
-  /// cards agree in every scheme.
-  Brightness get brightness =>
-      scheme.isDark ? Brightness.dark : Brightness.light;
+  /// Light, or dark, for Material and the status bar: the page's, or in
+  /// the card context the card's. They agree in every scheme but Candy
+  /// Pop, whose white cards are light on its dark blue page (#72).
+  Brightness get brightness => onCard
+      ? ThemeData.estimateBrightnessForColor(surface)
+      : scheme.isDark
+      ? Brightness.dark
+      : Brightness.light;
 
   /// What text sits on in this context: the page, or a card.
   Color get background => onCard ? surface : page;
@@ -430,6 +451,7 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
     bool? onCard,
     Color? page,
     Color? surface,
+    Color? popup,
     Color? surfaceBorder,
     double? surfaceBorderWidth,
     Color? raisedFace,
@@ -480,6 +502,7 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
     onCard: onCard ?? this.onCard,
     page: page ?? this.page,
     surface: surface ?? this.surface,
+    popup: popup ?? this.popup,
     surfaceBorder: surfaceBorder ?? this.surfaceBorder,
     surfaceBorderWidth: surfaceBorderWidth ?? this.surfaceBorderWidth,
     raisedFace: raisedFace ?? this.raisedFace,
@@ -538,6 +561,7 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
       onCard: near.onCard,
       page: c(page, other.page),
       surface: c(surface, other.surface),
+      popup: c(popup, other.popup),
       surfaceBorder: c(surfaceBorder, other.surfaceBorder),
       surfaceBorderWidth: d(surfaceBorderWidth, other.surfaceBorderWidth),
       raisedFace: c(raisedFace, other.raisedFace),

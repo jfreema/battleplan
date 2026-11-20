@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
@@ -321,12 +322,15 @@ class _Choice extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Card(
     margin: const EdgeInsets.only(bottom: Space.sm),
-    child: ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      subtitle: subtitle == null ? null : Text(subtitle!),
-      trailing: const Icon(AppIcons.chevronRight),
-      onTap: onTap,
+    // In the card's colors: Candy Pop's are white under navy (#72).
+    child: GumdropSurface(
+      child: ListTile(
+        leading: Icon(icon),
+        title: Text(title),
+        subtitle: subtitle == null ? null : Text(subtitle!),
+        trailing: const Icon(AppIcons.chevronRight),
+        onTap: onTap,
+      ),
     ),
   );
 }

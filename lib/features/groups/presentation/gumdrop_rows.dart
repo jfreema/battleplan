@@ -926,7 +926,9 @@ TextStyle? switchRowTitle(BuildContext context) =>
     Theme.of(context).textTheme.bodyMedium?.copyWith(
       fontSize: 15,
       fontWeight: FontWeight.w800,
-      color: GumdropColors.of(context).card.textPrimary,
+      // Where the row is: the page's text, or a card's (Candy Pop's differ,
+      // #72; the rows are on the page since #32).
+      color: GumdropColors.of(context).textPrimary,
     );
 
 /// A heading inside a card (SPEC §7.3): Lilita One 20 in the text color,

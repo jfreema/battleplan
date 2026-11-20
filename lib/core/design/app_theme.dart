@@ -36,16 +36,21 @@ abstract final class AppTheme {
     final text = g.textOnPage;
     final muted = g.textMutedOnPage;
     // From the page out: lowest (the well), low (cards, sheets), container
-    // (menus), high (dialogs), and highest (chips).
+    // (menus), high (dialogs, pickers), and highest (chips). Menus and
+    // pickers are Material's own, with rows in this context's text color,
+    // so they take the pop-up color: the card's, but from Candy Pop's page
+    // the deeper blue, since its cards are white (#72). Our cards, sheets,
+    // dialogs and panels put their content in the card context.
     final [lowest, low, container, high, highest] = [
       g.inputFill,
       g.surface,
-      g.surface,
-      g.surface,
+      g.popup,
+      g.popup,
       g.inputFill,
     ];
-    // Text in a role's color must read on the page and on cards.
-    final textBackgrounds = [background, low];
+    // Text in a role's color must read on what this context's text is on:
+    // the page and its pop-ups, or the card.
+    final textBackgrounds = [background, container];
     Color readable(Color c) => ColorMath.readable(c, textBackgrounds);
     // White or ink on a role's color; black where neither reads.
     Color on(Color c) {
@@ -69,10 +74,11 @@ abstract final class AppTheme {
     final secondary = readable(g.bubblegum.face);
     final tertiary = readable(g.grape.face);
     final error = readable(g.cherry.text);
-    // Snack bars and tooltips: the text color as the fill, the page as the
-    // label (7.5:1 or better in every scheme).
+    // Snack bars and tooltips: the text color as the fill, what it's on
+    // (the page, or the card) as the label (7.5:1 or better in every
+    // scheme; Candy Pop's card text is navy on its white cards, #72).
     final inverseSurface = g.textOnPage;
-    final onInverseSurface = g.page;
+    final onInverseSurface = background;
     final scheme = ColorScheme(
       brightness: g.brightness,
       primary: primary,
@@ -286,11 +292,13 @@ abstract final class AppTheme {
           backgroundColor: WidgetStateProperty.resolveWith(
             (s) => s.contains(WidgetState.selected) ? g.you.face : g.well,
           ),
+          // Unpicked: the muted text of where the well is, the page's or
+          // the card's (Candy Pop's differ, #72).
           foregroundColor: WidgetStateProperty.resolveWith(
-            (s) => s.contains(WidgetState.selected) ? g.ink : g.textMuted,
+            (s) => s.contains(WidgetState.selected) ? g.ink : muted,
           ),
           iconColor: WidgetStateProperty.resolveWith(
-            (s) => s.contains(WidgetState.selected) ? g.ink : g.textMuted,
+            (s) => s.contains(WidgetState.selected) ? g.ink : muted,
           ),
           textStyle: WidgetStatePropertyAll(label.copyWith(fontSize: 16)),
           shape: const WidgetStatePropertyAll(StadiumBorder()),
@@ -559,7 +567,7 @@ abstract final class AppTheme {
       secondaryLabelStyle: label.copyWith(color: g.ink),
       checkmarkColor: g.ink,
       iconTheme: IconThemeData(color: g.textPrimary, size: 18),
-      deleteIconColor: g.textMuted,
+      deleteIconColor: g.textMutedOnPage,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       labelPadding: const EdgeInsets.symmetric(horizontal: 3),
       elevation: 0,

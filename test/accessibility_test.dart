@@ -127,9 +127,17 @@ void main() {
           await goTo(tester, '/teams');
           await scrollToTeamsRows(tester);
         },
+    // As tall as the whole conversation: at wideSize the poll's card sits
+    // half under the search row, which the contrast check reads as its
+    // colors, and Candy Pop's white cards (#72) have navy text.
     'super admin wide chat':
         (WidgetTester tester, {required TeamScheme scheme}) async {
-          await pumpTeam(tester, scheme: scheme, user: boss, size: wideSize);
+          await pumpTeam(
+            tester,
+            scheme: scheme,
+            user: boss,
+            size: const Size(1280, 1300),
+          );
           expect(find.text('Super Admin Panel'), findsOneWidget);
         },
     // Pushed screens open as the app opens them, so the back row is

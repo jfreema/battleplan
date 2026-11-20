@@ -16,7 +16,7 @@ import 'package:material_ui/material_ui.dart';
 
 /// Appendix A.2 of the Open Field spec, by role, in enum order (army,
 /// light, dark, navy, skyblue), then Candy Pop (#70), made after it from
-/// TeamRank's colors.
+/// TeamRank's colors, with TeamRank's white cards since #72.
 const _a2 = <String, List<int>>{
   'page': [
     0xFF474C2B,
@@ -96,7 +96,7 @@ const _a2 = <String, List<int>>{
     0xFF1B1B19,
     0xFF18284C,
     0xFFFFFFFF,
-    0xFF1238A8,
+    0xFFFFFFFF,
   ],
   'cardRim': [
     0xFF1A1A18,
@@ -112,7 +112,7 @@ const _a2 = <String, List<int>>{
     0xC7F4EAD0,
     0xFFC2CCE8,
     0xFF34476E,
-    0xFFDCE6FF,
+    0xFF4B5A8C,
   ],
   'cardTrack': [
     0x38F4EAD0,
@@ -120,7 +120,7 @@ const _a2 = <String, List<int>>{
     0x2EF4EAD0,
     0x38F2F6FF,
     0x1F0B1531,
-    0x38FFFFFF,
+    0x1F0B1640,
   ],
   'cardOutline': [
     0x73F4EAD0,
@@ -128,7 +128,41 @@ const _a2 = <String, List<int>>{
     0x73F4EAD0,
     0x73F2F6FF,
     0x660B1531,
-    0x80FFFFFF,
+    0x660B1640,
+  ],
+  // The card's own text, fields, Maybe, and Material's pop-ups: the
+  // page's or the card's in every scheme but Candy Pop (#72).
+  'cardText': [
+    0xFFF4EAD0,
+    0xFF1A1A18,
+    0xFFF4EAD0,
+    0xFFF2F6FF,
+    0xFF0B1531,
+    0xFF0B1640,
+  ],
+  'cardField': [
+    0xFF2B2F18,
+    0xFFEFE6CC,
+    0xFF1F1F1C,
+    0xFF07102A,
+    0xFFE3EEFA,
+    0xFFDDE8FF,
+  ],
+  'cardMaybeText': [
+    0xFFF8D84A,
+    0xFF8F6500,
+    0xFFF8D84A,
+    0xFFF8D84A,
+    0xFF785200,
+    0xFF785200,
+  ],
+  'popup': [
+    0xFF575A3A,
+    0xFFFFFFFF,
+    0xFF1B1B19,
+    0xFF18284C,
+    0xFFFFFFFF,
+    0xFF1238A8,
   ],
   'candyInk': [
     0xFF1A1A18,
@@ -232,7 +266,7 @@ const _a2 = <String, List<int>>{
     0xFF58C173,
     0xFF79CD8F,
     0xFF137236,
-    0xFFB5FAD0,
+    0xFF137236,
   ],
   'cardAccentText': [
     0xFFFBC0C0,
@@ -240,7 +274,7 @@ const _a2 = <String, List<int>>{
     0xFFF76F6F,
     0xFFF78C8C,
     0xFFC0262F,
-    0xFFFFC7C7,
+    0xFFC0262F,
   ],
   'gameText': [
     0xFFF4AD79,
@@ -256,7 +290,7 @@ const _a2 = <String, List<int>>{
     0xFFEE8131,
     0xFFF19A5A,
     0xFF9E4B0A,
-    0xFFFFCB99,
+    0xFF9E4B0A,
   ],
   'typePractice': [
     0xFFDBCBFB,
@@ -264,7 +298,7 @@ const _a2 = <String, List<int>>{
     0xFFA57CF5,
     0xFFB796F7,
     0xFF6C46CC,
-    0xFFDDD0FF,
+    0xFF6C46CC,
   ],
   'typeOther': [
     0xFFF8C2DE,
@@ -272,7 +306,7 @@ const _a2 = <String, List<int>>{
     0xFFF06AAF,
     0xFFF184BE,
     0xFFAE2770,
-    0xFFFFC7E6,
+    0xFFAE2770,
   ],
 };
 
@@ -292,6 +326,10 @@ Map<String, Color> _roles(SchemeRoles r) => {
   'cardMuted': r.cardMuted,
   'cardTrack': r.cardTrack,
   'cardOutline': r.cardOutline,
+  'cardText': r.cardText,
+  'cardField': r.cardField,
+  'cardMaybeText': r.cardMaybeText,
+  'popup': r.popup,
   'candyInk': r.candyInk,
   'candyLipCoral': r.candyLipCoral,
   'candyLipMint': r.candyLipMint,
@@ -389,7 +427,7 @@ void main() {
     });
 
     test('Army green, Dark, Navy, and Candy Pop are dark; Light and Light '
-        'blue light', () {
+        "blue light; cards agree, but Candy Pop's white ones", () {
       expect(TeamScheme.values.where((s) => s.isDark), [
         TeamScheme.army,
         TeamScheme.dark,
@@ -398,9 +436,11 @@ void main() {
       ]);
       for (final scheme in TeamScheme.values) {
         final want = scheme.isDark ? Brightness.dark : Brightness.light;
+        final card = scheme == TeamScheme.candypop ? Brightness.light : want;
         expect(GumdropColors.forScheme(scheme).brightness, want);
-        expect(GumdropColors.forScheme(scheme, onCard: true).brightness, want);
+        expect(GumdropColors.forScheme(scheme, onCard: true).brightness, card);
         expect(AppTheme.of(scheme).brightness, want);
+        expect(AppTheme.of(scheme, onCard: true).brightness, card);
       }
     });
   });
@@ -411,9 +451,12 @@ void main() {
         final r = SchemeRoles.of(scheme);
         for (final (fg, bg, what) in [
           (r.text, r.page, 'text on page'),
-          (r.text, r.card, 'text on card'),
+          (r.cardText, r.card, 'card text on card'),
           (r.text, r.tabbar, 'text on tab bar'),
           (r.text, r.field, 'text on field'),
+          (r.text, r.popup, 'text on pop-ups'),
+          (r.cardText, r.cardField, 'card text on a card field'),
+          (r.cardMuted, r.cardField, 'card-muted on a card field'),
           (r.pageMuted, r.page, 'page-muted on page'),
           (r.pageMuted, r.tabbar, 'page-muted on tab bar'),
           (r.pageMuted, r.field, 'page-muted on field'),
@@ -421,7 +464,7 @@ void main() {
           (r.accentText, r.page, 'accent-text on page'),
           (r.goingText, r.page, 'going-text on page'),
           (r.maybeText, r.page, 'maybe-text on page'),
-          (r.maybeText, r.card, 'maybe-text on card'),
+          (r.cardMaybeText, r.card, 'card-maybe-text on card'),
           (r.gameText, r.page, 'game-text on page'),
           (r.cardGoingText, r.card, 'card-going-text on card'),
           (r.cardAccentText, r.card, 'card-accent-text on card'),
@@ -470,7 +513,8 @@ void main() {
         expect(card.you.text, r.cardAccentText);
         expect(page.mint.text, r.goingText);
         expect(card.mint.text, r.cardGoingText);
-        expect(card.lemon.text, r.maybeText);
+        expect(page.lemon.text, r.maybeText);
+        expect(card.lemon.text, r.cardMaybeText);
         expect(page.tangerine.text, r.gameText);
         expect(card.tangerine.text, r.typeGame);
         expect(card.grape.text, r.typePractice);
@@ -485,6 +529,17 @@ void main() {
         expect(card.notGoingIcon, r.cardAccentText);
         expect(card.badgeRing, r.card);
         expect(page.badgeRing, r.page);
+        // The card's own text and fields (Candy Pop's navy on white, #72),
+        // and Material's pop-ups.
+        expect(page.textPrimary, r.text);
+        expect(card.textPrimary, r.cardText);
+        expect(card.textOnPage, r.cardText);
+        expect(card.headingText, r.cardText);
+        expect(page.headingTextOnCard, r.cardText);
+        expect(page.inputFill, r.field);
+        expect(card.inputFill, r.cardField);
+        expect(page.popup, r.popup);
+        expect(card.popup, r.card);
       });
     }
 
@@ -500,10 +555,14 @@ void main() {
         test(where, () {
           final theme = AppTheme.of(scheme, onCard: onCard);
           final s = theme.colorScheme;
+          // Low is the cards and sheets, whose content is in the card
+          // context (its own check): from the page, only the containers
+          // Material draws its own rows on (menus, pickers) need the page's
+          // text to read. They're one color but in Candy Pop (#72).
           for (final (bg, name) in [
             (s.surface, 'surface'),
             (s.surfaceContainerLowest, 'lowest'),
-            (s.surfaceContainerLow, 'low'),
+            if (onCard) (s.surfaceContainerLow, 'low'),
             (s.surfaceContainer, 'container'),
             (s.surfaceContainerHigh, 'high'),
             (s.surfaceContainerHighest, 'highest'),
@@ -518,7 +577,14 @@ void main() {
             (s.error, 'error'),
           ]) {
             _reads(fg, s.surface, '$where $name on surface');
-            _reads(fg, s.surfaceContainerLow, '$where $name on cards');
+            _reads(fg, s.surfaceContainer, '$where $name on pop-ups');
+            if (onCard) {
+              _reads(fg, s.surfaceContainerLow, '$where $name on cards');
+            }
+          }
+          if (!onCard && scheme != TeamScheme.candypop) {
+            // The same color everywhere else.
+            expect(s.surfaceContainerLow, s.surfaceContainer);
           }
           for (final (fg, bg, name) in [
             (s.onPrimary, s.primary, 'onPrimary'),

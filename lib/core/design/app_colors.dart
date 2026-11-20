@@ -41,7 +41,8 @@ class AppColors extends ThemeExtension<AppColors> {
       bubbleMine: g.you.face,
       onBubbleMine: g.ink,
       bubbleOther: g.surface,
-      onBubbleOther: g.textPrimary,
+      // A card's text: Candy Pop's cards are white under navy (#72).
+      onBubbleOther: g.roles.cardText,
       game: text(g.tangerine),
       practice: text(g.grape),
       meeting: text(g.blueRaspberry),

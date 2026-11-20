@@ -155,8 +155,10 @@ class _NewSeasonScreenState extends ConsumerState<NewSeasonScreen> {
           ? null
           : Text(
               subtitle,
+              // The rows are on the page (Candy Pop's card text differs,
+              // #72).
               style: theme.textTheme.bodySmall?.copyWith(
-                color: c.card.textMuted,
+                color: c.textMutedOnPage,
               ),
             ),
       value: value,

@@ -355,7 +355,8 @@ class _SwatchPainter extends CustomPainter {
           Rect.fromLTWH(card.left + 15, card.top + 6.5, 20, 4),
           const Radius.circular(2),
         ),
-        Paint()..color = roles.text,
+        // The card's own text color (Candy Pop's navy, #72).
+        Paint()..color = roles.cardText,
       )
       // The inset ring in the screen's outline.
       ..drawRRect(

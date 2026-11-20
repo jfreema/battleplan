@@ -1,3 +1,4 @@
+import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
@@ -81,7 +82,10 @@ Future<T?> _showDropdownPanel<T>(
             elevation: 3,
             // Shadows only on floating things (SPEC §7.3).
             shadowColor: Theme.of(themed).colorScheme.shadow,
-            color: Theme.of(themed).colorScheme.surfaceContainerHigh,
+            // A card: its content is in the card context below. (Material's
+            // high container is the pop-up color, Candy Pop's deeper blue,
+            // #72.)
+            color: GumdropColors.of(themed).surface,
             borderRadius: BorderRadius.circular(Corners.card),
             clipBehavior: Clip.antiAlias,
             child: Padding(
