@@ -14,14 +14,14 @@ import 'package:battleplan/core/widgets/team_badge.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Appendix A.2 of the Open Field spec, by role, in enum order (army,
-/// then darkarmy, Dark army green, added beside it in #77, light, dark, navy, then sky, Sky Blue, added beside it in #75, skyblue,
-/// Sky Blue Pop), then Candy Pop (#70), made after it from TeamRank's
-/// colors, with TeamRank's white cards since #72.
+/// Appendix A.2 of the Open Field spec, by role, in enum order: army,
+/// darkarmy (Forest green, #77, #78), light, dark, navy, sky (Sky Blue,
+/// #75), skyblue (Sky Blue Pop), then Candy Pop (#70), made after it from
+/// TeamRank's colors, with TeamRank's white cards since #72.
 const _a2 = <String, List<int>>{
   'page': [
     0xFF474C2B,
-    0xFF2A2E19,
+    0xFF242713,
     0xFFFBF5E6,
     0xFF0E0E0D,
     0xFF0B1531,
@@ -71,7 +71,7 @@ const _a2 = <String, List<int>>{
   ],
   'tabbar': [
     0xFF3D4124,
-    0xFF222513,
+    0xFF1D200F,
     0xFFFFFFFF,
     0xFF161615,
     0xFF07102A,
@@ -91,7 +91,7 @@ const _a2 = <String, List<int>>{
   ],
   'field': [
     0xFF2B2F18,
-    0xFF181B0E,
+    0xFF14160A,
     0xFFEFE6CC,
     0xFF1F1F1C,
     0xFF07102A,
@@ -111,7 +111,7 @@ const _a2 = <String, List<int>>{
   ],
   'card': [
     0xFF575A3A,
-    0xFF393D26,
+    0xFF33361F,
     0xFFFFFFFF,
     0xFF1B1B19,
     0xFF18284C,
@@ -173,7 +173,7 @@ const _a2 = <String, List<int>>{
   ],
   'cardField': [
     0xFF2B2F18,
-    0xFF181B0E,
+    0xFF14160A,
     0xFFEFE6CC,
     0xFF1F1F1C,
     0xFF07102A,
@@ -193,7 +193,7 @@ const _a2 = <String, List<int>>{
   ],
   'popup': [
     0xFF575A3A,
-    0xFF393D26,
+    0xFF33361F,
     0xFFFFFFFF,
     0xFF1B1B19,
     0xFF18284C,

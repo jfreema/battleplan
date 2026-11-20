@@ -270,29 +270,31 @@ class SchemeRoles {
     cherryLip: Color(0xFF1A1A18),
   );
 
-  /// Dark army green (#77, owner's pick 2026-11-20 from the darker mockups:
-  /// "add a new "dark army green" theme that is the "darkest" theme from
-  /// the mockups"): Army green's cream type, ink, and candies on a deeper
-  /// olive page, with its cards, fields, and tab bar deepened alike.
+  /// Forest green (#78, owner's request 2026-11-20: "rename the dark army
+  /// green theme to "forest green", but first make it a tiny bit darker"):
+  /// Army green's cream type, ink, and candies on a deep olive page, its
+  /// cards, fields, and tab bar deepened alike. Called Dark army green in
+  /// #77, a shade lighter (page 2A2E19); its stored value is still
+  /// `darkarmy`, so a pick of it carries over.
   static const darkarmy = SchemeRoles(
-    page: Color(0xFF2A2E19),
+    page: Color(0xFF242713),
     text: Color(0xFFF4EAD0),
     pageMuted: Color(0xCCF4EAD0),
     hairline: Color(0x24F4EAD0),
     outline: Color(0x4CF4EAD0),
-    tabbar: Color(0xFF222513),
+    tabbar: Color(0xFF1D200F),
     tabbarLine: Color(0x1AF4EAD0),
-    field: Color(0xFF181B0E),
+    field: Color(0xFF14160A),
     fieldRim: Color(0x00000000),
-    card: Color(0xFF393D26),
+    card: Color(0xFF33361F),
     cardRim: Color(0xFF1A1A18),
     cardMuted: Color(0xE0F4EAD0),
     cardTrack: Color(0x38F4EAD0),
     cardOutline: Color(0x73F4EAD0),
     cardText: Color(0xFFF4EAD0),
-    cardField: Color(0xFF181B0E),
+    cardField: Color(0xFF14160A),
     cardMaybeText: Color(0xFFF8D84A),
-    popup: Color(0xFF393D26),
+    popup: Color(0xFF33361F),
     candyInk: Color(0xFF1A1A18),
     candyLipCoral: Color(0xFF1A1A18),
     candyLipMint: Color(0xFF1A1A18),
@@ -635,7 +637,7 @@ class SchemeRoles {
 
 /// What each scheme is called, and whether its page is dark.
 extension TeamSchemeLook on TeamScheme {
-  /// Light text on a dark page (Army green, Dark army green, Dark, Navy,
+  /// Light text on a dark page (Army green, Forest green, Dark, Navy,
   /// and Candy Pop's deep blue). The cards are dark too, but Candy Pop's, which are white
   /// ([GumdropColors.brightness] tells a card's own).
   bool get isDark =>
