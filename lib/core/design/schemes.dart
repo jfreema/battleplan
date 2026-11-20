@@ -674,6 +674,58 @@ class SchemeRoles {
     cherryLip: Color(0xFF0B0B0B),
   );
 
+  /// Geaux Tigahs (#80, owner's pick 2026-11-20 from the purple and gold
+  /// mockups: "add the LSU inspired theme as well. Name it "Geaux
+  /// Tigahs""): a purple page with cards a shade lighter, white type, and gold
+  /// for the card rims, outlines, marks, and the drop under titles. Colors
+  /// only: no school's name, logo, or mark is in the app.
+  static const purplegold = SchemeRoles(
+    page: Color(0xFF461D7C),
+    text: Color(0xFFFFFFFF),
+    pageMuted: Color(0xFFD5C6F0),
+    hairline: Color(0x33FDD023),
+    outline: Color(0x99FDD023),
+    tabbar: Color(0xFF2E1157),
+    tabbarLine: Color(0x66FDD023),
+    field: Color(0xFF34125F),
+    fieldRim: Color(0x66FDD023),
+    card: Color(0xFF55278F),
+    cardRim: Color(0xFFFDD023),
+    cardMuted: Color(0xFFDCCFF3),
+    cardTrack: Color(0x38FFFFFF),
+    cardOutline: Color(0x99FDD023),
+    cardText: Color(0xFFFFFFFF),
+    cardField: Color(0xFF34125F),
+    cardMaybeText: Color(0xFFFFE680),
+    popup: Color(0xFF55278F),
+    candyInk: Color(0xFF1E0A3C),
+    candyLipCoral: Color(0xFF1E0A3C),
+    candyLipMint: Color(0xFF1E0A3C),
+    candyLipLemon: Color(0xFF1E0A3C),
+    candyLipTangerine: Color(0xFF1E0A3C),
+    titleDrop: Color(0xFFFDD023),
+    avatarRing: Color(0x00000000),
+    accentText: Color(0xFFFFB3B3),
+    accentMark: Color(0xFFFDD023),
+    notGoingIcon: Color(0xFFFFB3B3),
+    goingText: Color(0xFFB8F2C8),
+    maybeText: Color(0xFFFFE680),
+    cardGoingText: Color(0xFFB8F2C8),
+    cardAccentText: Color(0xFFFFB3B3),
+    gameText: Color(0xFFFFC999),
+    typeGame: Color(0xFFFFC999),
+    typePractice: Color(0xFFE0D0FF),
+    typeOther: Color(0xFFFFC2E0),
+    grapePageText: Color(0xFFE0D0FF),
+    bubblegumPageText: Color(0xFFFFC2E0),
+    blueRaspberryPageText: Color(0xFFBFDDFF),
+    blueRaspberryCardText: Color(0xFFBFDDFF),
+    grapeLip: Color(0xFF1E0A3C),
+    bubblegumLip: Color(0xFF1E0A3C),
+    blueRaspberryLip: Color(0xFF1E0A3C),
+    cherryLip: Color(0xFF1E0A3C),
+  );
+
   /// The roles of [scheme].
   static SchemeRoles of(TeamScheme scheme) => switch (scheme) {
     TeamScheme.army => army,
@@ -684,6 +736,7 @@ class SchemeRoles {
     TeamScheme.sky => sky,
     TeamScheme.skyblue => skyblue,
     TeamScheme.candypop => candypop,
+    TeamScheme.purplegold => purplegold,
     TeamScheme.wildcat => wildcat,
   };
 }
@@ -699,7 +752,8 @@ extension TeamSchemeLook on TeamScheme {
       this == TeamScheme.dark ||
       this == TeamScheme.navy ||
       this == TeamScheme.candypop ||
-      this == TeamScheme.wildcat;
+      this == TeamScheme.wildcat ||
+      this == TeamScheme.purplegold;
 
   /// "Army green", and the rest.
   String label(AppLocalizations l10n) => switch (this) {
@@ -711,6 +765,7 @@ extension TeamSchemeLook on TeamScheme {
     TeamScheme.sky => l10n.schemeSky,
     TeamScheme.skyblue => l10n.schemeSkyblue,
     TeamScheme.candypop => l10n.schemeCandypop,
+    TeamScheme.purplegold => l10n.schemePurplegold,
     TeamScheme.wildcat => l10n.schemeWildcat,
   };
 
@@ -724,6 +779,7 @@ extension TeamSchemeLook on TeamScheme {
     TeamScheme.sky => l10n.schemeSkyShort,
     TeamScheme.skyblue => l10n.schemeSkyblueShort,
     TeamScheme.candypop => l10n.schemeCandypopShort,
+    TeamScheme.purplegold => l10n.schemePurplegoldShort,
     TeamScheme.wildcat => l10n.schemeWildcatShort,
   };
 }

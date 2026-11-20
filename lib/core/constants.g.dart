@@ -251,7 +251,8 @@ enum TeamScheme {
   sky('sky'),
   skyblue('skyblue'),
   candypop('candypop'),
-  wildcat('wildcat');
+  wildcat('wildcat'),
+  purplegold('purplegold');
 
   const TeamScheme(this.value);
 

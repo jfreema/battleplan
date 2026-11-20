@@ -29,6 +29,7 @@ const _a2 = <String, List<int>>{
     0xFFBCD9F5,
     0xFF1748D4,
     0xFF5E1224,
+    0xFF461D7C,
   ],
   'text': [
     0xFFF4EAD0,
@@ -38,6 +39,7 @@ const _a2 = <String, List<int>>{
     0xFFF2F6FF,
     0xFF0B1531,
     0xFF0B1531,
+    0xFFFFFFFF,
     0xFFFFFFFF,
     0xFFFFFFFF,
   ],
@@ -51,6 +53,7 @@ const _a2 = <String, List<int>>{
     0xFF34476E,
     0xFFDCE6FF,
     0xFFCDD1D8,
+    0xFFD5C6F0,
   ],
   'hairline': [
     0x24F4EAD0,
@@ -62,6 +65,7 @@ const _a2 = <String, List<int>>{
     0x240B1531,
     0x33FFFFFF,
     0x33C0C5CC,
+    0x33FDD023,
   ],
   'outline': [
     0x4CF4EAD0,
@@ -73,6 +77,7 @@ const _a2 = <String, List<int>>{
     0x590B1531,
     0x66FFFFFF,
     0x99C0C5CC,
+    0x99FDD023,
   ],
   'tabbar': [
     0xFF3D4124,
@@ -84,6 +89,7 @@ const _a2 = <String, List<int>>{
     0xFFFFFFFF,
     0xFF0B1640,
     0xFF0B0B0B,
+    0xFF2E1157,
   ],
   'tabbarLine': [
     0x1AF4EAD0,
@@ -95,6 +101,7 @@ const _a2 = <String, List<int>>{
     0xFF0B1531,
     0xFF0B1640,
     0x66C0C5CC,
+    0x66FDD023,
   ],
   'field': [
     0xFF2B2F18,
@@ -106,6 +113,7 @@ const _a2 = <String, List<int>>{
     0xFFE3EEFA,
     0xFF1238A8,
     0xFF470C1A,
+    0xFF34125F,
   ],
   'fieldRim': [
     0x00000000,
@@ -117,6 +125,7 @@ const _a2 = <String, List<int>>{
     0x00000000,
     0x33FFFFFF,
     0x66C0C5CC,
+    0x66FDD023,
   ],
   'card': [
     0xFF575A3A,
@@ -128,6 +137,7 @@ const _a2 = <String, List<int>>{
     0xFFFFFFFF,
     0xFFFFFFFF,
     0xFF701C30,
+    0xFF55278F,
   ],
   'cardRim': [
     0xFF1A1A18,
@@ -139,6 +149,7 @@ const _a2 = <String, List<int>>{
     0xFF0B1531,
     0xFF0B1640,
     0xFFC0C5CC,
+    0xFFFDD023,
   ],
   'cardMuted': [
     0xE0F4EAD0,
@@ -150,6 +161,7 @@ const _a2 = <String, List<int>>{
     0xFF34476E,
     0xFF4B5A8C,
     0xFFD8DCE2,
+    0xFFDCCFF3,
   ],
   'cardTrack': [
     0x38F4EAD0,
@@ -160,6 +172,7 @@ const _a2 = <String, List<int>>{
     0x1F0B1531,
     0x1F0B1531,
     0x1F0B1640,
+    0x38FFFFFF,
     0x38FFFFFF,
   ],
   'cardOutline': [
@@ -172,6 +185,7 @@ const _a2 = <String, List<int>>{
     0x660B1531,
     0x660B1640,
     0x99C0C5CC,
+    0x99FDD023,
   ],
   // The card's own text, fields, Maybe, and Material's pop-ups: the
   // page's or the card's in every scheme but Candy Pop (#72).
@@ -185,6 +199,7 @@ const _a2 = <String, List<int>>{
     0xFF0B1531,
     0xFF0B1640,
     0xFFFFFFFF,
+    0xFFFFFFFF,
   ],
   'cardField': [
     0xFF2B2F18,
@@ -196,6 +211,7 @@ const _a2 = <String, List<int>>{
     0xFFE3EEFA,
     0xFFDDE8FF,
     0xFF470C1A,
+    0xFF34125F,
   ],
   'cardMaybeText': [
     0xFFF8D84A,
@@ -206,6 +222,7 @@ const _a2 = <String, List<int>>{
     0xFF785200,
     0xFF785200,
     0xFF785200,
+    0xFFFFE680,
     0xFFFFE680,
   ],
   'popup': [
@@ -218,6 +235,7 @@ const _a2 = <String, List<int>>{
     0xFFFFFFFF,
     0xFF1238A8,
     0xFF701C30,
+    0xFF55278F,
   ],
   'candyInk': [
     0xFF1A1A18,
@@ -229,6 +247,7 @@ const _a2 = <String, List<int>>{
     0xFF0B1531,
     0xFF0B1640,
     0xFF0B0B0B,
+    0xFF1E0A3C,
   ],
   'candyLipCoral': [
     0xFF1A1A18,
@@ -240,6 +259,7 @@ const _a2 = <String, List<int>>{
     0xFF0B1531,
     0xFF0B1640,
     0xFF0B0B0B,
+    0xFF1E0A3C,
   ],
   'candyLipMint': [
     0xFF1A1A18,
@@ -251,6 +271,7 @@ const _a2 = <String, List<int>>{
     0xFF0B1531,
     0xFF0B1640,
     0xFF0B0B0B,
+    0xFF1E0A3C,
   ],
   'candyLipLemon': [
     0xFF1A1A18,
@@ -262,6 +283,7 @@ const _a2 = <String, List<int>>{
     0xFF0B1531,
     0xFF0B1640,
     0xFF0B0B0B,
+    0xFF1E0A3C,
   ],
   'candyLipTangerine': [
     0xFF1A1A18,
@@ -273,6 +295,7 @@ const _a2 = <String, List<int>>{
     0xFF0B1531,
     0xFF0B1640,
     0xFF0B0B0B,
+    0xFF1E0A3C,
   ],
   'titleDrop': [
     0xFF1A1A18,
@@ -284,6 +307,7 @@ const _a2 = <String, List<int>>{
     0xFFFFFFFF,
     0xFF0B1640,
     0xFF0B0B0B,
+    0xFFFDD023,
   ],
   'avatarRing': [
     0x00000000,
@@ -294,6 +318,7 @@ const _a2 = <String, List<int>>{
     0xFF0B1531,
     0xFF0B1531,
     0xFF0B1640,
+    0x00000000,
     0x00000000,
   ],
   'accentText': [
@@ -306,6 +331,7 @@ const _a2 = <String, List<int>>{
     0xFFAB222A,
     0xFFFFC7C7,
     0xFFFFB3B3,
+    0xFFFFB3B3,
   ],
   'accentMark': [
     0xFFF45B5B,
@@ -317,6 +343,7 @@ const _a2 = <String, List<int>>{
     0xFFAB222A,
     0xFFFFC7C7,
     0xFFC0C5CC,
+    0xFFFDD023,
   ],
   'notGoingIcon': [
     0xFFFBC0C0,
@@ -327,6 +354,7 @@ const _a2 = <String, List<int>>{
     0xFFAB222A,
     0xFFAB222A,
     0xFFFFC7C7,
+    0xFFFFB3B3,
     0xFFFFB3B3,
   ],
   'goingText': [
@@ -339,6 +367,7 @@ const _a2 = <String, List<int>>{
     0xFF116530,
     0xFFB5FAD0,
     0xFFB8F2C8,
+    0xFFB8F2C8,
   ],
   'maybeText': [
     0xFFF8D84A,
@@ -349,6 +378,7 @@ const _a2 = <String, List<int>>{
     0xFF785200,
     0xFF785200,
     0xFFFFE45C,
+    0xFFFFE680,
     0xFFFFE680,
   ],
   'cardGoingText': [
@@ -361,6 +391,7 @@ const _a2 = <String, List<int>>{
     0xFF137236,
     0xFF137236,
     0xFFB8F2C8,
+    0xFFB8F2C8,
   ],
   'cardAccentText': [
     0xFFFBC0C0,
@@ -371,6 +402,7 @@ const _a2 = <String, List<int>>{
     0xFFC0262F,
     0xFFC0262F,
     0xFFC0262F,
+    0xFFFFB3B3,
     0xFFFFB3B3,
   ],
   'gameText': [
@@ -383,6 +415,7 @@ const _a2 = <String, List<int>>{
     0xFF8D4309,
     0xFFFFCB99,
     0xFFFFC999,
+    0xFFFFC999,
   ],
   'typeGame': [
     0xFFF8CDAD,
@@ -393,6 +426,7 @@ const _a2 = <String, List<int>>{
     0xFF9E4B0A,
     0xFF9E4B0A,
     0xFF9E4B0A,
+    0xFFFFC999,
     0xFFFFC999,
   ],
   'typePractice': [
@@ -405,6 +439,7 @@ const _a2 = <String, List<int>>{
     0xFF6C46CC,
     0xFF6C46CC,
     0xFFE0D0FF,
+    0xFFE0D0FF,
   ],
   'typeOther': [
     0xFFF8C2DE,
@@ -415,6 +450,7 @@ const _a2 = <String, List<int>>{
     0xFFAE2770,
     0xFFAE2770,
     0xFFAE2770,
+    0xFFFFC2E0,
     0xFFFFC2E0,
   ],
 };
@@ -531,7 +567,8 @@ void main() {
         if (scheme != TeamScheme.army &&
             scheme != TeamScheme.darkarmy &&
             scheme != TeamScheme.candypop &&
-            scheme != TeamScheme.wildcat) {
+            scheme != TeamScheme.wildcat &&
+            scheme != TeamScheme.purplegold) {
           _reads(c.cherry.face, r.page, '${scheme.value} red on page', min: 3);
           _reads(c.cherry.face, r.card, '${scheme.value} red on card', min: 3);
         }
@@ -547,6 +584,7 @@ void main() {
         TeamScheme.navy,
         TeamScheme.candypop,
         TeamScheme.wildcat,
+        TeamScheme.purplegold,
       ]);
       for (final scheme in TeamScheme.values) {
         final want = scheme.isDark ? Brightness.dark : Brightness.light;
