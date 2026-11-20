@@ -25,8 +25,10 @@ mixin _$Membership {
 /// for a guardian, "#12" for a member who is a player (number first
 /// when both), or null.
  String? get playerSummary;/// Added by email and hasn't signed in yet: "Not joined yet" (AUTH-6).
- bool get pending;/// A phone number and email they chose to share with this team, shown
-/// on their card with call, text, and email buttons (TEAM-10).
+ bool get pending;/// A phone number and email they shared with this team (TEAM-10), as
+/// memberships carried them before #45 moved them to their own record
+/// ([SharedContact]). Read only until the one-time move clears them:
+/// the card shows them when there's no record yet.
  String? get contactPhone; String? get contactEmail;/// A coach of the team (TEAM-3), set by its admins: on the roster's
 /// Coaches, and answering for themselves on events (PLAYER-6). Unset,
 /// the owner counts as one ([isCoach]).
@@ -285,8 +287,10 @@ class _Membership extends Membership {
 @override final  String? playerSummary;
 /// Added by email and hasn't signed in yet: "Not joined yet" (AUTH-6).
 @override@JsonKey() final  bool pending;
-/// A phone number and email they chose to share with this team, shown
-/// on their card with call, text, and email buttons (TEAM-10).
+/// A phone number and email they shared with this team (TEAM-10), as
+/// memberships carried them before #45 moved them to their own record
+/// ([SharedContact]). Read only until the one-time move clears them:
+/// the card shows them when there's no record yet.
 @override final  String? contactPhone;
 @override final  String? contactEmail;
 /// A coach of the team (TEAM-3), set by its admins: on the roster's

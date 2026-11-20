@@ -4,6 +4,12 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'membership.freezed.dart';
 
+/// The phone number and email someone shares with a team (TEAM-10), either
+/// one null when not shared. Kept in its own record (`memberContacts`)
+/// since #45, which the rules show only to the people who see that person
+/// on the roster.
+typedef SharedContact = ({String? phone, String? email});
+
 /// One person on one team (ARCH §6.2 `groupMembers`).
 @freezed
 abstract class Membership with _$Membership {
@@ -37,8 +43,10 @@ abstract class Membership with _$Membership {
     /// Added by email and hasn't signed in yet: "Not joined yet" (AUTH-6).
     @Default(false) bool pending,
 
-    /// A phone number and email they chose to share with this team, shown
-    /// on their card with call, text, and email buttons (TEAM-10).
+    /// A phone number and email they shared with this team (TEAM-10), as
+    /// memberships carried them before #45 moved them to their own record
+    /// ([SharedContact]). Read only until the one-time move clears them:
+    /// the card shows them when there's no record yet.
     String? contactPhone,
     String? contactEmail,
 
@@ -90,7 +98,8 @@ abstract class Membership with _$Membership {
   /// started the team to coach it.
   bool get isCoach => coach ?? role == MemberRole.owner;
 
-  /// Whether they share a phone number or email with the team (TEAM-10).
+  /// Whether their membership still carries a shared phone number or email
+  /// from before #45 (TEAM-10).
   bool get sharesContact => contactPhone != null || contactEmail != null;
 
   /// True when pushes from this team are off or snoozed (NOTIF-3).

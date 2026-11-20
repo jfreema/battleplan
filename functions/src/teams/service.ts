@@ -85,6 +85,7 @@ export async function removeAccountFromTeams(uid: string, newOwners: Record<stri
       }
     }
     await m.ref.delete();
+    await deleteSharedContact(groupId, uid);
     // Counts are recomputed, never incremented (D12).
     const count = await db().collection(Collections.groupMembers).where('groupId', '==', groupId).count().get();
     await groupRef.update({ memberCount: count.data().count }).catch(() => undefined);
@@ -275,6 +276,15 @@ export function canRemove(
   return true;
 }
 
+/**
+ * Deletes the phone and email someone shared with a team (TEAM-10, #45),
+ * kept apart from their membership: leaving, being removed, and deleting
+ * the account take it away with the membership.
+ */
+export async function deleteSharedContact(groupId: string, uid: string): Promise<void> {
+  await db().collection(Collections.memberContacts).doc(groupMemberId(groupId, uid)).delete();
+}
+
 /** Recomputes a team's member count (D12: recompute, never increment). */
 export async function refreshMemberCount(groupId: string): Promise<void> {
   const count = await db().collection(Collections.groupMembers).where('groupId', '==', groupId).count().get();
@@ -300,6 +310,7 @@ export async function removeFromTeam(groupId: string, uid: string, actorUid: str
   const target = await ref.get();
   if (!target.exists) return null;
   await ref.delete();
+  await deleteSharedContact(groupId, uid);
   await removeGuardianFromTeam(groupId, uid);
   await refreshMemberCount(groupId);
   const name = (target.get('displayName') as string) || 'Someone';
@@ -512,6 +523,8 @@ const TEAM_COLLECTIONS = [
   // events, whose triggers only mark a cache that still exists.
   Collections.calendarLinks,
   Collections.teamCalendars,
+  // What members shared with the team (TEAM-10, #45).
+  Collections.memberContacts,
 ];
 
 /**

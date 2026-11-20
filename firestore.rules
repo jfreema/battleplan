@@ -244,11 +244,12 @@ service cloud.firestore {
                         'lastPostedAt', 'lastPostedMessageId',
                         'contactPhone', 'contactEmail', 'colorScheme',
                         'hereFor', 'setupClosed'])
-        // Contact sharing (TEAM-10): a phone with a digit, up to 30
-        // characters, and an email, up to 254. Stopping (null) always
-        // works; sharing needs an open team (not suspended or archived).
-        && sharedContactOk('contactPhone', '.*[0-9].*', 30)
-        && sharedContactOk('contactEmail', '[^@ ]+@[^@ ]+[.][^@ ]+', 254)
+        // Shared contacts moved to memberContacts (TEAM-10, #45), since
+        // every member can read a membership. The old fields can only be
+        // cleared: the app clears them when it saves the new record, and
+        // an older app can still stop sharing.
+        && legacyContactCleared('contactPhone')
+        && legacyContactCleared('contactEmail')
         && (!('lastPostedAt' in changed()) || incoming().lastPostedAt == request.time)
         && (!('notificationLevel' in changed())
             || incoming().notificationLevel in ['all', 'important', 'none'])
@@ -276,14 +277,63 @@ service cloud.firestore {
         && incoming().get('setupClosed', false) is bool;
     }
 
-    // A contact field a member shares with their team (TEAM-10), unchanged,
-    // cleared, or set to text matching [pattern] of at most [max]
-    // characters on a team that takes changes.
-    function sharedContactOk(field, pattern, max) {
-      let value = incoming().get(field, null);
-      return !(field in changed()) || value == null
-        || (value is string && value.size() <= max && value.matches(pattern)
-            && isMember(resource.data.groupId) && active(resource.data.groupId));
+    // A contact field left on a membership from before #45: unchanged or
+    // cleared, never set.
+    function legacyContactCleared(field) {
+      return !(field in changed()) || incoming().get(field, null) == null;
+    }
+
+    // ---- Shared contacts (TEAM-10, #45) --------------------------------------
+
+    // The phone and email a member shares with a team, one record per
+    // membership under the same ID (groupId_uid), kept off the membership
+    // because every member can read memberships. Who reads it follows the
+    // roster (TEAM-3): with "Everyone can see who's on the team" on, the
+    // whole team; with it off, only the team's admins, super admins, and
+    // the person, plus everyone for a coach's, since members still see the
+    // coaches' cards. The membership it belongs to decides, so a get for a
+    // record not made yet reads as not found for those people, and one for
+    // someone no longer on the team is refused.
+    match /memberContacts/{memberId} {
+      allow get: if signedIn() && contactReader(
+        get(/databases/$(database)/documents/groupMembers/$(memberId)).data);
+      // Lists only of my own, or a team's for its admins and super admins
+      // (rules are not filters: a member's list could include hidden ones).
+      allow list: if boundedQuery() && signedIn()
+        && (resource.data.uid == uid() || isAdmin(resource.data.groupId)
+            || (superAdmin() && exists(groupPath(resource.data.groupId))));
+      // Only the person writes theirs, under their own membership's ID: a
+      // phone with a digit, up to 30 characters, and an email, up to 254
+      // (either may be null). Sharing needs an open team (not suspended or
+      // archived); stopping is a delete, which always works.
+      allow create, update: if signedIn()
+        && memberId == incoming().groupId + '_' + uid()
+        && incoming().uid == uid()
+        && incoming().keys().hasOnly(['groupId', 'uid', 'phone', 'email', 'updatedAt'])
+        && incoming().updatedAt == request.time
+        && contactFieldOk(incoming().get('phone', null), '.*[0-9].*', 30)
+        && contactFieldOk(incoming().get('email', null), '[^@ ]+@[^@ ]+[.][^@ ]+', 254)
+        && isMember(incoming().groupId) && active(incoming().groupId)
+        && !isDirect(incoming().groupId);
+      // Deleting none is no error, so stopping works before there's one.
+      allow delete: if signedIn() && (resource == null || resource.data.uid == uid());
+    }
+
+    // Who may read the shared contact of membership [m].
+    function contactReader(m) {
+      return m.uid == uid()
+        || (superAdmin() && !isDirect(m.groupId))
+        || isAdmin(m.groupId)
+        || (isMember(m.groupId)
+            && (get(groupPath(m.groupId)).data.get('settings', {}).get('membersCanSeePeople', true) == true
+                // A coach (TEAM-3): as the admins set it, else the owner.
+                || m.get('coach', m.role == 'owner') == true));
+    }
+
+    // A shared contact field: null, or text matching [pattern] of at most
+    // [max] characters.
+    function contactFieldOk(value, pattern, max) {
+      return value == null || (value is string && value.size() <= max && value.matches(pattern));
     }
 
     // ---- Players, guardians, and claims -------------------------------------

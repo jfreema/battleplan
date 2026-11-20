@@ -294,8 +294,12 @@ describe('deleting a team finishes, even when it stops partway (TEAM-9)', () => 
 
   it('deletes its files before its memberships, and everything', async () => {
     await file('groups/open/logo.jpg').save(Buffer.from('logo'));
+    const contact = db().collection(Collections.memberContacts).doc('open_sam');
+    await contact.set({ groupId: 'open', uid: 'sam', phone: '555 0100', email: null });
     await run(teams.deleteGroup, 'pat', { groupId: 'open', confirmName: 'open' });
     expect((await groups().doc('open').get()).exists).toBe(false);
+    // What members shared with it too (TEAM-10, #45).
+    expect((await contact.get()).exists).toBe(false);
     expect(await isMember('open', 'pat')).toBe(false);
     expect((await file('groups/open/logo.jpg').exists())[0]).toBe(false);
     expect(await audits()).toBe(1);
@@ -433,8 +437,12 @@ describe('adding players (PLAYER-1) and guardians (PLAYER-5, §3)', () => {
   });
 });
 
-describe('leaving or being removed takes player links, claims, and pending players too (TEAM-8)', () => {
+describe('leaving or being removed takes player links, claims, pending players, and shared contacts too (TEAM-8)', () => {
+  const contact = (g: string) => db().collection(Collections.memberContacts).doc(`${g}_sam`);
   beforeEach(async () => {
+    // What sam shared with each team (TEAM-10, #45).
+    await contact('open').set({ groupId: 'open', uid: 'sam', phone: '555 0100', email: null });
+    await contact('archived').set({ groupId: 'archived', uid: 'sam', phone: '555 0100', email: null });
     await guardian('open', 'open-p1', 'sam');
     await db().collection(Collections.guardianRequests).doc('open-p2_sam').set({ groupId: 'open', playerId: 'open-p2', uid: 'sam', status: 'pending' });
     await guardian('archived', 'archived-p1', 'sam');
@@ -452,6 +460,9 @@ describe('leaving or being removed takes player links, claims, and pending playe
   it('on leaving', async () => {
     await run(teams.leaveGroup, 'sam', { groupId: 'open' });
     expect(await left()).toEqual({ links: ['archived-p1_sam'], requests: 0, pending: false });
+    // Only that team's contact goes.
+    expect((await contact('open').get()).exists).toBe(false);
+    expect((await contact('archived').get()).exists).toBe(true);
     // Players already on the roster stay.
     expect((await db().collection(Collections.players).doc('open-p1').get()).exists).toBe(true);
   });
@@ -459,6 +470,7 @@ describe('leaving or being removed takes player links, claims, and pending playe
   it('on removal', async () => {
     await run(teams.removeMember, 'ada', { groupId: 'open', uid: 'sam' });
     expect(await left()).toEqual({ links: ['archived-p1_sam'], requests: 0, pending: false });
+    expect((await contact('open').get()).exists).toBe(false);
   });
 
   it("an old claim never puts someone who left back on the team", async () => {

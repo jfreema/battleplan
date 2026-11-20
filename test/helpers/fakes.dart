@@ -687,8 +687,12 @@ class FakeMemberRepository implements MemberRepository {
     }
   }
 
+  /// Shared contact records (TEAM-10, #45), by `groupId_uid`.
+  final Map<String, SharedContact> contacts = {};
+
   /// Shares or stops sharing my contact info (TEAM-10), as the rules let
-  /// me write it: blank is not shared.
+  /// me write it: blank is not shared. It goes in its own record, and any
+  /// my membership carried from before #45 is cleared.
   @override
   Future<void> setContact(
     GroupId groupId,
@@ -699,12 +703,27 @@ class FakeMemberRepository implements MemberRepository {
     String? shared(String? v) =>
         v == null || v.trim().isEmpty ? null : v.trim();
     calls.add('contact ${uid.value} ${shared(phone)} ${shared(email)}');
+    final key = '${groupId.value}_${uid.value}';
+    if (shared(phone) == null && shared(email) == null) {
+      contacts.remove(key);
+    } else {
+      contacts[key] = (phone: shared(phone), email: shared(email));
+    }
     _updateMine(
       groupId,
       uid,
-      (m) =>
-          m.copyWith(contactPhone: shared(phone), contactEmail: shared(email)),
+      (m) => m.copyWith(contactPhone: null, contactEmail: null),
     );
+    _changes.add(null);
+  }
+
+  @override
+  Stream<SharedContact?> watchContact(GroupId groupId, UserId uid) async* {
+    SharedContact? theirs() => contacts['${groupId.value}_${uid.value}'];
+    yield theirs();
+    await for (final _ in _changes.stream) {
+      yield theirs();
+    }
   }
 
   @override

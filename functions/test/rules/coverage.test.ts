@@ -38,6 +38,7 @@ const DOCS: [collection: string, id: string, field: string, value: string][] = [
   ['userBlocks', 'alice_bob', 'uid', 'alice'],
   ['groups', 'teamA', 'nameLower', 'teama'],
   ['groupMembers', 'teamA_alice', 'groupId', 'teamA'],
+  ['memberContacts', 'teamA_alice', 'groupId', 'teamA'],
   ['players', 'emma', 'groupId', 'teamA'],
   ['playerGuardians', 'emma_dan', 'groupId', 'teamA'],
   ['guardianRequests', 'emma_bob', 'groupId', 'teamA'],
@@ -100,6 +101,7 @@ async function seed(group: object = {}) {
     await member('teamA', 'bob', 'member');
     await member('teamA', 'dan', 'member');
     await member('teamB', 'gina', 'admin');
+    await db.doc('memberContacts/teamA_alice').set({ groupId: 'teamA', uid: 'alice', phone: '555 0100', email: null });
     await db.doc('users/alice').set({ displayName: 'alice', displayNameLower: 'alice', photoPath: null, themeMode: 'system', notificationPrefs: {} });
     await db.doc('devices/abcdefghijklmnop1234').set({ uid: 'alice', token: 't', platform: 'web', appVersion: '1', updatedAt: ts('2026-10-01T00:00:00Z') });
     await db.doc('userBlocks/alice_bob').set({ uid: 'alice', blockedUid: 'bob', blockedName: 'bob' });

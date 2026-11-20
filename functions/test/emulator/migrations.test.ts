@@ -1,11 +1,13 @@
 // The one-time change to reminders for teams made before Nov 1 (#48),
 // against the Firestore emulator: only the teams still on the old default
-// change, once, with a record to undo it and one audit entry. Run with:
+// change, once, with a record to undo it and one audit entry. And the
+// one-time move of shared contacts off memberships (#45). Run with:
 //   npm --prefix functions run emulators:test
 import { Timestamp } from 'firebase-admin/firestore';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import {
   REMINDERS_OFF_BEFORE,
+  moveSharedContacts,
   turnOffOldReminderDefaults,
   undoReminderDefaultsOff,
 } from '../../src/teams/migrations.js';
@@ -99,5 +101,41 @@ describe('reminders off for teams made before Nov 1 (#48)', () => {
     expect(await offsetsOf('old')).toEqual([1440]);
     expect(await offsetsOf('old2')).toEqual([60]);
     expect((await marker()).reminderDefaultsOffUndone).toMatchObject({ teamIds: ['old'] });
+  });
+});
+
+describe('shared contacts move off memberships (#45)', () => {
+  const members = () => db().collection(Collections.groupMembers);
+  const contacts = () => db().collection(Collections.memberContacts);
+  beforeEach(async () => {
+    await members().doc('old_sam').set({ groupId: 'old', uid: 'sam', role: 'member', contactPhone: '555 0100', contactEmail: 'sam@example.com' });
+    await members().doc('old_una').set({ groupId: 'old', uid: 'una', role: 'member', contactEmail: ' una@example.com ' });
+    await members().doc('old_pat').set({ groupId: 'old', uid: 'pat', role: 'owner' });
+    // Already saved by a newer app, which wins over the old field.
+    await members().doc('old_lee').set({ groupId: 'old', uid: 'lee', role: 'member', contactPhone: '555 0000' });
+    await contacts().doc('old_lee').set({ groupId: 'old', uid: 'lee', phone: '555 0199', email: null });
+  });
+
+  it('moves each one to its own record and clears the membership, once', async () => {
+    expect(await moveSharedContacts()).toBe(3);
+    expect((await contacts().doc('old_sam').get()).data()).toMatchObject({
+      groupId: 'old', uid: 'sam', phone: '555 0100', email: 'sam@example.com',
+    });
+    expect((await contacts().doc('old_una').get()).data()).toMatchObject({ uid: 'una', phone: null, email: 'una@example.com' });
+    expect((await contacts().doc('old_lee').get()).data()).toMatchObject({ phone: '555 0199' });
+    expect((await contacts().doc('old_pat').get()).exists).toBe(false);
+    for (const id of ['old_sam', 'old_una', 'old_lee']) {
+      const m = (await members().doc(id).get()).data()!;
+      expect(m.contactPhone).toBeUndefined();
+      expect(m.contactEmail).toBeUndefined();
+    }
+    expect((await marker()).sharedContactsMoved).toMatchObject({ count: 3 });
+    const entries = await db().collection(Collections.auditLogs).where('action', '==', 'sharedContactsMoved').get();
+    expect(entries.size).toBe(1);
+    expect(entries.docs[0].get('actorId')).toBe('Battleplan');
+    // A second night does nothing.
+    await members().doc('old_pat').update({ contactPhone: '555 0123' });
+    expect(await moveSharedContacts()).toBeNull();
+    expect((await contacts().doc('old_pat').get()).exists).toBe(false);
   });
 });

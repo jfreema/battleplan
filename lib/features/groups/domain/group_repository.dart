@@ -184,9 +184,18 @@ abstract interface class MemberRepository {
   /// (NOTIF-3). "Until unmuted" is [Limits.mutedForeverMs].
   Future<void> setMutedUntil(GroupId groupId, UserId uid, DateTime? until);
 
+  /// What someone shares with a team (TEAM-10), live: null when they share
+  /// nothing yet, or when I may not see it. Since #45 the rules show it
+  /// only to the people the roster shows them to: with "Everyone can see
+  /// who's on the team" off, the team's admins, super admins, and the
+  /// person, plus everyone for a coach's.
+  Stream<SharedContact?> watchContact(GroupId groupId, UserId uid);
+
   /// Shares my phone number and email with this team, or stops sharing one
-  /// with null or blank (TEAM-10). Everyone on the team sees them on my
-  /// card. Stopping always works; sharing needs an active team.
+  /// with null or blank (TEAM-10), in my own record (#45), and clears any
+  /// my membership carried from before. The people who see me on the
+  /// roster see them on my card. Stopping always works; sharing needs an
+  /// active team.
   Future<void> setContact(
     GroupId groupId,
     UserId uid, {

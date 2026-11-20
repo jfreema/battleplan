@@ -85,6 +85,11 @@ async function fall(extra: object = {}): Promise<void> {
       playerSummary: 'old', joinedAt: Timestamp.now(), ...fields,
     });
   }
+  // A contact shared in its own record (TEAM-10, #45); sam's is still on
+  // the membership from before.
+  await db().collection(Collections.memberContacts).doc('fall_ada').set({
+    groupId: 'fall', uid: 'ada', phone: null, email: 'ada@example.com', updatedAt: Timestamp.now(),
+  });
   const players = db().collection(Collections.players);
   await players.doc('emma').set({ groupId: 'fall', displayName: 'Emma', displayNameLower: 'emma', jerseyNumber: '7', walkUpSong: 'Thunderstruck', status: 'active' });
   await players.doc('lee').set({ groupId: 'fall', displayName: 'Lee', displayNameLower: 'lee', jerseyNumber: '12' });
@@ -177,9 +182,17 @@ describe('starting a new season (TEAM-16)', () => {
     expect(await member(groupId, 'gia')).toMatchObject({ role: 'admin', title: 'Treasurer', playerSummary: 'Emma #7' });
     // Their own choices for the team carry on.
     expect(await member(groupId, 'sam')).toMatchObject({
-      role: 'member', playerSummary: 'Emma #7', notificationLevel: 'important', contactPhone: '555-0100',
+      role: 'member', playerSummary: 'Emma #7', notificationLevel: 'important',
       colorScheme: 'navy', avatarColor: 'grape',
     });
+    // What they share comes along in its own record (TEAM-10, #45), from
+    // the old record or from a membership not moved yet, never on the new
+    // membership, which every member reads.
+    expect((await member(groupId, 'sam'))!.contactPhone).toBeUndefined();
+    const contacts = await byTeam(Collections.memberContacts, groupId);
+    expect(contacts.map((c) => c.id).sort()).toEqual([`${groupId}_ada`, `${groupId}_sam`]);
+    expect(contacts.find((c) => c.id === `${groupId}_sam`)!.data()).toMatchObject({ uid: 'sam', phone: '555-0100', email: null });
+    expect(contacts.find((c) => c.id === `${groupId}_ada`)!.data()).toMatchObject({ uid: 'ada', phone: null, email: 'ada@example.com' });
     expect(await member(groupId, 'lee')).toMatchObject({ playerSummary: '#12', colorScheme: null, avatarColor: null });
     expect((await member(groupId, 'lee'))!.hereFor).toBeUndefined();
     // A play maker (#63) still makes plays; nobody else becomes one.

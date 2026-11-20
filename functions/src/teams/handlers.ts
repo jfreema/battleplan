@@ -36,6 +36,7 @@ import {
   convertGroupToTeam,
   createGroup as create,
   deleteGroupNamed,
+  deleteSharedContact,
   teamIdFor,
   refreshMemberCount,
   removeFromTeam,
@@ -391,6 +392,8 @@ export const leaveGroup = onCall(async (request) => {
     throw new HttpsError('failed-precondition', 'owner-must-transfer');
   }
   await ref.delete();
+  // What they shared with the team goes with them (TEAM-10, #45).
+  await deleteSharedContact(input.groupId, uid);
   // They stop being a guardian here too (TEAM-8, PLAYER-3).
   await removeGuardianFromTeam(input.groupId, uid);
   await refreshMemberCount(input.groupId);

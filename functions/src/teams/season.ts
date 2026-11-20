@@ -285,9 +285,26 @@ export async function copyTeamForSeason(
       },
     ]);
   }
+  // What each one shared with the old team (TEAM-10), kept apart from the
+  // membership since #45; a membership not moved yet still has it on it.
+  const contacts = new Map(
+    (await byTeam(Collections.memberContacts).get()).docs.map((d) => [String(d.get('uid')), d.data()]),
+  );
   for (const { doc, place } of coming) {
     const m = doc.data();
     const who = String(m.uid);
+    const contact = contacts.get(who);
+    const phone = contact ? (contact.phone ?? null) : (m.contactPhone ?? null);
+    const email = contact ? (contact.email ?? null) : (m.contactEmail ?? null);
+    if (phone != null || email != null) {
+      await writes.set(db().collection(Collections.memberContacts).doc(groupMemberId(newGroupId, who)), {
+        groupId: newGroupId,
+        uid: who,
+        phone,
+        email,
+        updatedAt: now,
+      });
+    }
     await writes.set(db().collection(Collections.groupMembers).doc(groupMemberId(newGroupId, who)), {
       groupId: newGroupId,
       uid: who,
@@ -299,15 +316,13 @@ export async function copyTeamForSeason(
       displayName: m.displayName ?? '',
       photoPath: m.photoPath ?? null,
       playerSummary: playerSummaryOf(summaries.get(who) ?? []),
-      // Their own choices for the team carry on: notifications (NOTIF-3),
-      // what they share (TEAM-10), and the color scheme they see it in
-      // (SET-2).
+      // Their own choices for the team carry on: notifications (NOTIF-3)
+      // and the color scheme they see it in (SET-2). What they share
+      // (TEAM-10) is copied above, into its own record (#45).
       notificationLevel: m.notificationLevel ?? 'all',
       mutedUntil: m.mutedUntil ?? null,
       colorScheme: m.colorScheme ?? null,
       avatarColor: m.avatarColor ?? null,
-      ...(m.contactPhone != null ? { contactPhone: m.contactPhone } : {}),
-      ...(m.contactEmail != null ? { contactEmail: m.contactEmail } : {}),
       // And what they said to "Who are you here for?" without picking a
       // player (PLAYER-3): Not now, or that they're a coach or another
       // adult. The new season doesn't ask again.

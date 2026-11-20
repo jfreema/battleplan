@@ -56,6 +56,12 @@ Stream<List<Membership>> myDirectMemberships(Ref ref) {
 Stream<Membership?> member(Ref ref, GroupId groupId, UserId uid) =>
     ref.watch(memberRepositoryProvider).watchMember(groupId, uid);
 
+/// What someone shares with a team (TEAM-10), live, or null when nothing
+/// is shared or it's hidden from me (#45).
+@riverpod
+Stream<SharedContact?> memberContact(Ref ref, GroupId groupId, UserId uid) =>
+    ref.watch(memberRepositoryProvider).watchContact(groupId, uid);
+
 /// A team, live. One you can't read (removed, deleted, or suspended)
 /// reads as null, and its read ends there. A suspension can be lifted with
 /// nothing to tell its members, so while it's null the read starts over:

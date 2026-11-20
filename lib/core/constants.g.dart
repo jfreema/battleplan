@@ -11,6 +11,7 @@ abstract final class Collections {
   static const String userBlocks = 'userBlocks';
   static const String groups = 'groups';
   static const String groupMembers = 'groupMembers';
+  static const String memberContacts = 'memberContacts';
   static const String players = 'players';
   static const String playerGuardians = 'playerGuardians';
   static const String playerDetails = 'playerDetails';

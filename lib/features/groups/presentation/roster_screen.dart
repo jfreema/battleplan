@@ -959,7 +959,9 @@ class MemberCard extends ConsumerWidget {
 
 /// The phone and email someone shares with the team (TEAM-10), with call,
 /// text, and email buttons; on my own card, sharing them, changing them,
-/// and stopping. Sharing needs an open team; stopping always works.
+/// and stopping. Sharing needs an open team; stopping always works. They
+/// come from their own record, which the rules hide when the roster hides
+/// the person (#45); a membership from before that still carries them.
 class _SharedContact extends ConsumerWidget {
   const new({required this.member, required this.isSelf});
 
@@ -972,6 +974,8 @@ class _SharedContact extends ConsumerWidget {
     final name = member.displayName;
     final group = ref.watch(groupProvider(member.groupId)).value;
     final open = group != null && !group.isArchived;
+    final contact = _contact(ref);
+    final shares = contact.phone != null || contact.email != null;
     Future<void> launch(Uri uri) async {
       final opened = await ref.read(linkOpenerProvider).open(uri);
       if (!opened && context.mounted) {
@@ -982,7 +986,7 @@ class _SharedContact extends ConsumerWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (member.contactPhone case final phone?)
+        if (contact.phone case final phone?)
           ListTile(
             leading: const Icon(AppIcons.call),
             title: Text(phone),
@@ -1007,7 +1011,7 @@ class _SharedContact extends ConsumerWidget {
               ],
             ),
           ),
-        if (member.contactEmail case final email?)
+        if (contact.email case final email?)
           ListTile(
             leading: const Icon(AppIcons.email),
             title: Text(email),
@@ -1022,15 +1026,11 @@ class _SharedContact extends ConsumerWidget {
         if (isSelf && open)
           ListTile(
             leading: const Icon(AppIcons.contactInfo),
-            title: Text(
-              member.sharesContact
-                  ? l10n.editContactInfo
-                  : l10n.shareContactInfo,
-            ),
+            title: Text(shares ? l10n.editContactInfo : l10n.shareContactInfo),
             subtitle: Text(l10n.contactInfoHelp(group.name)),
             onTap: () => unawaited(_edit(context, ref, group.name)),
           )
-        else if (isSelf && member.sharesContact)
+        else if (isSelf && shares)
           ListTile(
             leading: const Icon(AppIcons.contactInfo),
             title: Text(l10n.stopSharingContact),
@@ -1040,16 +1040,31 @@ class _SharedContact extends ConsumerWidget {
     );
   }
 
+  /// What they share: their record (#45), else what their membership
+  /// carried before it, until the one-time move clears that.
+  SharedContact _contact(WidgetRef ref) {
+    final saved = ref
+        .watch(memberContactProvider(member.groupId, member.uid))
+        .value;
+    return saved ?? (phone: member.contactPhone, email: member.contactEmail);
+  }
+
   Future<void> _edit(BuildContext context, WidgetRef ref, String team) async {
     final account = ref.read(authUserProvider).value?.email;
+    final saved = ref
+        .read(memberContactProvider(member.groupId, member.uid))
+        .value;
+    final contact =
+        saved ?? (phone: member.contactPhone, email: member.contactEmail);
+    final shares = contact.phone != null || contact.email != null;
     final result = await showCardDialog<({String? phone, String? email})>(
       context: context,
       builder: (_) => _ContactDialog(
         team: team,
-        phone: member.contactPhone,
+        phone: contact.phone,
         // Offered from the account when nothing's shared yet.
-        email: member.sharesContact ? member.contactEmail : account,
-        canStop: member.sharesContact,
+        email: shares ? contact.email : account,
+        canStop: shares,
       ),
     );
     if (result == null || !context.mounted) return;

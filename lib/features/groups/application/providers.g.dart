@@ -285,6 +285,95 @@ final class MemberFamily extends $Family
   String toString() => r'memberProvider';
 }
 
+/// What someone shares with a team (TEAM-10), live, or null when nothing
+/// is shared or it's hidden from me (#45).
+
+@ProviderFor(memberContact)
+final memberContactProvider = MemberContactFamily._();
+
+/// What someone shares with a team (TEAM-10), live, or null when nothing
+/// is shared or it's hidden from me (#45).
+
+final class MemberContactProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<SharedContact?>,
+          SharedContact?,
+          Stream<SharedContact?>
+        >
+    with $FutureModifier<SharedContact?>, $StreamProvider<SharedContact?> {
+  /// What someone shares with a team (TEAM-10), live, or null when nothing
+  /// is shared or it's hidden from me (#45).
+  MemberContactProvider._({
+    required MemberContactFamily super.from,
+    required (GroupId, UserId) super.argument,
+  }) : super(
+         retry: null,
+         name: r'memberContactProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$memberContactHash();
+
+  @override
+  String toString() {
+    return r'memberContactProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<SharedContact?> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<SharedContact?> create(Ref ref) {
+    final argument = this.argument as (GroupId, UserId);
+    return memberContact(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MemberContactProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$memberContactHash() => r'7ca04d4fc4af779ffab11ceeaf618a784cb616ba';
+
+/// What someone shares with a team (TEAM-10), live, or null when nothing
+/// is shared or it's hidden from me (#45).
+
+final class MemberContactFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<SharedContact?>, (GroupId, UserId)> {
+  MemberContactFamily._()
+    : super(
+        retry: null,
+        name: r'memberContactProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// What someone shares with a team (TEAM-10), live, or null when nothing
+  /// is shared or it's hidden from me (#45).
+
+  MemberContactProvider call(GroupId groupId, UserId uid) =>
+      MemberContactProvider._(argument: (groupId, uid), from: this);
+
+  @override
+  String toString() => r'memberContactProvider';
+}
+
 /// A team, live. One you can't read (removed, deleted, or suspended)
 /// reads as null, and its read ends there. A suspension can be lifted with
 /// nothing to tell its members, so while it's null the read starts over:

@@ -4,7 +4,7 @@ import { removeAllOrphanMessageFiles } from '../chat/service.js';
 import { removeAllOrphanDocumentFiles } from '../documents/service.js';
 import { pruneDevices } from '../notify/service.js';
 import { remindOpenReports } from '../safety/alerts.js';
-import { turnOffOldReminderDefaults } from './migrations.js';
+import { moveSharedContacts, turnOffOldReminderDefaults } from './migrations.js';
 import { reconcileAllStorage, type RecountResult } from './storage.js';
 
 const MINUTE_MS = 60_000;
@@ -28,8 +28,24 @@ export interface CleanupSteps {
 
 const STEPS: CleanupSteps = {
   remindOpenReports: () => remindOpenReports(),
-  // #48: old teams' default reminders off; a no-op after its first night.
-  runMigrations: async () => (await turnOffOldReminderDefaults())?.length ?? 0,
+  // #48: old teams' default reminders off; #45: shared contacts off
+  // memberships. Each is a no-op after its first night, and one failing
+  // doesn't stop the next.
+  runMigrations: async () => {
+    let changed = 0;
+    const runs = [
+      async () => (await turnOffOldReminderDefaults())?.length ?? 0,
+      async () => (await moveSharedContacts()) ?? 0,
+    ];
+    for (const run of runs) {
+      try {
+        changed += await run();
+      } catch (e) {
+        logger.error('migration_failed', { error: String(e) });
+      }
+    }
+    return changed;
+  },
   pruneDevices: () => pruneDevices(),
   removeAllOrphanDocumentFiles,
   removeAllOrphanMessageFiles,

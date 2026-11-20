@@ -493,30 +493,46 @@ void main() {
       expect(d['mutedUntil'], isNull);
     });
 
-    test('shares and stops sharing my phone and email (TEAM-10)', () async {
+    test('shares and stops sharing my phone and email in its own record, '
+        'clearing what the membership carried (TEAM-10, #45)', () async {
       final repo = FirestoreMemberRepository(db, functions);
+      // A membership from before #45, still carrying a phone.
+      await db.doc('groupMembers/g1_alex').update({'contactPhone': '555 0000'});
       await repo.setContact(
         _g,
         _me,
         phone: ' 555 0100 ',
         email: 'alex@example.com',
       );
-      var d = (await db.doc('groupMembers/g1_alex').get()).data()!;
-      expect(d['contactPhone'], '555 0100');
-      expect(d['contactEmail'], 'alex@example.com');
-      var alex = (await repo.watchRoster(_g).first).firstWhere(
-        (m) => m.uid == _me,
-      );
-      expect(alex.contactPhone, '555 0100');
-      expect(alex.sharesContact, isTrue);
+      var record = (await db.doc('memberContacts/g1_alex').get()).data()!;
+      expect(record['groupId'], 'g1');
+      expect(record['uid'], 'alex');
+      expect(record['phone'], '555 0100');
+      expect(record['email'], 'alex@example.com');
+      final d = (await db.doc('groupMembers/g1_alex').get()).data()!;
+      expect(d.containsKey('contactPhone'), isFalse);
+      expect(d.containsKey('contactEmail'), isFalse);
+      expect(await repo.watchContact(_g, _me).first, (
+        phone: '555 0100',
+        email: 'alex@example.com',
+      ));
       // Blank is the same as not shared.
-      await repo.setContact(_g, _me, phone: '  ');
-      d = (await db.doc('groupMembers/g1_alex').get()).data()!;
-      expect(d['contactPhone'], isNull);
-      expect(d['contactEmail'], isNull);
-      alex = (await repo.watchRoster(_g).first).firstWhere((m) => m.uid == _me);
-      expect(alex.sharesContact, isFalse);
+      await repo.setContact(_g, _me, phone: '  ', email: 'alex@example.com');
+      record = (await db.doc('memberContacts/g1_alex').get()).data()!;
+      expect(record['phone'], isNull);
+      expect(await repo.watchContact(_g, _me).first, (
+        phone: null,
+        email: 'alex@example.com',
+      ));
+      // Stopping both deletes the record.
+      await repo.setContact(_g, _me);
+      expect((await db.doc('memberContacts/g1_alex').get()).exists, isFalse);
+      expect(await repo.watchContact(_g, _me).first, isNull);
       // A blank stored value reads as not shared.
+      expect(
+        sharedContactFromFirestore(const {'phone': ' ', 'email': ''}),
+        isNull,
+      );
       expect(
         membershipFromFirestore(const {
           'groupId': 'g1',

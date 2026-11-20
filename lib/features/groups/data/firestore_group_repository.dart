@@ -483,15 +483,61 @@ class FirestoreMemberRepository implements MemberRepository {
       });
 
   @override
+  Stream<SharedContact?> watchContact(GroupId groupId, UserId uid) => _db
+      .collection(Collections.memberContacts)
+      .doc(CompositeIds.groupMember(groupId, uid))
+      .snapshots()
+      .map((s) => s.exists ? sharedContactFromFirestore(s.data()!) : null)
+      // Hidden from me (#45), or they've left: nothing to show.
+      .transform(
+        StreamTransformer.fromHandlers(
+          handleError: (error, stack, sink) => _isPermissionDenied(error)
+              ? sink.add(null)
+              : sink.addError(error, stack),
+        ),
+      );
+
+  @override
   Future<void> setContact(
     GroupId groupId,
     UserId uid, {
     String? phone,
     String? email,
-  }) => _updateMine(groupId, uid, {
-    'contactPhone': _shared(phone),
-    'contactEmail': _shared(email),
-  });
+  }) async {
+    final id = CompositeIds.groupMember(groupId, uid);
+    final record = _db.collection(Collections.memberContacts).doc(id);
+    final shared = (phone: _shared(phone), email: _shared(email));
+    final batch = _db.batch();
+    // Stopping both deletes the record, which works on any team; sharing
+    // needs an open one (the rules check).
+    if (shared.phone == null && shared.email == null) {
+      batch.delete(record);
+    } else {
+      batch.set(record, {
+        'groupId': groupId.value,
+        'uid': uid.value,
+        'phone': shared.phone,
+        'email': shared.email,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
+    // The fields memberships carried before #45, which every member can
+    // read, go with the same save.
+    batch.update(_db.collection(Collections.groupMembers).doc(id), {
+      'contactPhone': FieldValue.delete(),
+      'contactEmail': FieldValue.delete(),
+    });
+    try {
+      await batch.commit();
+    } on FirebaseException catch (e) {
+      throw switch (e.code) {
+        'permission-denied' => PermissionDenied(e.code),
+        'not-found' => NotFound(e.code),
+        'unavailable' => Offline(e.code),
+        _ => UnknownFailure(e.code),
+      };
+    }
+  }
 
   /// Members edit their own notification settings directly; rules allow
   /// only those fields (ARCH §6.3).
@@ -733,6 +779,12 @@ Membership membershipFromFirestore(Map<String, dynamic> d) => Membership(
   otherUid: d['otherUid'] as String?,
   lastMessageAt: _date(d['lastMessageAt']),
 );
+
+/// A shared contact record (TEAM-10, #45), or null when it shares nothing.
+SharedContact? sharedContactFromFirestore(Map<String, dynamic> d) {
+  final contact = (phone: _shared(d['phone']), email: _shared(d['email']));
+  return contact.phone == null && contact.email == null ? null : contact;
+}
 
 /// A shared contact field (TEAM-10): its text, or null when it's missing
 /// or blank.

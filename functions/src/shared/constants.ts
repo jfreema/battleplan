@@ -9,6 +9,7 @@ export const Collections = {
   userBlocks: 'userBlocks',
   groups: 'groups',
   groupMembers: 'groupMembers',
+  memberContacts: 'memberContacts',
   players: 'players',
   playerGuardians: 'playerGuardians',
   playerDetails: 'playerDetails',

@@ -917,6 +917,57 @@ void main() {
       expect(find.text('Share my phone and email'), findsNothing);
     });
 
+    testWidgets("someone's own contact record shows, and wins over what "
+        'their membership carried before (#45)', (tester) async {
+      final members = FakeMemberRepository([
+        people.first,
+        people[1].copyWith(contactEmail: 'old@example.com'),
+      ])..contacts['y_maria'] = (phone: '555 0123', email: 'maria@example.com');
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: youth,
+        memberRepo: members,
+      );
+      await go(tester, '/g/y/team');
+      await tester.tap(find.text('Maria Rodriguez'));
+      await tester.pumpAndSettle();
+      expect(find.text('maria@example.com'), findsOneWidget);
+      expect(find.text('old@example.com'), findsNothing);
+      expect(find.byTooltip('Call Maria Rodriguez'), findsOneWidget);
+    });
+
+    testWidgets('sharing saves my own record and clears what my membership '
+        'carried before (#45)', (tester) async {
+      final members = FakeMemberRepository([
+        people.first.copyWith(contactPhone: '555 0100'),
+        people[1],
+      ]);
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: youth,
+        memberRepo: members,
+      );
+      await go(tester, '/g/y/team');
+      await tester.tap(find.text('Jordan'));
+      await tester.pumpAndSettle();
+      // The old field shows until the move, and fills the dialog.
+      expect(find.text('555 0100'), findsOneWidget);
+      await tester.tap(find.text('Edit my phone and email'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Phone'),
+        '555 0199',
+      );
+      await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+      await tester.pumpAndSettle();
+      expect(members.contacts['y_coach']?.phone, '555 0199');
+      expect(members.memberships.first.contactPhone, isNull);
+      expect(find.text('555 0199'), findsOneWidget);
+      expect(find.text('555 0100'), findsNothing);
+    });
+
     testWidgets('bad entries are caught before saving', (tester) async {
       final members = FakeMemberRepository([...people]);
       await pumpApp(

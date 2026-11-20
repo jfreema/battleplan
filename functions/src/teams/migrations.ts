@@ -102,3 +102,74 @@ export async function undoReminderDefaultsOff(now = new Date()): Promise<string[
   logger.info('reminder_defaults_off_undone', { teams: back.length });
   return back;
 }
+
+/**
+ * #45: the phone and email members shared with a team (TEAM-10) move from
+ * their membership, which everyone on the team can read, to
+ * `memberContacts` under the same ID, which the rules show only to the
+ * people the roster shows that person to. Each membership with either old
+ * field gets a record (unless it already has one, saved since by a newer
+ * app, which wins) and loses the old fields, in one batch, so nobody's
+ * contact is ever in neither place. It runs once, recorded in
+ * `ops/migrations.sharedContactsMoved`; one audit entry says how many
+ * moved. Returns how many memberships it changed, or null when it had
+ * run before.
+ */
+export async function moveSharedContacts(now = new Date()): Promise<number | null> {
+  if ((await migrations().get()).get('sharedContactsMoved') != null) return null;
+  const claimed = await db().runTransaction(async (tx) => {
+    const snap = await tx.get(migrations());
+    if (snap.get('sharedContactsMoved') != null) return false;
+    tx.set(migrations(), { sharedContactsMoved: { startedAt: Timestamp.fromDate(now) } }, { merge: true });
+    return true;
+  });
+  if (!claimed) return null;
+  // Memberships with either field, each once.
+  const members = db().collection(Collections.groupMembers);
+  const [phones, emails] = await Promise.all([
+    members.where('contactPhone', '!=', null).get(),
+    members.where('contactEmail', '!=', null).get(),
+  ]);
+  const docs = new Map([...phones.docs, ...emails.docs].map((d) => [d.id, d]));
+  const all = [...docs.values()];
+  const text = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
+  for (let i = 0; i < all.length; i += 200) {
+    const part = all.slice(i, i + 200);
+    const contacts = part.map((d) => db().collection(Collections.memberContacts).doc(d.id));
+    const existing = await db().getAll(...contacts);
+    const batch = db().batch();
+    part.forEach((d, j) => {
+      const phone = text(d.get('contactPhone'));
+      const email = text(d.get('contactEmail'));
+      if (!existing[j].exists && (phone || email)) {
+        batch.set(contacts[j], {
+          groupId: d.get('groupId'),
+          uid: d.get('uid'),
+          phone,
+          email,
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      }
+      batch.update(d.ref, { contactPhone: FieldValue.delete(), contactEmail: FieldValue.delete() });
+    });
+    await batch.commit();
+  }
+  await migrations().set(
+    { sharedContactsMoved: { ranAt: Timestamp.fromDate(now), count: all.length } },
+    { merge: true },
+  );
+  await audit({
+    actorId: SYSTEM_ACTOR,
+    action: 'sharedContactsMoved',
+    targetType: 'platform',
+    targetId: 'sharedContactsMoved',
+    after: {
+      members: all.length,
+      note:
+        `Shared phone numbers and emails moved to private records for ${all.length} ` +
+        `${all.length === 1 ? 'membership' : 'memberships'} (#45), so a hidden roster hides them too.`,
+    },
+  });
+  logger.info('shared_contacts_moved', { members: all.length });
+  return all.length;
+}
