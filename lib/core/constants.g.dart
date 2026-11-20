@@ -244,6 +244,7 @@ enum ThemePreference {
 
 enum TeamScheme {
   army('army'),
+  darkarmy('darkarmy'),
   light('light'),
   dark('dark'),
   navy('navy'),

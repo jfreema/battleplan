@@ -108,7 +108,7 @@ service cloud.firestore {
         // the lists in step with teamScheme and avatarColor in
         // shared/constants.json (users.test.ts checks).
         && (p.get('colorScheme', null) == null
-            || p.colorScheme in ['army', 'light', 'dark', 'navy', 'sky', 'skyblue', 'candypop'])
+            || p.colorScheme in ['army', 'darkarmy', 'light', 'dark', 'navy', 'sky', 'skyblue', 'candypop'])
         && (p.get('avatarColor', null) == null
             || p.avatarColor in ['blueRaspberry', 'lemon', 'mint', 'grape', 'bubblegum',
                                  'tangerine', 'cherry'])
@@ -181,7 +181,7 @@ service cloud.firestore {
         // The team's default color scheme (SET-2): one of the five, or
         // null for none (members then see their own default).
         && (!('colorScheme' in changed()) || incoming().get('colorScheme', null) == null
-            || incoming().colorScheme in ['army', 'light', 'dark', 'navy', 'sky', 'skyblue', 'candypop'])
+            || incoming().colorScheme in ['army', 'darkarmy', 'light', 'dark', 'navy', 'sky', 'skyblue', 'candypop'])
         // Where team notifications start for people who join (TEAM-5,
         // NOTIF-3): one of the three levels. Top-level, not in settings,
         // which older builds write whole (like colorScheme); absent is All
@@ -265,7 +265,7 @@ service cloud.firestore {
         // (No changed() here: a send batch updates this doc too, and the
         // ten-photo message must stay under the 1,000-expression budget.)
         && (incoming().get('colorScheme', null) == null
-            || incoming().colorScheme in ['army', 'light', 'dark', 'navy', 'sky', 'skyblue', 'candypop'])
+            || incoming().colorScheme in ['army', 'darkarmy', 'light', 'dark', 'navy', 'sky', 'skyblue', 'candypop'])
         // What they said to "Who are you here for?" without picking a
         // player (PLAYER-3): Not now ('later'), or a coach or another adult
         // ('nobody'), so the team's prompts stop asking them. Theirs alone,

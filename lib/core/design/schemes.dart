@@ -270,6 +270,57 @@ class SchemeRoles {
     cherryLip: Color(0xFF1A1A18),
   );
 
+  /// Dark army green (#77, owner's pick 2026-11-20 from the darker mockups:
+  /// "add a new "dark army green" theme that is the "darkest" theme from
+  /// the mockups"): Army green's cream type, ink, and candies on a deeper
+  /// olive page, with its cards, fields, and tab bar deepened alike.
+  static const darkarmy = SchemeRoles(
+    page: Color(0xFF2A2E19),
+    text: Color(0xFFF4EAD0),
+    pageMuted: Color(0xCCF4EAD0),
+    hairline: Color(0x24F4EAD0),
+    outline: Color(0x4CF4EAD0),
+    tabbar: Color(0xFF222513),
+    tabbarLine: Color(0x1AF4EAD0),
+    field: Color(0xFF181B0E),
+    fieldRim: Color(0x00000000),
+    card: Color(0xFF393D26),
+    cardRim: Color(0xFF1A1A18),
+    cardMuted: Color(0xE0F4EAD0),
+    cardTrack: Color(0x38F4EAD0),
+    cardOutline: Color(0x73F4EAD0),
+    cardText: Color(0xFFF4EAD0),
+    cardField: Color(0xFF181B0E),
+    cardMaybeText: Color(0xFFF8D84A),
+    popup: Color(0xFF393D26),
+    candyInk: Color(0xFF1A1A18),
+    candyLipCoral: Color(0xFF1A1A18),
+    candyLipMint: Color(0xFF1A1A18),
+    candyLipLemon: Color(0xFF1A1A18),
+    candyLipTangerine: Color(0xFF1A1A18),
+    titleDrop: Color(0xFF1A1A18),
+    avatarRing: Color(0x00000000),
+    accentText: Color(0xFFF9A5A5),
+    accentMark: Color(0xFFF45B5B),
+    notGoingIcon: Color(0xFFFBC0C0),
+    goingText: Color(0xFFB5FAD0),
+    maybeText: Color(0xFFF8D84A),
+    cardGoingText: Color(0xFFB5FAD0),
+    cardAccentText: Color(0xFFFBC0C0),
+    gameText: Color(0xFFF4AD79),
+    typeGame: Color(0xFFF8CDAD),
+    typePractice: Color(0xFFDBCBFB),
+    typeOther: Color(0xFFF8C2DE),
+    grapePageText: Color(0xFFC9B0F9),
+    bubblegumPageText: Color(0xFFF5A8D0),
+    blueRaspberryPageText: Color(0xFF86C2FF),
+    blueRaspberryCardText: Color(0xFFAFD6FF),
+    grapeLip: Color(0xFF1A1A18),
+    bubblegumLip: Color(0xFF1A1A18),
+    blueRaspberryLip: Color(0xFF1A1A18),
+    cherryLip: Color(0xFF1A1A18),
+  );
+
   static const light = SchemeRoles(
     page: Color(0xFFFBF5E6),
     text: Color(0xFF1A1A18),
@@ -572,6 +623,7 @@ class SchemeRoles {
   /// The roles of [scheme].
   static SchemeRoles of(TeamScheme scheme) => switch (scheme) {
     TeamScheme.army => army,
+    TeamScheme.darkarmy => darkarmy,
     TeamScheme.light => light,
     TeamScheme.dark => dark,
     TeamScheme.navy => navy,
@@ -583,11 +635,12 @@ class SchemeRoles {
 
 /// What each scheme is called, and whether its page is dark.
 extension TeamSchemeLook on TeamScheme {
-  /// Light text on a dark page (Army green, Dark, Navy, and Candy Pop's
-  /// deep blue). The cards are dark too, but Candy Pop's, which are white
+  /// Light text on a dark page (Army green, Dark army green, Dark, Navy,
+  /// and Candy Pop's deep blue). The cards are dark too, but Candy Pop's, which are white
   /// ([GumdropColors.brightness] tells a card's own).
   bool get isDark =>
       this == TeamScheme.army ||
+      this == TeamScheme.darkarmy ||
       this == TeamScheme.dark ||
       this == TeamScheme.navy ||
       this == TeamScheme.candypop;
@@ -595,6 +648,7 @@ extension TeamSchemeLook on TeamScheme {
   /// "Army green", and the rest.
   String label(AppLocalizations l10n) => switch (this) {
     TeamScheme.army => l10n.schemeArmy,
+    TeamScheme.darkarmy => l10n.schemeDarkarmy,
     TeamScheme.light => l10n.schemeLight,
     TeamScheme.dark => l10n.schemeDark,
     TeamScheme.navy => l10n.schemeNavy,
@@ -606,6 +660,7 @@ extension TeamSchemeLook on TeamScheme {
   /// The short line under the name: "Army green page, cream type".
   String shortLabel(AppLocalizations l10n) => switch (this) {
     TeamScheme.army => l10n.schemeArmyShort,
+    TeamScheme.darkarmy => l10n.schemeDarkarmyShort,
     TeamScheme.light => l10n.schemeLightShort,
     TeamScheme.dark => l10n.schemeDarkShort,
     TeamScheme.navy => l10n.schemeNavyShort,
