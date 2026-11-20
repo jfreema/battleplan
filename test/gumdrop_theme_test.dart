@@ -28,6 +28,7 @@ const _a2 = <String, List<int>>{
     0xFFBCD9F5,
     0xFFBCD9F5,
     0xFF1748D4,
+    0xFF5E1224,
   ],
   'text': [
     0xFFF4EAD0,
@@ -37,6 +38,7 @@ const _a2 = <String, List<int>>{
     0xFFF2F6FF,
     0xFF0B1531,
     0xFF0B1531,
+    0xFFFFFFFF,
     0xFFFFFFFF,
   ],
   'pageMuted': [
@@ -48,6 +50,7 @@ const _a2 = <String, List<int>>{
     0xFF34476E,
     0xFF34476E,
     0xFFDCE6FF,
+    0xFFCDD1D8,
   ],
   'hairline': [
     0x24F4EAD0,
@@ -58,6 +61,7 @@ const _a2 = <String, List<int>>{
     0x240B1531,
     0x240B1531,
     0x33FFFFFF,
+    0x33C0C5CC,
   ],
   'outline': [
     0x4CF4EAD0,
@@ -68,6 +72,7 @@ const _a2 = <String, List<int>>{
     0x590B1531,
     0x590B1531,
     0x66FFFFFF,
+    0x99C0C5CC,
   ],
   'tabbar': [
     0xFF3D4124,
@@ -78,6 +83,7 @@ const _a2 = <String, List<int>>{
     0xFFAFD0F1,
     0xFFFFFFFF,
     0xFF0B1640,
+    0xFF0B0B0B,
   ],
   'tabbarLine': [
     0x1AF4EAD0,
@@ -88,6 +94,7 @@ const _a2 = <String, List<int>>{
     0x1A0B1531,
     0xFF0B1531,
     0xFF0B1640,
+    0x66C0C5CC,
   ],
   'field': [
     0xFF2B2F18,
@@ -98,6 +105,7 @@ const _a2 = <String, List<int>>{
     0xFFA9CCEE,
     0xFFE3EEFA,
     0xFF1238A8,
+    0xFF470C1A,
   ],
   'fieldRim': [
     0x00000000,
@@ -108,6 +116,7 @@ const _a2 = <String, List<int>>{
     0x00000000,
     0x00000000,
     0x33FFFFFF,
+    0x66C0C5CC,
   ],
   'card': [
     0xFF575A3A,
@@ -118,6 +127,7 @@ const _a2 = <String, List<int>>{
     0xFFD3E6F9,
     0xFFFFFFFF,
     0xFFFFFFFF,
+    0xFF701C30,
   ],
   'cardRim': [
     0xFF1A1A18,
@@ -128,6 +138,7 @@ const _a2 = <String, List<int>>{
     0xFF0B1531,
     0xFF0B1531,
     0xFF0B1640,
+    0xFFC0C5CC,
   ],
   'cardMuted': [
     0xE0F4EAD0,
@@ -138,6 +149,7 @@ const _a2 = <String, List<int>>{
     0xFF34476E,
     0xFF34476E,
     0xFF4B5A8C,
+    0xFFD8DCE2,
   ],
   'cardTrack': [
     0x38F4EAD0,
@@ -148,6 +160,7 @@ const _a2 = <String, List<int>>{
     0x1F0B1531,
     0x1F0B1531,
     0x1F0B1640,
+    0x38FFFFFF,
   ],
   'cardOutline': [
     0x73F4EAD0,
@@ -158,6 +171,7 @@ const _a2 = <String, List<int>>{
     0x660B1531,
     0x660B1531,
     0x660B1640,
+    0x99C0C5CC,
   ],
   // The card's own text, fields, Maybe, and Material's pop-ups: the
   // page's or the card's in every scheme but Candy Pop (#72).
@@ -170,6 +184,7 @@ const _a2 = <String, List<int>>{
     0xFF0B1531,
     0xFF0B1531,
     0xFF0B1640,
+    0xFFFFFFFF,
   ],
   'cardField': [
     0xFF2B2F18,
@@ -180,6 +195,7 @@ const _a2 = <String, List<int>>{
     0xFFBCD9F5,
     0xFFE3EEFA,
     0xFFDDE8FF,
+    0xFF470C1A,
   ],
   'cardMaybeText': [
     0xFFF8D84A,
@@ -190,6 +206,7 @@ const _a2 = <String, List<int>>{
     0xFF785200,
     0xFF785200,
     0xFF785200,
+    0xFFFFE680,
   ],
   'popup': [
     0xFF575A3A,
@@ -200,6 +217,7 @@ const _a2 = <String, List<int>>{
     0xFFD3E6F9,
     0xFFFFFFFF,
     0xFF1238A8,
+    0xFF701C30,
   ],
   'candyInk': [
     0xFF1A1A18,
@@ -210,6 +228,7 @@ const _a2 = <String, List<int>>{
     0xFF0B1531,
     0xFF0B1531,
     0xFF0B1640,
+    0xFF0B0B0B,
   ],
   'candyLipCoral': [
     0xFF1A1A18,
@@ -220,6 +239,7 @@ const _a2 = <String, List<int>>{
     0xFF0B1531,
     0xFF0B1531,
     0xFF0B1640,
+    0xFF0B0B0B,
   ],
   'candyLipMint': [
     0xFF1A1A18,
@@ -230,6 +250,7 @@ const _a2 = <String, List<int>>{
     0xFF0B1531,
     0xFF0B1531,
     0xFF0B1640,
+    0xFF0B0B0B,
   ],
   'candyLipLemon': [
     0xFF1A1A18,
@@ -240,6 +261,7 @@ const _a2 = <String, List<int>>{
     0xFF0B1531,
     0xFF0B1531,
     0xFF0B1640,
+    0xFF0B0B0B,
   ],
   'candyLipTangerine': [
     0xFF1A1A18,
@@ -250,6 +272,7 @@ const _a2 = <String, List<int>>{
     0xFF0B1531,
     0xFF0B1531,
     0xFF0B1640,
+    0xFF0B0B0B,
   ],
   'titleDrop': [
     0xFF1A1A18,
@@ -260,6 +283,7 @@ const _a2 = <String, List<int>>{
     0xFFFFFFFF,
     0xFFFFFFFF,
     0xFF0B1640,
+    0xFF0B0B0B,
   ],
   'avatarRing': [
     0x00000000,
@@ -270,6 +294,7 @@ const _a2 = <String, List<int>>{
     0xFF0B1531,
     0xFF0B1531,
     0xFF0B1640,
+    0x00000000,
   ],
   'accentText': [
     0xFFF9A5A5,
@@ -280,6 +305,7 @@ const _a2 = <String, List<int>>{
     0xFFAB222A,
     0xFFAB222A,
     0xFFFFC7C7,
+    0xFFFFB3B3,
   ],
   'accentMark': [
     0xFFF45B5B,
@@ -290,6 +316,7 @@ const _a2 = <String, List<int>>{
     0xFFAB222A,
     0xFFAB222A,
     0xFFFFC7C7,
+    0xFFC0C5CC,
   ],
   'notGoingIcon': [
     0xFFFBC0C0,
@@ -300,6 +327,7 @@ const _a2 = <String, List<int>>{
     0xFFAB222A,
     0xFFAB222A,
     0xFFFFC7C7,
+    0xFFFFB3B3,
   ],
   'goingText': [
     0xFFB5FAD0,
@@ -310,6 +338,7 @@ const _a2 = <String, List<int>>{
     0xFF116530,
     0xFF116530,
     0xFFB5FAD0,
+    0xFFB8F2C8,
   ],
   'maybeText': [
     0xFFF8D84A,
@@ -320,6 +349,7 @@ const _a2 = <String, List<int>>{
     0xFF785200,
     0xFF785200,
     0xFFFFE45C,
+    0xFFFFE680,
   ],
   'cardGoingText': [
     0xFFB5FAD0,
@@ -330,6 +360,7 @@ const _a2 = <String, List<int>>{
     0xFF137236,
     0xFF137236,
     0xFF137236,
+    0xFFB8F2C8,
   ],
   'cardAccentText': [
     0xFFFBC0C0,
@@ -340,6 +371,7 @@ const _a2 = <String, List<int>>{
     0xFFC0262F,
     0xFFC0262F,
     0xFFC0262F,
+    0xFFFFB3B3,
   ],
   'gameText': [
     0xFFF4AD79,
@@ -350,6 +382,7 @@ const _a2 = <String, List<int>>{
     0xFF8D4309,
     0xFF8D4309,
     0xFFFFCB99,
+    0xFFFFC999,
   ],
   'typeGame': [
     0xFFF8CDAD,
@@ -360,6 +393,7 @@ const _a2 = <String, List<int>>{
     0xFF9E4B0A,
     0xFF9E4B0A,
     0xFF9E4B0A,
+    0xFFFFC999,
   ],
   'typePractice': [
     0xFFDBCBFB,
@@ -370,6 +404,7 @@ const _a2 = <String, List<int>>{
     0xFF6C46CC,
     0xFF6C46CC,
     0xFF6C46CC,
+    0xFFE0D0FF,
   ],
   'typeOther': [
     0xFFF8C2DE,
@@ -380,6 +415,7 @@ const _a2 = <String, List<int>>{
     0xFFAE2770,
     0xFFAE2770,
     0xFFAE2770,
+    0xFFFFC2E0,
   ],
 };
 
@@ -494,7 +530,8 @@ void main() {
         // pages are as deep as the red; its white words carry it there.
         if (scheme != TeamScheme.army &&
             scheme != TeamScheme.darkarmy &&
-            scheme != TeamScheme.candypop) {
+            scheme != TeamScheme.candypop &&
+            scheme != TeamScheme.wildcat) {
           _reads(c.cherry.face, r.page, '${scheme.value} red on page', min: 3);
           _reads(c.cherry.face, r.card, '${scheme.value} red on card', min: 3);
         }
@@ -509,6 +546,7 @@ void main() {
         TeamScheme.dark,
         TeamScheme.navy,
         TeamScheme.candypop,
+        TeamScheme.wildcat,
       ]);
       for (final scheme in TeamScheme.values) {
         final want = scheme.isDark ? Brightness.dark : Brightness.light;
@@ -702,7 +740,7 @@ void main() {
   });
 
   group('themes', () {
-    test('built once per scheme and context, sixteen at most', () {
+    test('built once per scheme and context, two each at most', () {
       for (final scheme in TeamScheme.values) {
         for (final onCard in [false, true]) {
           expect(
@@ -714,7 +752,10 @@ void main() {
           );
         }
       }
-      expect(AppTheme.cachedThemes, lessThanOrEqualTo(16));
+      expect(
+        AppTheme.cachedThemes,
+        lessThanOrEqualTo(2 * TeamScheme.values.length),
+      );
     });
 
     test('titles are Lilita One with one hard drop, or none', () {

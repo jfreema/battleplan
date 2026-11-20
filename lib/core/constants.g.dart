@@ -250,7 +250,8 @@ enum TeamScheme {
   navy('navy'),
   sky('sky'),
   skyblue('skyblue'),
-  candypop('candypop');
+  candypop('candypop'),
+  wildcat('wildcat');
 
   const TeamScheme(this.value);
 

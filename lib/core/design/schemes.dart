@@ -622,6 +622,58 @@ class SchemeRoles {
     cherryLip: Color(0xFF0B1640),
   );
 
+  /// Central Wildcat (#79, owner's pick 2026-11-20 from the maroon, silver,
+  /// white, and black mockups: "add the deep maroon theme you just made to
+  /// the available themes. Name it "Central Wildcat""): a deep maroon page
+  /// with cards a shade lighter, silver rims and outlines, white type, and
+  /// black for the tab bar, the candies' lips, and the drop under titles.
+  static const wildcat = SchemeRoles(
+    page: Color(0xFF5E1224),
+    text: Color(0xFFFFFFFF),
+    pageMuted: Color(0xFFCDD1D8),
+    hairline: Color(0x33C0C5CC),
+    outline: Color(0x99C0C5CC),
+    tabbar: Color(0xFF0B0B0B),
+    tabbarLine: Color(0x66C0C5CC),
+    field: Color(0xFF470C1A),
+    fieldRim: Color(0x66C0C5CC),
+    card: Color(0xFF701C30),
+    cardRim: Color(0xFFC0C5CC),
+    cardMuted: Color(0xFFD8DCE2),
+    cardTrack: Color(0x38FFFFFF),
+    cardOutline: Color(0x99C0C5CC),
+    cardText: Color(0xFFFFFFFF),
+    cardField: Color(0xFF470C1A),
+    cardMaybeText: Color(0xFFFFE680),
+    popup: Color(0xFF701C30),
+    candyInk: Color(0xFF0B0B0B),
+    candyLipCoral: Color(0xFF0B0B0B),
+    candyLipMint: Color(0xFF0B0B0B),
+    candyLipLemon: Color(0xFF0B0B0B),
+    candyLipTangerine: Color(0xFF0B0B0B),
+    titleDrop: Color(0xFF0B0B0B),
+    avatarRing: Color(0x00000000),
+    accentText: Color(0xFFFFB3B3),
+    accentMark: Color(0xFFC0C5CC),
+    notGoingIcon: Color(0xFFFFB3B3),
+    goingText: Color(0xFFB8F2C8),
+    maybeText: Color(0xFFFFE680),
+    cardGoingText: Color(0xFFB8F2C8),
+    cardAccentText: Color(0xFFFFB3B3),
+    gameText: Color(0xFFFFC999),
+    typeGame: Color(0xFFFFC999),
+    typePractice: Color(0xFFE0D0FF),
+    typeOther: Color(0xFFFFC2E0),
+    grapePageText: Color(0xFFE0D0FF),
+    bubblegumPageText: Color(0xFFFFC2E0),
+    blueRaspberryPageText: Color(0xFFBFDDFF),
+    blueRaspberryCardText: Color(0xFFBFDDFF),
+    grapeLip: Color(0xFF0B0B0B),
+    bubblegumLip: Color(0xFF0B0B0B),
+    blueRaspberryLip: Color(0xFF0B0B0B),
+    cherryLip: Color(0xFF0B0B0B),
+  );
+
   /// The roles of [scheme].
   static SchemeRoles of(TeamScheme scheme) => switch (scheme) {
     TeamScheme.army => army,
@@ -632,6 +684,7 @@ class SchemeRoles {
     TeamScheme.sky => sky,
     TeamScheme.skyblue => skyblue,
     TeamScheme.candypop => candypop,
+    TeamScheme.wildcat => wildcat,
   };
 }
 
@@ -645,7 +698,8 @@ extension TeamSchemeLook on TeamScheme {
       this == TeamScheme.darkarmy ||
       this == TeamScheme.dark ||
       this == TeamScheme.navy ||
-      this == TeamScheme.candypop;
+      this == TeamScheme.candypop ||
+      this == TeamScheme.wildcat;
 
   /// "Army green", and the rest.
   String label(AppLocalizations l10n) => switch (this) {
@@ -657,6 +711,7 @@ extension TeamSchemeLook on TeamScheme {
     TeamScheme.sky => l10n.schemeSky,
     TeamScheme.skyblue => l10n.schemeSkyblue,
     TeamScheme.candypop => l10n.schemeCandypop,
+    TeamScheme.wildcat => l10n.schemeWildcat,
   };
 
   /// The short line under the name: "Army green page, cream type".
@@ -669,5 +724,6 @@ extension TeamSchemeLook on TeamScheme {
     TeamScheme.sky => l10n.schemeSkyShort,
     TeamScheme.skyblue => l10n.schemeSkyblueShort,
     TeamScheme.candypop => l10n.schemeCandypopShort,
+    TeamScheme.wildcat => l10n.schemeWildcatShort,
   };
 }
