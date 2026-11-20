@@ -91,12 +91,19 @@ class ChatLookSection extends ConsumerWidget {
         ? showStorageFull(context)
         : unawaited(_pickPhoto(context, ref, theme));
     void save(ChatTheme next) => unawaited(_save(context, ref, next));
-    final mine = chatBubbleColor(c, group.bubbleColorOrDefault) ?? c.you.face;
+    final mine = chatBubbleColor(c, group.bubbleColorToDraw) ?? c.you.face;
     const order = chatCandyOrder;
     // Nothing picked is the theme's "you" color, which is the first candy
-    // (CHAT-18); a palette color is the team's.
+    // (CHAT-18).
     final stored = group.bubbleColorOrDefault;
     final picked = stored == null ? order.first : ChatCandy.fromStored(stored);
+    // "Team color" follows the team's color (#34). A palette color saved
+    // before that is a copy that doesn't, so it keeps a swatch of its own,
+    // picked, until the admins choose something else.
+    final teamPicked = stored == chatBubbleTeamColor;
+    final saved = stored != null && picked == null && !teamPicked
+        ? stored
+        : null;
     final muted = text.bodyMedium?.copyWith(
       fontSize: 15,
       height: 1.4,
@@ -131,18 +138,29 @@ class ChatLookSection extends ConsumerWidget {
                   selected: picked == candy,
                   onTap: () => save(theme.copyWith(bubbleColor: candy.stored)),
                 ),
-              // The team's own color, last; also where a color from the
-              // old team palette shows as picked. A team with no color
-              // has the theme's.
+              // The team's own color, last, saved as "Team color" so the
+              // bubbles follow it when it changes (#34). A team with no
+              // color has the theme's.
               _ColorTile(
                 label: group.isGroup
                     ? l10n.groupColorOption
                     : l10n.teamColorOption,
                 accent: _teamAccent(c, group.color),
                 teamSwatch: true,
-                selected: picked == null,
-                onTap: () => save(theme.copyWith(bubbleColor: group.color)),
+                selected: teamPicked,
+                onTap: () =>
+                    save(theme.copyWith(bubbleColor: chatBubbleTeamColor)),
               ),
+              // A palette color saved before #34, named as the team color
+              // picker names it; it goes away once something else is picked.
+              if (saved != null)
+                _ColorTile(
+                  label: teamColorName(l10n, saved),
+                  accent: _teamAccent(c, saved),
+                  teamSwatch: true,
+                  selected: true,
+                  onTap: () {},
+                ),
             ],
           ),
         ),

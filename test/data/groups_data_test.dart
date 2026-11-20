@@ -260,6 +260,20 @@ void main() {
             as Map)['bubbleColor'],
         isNull,
       );
+      // "Team color" is saved as itself and read back as itself (#34).
+      await repo.updateChatTheme(
+        _g,
+        const ChatTheme(bubbleColor: chatBubbleTeamColor),
+      );
+      expect(
+        ((await db.doc('groups/g1').get()).data()!['chatTheme']
+            as Map)['bubbleColor'],
+        'team',
+      );
+      expect(
+        (await repo.watchGroup(_g).first)!.chatTheme!.bubbleColor,
+        chatBubbleTeamColor,
+      );
       // The team's default color scheme (SET-2), read back on the team.
       expect((await repo.watchGroup(_g).first)!.colorScheme, isNull);
       await repo.updateColorScheme(_g, TeamScheme.navy);

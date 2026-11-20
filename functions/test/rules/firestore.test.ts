@@ -514,6 +514,7 @@ describe('chat look (CHAT-18)', () => {
     await assertFails(look('dan', 'teamB', good));
     await assertFails(look('alice', 'teamB', good));
     await assertFails(look('alice', 'teamA', { ...good, bubbleColor: '#FFFFFF' }));
+    await assertFails(look('alice', 'teamA', { ...good, bubbleColor: 'Team' }));
     await assertFails(look('alice', 'teamA', { ...good, background: 'video' }));
     await assertFails(look('alice', 'teamA', { ...good, backgroundPath: 'groups/teamB/theme/1.jpg' }));
     await assertFails(look('alice', 'teamA', { ...good, extra: true }));
@@ -530,6 +531,8 @@ describe('chat look (CHAT-18)', () => {
     for (const color of CHAT_CANDY_COLORS) {
       await assertSucceeds(look('alice', 'teamA', { ...good, bubbleColor: color }));
     }
+    // And "Team color", which follows the team's color as it changes (#34).
+    await assertSucceeds(look('alice', 'teamA', { ...good, bubbleColor: 'team' }));
     // A retired color (TEAM-5) still validates, so an old team can save
     // its other fields.
     for (const color of Object.keys(RETIRED_TEAM_COLORS)) {

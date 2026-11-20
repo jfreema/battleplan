@@ -534,7 +534,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           otherUid: other,
           otherName: other == null ? '' : g?.people[other]?.name ?? '',
           look: g?.chatTheme,
-          bubble: g?.bubbleColorOrDefault,
+          // "Team color" as the team's color now, so a new team color
+          // repaints the bubbles (#34).
+          bubble: g?.bubbleColorToDraw,
           storageFull: g?.storageFull ?? false,
           membersCanCreatePolls: g?.settings.membersCanCreatePolls ?? false,
           nextSeasonId: g?.nextSeasonId,

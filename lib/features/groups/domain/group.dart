@@ -37,12 +37,25 @@ enum ChatBackground { plain, pattern, photo }
 @freezed
 abstract class ChatTheme with _$ChatTheme {
   const factory({
-    /// ARGB from the team palette; null uses the team's own color.
+    /// My bubbles' color: a candy (ChatCandy.stored), the team's own color
+    /// as it is now ([chatBubbleTeamColor], #34), a team palette color
+    /// saved before #34 (kept as it was), or null for the theme's "you"
+    /// color.
     int? bubbleColor,
     @Default(ChatBackground.plain) ChatBackground background,
     String? backgroundPath,
   }) = _ChatTheme;
 }
+
+/// The bubble choice "Team color" (CHAT-18, #34): the bubbles follow the
+/// team's color, now and after it changes, rather than keeping a copy of
+/// it. ARGB 0 (clear) is never a stored color, so it can't be mistaken for
+/// one; Firestore holds it as [chatBubbleTeamValue].
+const int chatBubbleTeamColor = 0;
+
+/// How [chatBubbleTeamColor] is written in `chatTheme.bubbleColor`, where
+/// every other choice is a `#RRGGBB` hex.
+const String chatBubbleTeamValue = 'team';
 
 /// Bytes in a megabyte, as the storage limits count them (ARCH §6.11).
 const int bytesPerMb = 1024 * 1024;
@@ -176,6 +189,15 @@ abstract class Group with _$Group {
   int? get bubbleColorOrDefault =>
       chatTheme?.bubbleColor ??
       (isGroup ? ChatCandy.blueRaspberry.stored : null);
+
+  /// My bubbles' color to draw (CHAT-18): [bubbleColorOrDefault], with
+  /// "Team color" read as the team's color today (#34), so changing the
+  /// team color changes the chat too. A team with no color has null there,
+  /// the theme's "you" color, as its Team color swatch shows.
+  int? get bubbleColorToDraw {
+    final stored = bubbleColorOrDefault;
+    return stored == chatBubbleTeamColor ? color : stored;
+  }
 
   /// It has a roster of players, with guardians and Plays: a team.
   bool get hasPlayers => kind == GroupKind.team;

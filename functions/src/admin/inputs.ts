@@ -118,7 +118,9 @@ export const UpdateGroupInput = z
       .optional(),
     chatTheme: z
       .strictObject({
-        bubbleColor: z.union([teamColor, z.enum(CHAT_CANDY_COLORS)]).nullable().optional(),
+        // A palette color, a candy, or 'team': the team's own color, which
+        // the bubbles follow as it changes (#34), as the rules allow.
+        bubbleColor: z.union([teamColor, z.enum(CHAT_CANDY_COLORS), z.literal('team')]).nullable().optional(),
         background: z.enum(['plain', 'pattern', 'photo']).optional(),
         backgroundPath: StoragePath,
       })

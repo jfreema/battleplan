@@ -211,6 +211,16 @@ void main() {
             as Map)['bubbleColor'],
         isNull,
       );
+      // "Team color" goes as itself (#34).
+      await repo.updateGroup(
+        _g,
+        chatTheme: const ChatTheme(bubbleColor: chatBubbleTeamColor),
+      );
+      expect(
+        ((functions.lastData('adminUpdateGroup')! as Map)['chatTheme']
+            as Map)['bubbleColor'],
+        'team',
+      );
       await repo.updatePlayer(
         const PlayerId('emma'),
         name: ' Emma ',

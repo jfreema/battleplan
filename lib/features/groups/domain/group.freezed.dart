@@ -322,7 +322,10 @@ as List<int>,
 /// @nodoc
 mixin _$ChatTheme {
 
-/// ARGB from the team palette; null uses the team's own color.
+/// My bubbles' color: a candy (ChatCandy.stored), the team's own color
+/// as it is now ([chatBubbleTeamColor], #34), a team palette color
+/// saved before #34 (kept as it was), or null for the theme's "you"
+/// color.
  int? get bubbleColor; ChatBackground get background; String? get backgroundPath;
 /// Create a copy of ChatTheme
 /// with the given fields replaced by the non-null parameter values.
@@ -525,7 +528,10 @@ class _ChatTheme implements ChatTheme {
   const _ChatTheme({this.bubbleColor, this.background = ChatBackground.plain, this.backgroundPath});
   
 
-/// ARGB from the team palette; null uses the team's own color.
+/// My bubbles' color: a candy (ChatCandy.stored), the team's own color
+/// as it is now ([chatBubbleTeamColor], #34), a team palette color
+/// saved before #34 (kept as it was), or null for the theme's "you"
+/// color.
 @override final  int? bubbleColor;
 @override@JsonKey() final  ChatBackground background;
 @override final  String? backgroundPath;

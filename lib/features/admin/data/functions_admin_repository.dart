@@ -233,7 +233,10 @@ class FunctionsAdminRepository implements AdminRepository {
       },
     if (chatTheme != null)
       'chatTheme': {
-        'bubbleColor': _hex(chatTheme.bubbleColor),
+        // "Team color" as itself, as the team's own save writes it (#34).
+        'bubbleColor': chatTheme.bubbleColor == chatBubbleTeamColor
+            ? chatBubbleTeamValue
+            : _hex(chatTheme.bubbleColor),
         'background': chatTheme.background.name,
         'backgroundPath': chatTheme.backgroundPath,
       },

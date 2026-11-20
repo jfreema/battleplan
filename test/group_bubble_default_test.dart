@@ -24,4 +24,43 @@ void main() {
     );
     expect(g.bubbleColorOrDefault, ChatCandy.mint.stored);
   });
+
+  // "Team color" follows the team's color (#34).
+  group('Team color', () {
+    const team = ChatTheme(bubbleColor: chatBubbleTeamColor);
+
+    test('draws the team color as it is now', () {
+      final g = testGroup(
+        'a',
+        'Thunder',
+      ).copyWith(color: 0xFF1E3A5F, chatTheme: team);
+      expect(g.bubbleColorOrDefault, chatBubbleTeamColor);
+      expect(g.bubbleColorToDraw, 0xFF1E3A5F);
+      expect(g.copyWith(color: 0xFFB91C1C).bubbleColorToDraw, 0xFFB91C1C);
+    });
+
+    test("is the theme's color (null) on a team with no color", () {
+      final g = testGroup(
+        'a',
+        'Thunder',
+      ).copyWith(color: null, chatTheme: team);
+      expect(g.bubbleColorToDraw, isNull);
+    });
+
+    test('leaves a candy and a color saved before #34 as they are', () {
+      final g = testGroup('a', 'Thunder').copyWith(color: 0xFF1E3A5F);
+      expect(
+        g
+            .copyWith(chatTheme: ChatTheme(bubbleColor: ChatCandy.mint.stored))
+            .bubbleColorToDraw,
+        ChatCandy.mint.stored,
+      );
+      expect(
+        g
+            .copyWith(chatTheme: const ChatTheme(bubbleColor: 0xFF0F8A5F))
+            .bubbleColorToDraw,
+        0xFF0F8A5F,
+      );
+    });
+  });
 }

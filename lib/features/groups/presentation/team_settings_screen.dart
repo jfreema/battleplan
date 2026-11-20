@@ -465,12 +465,17 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
     const gap = SizedBox(height: 12);
     const headingGap = SizedBox(height: 10);
     final look = group.chatTheme ?? const ChatTheme();
-    final candy = group.bubbleColorOrDefault == null
+    final stored = group.bubbleColorOrDefault;
+    final candy = stored == null
         ? chatCandyOrder.first
-        : ChatCandy.fromStored(group.bubbleColorOrDefault);
-    final lookColor = candy == null
+        : ChatCandy.fromStored(stored);
+    // A candy by name, "Team color" (#34), or a palette color saved before
+    // #34 by its color's name, as Chat look shows them.
+    final lookColor = candy != null
+        ? chatCandyName(l10n, candy)
+        : stored == chatBubbleTeamColor
         ? (group.isGroup ? l10n.groupColorOption : l10n.teamColorOption)
-        : chatCandyName(l10n, candy);
+        : teamColorName(l10n, stored!);
     final lookBackground = switch (look.background) {
       ChatBackground.plain => l10n.backgroundPlain,
       ChatBackground.pattern => l10n.backgroundPattern,

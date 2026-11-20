@@ -192,12 +192,14 @@ service cloud.firestore {
     }
 
     // A team's chat look (CHAT-18), set by its admins: a bubble color from the
-    // team palette or one of the Gumdrop candies (or null for the theme's
-    // own) and a background. The last two team colors are retired ones
-    // (Royal blue, Violet; TEAM-5): still accepted so an old look validates.
+    // team palette or one of the Gumdrop candies, 'team' for the team's own
+    // color as it changes (#34), or null for the theme's own; and a
+    // background. The last two team colors are retired ones (Royal blue,
+    // Violet; TEAM-5): still accepted so an old look validates.
     function validChatTheme(t, g) {
       return t is map && t.keys().hasOnly(['bubbleColor', 'background', 'backgroundPath'])
-        && (t.get('bubbleColor', null) == null || t.bubbleColor in ['#2F5BEA', '#7BAFD4',
+        && (t.get('bubbleColor', null) == null || t.bubbleColor == 'team'
+            || t.bubbleColor in ['#2F5BEA', '#7BAFD4',
             '#1E3A5F', '#0E7490', '#0F8A5F', '#4D7C0F', '#D4A017', '#A16207', '#C2410C', '#B91C1C',
             '#7F1D1D', '#BE185D', '#7C3AED', '#334155', '#111111', '#1D4ED8', '#9333EA',
             '#4D9BFF', '#FF7AC8', '#A88BFF', '#4DDC8C', '#FFD84A', '#FF9B42', '#FF5D73'])

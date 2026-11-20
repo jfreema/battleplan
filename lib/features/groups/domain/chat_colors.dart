@@ -1,9 +1,10 @@
 /// The candy message colors of the chat look (CHAT-18), as Gumdrop Pop
 /// shows them. Each is stored in `chatTheme.bubbleColor` as its Gumdrop Pop
 /// Dark face (the value is the choice, not the paint: every theme draws
-/// it in its own shade of that candy). A team palette color there is the
-/// team's color (or one picked before 1.1), drawn as it is; null is the
-/// theme's "you" color.
+/// it in its own shade of that candy). "Team color" is saved as `team`
+/// (chatBubbleTeamColor, #34) and follows the team's color; a team palette
+/// color there was saved before that (or before 1.1) and is drawn as it
+/// is; null is the theme's "you" color.
 enum ChatCandy {
   blueRaspberry(0xFF4D9BFF),
   bubblegum(0xFFFF7AC8),

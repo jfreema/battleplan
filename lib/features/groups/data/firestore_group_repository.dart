@@ -160,9 +160,13 @@ class FirestoreGroupRepository implements GroupRepository {
 
   @override
   Future<void> updateChatTheme(GroupId id, ChatTheme theme) async {
-    String? hex(int? argb) => argb == null
-        ? null
-        : '#${(argb & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
+    // "Team color" is saved as itself, not a copy of today's color (#34).
+    String? hex(int? argb) => switch (argb) {
+      null => null,
+      chatBubbleTeamColor => chatBubbleTeamValue,
+      _ =>
+        '#${(argb & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}',
+    };
     try {
       await _db.collection(Collections.groups).doc(id.value).update({
         'chatTheme': {
@@ -659,7 +663,11 @@ Group groupFromFirestore(String id, Map<String, dynamic> d) {
     storageQuotaCustom: d['storageQuotaCustom'] as bool? ?? false,
     chatTheme: switch (d['chatTheme']) {
       final Map<String, dynamic> t => ChatTheme(
-        bubbleColor: _parseColor(t['bubbleColor'] as String?),
+        // "Team color" (#34), or a hex: a candy, or a palette color saved
+        // before #34, which stays as it was.
+        bubbleColor: t['bubbleColor'] == chatBubbleTeamValue
+            ? chatBubbleTeamColor
+            : _parseColor(t['bubbleColor'] as String?),
         background:
             ChatBackground.values.asNameMap()[t['background']] ??
             ChatBackground.plain,
