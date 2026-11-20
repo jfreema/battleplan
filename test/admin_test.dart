@@ -704,7 +704,7 @@ void main() {
       GoRouter.of(tester.element(find.byType(Scaffold).first))
           .go('/g/t1/scheme');
       await tester.pumpAndSettle();
-      expect(find.text('Light blue'), findsNothing);
+      expect(find.text('Sky Blue Pop'), findsNothing);
     });
 
     testWidgets('Roster and Member card: owner powers', (tester) async {

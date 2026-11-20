@@ -411,6 +411,60 @@ class SchemeRoles {
     cherryLip: Color(0xFF8E1C23),
   );
 
+  /// Sky Blue (#75, owner's request 2026-11-20: "add a version of sky blue
+  /// that dosnt have the white bubbles. make it more like the army green
+  /// one how it is all blended into the background"): Sky Blue Pop's sky
+  /// page and navy type, with cards a shade lighter than the page, as Army
+  /// green's are, rimmed and lipped in navy ink, and fields a shade deeper.
+  static const sky = SchemeRoles(
+    page: Color(0xFFBCD9F5),
+    text: Color(0xFF0B1531),
+    pageMuted: Color(0xFF34476E),
+    hairline: Color(0x240B1531),
+    outline: Color(0x590B1531),
+    tabbar: Color(0xFFAFD0F1),
+    tabbarLine: Color(0x1A0B1531),
+    field: Color(0xFFA9CCEE),
+    fieldRim: Color(0x00000000),
+    card: Color(0xFFD3E6F9),
+    cardRim: Color(0xFF0B1531),
+    cardMuted: Color(0xFF34476E),
+    cardTrack: Color(0x1F0B1531),
+    cardOutline: Color(0x660B1531),
+    cardText: Color(0xFF0B1531),
+    cardField: Color(0xFFBCD9F5),
+    cardMaybeText: Color(0xFF785200),
+    popup: Color(0xFFD3E6F9),
+    candyInk: Color(0xFF0B1531),
+    candyLipCoral: Color(0xFF0B1531),
+    candyLipMint: Color(0xFF0B1531),
+    candyLipLemon: Color(0xFF0B1531),
+    candyLipTangerine: Color(0xFF0B1531),
+    titleDrop: Color(0xFFFFFFFF),
+    avatarRing: Color(0xFF0B1531),
+    accentText: Color(0xFFAB222A),
+    accentMark: Color(0xFFAB222A),
+    notGoingIcon: Color(0xFFAB222A),
+    goingText: Color(0xFF116530),
+    maybeText: Color(0xFF785200),
+    cardGoingText: Color(0xFF137236),
+    cardAccentText: Color(0xFFC0262F),
+    gameText: Color(0xFF8D4309),
+    typeGame: Color(0xFF9E4B0A),
+    typePractice: Color(0xFF6C46CC),
+    typeOther: Color(0xFFAE2770),
+    grapePageText: Color(0xFF6642C0),
+    bubblegumPageText: Color(0xFFA7256C),
+    blueRaspberryPageText: Color(0xFF2558B3),
+    blueRaspberryCardText: Color(0xFF2558B3),
+    grapeLip: Color(0xFF0B1531),
+    bubblegumLip: Color(0xFF0B1531),
+    blueRaspberryLip: Color(0xFF0B1531),
+    cherryLip: Color(0xFF0B1531),
+  );
+
+  /// Sky Blue Pop (called Light blue until #75): the sky page with white
+  /// cards.
   static const skyblue = SchemeRoles(
     page: Color(0xFFBCD9F5),
     text: Color(0xFF0B1531),
@@ -521,6 +575,7 @@ class SchemeRoles {
     TeamScheme.light => light,
     TeamScheme.dark => dark,
     TeamScheme.navy => navy,
+    TeamScheme.sky => sky,
     TeamScheme.skyblue => skyblue,
     TeamScheme.candypop => candypop,
   };
@@ -543,6 +598,7 @@ extension TeamSchemeLook on TeamScheme {
     TeamScheme.light => l10n.schemeLight,
     TeamScheme.dark => l10n.schemeDark,
     TeamScheme.navy => l10n.schemeNavy,
+    TeamScheme.sky => l10n.schemeSky,
     TeamScheme.skyblue => l10n.schemeSkyblue,
     TeamScheme.candypop => l10n.schemeCandypop,
   };
@@ -553,6 +609,7 @@ extension TeamSchemeLook on TeamScheme {
     TeamScheme.light => l10n.schemeLightShort,
     TeamScheme.dark => l10n.schemeDarkShort,
     TeamScheme.navy => l10n.schemeNavyShort,
+    TeamScheme.sky => l10n.schemeSkyShort,
     TeamScheme.skyblue => l10n.schemeSkyblueShort,
     TeamScheme.candypop => l10n.schemeCandypopShort,
   };

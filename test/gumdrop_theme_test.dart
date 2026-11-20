@@ -15,14 +15,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Appendix A.2 of the Open Field spec, by role, in enum order (army,
-/// light, dark, navy, skyblue), then Candy Pop (#70), made after it from
-/// TeamRank's colors, with TeamRank's white cards since #72.
+/// light, dark, navy, then sky, Sky Blue, added beside it in #75, skyblue,
+/// Sky Blue Pop), then Candy Pop (#70), made after it from TeamRank's
+/// colors, with TeamRank's white cards since #72.
 const _a2 = <String, List<int>>{
   'page': [
     0xFF474C2B,
     0xFFFBF5E6,
     0xFF0E0E0D,
     0xFF0B1531,
+    0xFFBCD9F5,
     0xFFBCD9F5,
     0xFF1748D4,
   ],
@@ -32,6 +34,7 @@ const _a2 = <String, List<int>>{
     0xFFF4EAD0,
     0xFFF2F6FF,
     0xFF0B1531,
+    0xFF0B1531,
     0xFFFFFFFF,
   ],
   'pageMuted': [
@@ -39,6 +42,7 @@ const _a2 = <String, List<int>>{
     0xFF5F5A4D,
     0xBFF4EAD0,
     0xFFB2BFE0,
+    0xFF34476E,
     0xFF34476E,
     0xFFDCE6FF,
   ],
@@ -48,6 +52,7 @@ const _a2 = <String, List<int>>{
     0x1FF4EAD0,
     0x1FF2F6FF,
     0x240B1531,
+    0x240B1531,
     0x33FFFFFF,
   ],
   'outline': [
@@ -56,6 +61,7 @@ const _a2 = <String, List<int>>{
     0x4CF4EAD0,
     0x4CF2F6FF,
     0x590B1531,
+    0x590B1531,
     0x66FFFFFF,
   ],
   'tabbar': [
@@ -63,6 +69,7 @@ const _a2 = <String, List<int>>{
     0xFFFFFFFF,
     0xFF161615,
     0xFF07102A,
+    0xFFAFD0F1,
     0xFFFFFFFF,
     0xFF0B1640,
   ],
@@ -71,6 +78,7 @@ const _a2 = <String, List<int>>{
     0xFF1A1A18,
     0x1AF4EAD0,
     0x1AF2F6FF,
+    0x1A0B1531,
     0xFF0B1531,
     0xFF0B1640,
   ],
@@ -79,6 +87,7 @@ const _a2 = <String, List<int>>{
     0xFFEFE6CC,
     0xFF1F1F1C,
     0xFF07102A,
+    0xFFA9CCEE,
     0xFFE3EEFA,
     0xFF1238A8,
   ],
@@ -88,6 +97,7 @@ const _a2 = <String, List<int>>{
     0x00000000,
     0x1AF2F6FF,
     0x00000000,
+    0x00000000,
     0x33FFFFFF,
   ],
   'card': [
@@ -95,6 +105,7 @@ const _a2 = <String, List<int>>{
     0xFFFFFFFF,
     0xFF1B1B19,
     0xFF18284C,
+    0xFFD3E6F9,
     0xFFFFFFFF,
     0xFFFFFFFF,
   ],
@@ -104,6 +115,7 @@ const _a2 = <String, List<int>>{
     0xFF363631,
     0xFF35466D,
     0xFF0B1531,
+    0xFF0B1531,
     0xFF0B1640,
   ],
   'cardMuted': [
@@ -111,6 +123,7 @@ const _a2 = <String, List<int>>{
     0xFF5F5A4D,
     0xC7F4EAD0,
     0xFFC2CCE8,
+    0xFF34476E,
     0xFF34476E,
     0xFF4B5A8C,
   ],
@@ -120,6 +133,7 @@ const _a2 = <String, List<int>>{
     0x2EF4EAD0,
     0x38F2F6FF,
     0x1F0B1531,
+    0x1F0B1531,
     0x1F0B1640,
   ],
   'cardOutline': [
@@ -127,6 +141,7 @@ const _a2 = <String, List<int>>{
     0x661A1A18,
     0x73F4EAD0,
     0x73F2F6FF,
+    0x660B1531,
     0x660B1531,
     0x660B1640,
   ],
@@ -138,6 +153,7 @@ const _a2 = <String, List<int>>{
     0xFFF4EAD0,
     0xFFF2F6FF,
     0xFF0B1531,
+    0xFF0B1531,
     0xFF0B1640,
   ],
   'cardField': [
@@ -145,6 +161,7 @@ const _a2 = <String, List<int>>{
     0xFFEFE6CC,
     0xFF1F1F1C,
     0xFF07102A,
+    0xFFBCD9F5,
     0xFFE3EEFA,
     0xFFDDE8FF,
   ],
@@ -155,12 +172,14 @@ const _a2 = <String, List<int>>{
     0xFFF8D84A,
     0xFF785200,
     0xFF785200,
+    0xFF785200,
   ],
   'popup': [
     0xFF575A3A,
     0xFFFFFFFF,
     0xFF1B1B19,
     0xFF18284C,
+    0xFFD3E6F9,
     0xFFFFFFFF,
     0xFF1238A8,
   ],
@@ -170,6 +189,7 @@ const _a2 = <String, List<int>>{
     0xFF1A1A18,
     0xFF050C1F,
     0xFF0B1531,
+    0xFF0B1531,
     0xFF0B1640,
   ],
   'candyLipCoral': [
@@ -177,6 +197,7 @@ const _a2 = <String, List<int>>{
     0xFF1A1A18,
     0xFFC0262F,
     0xFFC0262F,
+    0xFF0B1531,
     0xFF0B1531,
     0xFF0B1640,
   ],
@@ -186,6 +207,7 @@ const _a2 = <String, List<int>>{
     0xFF137236,
     0xFF137236,
     0xFF0B1531,
+    0xFF0B1531,
     0xFF0B1640,
   ],
   'candyLipLemon': [
@@ -193,6 +215,7 @@ const _a2 = <String, List<int>>{
     0xFF1A1A18,
     0xFFA88A12,
     0xFFA88A12,
+    0xFF0B1531,
     0xFF0B1531,
     0xFF0B1640,
   ],
@@ -202,6 +225,7 @@ const _a2 = <String, List<int>>{
     0xFF9E4B0A,
     0xFF9E4B0A,
     0xFF0B1531,
+    0xFF0B1531,
     0xFF0B1640,
   ],
   'titleDrop': [
@@ -209,6 +233,7 @@ const _a2 = <String, List<int>>{
     0x00000000,
     0x00000000,
     0xFF2A63C9,
+    0xFFFFFFFF,
     0xFFFFFFFF,
     0xFF0B1640,
   ],
@@ -218,6 +243,7 @@ const _a2 = <String, List<int>>{
     0x00000000,
     0x00000000,
     0xFF0B1531,
+    0xFF0B1531,
     0xFF0B1640,
   ],
   'accentText': [
@@ -225,6 +251,7 @@ const _a2 = <String, List<int>>{
     0xFFC0262F,
     0xFFF76F6F,
     0xFFF78C8C,
+    0xFFAB222A,
     0xFFAB222A,
     0xFFFFC7C7,
   ],
@@ -234,6 +261,7 @@ const _a2 = <String, List<int>>{
     0xFFF45B5B,
     0xFFF45B5B,
     0xFFAB222A,
+    0xFFAB222A,
     0xFFFFC7C7,
   ],
   'notGoingIcon': [
@@ -241,6 +269,7 @@ const _a2 = <String, List<int>>{
     0xFFC0262F,
     0xFFF76F6F,
     0xFFF78C8C,
+    0xFFAB222A,
     0xFFAB222A,
     0xFFFFC7C7,
   ],
@@ -250,6 +279,7 @@ const _a2 = <String, List<int>>{
     0xFF58C173,
     0xFF79CD8F,
     0xFF116530,
+    0xFF116530,
     0xFFB5FAD0,
   ],
   'maybeText': [
@@ -257,6 +287,7 @@ const _a2 = <String, List<int>>{
     0xFF8F6500,
     0xFFF8D84A,
     0xFFF8D84A,
+    0xFF785200,
     0xFF785200,
     0xFFFFE45C,
   ],
@@ -267,6 +298,7 @@ const _a2 = <String, List<int>>{
     0xFF79CD8F,
     0xFF137236,
     0xFF137236,
+    0xFF137236,
   ],
   'cardAccentText': [
     0xFFFBC0C0,
@@ -275,12 +307,14 @@ const _a2 = <String, List<int>>{
     0xFFF78C8C,
     0xFFC0262F,
     0xFFC0262F,
+    0xFFC0262F,
   ],
   'gameText': [
     0xFFF4AD79,
     0xFF9E4B0A,
     0xFFEE8131,
     0xFFF19A5A,
+    0xFF8D4309,
     0xFF8D4309,
     0xFFFFCB99,
   ],
@@ -291,6 +325,7 @@ const _a2 = <String, List<int>>{
     0xFFF19A5A,
     0xFF9E4B0A,
     0xFF9E4B0A,
+    0xFF9E4B0A,
   ],
   'typePractice': [
     0xFFDBCBFB,
@@ -299,12 +334,14 @@ const _a2 = <String, List<int>>{
     0xFFB796F7,
     0xFF6C46CC,
     0xFF6C46CC,
+    0xFF6C46CC,
   ],
   'typeOther': [
     0xFFF8C2DE,
     0xFFAE2770,
     0xFFF06AAF,
     0xFFF184BE,
+    0xFFAE2770,
     0xFFAE2770,
     0xFFAE2770,
   ],
@@ -426,8 +463,8 @@ void main() {
       }
     });
 
-    test('Army green, Dark, Navy, and Candy Pop are dark; Light and Light '
-        "blue light; cards agree, but Candy Pop's white ones", () {
+    test('Army green, Dark, Navy, and Candy Pop are dark; Light, Sky Blue, '
+        "and Sky Blue Pop light; cards agree, but Candy Pop's white ones", () {
       expect(TeamScheme.values.where((s) => s.isDark), [
         TeamScheme.army,
         TeamScheme.dark,
@@ -626,7 +663,7 @@ void main() {
   });
 
   group('themes', () {
-    test('built once per scheme and context, twelve at most', () {
+    test('built once per scheme and context, fourteen at most', () {
       for (final scheme in TeamScheme.values) {
         for (final onCard in [false, true]) {
           expect(
@@ -638,7 +675,7 @@ void main() {
           );
         }
       }
-      expect(AppTheme.cachedThemes, lessThanOrEqualTo(12));
+      expect(AppTheme.cachedThemes, lessThanOrEqualTo(14));
     });
 
     test('titles are Lilita One with one hard drop, or none', () {

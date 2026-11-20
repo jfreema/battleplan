@@ -566,7 +566,7 @@ void main() {
     });
   });
 
-  // In Army green (the default) and Light blue (a light one).
+  // In Army green (the default) and Sky Blue Pop (a light one).
   group('text at 200% (SPEC §7.6)', () {
     for (final scheme in [TeamScheme.army, TeamScheme.skyblue]) {
       for (final MapEntry(key: name, value: pump) in screens.entries) {

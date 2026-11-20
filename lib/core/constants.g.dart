@@ -247,6 +247,7 @@ enum TeamScheme {
   light('light'),
   dark('dark'),
   navy('navy'),
+  sky('sky'),
   skyblue('skyblue'),
   candypop('candypop');
 

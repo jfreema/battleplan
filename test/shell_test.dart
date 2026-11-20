@@ -625,7 +625,7 @@ void main() {
       await tester.tap(find.text('Your default (Dark)'));
       await tester.pumpAndSettle();
       expect(members.calls.where((c) => c.startsWith('scheme')), isEmpty);
-      await tester.tap(find.text('Light blue'));
+      await tester.tap(find.text('Sky Blue Pop'));
       await tester.pumpAndSettle();
       expect(members.calls, contains('scheme a skyblue'));
       // The team's screens re-theme at once.
@@ -717,7 +717,7 @@ void main() {
       GoRouter.of(tester.element(find.byType(Scaffold).first))
           .go('/g/a/scheme');
       await tester.pumpAndSettle();
-      expect(find.text('Group default (Light blue)'), findsOneWidget);
+      expect(find.text('Group default (Sky Blue Pop)'), findsOneWidget);
       expect(page(tester), SchemeRoles.skyblue.page);
     });
 
