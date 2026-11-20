@@ -28,6 +28,8 @@ export 'presentation/gumdrop_rows.dart'
         switchRowTitle,
         upButton,
         upFrom;
+export 'presentation/invite_banner.dart'
+    show InviteBanner, InviteBannerOn, inviteCodeFromReturn;
 export 'presentation/results_screen.dart'
     show AddResultsScreen, ResultSection, describeAddProblem;
 export 'presentation/roster_screen.dart' show roleBadge;

@@ -4,6 +4,7 @@ import 'package:battleplan/core/widgets/brand_mark.dart';
 import 'package:battleplan/features/auth/presentation/legal_links.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_controller.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_error_text.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -15,6 +16,12 @@ import 'package:material_ui/material_ui.dart';
 /// here: it's at `/emaillogin`, which nothing links to, for the people who
 /// need it (AUTH-2). At `/sign-up` ([signUp], the website's "Sign up, it's
 /// free!") it says "Create your free account". Each links to the other.
+///
+/// On the way to an invite (`from` is `/join/<code>`, INV-5 step 2), the
+/// team's badge and "Join Hornets: sign in or create a free account" sit
+/// above the buttons, in place of the sign-up page's title (#24). On
+/// sign-in, a line under Google and Apple says they also create the
+/// account, so new people needn't look for Sign up first.
 class SignInScreen extends ConsumerWidget {
   const new({
     this.appleEnabled = false,
@@ -45,6 +52,7 @@ class SignInScreen extends ConsumerWidget {
     final loading = state.isLoading;
     final error = state.hasError ? signInErrorOf(state.error!) : null;
     listenForDisabledAccount(context, ref);
+    final inviteCode = inviteCodeFromReturn(_from(context)?['from']);
 
     return Scaffold(
       body: SafeArea(
@@ -71,7 +79,11 @@ class SignInScreen extends ConsumerWidget {
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  if (signUp) ...[
+                  if (inviteCode != null) ...[
+                    // The team they're joining, which says sign-up too.
+                    const SizedBox(height: Space.xl),
+                    InviteBanner(code: inviteCode, on: InviteBannerOn.signIn),
+                  ] else if (signUp) ...[
                     const SizedBox(height: Space.xl),
                     Text(
                       l10n.signUpTitle,
@@ -94,6 +106,20 @@ class SignInScreen extends ConsumerWidget {
                           ? l10n.signUpWithApple
                           : l10n.continueWithApple,
                       onPressed: loading ? null : controller.signInWithApple,
+                    ),
+                    const SizedBox(height: Space.md),
+                  ],
+                  // Sign-in's buttons make an account too (AUTH-1, #24); the
+                  // sign-up page's say so already.
+                  if (!signUp) ...[
+                    Text(
+                      appleEnabled
+                          ? l10n.signInAlsoCreates
+                          : l10n.signInAlsoCreatesGoogle,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     const SizedBox(height: Space.md),
                   ],

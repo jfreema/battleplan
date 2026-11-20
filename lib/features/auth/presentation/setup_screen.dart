@@ -8,8 +8,10 @@ import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/application/session_service.dart';
 import 'package:battleplan/features/auth/presentation/legal_links.dart';
 import 'package:battleplan/features/auth/presentation/profile_photo.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// First-run setup (AUTH-5, SAFE-3, SAFE-6) at `/setup`: confirm the name
@@ -18,7 +20,9 @@ import 'package:material_ui/material_ui.dart';
 /// confirmations and their dates are stored. The router sends people here
 /// until it's done, then on to their teams. It says which account this is,
 /// with Use a different account to sign out and pick another (a Google
-/// account the browser chose that wasn't the one meant).
+/// account the browser chose that wasn't the one meant). On the way to an
+/// invite (`from` is `/join/<code>`), the team's badge and "Finish setting
+/// up, then you'll join Hornets" come first (#24).
 class SetupScreen extends ConsumerStatefulWidget {
   const new({super.key});
 
@@ -120,6 +124,9 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     final canContinue =
         _adult && _terms && _name.text.trim().isNotEmpty && !_saving;
     final email = ref.watch(authUserProvider).value?.email;
+    final inviteCode = inviteCodeFromReturn(
+      GoRouterState.of(context).uri.queryParameters['from'],
+    );
 
     return Scaffold(
       body: SafeArea(
@@ -131,6 +138,10 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (inviteCode != null) ...[
+                    InviteBanner(code: inviteCode, on: InviteBannerOn.setup),
+                    const SizedBox(height: Space.xl),
+                  ],
                   Text(
                     l10n.setupTitle,
                     textAlign: TextAlign.center,
