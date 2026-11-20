@@ -246,7 +246,8 @@ enum TeamScheme {
   light('light'),
   dark('dark'),
   navy('navy'),
-  skyblue('skyblue');
+  skyblue('skyblue'),
+  candypop('candypop');
 
   const TeamScheme(this.value);
 

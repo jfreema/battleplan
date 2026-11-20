@@ -413,6 +413,55 @@ class SchemeRoles {
     cherryLip: Color(0xFF0B1531),
   );
 
+  /// Candy Pop (#70, owner's request 2026-11-20: "add a scheme that uses
+  /// the colors from the TeamRank app"): TeamRank's loud blue page (a shade
+  /// deeper than its 1E5BFF, so tinted text reads at 4.5:1), white type,
+  /// its navy ink for every outline, lip and hard drop, and deeper blue
+  /// cards. TeamRank's own cards are white, but here sheets, dialogs, and
+  /// menus share the page's text color, so cards stay dark enough for it.
+  static const candypop = SchemeRoles(
+    page: Color(0xFF1748D4),
+    text: Color(0xFFFFFFFF),
+    pageMuted: Color(0xFFDCE6FF),
+    hairline: Color(0x33FFFFFF),
+    outline: Color(0x66FFFFFF),
+    tabbar: Color(0xFF0B1640),
+    tabbarLine: Color(0xFF0B1640),
+    field: Color(0xFF1238A8),
+    fieldRim: Color(0x33FFFFFF),
+    card: Color(0xFF1238A8),
+    cardRim: Color(0xFF0B1640),
+    cardMuted: Color(0xFFDCE6FF),
+    cardTrack: Color(0x38FFFFFF),
+    cardOutline: Color(0x80FFFFFF),
+    candyInk: Color(0xFF0B1640),
+    candyLipCoral: Color(0xFF0B1640),
+    candyLipMint: Color(0xFF0B1640),
+    candyLipLemon: Color(0xFF0B1640),
+    candyLipTangerine: Color(0xFF0B1640),
+    titleDrop: Color(0xFF0B1640),
+    avatarRing: Color(0xFF0B1640),
+    accentText: Color(0xFFFFC7C7),
+    accentMark: Color(0xFFFFC7C7),
+    notGoingIcon: Color(0xFFFFC7C7),
+    goingText: Color(0xFFB5FAD0),
+    maybeText: Color(0xFFFFE45C),
+    cardGoingText: Color(0xFFB5FAD0),
+    cardAccentText: Color(0xFFFFC7C7),
+    gameText: Color(0xFFFFCB99),
+    typeGame: Color(0xFFFFCB99),
+    typePractice: Color(0xFFDDD0FF),
+    typeOther: Color(0xFFFFC7E6),
+    grapePageText: Color(0xFFDDD0FF),
+    bubblegumPageText: Color(0xFFFFC7E6),
+    blueRaspberryPageText: Color(0xFFCFE3FF),
+    blueRaspberryCardText: Color(0xFFCFE3FF),
+    grapeLip: Color(0xFF0B1640),
+    bubblegumLip: Color(0xFF0B1640),
+    blueRaspberryLip: Color(0xFF0B1640),
+    cherryLip: Color(0xFF0B1640),
+  );
+
   /// The roles of [scheme].
   static SchemeRoles of(TeamScheme scheme) => switch (scheme) {
     TeamScheme.army => army,
@@ -420,16 +469,19 @@ class SchemeRoles {
     TeamScheme.dark => dark,
     TeamScheme.navy => navy,
     TeamScheme.skyblue => skyblue,
+    TeamScheme.candypop => candypop,
   };
 }
 
 /// What each scheme is called, and whether its page is dark.
 extension TeamSchemeLook on TeamScheme {
-  /// Light text on a dark page and dark cards (Army green, Dark, Navy).
+  /// Light text on a dark page and dark cards (Army green, Dark, Navy,
+  /// and Candy Pop's deep blue).
   bool get isDark =>
       this == TeamScheme.army ||
       this == TeamScheme.dark ||
-      this == TeamScheme.navy;
+      this == TeamScheme.navy ||
+      this == TeamScheme.candypop;
 
   /// "Army green", and the rest.
   String label(AppLocalizations l10n) => switch (this) {
@@ -438,6 +490,7 @@ extension TeamSchemeLook on TeamScheme {
     TeamScheme.dark => l10n.schemeDark,
     TeamScheme.navy => l10n.schemeNavy,
     TeamScheme.skyblue => l10n.schemeSkyblue,
+    TeamScheme.candypop => l10n.schemeCandypop,
   };
 
   /// The short line under the name: "Army green page, cream type".
@@ -447,5 +500,6 @@ extension TeamSchemeLook on TeamScheme {
     TeamScheme.dark => l10n.schemeDarkShort,
     TeamScheme.navy => l10n.schemeNavyShort,
     TeamScheme.skyblue => l10n.schemeSkyblueShort,
+    TeamScheme.candypop => l10n.schemeCandypopShort,
   };
 }

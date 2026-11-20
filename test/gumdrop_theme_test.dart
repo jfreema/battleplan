@@ -1,4 +1,4 @@
-// The Open Field theme (SPEC §7.4, SET-2) in its five color schemes: the
+// The Open Field theme (SPEC §7.4, SET-2) in its six color schemes: the
 // role values, contrast, the card context, and the theme widgets.
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_colors.dart';
@@ -15,52 +15,265 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Appendix A.2 of the Open Field spec, by role, in enum order (army,
-/// light, dark, navy, skyblue).
+/// light, dark, navy, skyblue), then Candy Pop (#70), made after it from
+/// TeamRank's colors.
 const _a2 = <String, List<int>>{
-  'page': [0xFF474C2B, 0xFFFBF5E6, 0xFF0E0E0D, 0xFF0B1531, 0xFFBCD9F5],
-  'text': [0xFFF4EAD0, 0xFF1A1A18, 0xFFF4EAD0, 0xFFF2F6FF, 0xFF0B1531],
-  'pageMuted': [0xCCF4EAD0, 0xFF5F5A4D, 0xBFF4EAD0, 0xFFB2BFE0, 0xFF34476E],
-  'hairline': [0x24F4EAD0, 0x1F1A1A18, 0x1FF4EAD0, 0x1FF2F6FF, 0x240B1531],
-  'outline': [0x4CF4EAD0, 0x4C1A1A18, 0x4CF4EAD0, 0x4CF2F6FF, 0x590B1531],
-  'tabbar': [0xFF3D4124, 0xFFFFFFFF, 0xFF161615, 0xFF07102A, 0xFFFFFFFF],
-  'tabbarLine': [0x1AF4EAD0, 0xFF1A1A18, 0x1AF4EAD0, 0x1AF2F6FF, 0xFF0B1531],
-  'field': [0xFF2B2F18, 0xFFEFE6CC, 0xFF1F1F1C, 0xFF07102A, 0xFFE3EEFA],
-  'fieldRim': [0x00000000, 0x00000000, 0x00000000, 0x1AF2F6FF, 0x00000000],
-  'card': [0xFF575A3A, 0xFFFFFFFF, 0xFF1B1B19, 0xFF18284C, 0xFFFFFFFF],
-  'cardRim': [0xFF1A1A18, 0xFF1A1A18, 0xFF363631, 0xFF35466D, 0xFF0B1531],
-  'cardMuted': [0xE0F4EAD0, 0xFF5F5A4D, 0xC7F4EAD0, 0xFFC2CCE8, 0xFF34476E],
-  'cardTrack': [0x38F4EAD0, 0x1F1A1A18, 0x2EF4EAD0, 0x38F2F6FF, 0x1F0B1531],
-  'cardOutline': [0x73F4EAD0, 0x661A1A18, 0x73F4EAD0, 0x73F2F6FF, 0x660B1531],
-  'candyInk': [0xFF1A1A18, 0xFF1A1A18, 0xFF1A1A18, 0xFF050C1F, 0xFF0B1531],
-  'candyLipCoral': [0xFF1A1A18, 0xFF1A1A18, 0xFFC0262F, 0xFFC0262F, 0xFF0B1531],
-  'candyLipMint': [0xFF1A1A18, 0xFF1A1A18, 0xFF137236, 0xFF137236, 0xFF0B1531],
-  'candyLipLemon': [0xFF1A1A18, 0xFF1A1A18, 0xFFA88A12, 0xFFA88A12, 0xFF0B1531],
+  'page': [
+    0xFF474C2B,
+    0xFFFBF5E6,
+    0xFF0E0E0D,
+    0xFF0B1531,
+    0xFFBCD9F5,
+    0xFF1748D4,
+  ],
+  'text': [
+    0xFFF4EAD0,
+    0xFF1A1A18,
+    0xFFF4EAD0,
+    0xFFF2F6FF,
+    0xFF0B1531,
+    0xFFFFFFFF,
+  ],
+  'pageMuted': [
+    0xCCF4EAD0,
+    0xFF5F5A4D,
+    0xBFF4EAD0,
+    0xFFB2BFE0,
+    0xFF34476E,
+    0xFFDCE6FF,
+  ],
+  'hairline': [
+    0x24F4EAD0,
+    0x1F1A1A18,
+    0x1FF4EAD0,
+    0x1FF2F6FF,
+    0x240B1531,
+    0x33FFFFFF,
+  ],
+  'outline': [
+    0x4CF4EAD0,
+    0x4C1A1A18,
+    0x4CF4EAD0,
+    0x4CF2F6FF,
+    0x590B1531,
+    0x66FFFFFF,
+  ],
+  'tabbar': [
+    0xFF3D4124,
+    0xFFFFFFFF,
+    0xFF161615,
+    0xFF07102A,
+    0xFFFFFFFF,
+    0xFF0B1640,
+  ],
+  'tabbarLine': [
+    0x1AF4EAD0,
+    0xFF1A1A18,
+    0x1AF4EAD0,
+    0x1AF2F6FF,
+    0xFF0B1531,
+    0xFF0B1640,
+  ],
+  'field': [
+    0xFF2B2F18,
+    0xFFEFE6CC,
+    0xFF1F1F1C,
+    0xFF07102A,
+    0xFFE3EEFA,
+    0xFF1238A8,
+  ],
+  'fieldRim': [
+    0x00000000,
+    0x00000000,
+    0x00000000,
+    0x1AF2F6FF,
+    0x00000000,
+    0x33FFFFFF,
+  ],
+  'card': [
+    0xFF575A3A,
+    0xFFFFFFFF,
+    0xFF1B1B19,
+    0xFF18284C,
+    0xFFFFFFFF,
+    0xFF1238A8,
+  ],
+  'cardRim': [
+    0xFF1A1A18,
+    0xFF1A1A18,
+    0xFF363631,
+    0xFF35466D,
+    0xFF0B1531,
+    0xFF0B1640,
+  ],
+  'cardMuted': [
+    0xE0F4EAD0,
+    0xFF5F5A4D,
+    0xC7F4EAD0,
+    0xFFC2CCE8,
+    0xFF34476E,
+    0xFFDCE6FF,
+  ],
+  'cardTrack': [
+    0x38F4EAD0,
+    0x1F1A1A18,
+    0x2EF4EAD0,
+    0x38F2F6FF,
+    0x1F0B1531,
+    0x38FFFFFF,
+  ],
+  'cardOutline': [
+    0x73F4EAD0,
+    0x661A1A18,
+    0x73F4EAD0,
+    0x73F2F6FF,
+    0x660B1531,
+    0x80FFFFFF,
+  ],
+  'candyInk': [
+    0xFF1A1A18,
+    0xFF1A1A18,
+    0xFF1A1A18,
+    0xFF050C1F,
+    0xFF0B1531,
+    0xFF0B1640,
+  ],
+  'candyLipCoral': [
+    0xFF1A1A18,
+    0xFF1A1A18,
+    0xFFC0262F,
+    0xFFC0262F,
+    0xFF0B1531,
+    0xFF0B1640,
+  ],
+  'candyLipMint': [
+    0xFF1A1A18,
+    0xFF1A1A18,
+    0xFF137236,
+    0xFF137236,
+    0xFF0B1531,
+    0xFF0B1640,
+  ],
+  'candyLipLemon': [
+    0xFF1A1A18,
+    0xFF1A1A18,
+    0xFFA88A12,
+    0xFFA88A12,
+    0xFF0B1531,
+    0xFF0B1640,
+  ],
   'candyLipTangerine': [
     0xFF1A1A18,
     0xFF1A1A18,
     0xFF9E4B0A,
     0xFF9E4B0A,
     0xFF0B1531,
+    0xFF0B1640,
   ],
-  'titleDrop': [0xFF1A1A18, 0x00000000, 0x00000000, 0xFF2A63C9, 0xFFFFFFFF],
-  'avatarRing': [0x00000000, 0x00000000, 0x00000000, 0x00000000, 0xFF0B1531],
-  'accentText': [0xFFF9A5A5, 0xFFC0262F, 0xFFF76F6F, 0xFFF78C8C, 0xFFAB222A],
-  'accentMark': [0xFFF45B5B, 0xFFC0262F, 0xFFF45B5B, 0xFFF45B5B, 0xFFAB222A],
-  'notGoingIcon': [0xFFFBC0C0, 0xFFC0262F, 0xFFF76F6F, 0xFFF78C8C, 0xFFAB222A],
-  'goingText': [0xFFB5FAD0, 0xFF137236, 0xFF58C173, 0xFF79CD8F, 0xFF116530],
-  'maybeText': [0xFFF8D84A, 0xFF8F6500, 0xFFF8D84A, 0xFFF8D84A, 0xFF785200],
-  'cardGoingText': [0xFFB5FAD0, 0xFF137236, 0xFF58C173, 0xFF79CD8F, 0xFF137236],
+  'titleDrop': [
+    0xFF1A1A18,
+    0x00000000,
+    0x00000000,
+    0xFF2A63C9,
+    0xFFFFFFFF,
+    0xFF0B1640,
+  ],
+  'avatarRing': [
+    0x00000000,
+    0x00000000,
+    0x00000000,
+    0x00000000,
+    0xFF0B1531,
+    0xFF0B1640,
+  ],
+  'accentText': [
+    0xFFF9A5A5,
+    0xFFC0262F,
+    0xFFF76F6F,
+    0xFFF78C8C,
+    0xFFAB222A,
+    0xFFFFC7C7,
+  ],
+  'accentMark': [
+    0xFFF45B5B,
+    0xFFC0262F,
+    0xFFF45B5B,
+    0xFFF45B5B,
+    0xFFAB222A,
+    0xFFFFC7C7,
+  ],
+  'notGoingIcon': [
+    0xFFFBC0C0,
+    0xFFC0262F,
+    0xFFF76F6F,
+    0xFFF78C8C,
+    0xFFAB222A,
+    0xFFFFC7C7,
+  ],
+  'goingText': [
+    0xFFB5FAD0,
+    0xFF137236,
+    0xFF58C173,
+    0xFF79CD8F,
+    0xFF116530,
+    0xFFB5FAD0,
+  ],
+  'maybeText': [
+    0xFFF8D84A,
+    0xFF8F6500,
+    0xFFF8D84A,
+    0xFFF8D84A,
+    0xFF785200,
+    0xFFFFE45C,
+  ],
+  'cardGoingText': [
+    0xFFB5FAD0,
+    0xFF137236,
+    0xFF58C173,
+    0xFF79CD8F,
+    0xFF137236,
+    0xFFB5FAD0,
+  ],
   'cardAccentText': [
     0xFFFBC0C0,
     0xFFC0262F,
     0xFFF76F6F,
     0xFFF78C8C,
     0xFFC0262F,
+    0xFFFFC7C7,
   ],
-  'gameText': [0xFFF4AD79, 0xFF9E4B0A, 0xFFEE8131, 0xFFF19A5A, 0xFF8D4309],
-  'typeGame': [0xFFF8CDAD, 0xFF9E4B0A, 0xFFEE8131, 0xFFF19A5A, 0xFF9E4B0A],
-  'typePractice': [0xFFDBCBFB, 0xFF6C46CC, 0xFFA57CF5, 0xFFB796F7, 0xFF6C46CC],
-  'typeOther': [0xFFF8C2DE, 0xFFAE2770, 0xFFF06AAF, 0xFFF184BE, 0xFFAE2770],
+  'gameText': [
+    0xFFF4AD79,
+    0xFF9E4B0A,
+    0xFFEE8131,
+    0xFFF19A5A,
+    0xFF8D4309,
+    0xFFFFCB99,
+  ],
+  'typeGame': [
+    0xFFF8CDAD,
+    0xFF9E4B0A,
+    0xFFEE8131,
+    0xFFF19A5A,
+    0xFF9E4B0A,
+    0xFFFFCB99,
+  ],
+  'typePractice': [
+    0xFFDBCBFB,
+    0xFF6C46CC,
+    0xFFA57CF5,
+    0xFFB796F7,
+    0xFF6C46CC,
+    0xFFDDD0FF,
+  ],
+  'typeOther': [
+    0xFFF8C2DE,
+    0xFFAE2770,
+    0xFFF06AAF,
+    0xFFF184BE,
+    0xFFAE2770,
+    0xFFFFC7E6,
+  ],
 };
 
 /// Each role's value in [r], by the name A.2 uses.
@@ -166,19 +379,22 @@ void main() {
           '${scheme.value} white on the warning red',
         );
         // A mark on its own (a Canceled tag, Owes) where no ink lip
-        // outlines it: everywhere but Army green.
-        if (scheme != TeamScheme.army) {
+        // outlines it: everywhere but Army green and Candy Pop, whose pages
+        // are as deep as the red; its white words carry it there.
+        if (scheme != TeamScheme.army && scheme != TeamScheme.candypop) {
           _reads(c.cherry.face, r.page, '${scheme.value} red on page', min: 3);
           _reads(c.cherry.face, r.card, '${scheme.value} red on card', min: 3);
         }
       }
     });
 
-    test('Army green, Dark, and Navy are dark; Light and Light blue light', () {
+    test('Army green, Dark, Navy, and Candy Pop are dark; Light and Light '
+        'blue light', () {
       expect(TeamScheme.values.where((s) => s.isDark), [
         TeamScheme.army,
         TeamScheme.dark,
         TeamScheme.navy,
+        TeamScheme.candypop,
       ]);
       for (final scheme in TeamScheme.values) {
         final want = scheme.isDark ? Brightness.dark : Brightness.light;
@@ -344,7 +560,7 @@ void main() {
   });
 
   group('themes', () {
-    test('built once per scheme and context, ten at most', () {
+    test('built once per scheme and context, twelve at most', () {
       for (final scheme in TeamScheme.values) {
         for (final onCard in [false, true]) {
           expect(
@@ -356,7 +572,7 @@ void main() {
           );
         }
       }
-      expect(AppTheme.cachedThemes, lessThanOrEqualTo(10));
+      expect(AppTheme.cachedThemes, lessThanOrEqualTo(12));
     });
 
     test('titles are Lilita One with one hard drop, or none', () {
