@@ -1170,19 +1170,21 @@ describe('the theme editor (#82)', () => {
     expect(await themes()).toEqual({});
   });
 
-  it('saves text colors, and refuses colors that leave text hard to read, saving nothing (#83)', async () => {
+  it('saves text colors, and refuses colors nearly the same as what they sit on, saving nothing (#83)', async () => {
     await asRoot(admin.adminSaveTheme, { scheme: 'purplegold', text: '#fdd023' });
     expect((await themes()).purplegold).toEqual({ accent: null, page: null, card: null, text: '#FDD023', cardText: null });
     // Maroon buttons on Light take white writing.
     await asRoot(admin.adminSaveTheme, { name: 'Maroon Day', base: 'light', accent: '#7F1D1D' });
+    // A yellow page goes, whatever the text: only nearly the same is refused.
+    await asRoot(admin.adminSaveTheme, { scheme: 'army', page: '#FDD023' });
     for (const [bad, part] of [
       [{ scheme: 'army', page: '#F4EAD0' }, 'text on page'],
       [{ scheme: 'army', text: '#474C2B' }, 'text on page'],
       [{ scheme: 'candypop', cardText: '#FFFFFF' }, 'text on cards'],
-      [{ scheme: 'army', page: '#FBF5E6', card: '#FFFFFF', text: '#1A1A18' }, 'text on tab bar'],
-      [{ scheme: 'light', accent: '#808080' }, 'writing on buttons'],
+      [{ scheme: 'army', page: '#FFFFFF', text: '#3D4124' }, 'text on tab bar'],
+      [{ scheme: 'light', accent: '#FBF5E6' }, 'buttons on page'],
       [{ scheme: 'wildcat', accent: '#701C30' }, 'buttons on page'],
-      [{ name: 'Gray', base: 'light', accent: '#808080' }, 'writing on buttons'],
+      [{ name: 'Snow', base: 'light', accent: '#FFFFFF' }, 'buttons on cards'],
     ] as [object, string][]) {
       await expect(asRoot(admin.adminSaveTheme, bad)).rejects.toMatchObject({
         code: 'failed-precondition',
@@ -1193,8 +1195,8 @@ describe('the theme editor (#82)', () => {
     await expect(asRoot(admin.adminSaveTheme, { scheme: 'custom1', text: '#FBF5E6' })).rejects.toMatchObject({
       details: { reason: 'unreadable-theme' },
     });
-    expect(Object.keys(await themes()).sort()).toEqual(['custom1', 'purplegold']);
-    expect((await audits('saveTheme')).length).toBe(2);
+    expect(Object.keys(await themes()).sort()).toEqual(['army', 'custom1', 'purplegold']);
+    expect((await audits('saveTheme')).length).toBe(3);
   });
 
   it('deleting a built-in scheme\'s colors puts it back and leaves picks of it alone', async () => {

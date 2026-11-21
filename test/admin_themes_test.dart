@@ -203,36 +203,26 @@ void main() {
     );
   });
 
-  testWidgets("colors that leave text unreadable, or aren't colors, can't "
-      'be saved', (tester) async {
+  testWidgets("colors nearly the same as what they sit on, or that aren't "
+      "colors, can't be saved", (tester) async {
     final admin = await open(tester, '/admin/themes/army');
     // Army green's own cream type, as the background.
     await tester.enterText(hex('Background'), '#F4EAD0');
     await tester.pump();
     expect(
       find.text(
-        "The text won't be easy to read on this background. Try a darker or "
-        'lighter one.',
+        'This is nearly the same color as the text. Pick one that stands '
+        'apart from it.',
       ),
       findsOneWidget,
     );
-    // Near black takes white writing, but vanishes into the olive.
-    await tester.enterText(hex('Buttons and your messages'), '#101010');
+    // Buttons the olive of the page.
+    await tester.enterText(hex('Buttons and your messages'), '#474C2B');
     await tester.pump();
     expect(
       find.text(
-        "This color won't stand out on the background, the cards, or the tab "
-        'bar. Try one with more contrast.',
-      ),
-      findsOneWidget,
-    );
-    // Mid gray: neither dark nor white writing reads on it.
-    await tester.enterText(hex('Buttons and your messages'), '#808080');
-    await tester.pump();
-    expect(
-      find.text(
-        'Neither dark nor white writing reads well on this color. Try a '
-        'lighter or darker one.',
+        'This is nearly the same color as the background, the cards, or the '
+        'tab bar. Pick one that stands apart.',
       ),
       findsOneWidget,
     );
@@ -384,15 +374,21 @@ void main() {
           .push<void>('/admin/themes/army'),
     );
     await tester.pumpAndSettle();
-    // Dark text on a light page, where Army green's bars stay olive.
+    // Dark text on a light page, where Army green's bars stay olive: hard
+    // to read there, but not the same color, so it goes.
     await tester.enterText(hex('Background'), '#FBF5E6');
     await tester.enterText(hex('Cards and bubbles'), '#FFFFFF');
     await tester.enterText(hex('Text'), '#1A1A18');
     await tester.pump();
+    expect(find.textContaining('nearly the same'), findsNothing);
+    // Text the olive of Army green's tab bar.
+    await tester.enterText(hex('Text'), '#3D4124');
+    await tester.pump();
     expect(
       find.text(
-        "This text won't be easy to read in the tab bar and text boxes, which "
-        "keep Army green's colors. Try a lighter or darker one.",
+        'This text is nearly the same color as the tab bar or text boxes, '
+        "which keep Army green's colors. Pick one that stands apart from "
+        'them.',
       ),
       findsOneWidget,
     );
@@ -403,8 +399,8 @@ void main() {
     await tester.pump();
     expect(
       find.text(
-        "This text won't be easy to read on the background. Try a lighter or "
-        'darker one.',
+        'This text is nearly the same color as the background. Pick one that '
+        'stands apart from it.',
       ),
       findsOneWidget,
     );
@@ -419,8 +415,8 @@ void main() {
     await tester.pump();
     expect(
       find.text(
-        "This text won't be easy to read on the cards. Try a lighter or darker "
-        'one.',
+        'This text is nearly the same color as the cards. Pick one that '
+        'stands apart from them.',
       ),
       findsOneWidget,
     );
@@ -462,6 +458,18 @@ void main() {
     expect(find.widgetWithText(ListTile, 'Maroon'), findsOneWidget);
   });
 
+  testWidgets('a yellow background saves: only nearly the same colors are '
+      'refused', (tester) async {
+    final admin = await open(tester, '/admin/themes/army');
+    await chooseColor(tester, 'Background', 'Gold');
+    expect(find.textContaining('nearly the same'), findsNothing);
+    await save(tester);
+    expect(admin.savedThemes.single, (
+      TeamScheme.army,
+      const ThemeOverride(page: 0xFFFDD023),
+    ));
+  });
+
   testWidgets('a theme the server refuses says why', (tester) async {
     final admin = await open(tester, '/admin/themes/army');
     admin.failWith = const ActionRefused('unreadable-theme');
@@ -470,8 +478,8 @@ void main() {
     await save(tester);
     expect(
       find.text(
-        "Those colors would make some text hard to read, so the theme wasn't "
-        'saved.',
+        'Some of those colors are nearly the same as what they sit on, so the '
+        "theme wasn't saved.",
       ),
       findsOneWidget,
     );
@@ -496,7 +504,10 @@ void main() {
       ),
     );
     expect(
-      find.text('Turned off: hard to read. Open it to fix it.'),
+      find.text(
+        'Turned off: some of its colors are nearly the same. Open it to fix '
+        'it.',
+      ),
       findsNWidgets(2),
     );
     expect(

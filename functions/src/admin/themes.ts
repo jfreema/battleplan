@@ -5,9 +5,10 @@
 // reserved slots (custom1 to custom12 in teamScheme), with a name and the
 // built-in scheme it starts from, so picks of it are stored and checked
 // like any other scheme's. The text colors came with #83 (2026-11-21), and
-// with them the check that refuses a theme whose text would be hard to
-// read ("a protection in there that prevents text and background from
-// being the same color"), as the editor does before it sends one.
+// with them the check that refuses a theme with a color nearly the same as
+// what it's drawn on ("a protection in there that prevents text and
+// background from being the same color", then "I only want to block colors
+// that are nearly identical"), as the editor does before it sends one.
 import { FieldValue } from 'firebase-admin/firestore';
 import { HttpsError } from 'firebase-functions/v2/https';
 import { z } from 'zod';
@@ -102,7 +103,7 @@ export async function saveTheme(input: SaveThemeInput): Promise<{
     }
     const unreadable = unreadableParts(base, colors);
     if (unreadable.length > 0) {
-      throw new HttpsError('failed-precondition', 'Those colors would make some text hard to read.', {
+      throw new HttpsError('failed-precondition', 'Some of those colors are nearly the same as what they sit on.', {
         reason: 'unreadable-theme',
         parts: unreadable,
       });
@@ -139,19 +140,21 @@ export async function deleteTheme(scheme: string): Promise<{ before: StoredTheme
   return { before, cleared };
 }
 
-// ---- Readability (#83) ---------------------------------------------------
+// ---- Nearly the same colors (#83) ----------------------------------------
 
 /** Coral, every built-in scheme's "you" color. */
 const CORAL = '#F45B5B';
 const WHITE = '#FFFFFF';
 
-/** WCAG 2 relative luminance of '#RRGGBB', as the app's ColorMath has it. */
+/** sRGB channel i of '#RRGGBB', linear, as the app's ColorMath has it. */
+function linear(hex: string, i: number): number {
+  const c = parseInt(hex.slice(i, i + 2), 16) / 255;
+  return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+}
+
+/** WCAG 2 relative luminance of '#RRGGBB'. */
 function luminance(hex: string): number {
-  const channel = (i: number) => {
-    const c = parseInt(hex.slice(i, i + 2), 16) / 255;
-    return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-  };
-  return 0.2126 * channel(1) + 0.7152 * channel(3) + 0.0722 * channel(5);
+  return 0.2126 * linear(hex, 1) + 0.7152 * linear(hex, 3) + 0.0722 * linear(hex, 5);
 }
 
 /** The WCAG 2 contrast ratio of two '#RRGGBB' colors, 1 to 21. */
@@ -160,16 +163,38 @@ export function contrast(a: string, b: string): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
+/** '#RRGGBB' in CIE Lab (D65), with the app's ColorMath constants. */
+function lab(hex: string): [number, number, number] {
+  const [r, g, b] = [linear(hex, 1), linear(hex, 3), linear(hex, 5)];
+  const x = 0.4124 * r + 0.3576 * g + 0.1805 * b;
+  const y = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  const z = 0.0193 * r + 0.1192 * g + 0.9505 * b;
+  const epsilon = 216 / 24389;
+  const kappa = 24389 / 27;
+  const f = (t: number) => (t > epsilon ? Math.cbrt(t) : (kappa * t + 16) / 116);
+  const [fx, fy, fz] = [f(x / 0.95047), f(y), f(z / 1.08883)];
+  return [116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)];
+}
+
+/** How different two '#RRGGBB' colors look: CIE76 ΔE, the app's ColorMath.deltaE. */
+export function deltaE(a: string, b: string): number {
+  const [x, y] = [lab(a), lab(b)];
+  return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]);
+}
+
+/** Under this ΔE two colors look nearly the same: the app's nearlySame. */
+export const NEARLY_SAME = 15;
+
 /**
- * What [colors] over the built-in scheme [base] would leave hard to read,
- * by name; none when they read. Text needs 4.5:1 on what it sits on (the
- * page, the tab bar and text boxes, which keep the base's colors, cards,
- * text boxes on cards, and pop-ups), the writing on the "you" color too
- * (the scheme's ink, or white where the ink doesn't read), and the "you"
- * color 3:1 on the page, cards and tab bar, or nearly as much as coral has
- * where that's less. The app checks these and more (theme_readability.dart),
- * and derives the colors that follow (muted text, colored labels); this is
- * the server's backstop for what it can't derive.
+ * Where [colors] over the built-in scheme [base] would put a color on one
+ * nearly the same as it, by name; none when there's nowhere (#83, owner's
+ * request 2026-11-21: "I only want to block colors that are nearly
+ * identical"). The pairs are the app's themePairs: the text on the page,
+ * the tab bar and text boxes (which keep the base's colors), cards, text
+ * boxes on cards, and pop-ups; the writing on the "you" color (the
+ * scheme's ink, or white where the ink doesn't read); and the "you" color
+ * on the page, cards and tab bar. Anything else goes; the app keeps the
+ * Super Admin Panel as it ships, so a theme can always be put right.
  */
 export function unreadableParts(base: string, colors: ThemeColors): string[] {
   const ink = SCHEME_INK[base];
@@ -182,24 +207,27 @@ export function unreadableParts(base: string, colors: ThemeColors): string[] {
   const cardText = colors.cardText ?? (colors.text !== null && ink.cardText === ink.text ? colors.text : ink.cardText);
   const popup = colors.card !== null && ink.popup === ink.card ? colors.card : ink.popup;
   const accent = colors.accent ?? CORAL;
-  // The standard, or nine tenths of what the shipped scheme reads where
-  // that's under it, with a hair for rounding: the app's themeFloor.
-  const floor = (minimum: number, shipped: number) => (shipped < minimum ? shipped * 0.9 : minimum) - 0.005;
-  const checks: [string, number, number][] = [
-    ['text on page', contrast(text, page), floor(4.5, contrast(ink.text, ink.page))],
-    ['text on tab bar', contrast(text, ink.tabbar), floor(4.5, contrast(ink.text, ink.tabbar))],
-    ['text in text boxes', contrast(text, ink.field), floor(4.5, contrast(ink.text, ink.field))],
-    ['text on cards', contrast(cardText, card), floor(4.5, contrast(ink.cardText, ink.card))],
-    ['text in text boxes on cards', contrast(cardText, ink.cardField), floor(4.5, contrast(ink.cardText, ink.cardField))],
-    ['text on pop-ups', contrast(text, popup), floor(4.5, contrast(ink.text, ink.popup))],
-    [
-      'writing on buttons',
-      Math.max(contrast(ink.candyInk, accent), contrast(WHITE, accent)),
-      floor(4.5, contrast(ink.candyInk, CORAL)),
-    ],
-    ['buttons on page', contrast(accent, page), floor(3, contrast(CORAL, ink.page))],
-    ['buttons on cards', contrast(accent, card), floor(3, contrast(CORAL, ink.card))],
-    ['picked tab on tab bar', contrast(accent, ink.tabbar), floor(3, contrast(CORAL, ink.tabbar))],
+  // The writing on the "you" color: the ink, or white where the ink doesn't
+  // read 4.5:1 and white reads better (the app's youInk).
+  const inkOn = (face: string) => {
+    const dark = contrast(ink.candyInk, face);
+    return dark >= 4.5 || contrast(WHITE, face) <= dark ? ink.candyInk : WHITE;
+  };
+  const pairs: [string, string, string, string, string][] = [
+    // [what, fg, bg, the shipped fg, the shipped bg]
+    ['text on page', text, page, ink.text, ink.page],
+    ['text on tab bar', text, ink.tabbar, ink.text, ink.tabbar],
+    ['text in text boxes', text, ink.field, ink.text, ink.field],
+    ['text in text boxes on cards', cardText, ink.cardField, ink.cardText, ink.cardField],
+    ['text on cards', cardText, card, ink.cardText, ink.card],
+    ['text on pop-ups', text, popup, ink.text, ink.popup],
+    ['writing on buttons', inkOn(accent), accent, inkOn(CORAL), CORAL],
+    ['buttons on page', accent, page, CORAL, ink.page],
+    ['buttons on cards', accent, card, CORAL, ink.card],
+    ['picked tab on tab bar', accent, ink.tabbar, CORAL, ink.tabbar],
   ];
-  return checks.filter(([, ratio, least]) => ratio < least).map(([what]) => what);
+  // Never refused for what the shipped scheme has itself.
+  return pairs
+    .filter(([, fg, bg, shippedFg, shippedBg]) => deltaE(fg, bg) < NEARLY_SAME && deltaE(shippedFg, shippedBg) >= NEARLY_SAME)
+    .map(([what]) => what);
 }

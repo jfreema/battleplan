@@ -12,6 +12,10 @@ import 'package:battleplan/l10n/gen/app_localizations_en.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
+/// How [fg] reads on [bg], drawn over it if see-through.
+double contrastOn(Color fg, Color bg) =>
+    ColorMath.contrast(Color.alphaBlend(fg, bg), bg);
+
 void main() {
   tearDown(() => ThemeCatalog.install(const {}));
 
@@ -287,32 +291,39 @@ void main() {
       expect(themeProblems(army, army.withOverrides(card: army.cardText)), {
         ThemeProblem.textOnCard,
       });
-      // Near black takes white writing, but vanishes into the olive.
-      expect(
-        themeProblems(army, army.withOverrides(you: const Color(0xFF101010))),
-        {ThemeProblem.accentHidden},
-      );
-      // Mid gray: neither the ink nor white reads on it.
-      expect(
-        themeProblems(
-          SchemeRoles.light,
-          SchemeRoles.light.withOverrides(you: const Color(0xFF808080)),
+      // The "you" color nearly the page's.
+      expect(themeProblems(army, army.withOverrides(you: army.page)), {
+        ThemeProblem.accentHidden,
+      });
+      // Only nearly the same is refused (owner's request 2026-11-21: "I only
+      // want to block colors that are nearly identical"): near black buttons
+      // on the olive, mid gray buttons, dark text where the tab bar stays
+      // olive, and a yellow page all go, however they read.
+      for (final themed in [
+        army.withOverrides(you: const Color(0xFF101010)),
+        army.withOverrides(you: const Color(0xFF808080)),
+        army.withOverrides(
+          page: const Color(0xFFFBF5E6),
+          card: const Color(0xFFFFFFFF),
+          text: const Color(0xFF1A1A18),
         ),
-        contains(ThemeProblem.inkOnAccent),
-      );
-      // Dark text, where the tab bar and text boxes stay olive.
+        army.withOverrides(page: const Color(0xFFFDD023)),
+        SchemeRoles.light.withOverrides(page: const Color(0xFFF8D84A)),
+      ]) {
+        expect(themeProblems(army, themed), isEmpty);
+      }
+      // Text nearly the tab bar's color, which keeps Army green's.
       expect(
         themeProblems(
           army,
           army.withOverrides(
-            page: const Color(0xFFFBF5E6),
-            card: const Color(0xFFFFFFFF),
-            text: const Color(0xFF1A1A18),
+            page: const Color(0xFFFFFFFF),
+            text: const Color(0xFF3D4124),
           ),
         ),
-        {ThemeProblem.textOnBars},
+        contains(ThemeProblem.textOnBars),
       );
-      // Text the color of the page: hard to read everywhere it's written.
+      // Text the color of the page: nearly the same everywhere it's written.
       expect(themeProblems(army, army.withOverrides(text: army.page)), {
         ThemeProblem.textOnPage,
         ThemeProblem.textOnBars,
@@ -366,7 +377,7 @@ void main() {
       final navy = SchemeRoles.navy.withOverrides(
         text: const Color(0xFFFDD023),
       );
-      expect(readability(navy.pageMuted, navy.page), greaterThanOrEqualTo(4.5));
+      expect(contrastOn(navy.pageMuted, navy.page), greaterThanOrEqualTo(4.5));
       expect(navy.pageMuted, isNot(SchemeRoles.navy.pageMuted));
     });
 
@@ -389,7 +400,7 @@ void main() {
         (r.bubblegumPageText, 'bubblegum'),
         (r.blueRaspberryPageText, 'blue raspberry'),
       ]) {
-        expect(readability(fg, page), greaterThanOrEqualTo(4.5), reason: what);
+        expect(contrastOn(fg, page), greaterThanOrEqualTo(4.5), reason: what);
       }
       for (final (fg, what) in [
         (r.cardGoingText, 'going'),
@@ -399,10 +410,10 @@ void main() {
         (r.typePractice, 'practice'),
         (r.typeOther, 'other'),
       ]) {
-        expect(readability(fg, card), greaterThanOrEqualTo(4.5), reason: what);
+        expect(contrastOn(fg, card), greaterThanOrEqualTo(4.5), reason: what);
       }
-      expect(readability(r.accentMark, page), greaterThanOrEqualTo(3));
-      expect(readability(r.notGoingIcon, page), greaterThanOrEqualTo(3));
+      expect(contrastOn(r.accentMark, page), greaterThanOrEqualTo(3));
+      expect(contrastOn(r.notGoingIcon, page), greaterThanOrEqualTo(3));
       // The red stays red.
       expect(
         ColorMath.hueDistance(

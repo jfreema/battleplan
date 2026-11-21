@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/color_math.dart';
 import 'package:battleplan/core/design/schemes.dart';
@@ -118,7 +116,7 @@ String colorNameOf(AppLocalizations l10n, Color color) {
   for (final group in themePalette(l10n)) {
     for (final named in group.colors) {
       if (named.color.toARGB32() == opaque.toARGB32()) return named.name;
-      final d = _distance(named.color, opaque);
+      final d = ColorMath.deltaE(named.color, opaque);
       if (d < best) {
         best = d;
         nearest = named;
@@ -128,16 +126,4 @@ String colorNameOf(AppLocalizations l10n, Color color) {
   return nearest == null
       ? ColorMath.hex(opaque)
       : l10n.adminThemeCloseTo(nearest.name);
-}
-
-/// How far apart [a] and [b] look: the distance between them in CIE Lab.
-double _distance(Color a, Color b) {
-  final x = ColorMath.lch(a);
-  final y = ColorMath.lch(b);
-  double ab(double c, double h, double Function(double) f) =>
-      c * f(h * math.pi / 180);
-  final da = ab(x.c, x.h, math.cos) - ab(y.c, y.h, math.cos);
-  final db = ab(x.c, x.h, math.sin) - ab(y.c, y.h, math.sin);
-  final dl = x.l - y.l;
-  return math.sqrt(dl * dl + da * da + db * db);
 }

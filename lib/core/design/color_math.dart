@@ -104,6 +104,22 @@ abstract final class ColorMath {
     );
   }
 
+  /// How different [a] and [b] look: their distance in CIE Lab (CIE76
+  /// ΔE). About 2 is the least most people can see side by side; under 15
+  /// they read as the same color (the theme editor's line, #83).
+  static double deltaE(Color a, Color b) {
+    final x = lch(a);
+    final y = lch(b);
+    final dl = x.l - y.l;
+    final da =
+        x.c * math.cos(x.h * math.pi / 180) -
+        y.c * math.cos(y.h * math.pi / 180);
+    final db =
+        x.c * math.sin(x.h * math.pi / 180) -
+        y.c * math.sin(y.h * math.pi / 180);
+    return math.sqrt(dl * dl + da * da + db * db);
+  }
+
   /// The smaller angle between two hues, from 0 to 180 degrees.
   static double hueDistance(double a, double b) {
     final d = (a - b).abs() % 360;
