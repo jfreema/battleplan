@@ -145,8 +145,9 @@ abstract interface class AdminRepository {
   /// Saves a theme's colors in `config/app.themes` (#82): over a built-in
   /// [scheme], or a saved theme's (with its [name] and [base]). With no
   /// [scheme], saves a new theme in the first free slot, or refuses with
-  /// `no-room` when all twelve are taken. Null colors keep the base's.
-  /// Returns the scheme it saved under.
+  /// `no-room` when all twelve are taken, or with `unreadable-theme` when
+  /// its colors would leave text hard to read (#83). Null colors keep the
+  /// base's. Returns the scheme it saved under.
   Future<TeamScheme> saveTheme({
     TeamScheme? scheme,
     String? name,
@@ -154,6 +155,8 @@ abstract interface class AdminRepository {
     int? accent,
     int? page,
     int? card,
+    int? text,
+    int? cardText,
   });
 
   /// Takes a theme's colors away (#82): a built-in scheme goes back to how

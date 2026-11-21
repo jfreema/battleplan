@@ -45,8 +45,9 @@ class Avatar extends StatelessWidget {
       colors.bubblegum,
       colors.tangerine,
       // "Cherry" is coral, as it always looked: the warning red went
-      // deeper in #12 (2026-11-16), and icons kept their colors.
-      colors.you,
+      // deeper in #12 (2026-11-16), and icons kept their colors; a theme's
+      // own "you" color doesn't change it (#83).
+      colors.coral,
     ];
     var hash = 0;
     for (final unit in key.codeUnits) {
@@ -64,8 +65,9 @@ class Avatar extends StatelessWidget {
         AvatarColor.grape => colors.grape.face,
         AvatarColor.bubblegum => colors.bubblegum.face,
         AvatarColor.tangerine => colors.tangerine.face,
-        // Coral, as it looked when they picked it (#12).
-        AvatarColor.cherry => colors.you.face,
+        // Coral, as it looked when they picked it (#12), whatever a theme
+        // sets for "you" (#83).
+        AvatarColor.cherry => colors.coral.face,
       };
 
   /// The color the icon shows: [picked], else the one hashed from [key].

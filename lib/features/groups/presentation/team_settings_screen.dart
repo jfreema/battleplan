@@ -472,7 +472,7 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
     // A candy by name, "Team color" (#34), or a palette color saved before
     // #34 by its color's name, as Chat look shows them.
     final lookColor = candy != null
-        ? chatCandyName(l10n, candy)
+        ? chatCandyName(l10n, candy, c: c)
         : stored == chatBubbleTeamColor
         ? (group.isGroup ? l10n.groupColorOption : l10n.teamColorOption)
         : teamColorName(l10n, stored!);

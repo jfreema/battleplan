@@ -11,10 +11,21 @@ import 'package:freezed_annotation/freezed_annotation.dart' show immutable;
 /// Over a built-in scheme it changes only what it sets. A saved theme takes
 /// one of the reserved slots (`custom1` to `custom12`, [SavedThemeSlots]):
 /// it has a [name], and a [base], the built-in scheme it starts from, which
-/// gives every color it doesn't set.
+/// gives every color it doesn't set. The text colors (#83, owner's request
+/// 2026-11-21: "all the text color to be changed") came after the first
+/// three; a theme the app or the server finds hard to read is never shown
+/// or saved (`themeProblems`).
 @immutable
 final class ThemeOverride {
-  const new({this.name, this.base, this.accent, this.page, this.card});
+  const new({
+    this.name,
+    this.base,
+    this.accent,
+    this.page,
+    this.card,
+    this.text,
+    this.cardText,
+  });
 
   /// A saved theme's name, shown in the pickers.
   final String? name;
@@ -33,8 +44,34 @@ final class ThemeOverride {
   /// Cards, sheets, dialogs, and the chat's filled bubbles.
   final int? card;
 
+  /// The text on the page, and in the tab bar and text boxes (#83).
+  final int? text;
+
+  /// The text on cards, sheets, and pop-ups (#83). Null follows [text] where
+  /// the base's card text is its page text (all but Candy Pop).
+  final int? cardText;
+
+  /// Whether it sets any color.
+  bool get hasColors =>
+      accent != null ||
+      page != null ||
+      card != null ||
+      text != null ||
+      cardText != null;
+
   /// Whether this is a saved theme rather than a change to a built-in one.
   bool get isSaved => base != null;
+
+  /// This theme with [name] and [base] set.
+  ThemeOverride copyWith({String? name, TeamScheme? base}) => ThemeOverride(
+    name: name ?? this.name,
+    base: base ?? this.base,
+    accent: accent,
+    page: page,
+    card: card,
+    text: text,
+    cardText: cardText,
+  );
 
   @override
   bool operator ==(Object other) =>
@@ -43,16 +80,20 @@ final class ThemeOverride {
       other.base == base &&
       other.accent == accent &&
       other.page == page &&
-      other.card == card;
+      other.card == card &&
+      other.text == text &&
+      other.cardText == cardText;
 
   @override
-  int get hashCode => Object.hash(name, base, accent, page, card);
+  int get hashCode =>
+      Object.hash(name, base, accent, page, card, text, cardText);
 
   @override
   String toString() =>
       'ThemeOverride(name: $name, base: ${base?.value}, accent: '
       '${hexOfColor(accent)}, page: ${hexOfColor(page)}, card: '
-      '${hexOfColor(card)})';
+      '${hexOfColor(card)}, text: ${hexOfColor(text)}, cardText: '
+      '${hexOfColor(cardText)})';
 }
 
 /// How long a saved theme's name can be; the server checks it too
@@ -113,23 +154,21 @@ Map<TeamScheme, ThemeOverride> themesFromConfig(Object? raw) {
   for (final MapEntry(:key, :value) in raw.entries) {
     final scheme = TeamScheme.tryParse(key as String?);
     if (scheme == null || value is! Map) continue;
-    final accent = colorFromHex(value['accent']);
-    final page = colorFromHex(value['page']);
-    final card = colorFromHex(value['card']);
+    final colors = ThemeOverride(
+      accent: colorFromHex(value['accent']),
+      page: colorFromHex(value['page']),
+      card: colorFromHex(value['card']),
+      text: colorFromHex(value['text']),
+      cardText: colorFromHex(value['cardText']),
+    );
     if (scheme.isCustom) {
       final name = value['name'];
       final base = TeamScheme.tryParse(value['base'] as String?);
       if (name is! String || name.trim().isEmpty) continue;
       if (base == null || base.isCustom) continue;
-      out[scheme] = ThemeOverride(
-        name: name.trim(),
-        base: base,
-        accent: accent,
-        page: page,
-        card: card,
-      );
-    } else if (accent != null || page != null || card != null) {
-      out[scheme] = ThemeOverride(accent: accent, page: page, card: card);
+      out[scheme] = colors.copyWith(name: name.trim(), base: base);
+    } else if (colors.hasColors) {
+      out[scheme] = colors;
     }
   }
   return Map.unmodifiable(out);

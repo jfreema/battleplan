@@ -1080,8 +1080,9 @@ class _Tools extends StatelessWidget {
             : scheme.surfaceContainerHighest,
       ),
       foregroundColor: WidgetStateProperty.resolveWith(
-        (s) =>
-            s.contains(WidgetState.selected) ? c.ink : scheme.onSurfaceVariant,
+        (s) => s.contains(WidgetState.selected)
+            ? c.inkOn(c.you)
+            : scheme.onSurfaceVariant,
       ),
     );
     final buttons = [

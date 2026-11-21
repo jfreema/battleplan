@@ -270,7 +270,7 @@ class _TeamCard extends ConsumerWidget {
                   fontSize: 13,
                   height: 1,
                   fontWeight: FontWeight.w700,
-                  color: muted ? c.textMuted : c.ink,
+                  color: muted ? c.textMuted : c.inkOn(c.you),
                 ),
               ),
             ),

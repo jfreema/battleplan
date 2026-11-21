@@ -3895,6 +3895,8 @@ class FakeAdminRepository implements AdminRepository {
     int? accent,
     int? page,
     int? card,
+    int? text,
+    int? cardText,
   }) async {
     await _act('saveTheme');
     final themes = _config.themes;
@@ -3908,6 +3910,8 @@ class FakeAdminRepository implements AdminRepository {
       accent: accent,
       page: page,
       card: card,
+      text: text,
+      cardText: cardText,
     );
     savedThemes.add((slot, theme));
     config = _config.copyWith(themes: {...themes, slot: theme});

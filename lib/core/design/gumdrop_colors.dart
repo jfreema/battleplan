@@ -106,14 +106,24 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
     required this.grape,
     required this.bubblegum,
     required this.sticker,
+    required this.coral,
     this.onCard = false,
+    this.shipped = false,
   });
 
   /// The colors of [scheme], on the page or ([onCard]) on a card.
+  ///
+  /// [shipped] takes [scheme] (a built-in one) as the app ships it, without
+  /// the theme editor's colors: the Super Admin Panel's (#83), so a theme
+  /// that's hard to read can always be put right.
   // A static, not a factory: the name reads as what it picks (spec 4.3).
   // ignore: prefer_constructors_over_static_methods
-  static GumdropColors forScheme(TeamScheme scheme, {bool onCard = false}) {
-    final r = SchemeRoles.of(scheme);
+  static GumdropColors forScheme(
+    TeamScheme scheme, {
+    bool onCard = false,
+    bool shipped = false,
+  }) {
+    final r = shipped ? SchemeRoles.builtIn(scheme) : SchemeRoles.of(scheme);
     GumdropAccent candy(
       Color face,
       Color lip,
@@ -126,21 +136,32 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
       text: onCard ? cardText : pageText,
       ink: ink,
     );
+    // Coral, as the scheme ships it: the "Cherry" a person picks for their
+    // icon or their bubbles, which stays coral under a theme's own "you".
+    final coral = candy(
+      CandyFaces.coral,
+      r.candyLipCoral,
+      r.accentText,
+      r.cardAccentText,
+    );
     // "You": coral, or the color a theme set for it (#82), whose text is
     // its own color made to read on the page or card (coral's text shades
-    // are the warning red's too, so they stay).
-    final coral = r.you == CandyFaces.coral
-        ? candy(r.you, r.candyLipCoral, r.accentText, r.cardAccentText)
+    // are the warning red's too, so they stay), with its own lip, and white
+    // writing on it where the ink doesn't read (#83).
+    final you = r.you == CandyFaces.coral
+        ? coral
         : candy(
             r.you,
-            r.candyLipCoral,
+            r.youLip,
             ColorMath.readable(r.you, [r.page]),
             ColorMath.readable(r.you, [r.card]),
+            ink: r.youInk == r.candyInk ? null : r.youInk,
           );
     return GumdropColors(
       scheme: scheme,
       roles: r,
       onCard: onCard,
+      shipped: shipped,
       page: r.page,
       surface: r.card,
       // On a card, pop-ups are cards too; from the page, Candy Pop's keep
@@ -183,7 +204,8 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
       avatarRing: r.avatarRing,
       accentMark: r.accentMark,
       notGoingIcon: onCard ? r.cardAccentText : r.notGoingIcon,
-      you: coral,
+      you: you,
+      coral: coral,
       // Its own deeper red, so a warning never reads as "you" (#12). The
       // text shades are coral's: red text has to be this light to read on
       // the dark schemes, and coral text is now only the picked scheme's
@@ -195,7 +217,7 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
         r.cardAccentText,
         ink: CandyFaces.cherryInk,
       ),
-      sticker: coral,
+      sticker: you,
       mint: candy(
         CandyFaces.mint,
         r.candyLipMint,
@@ -259,6 +281,11 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
 
   /// Whether these are the card context (see [card]).
   final bool onCard;
+
+  /// Whether these are a built-in scheme as it ships, without the theme
+  /// editor's colors (#83): the Super Admin Panel's. Its card context is
+  /// too.
+  final bool shipped;
 
   /// The screen's background.
   final Color page;
@@ -404,9 +431,14 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
   /// Other events, your reactions, polls.
   final GumdropAccent bubblegum;
 
-  /// The Open play sticker on a play's picture in the chat: coral. (The
-  /// stencil eyebrows are muted text since #12.)
+  /// The Open play sticker on a play's picture in the chat: coral, or a
+  /// theme's own "you" color. (The stencil eyebrows are muted text since
+  /// #12.)
   final GumdropAccent sticker;
+
+  /// Coral as the scheme ships it, whatever a theme sets for [you] (#83):
+  /// the "Cherry" people pick for their icon and their bubbles.
+  final GumdropAccent coral;
 
   /// Light, or dark, for Material and the status bar: the page's, or in
   /// the card context the card's. They agree in every scheme but Candy
@@ -425,7 +457,8 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
   Color inkOn(GumdropAccent accent) => accent.ink ?? ink;
 
   /// The card context, as `GumdropSurface` applies it.
-  GumdropColors get card => onCard ? this : forScheme(scheme, onCard: true);
+  GumdropColors get card =>
+      onCard ? this : forScheme(scheme, onCard: true, shipped: shipped);
 
   /// The candy color that marks the event type, by the event type's name
   /// (game, practice, meeting, social, other): tangerine, grape, blue
@@ -501,6 +534,8 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
     GumdropAccent? grape,
     GumdropAccent? bubblegum,
     GumdropAccent? sticker,
+    GumdropAccent? coral,
+    bool? shipped,
   }) => GumdropColors(
     scheme: scheme ?? this.scheme,
     roles: roles ?? this.roles,
@@ -552,6 +587,8 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
     grape: grape ?? this.grape,
     bubblegum: bubblegum ?? this.bubblegum,
     sticker: sticker ?? this.sticker,
+    coral: coral ?? this.coral,
+    shipped: shipped ?? this.shipped,
   );
 
   @override
@@ -611,6 +648,8 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
       grape: grape.lerp(other.grape, t),
       bubblegum: bubblegum.lerp(other.bubblegum, t),
       sticker: sticker.lerp(other.sticker, t),
+      coral: coral.lerp(other.coral, t),
+      shipped: near.shipped,
     );
   }
 }

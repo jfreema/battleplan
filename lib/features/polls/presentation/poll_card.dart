@@ -99,7 +99,7 @@ class _PollCardState extends ConsumerState<PollCard> {
   Color _inkOn(BuildContext context) {
     final c = GumdropColors.of(context);
     final fill = widget.bubbleColor;
-    if (fill == null) return c.ink;
+    if (fill == null) return c.inkOn(c.you);
     return ColorMath.contrast(c.ink, fill) >=
             ColorMath.contrast(const Color(0xFFFFFFFF), fill)
         ? c.ink
@@ -488,7 +488,7 @@ class _OptionRow extends StatelessWidget {
     final c = GumdropColors.of(context);
     final share = poll.shareOf(option.id);
     final votes = poll.votesFor(option.id);
-    final ink = onCoral ? bubbleInk ?? c.ink : c.textPrimary;
+    final ink = onCoral ? bubbleInk ?? c.inkOn(c.you) : c.textPrimary;
     final track = onCoral ? ink.withValues(alpha: 0.18) : c.cardTrack;
     final locked = onTap == null;
     // The winner's bar stays mint; once decided, the rest go quiet gray.

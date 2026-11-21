@@ -266,8 +266,8 @@ class _ComposerState extends State<Composer> {
           backgroundColor: WidgetStatePropertyAll(c.you.face),
           iconColor: WidgetStateProperty.resolveWith(
             (s) => s.contains(WidgetState.disabled)
-                ? c.ink.withValues(alpha: 0.5)
-                : c.ink,
+                ? c.inkOn(c.you).withValues(alpha: 0.5)
+                : c.inkOn(c.you),
           ),
           shape: WidgetStateProperty.resolveWith(
             (s) => GumdropShape(

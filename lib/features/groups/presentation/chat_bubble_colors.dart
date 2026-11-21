@@ -12,19 +12,28 @@ GumdropAccent chatCandyAccent(GumdropColors c, ChatCandy candy) =>
       ChatCandy.mint => c.mint,
       ChatCandy.lemon => c.lemon,
       ChatCandy.tangerine => c.tangerine,
-      // Coral, "you", as it looked when it was picked: the warning red
-      // went deeper in #12 (2026-11-16) and isn't a chat color.
+      // The theme's "you" color, coral as it looked when it was picked:
+      // the warning red went deeper in #12 (2026-11-16) and isn't a chat
+      // color. It's what a team that hasn't picked a color sees, so a
+      // theme's own "you" color (#82) changes it too.
       ChatCandy.cherry => c.you,
     };
 
-/// A candy's name.
-String chatCandyName(AppLocalizations l10n, ChatCandy candy) => switch (candy) {
+/// A candy's name. Cherry is the theme's "you" color, so with [c], under a
+/// theme whose "you" isn't coral (#82), it's "Theme color" (#83).
+String chatCandyName(
+  AppLocalizations l10n,
+  ChatCandy candy, {
+  GumdropColors? c,
+}) => switch (candy) {
   ChatCandy.blueRaspberry => l10n.candyBlueRaspberry,
   ChatCandy.bubblegum => l10n.candyBubblegum,
   ChatCandy.grape => l10n.candyGrape,
   ChatCandy.mint => l10n.candyMint,
   ChatCandy.lemon => l10n.candyLemon,
   ChatCandy.tangerine => l10n.candyTangerine,
+  ChatCandy.cherry when c != null && c.you.face != c.coral.face =>
+    l10n.candyThemeColor,
   ChatCandy.cherry => l10n.candyCherry,
 };
 

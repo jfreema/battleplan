@@ -97,16 +97,80 @@ final class AppConfigProvider
 
 String _$appConfigHash() => r'd1b65630e089e29f4fb7029e8d1ea7dda8320dc8';
 
-/// The theme editor's colors (#82), from `config/app`: what the app root
-/// installs in `ThemeCatalog`, and what decides which saved themes the
-/// pickers offer and a pick may use. None signed out.
+/// Every theme in `config/app.themes` (#82), as saved: the Super Admin
+/// Panel's Themes page lists them all, even one that's hard to read, so it
+/// can be put right. None signed out.
+
+@ProviderFor(allThemes)
+final allThemesProvider = AllThemesProvider._();
+
+/// Every theme in `config/app.themes` (#82), as saved: the Super Admin
+/// Panel's Themes page lists them all, even one that's hard to read, so it
+/// can be put right. None signed out.
+
+final class AllThemesProvider
+    extends
+        $FunctionalProvider<
+          Map<TeamScheme, ThemeOverride>,
+          Map<TeamScheme, ThemeOverride>,
+          Map<TeamScheme, ThemeOverride>
+        >
+    with $Provider<Map<TeamScheme, ThemeOverride>> {
+  /// Every theme in `config/app.themes` (#82), as saved: the Super Admin
+  /// Panel's Themes page lists them all, even one that's hard to read, so it
+  /// can be put right. None signed out.
+  AllThemesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'allThemesProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$allThemesHash();
+
+  @$internal
+  @override
+  $ProviderElement<Map<TeamScheme, ThemeOverride>> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  Map<TeamScheme, ThemeOverride> create(Ref ref) {
+    return allThemes(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Map<TeamScheme, ThemeOverride> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Map<TeamScheme, ThemeOverride>>(
+        value,
+      ),
+    );
+  }
+}
+
+String _$allThemesHash() => r'7d3bcdaeb2ec91b16c7838b070ea69c2aa36c5ea';
+
+/// The themes the app draws (#82): [allThemes] but any that's hard to read
+/// (#83, `themeReads`), which the editor and the server refuse but one saved
+/// by hand, or before the checks, could be. What the app root installs in
+/// `ThemeCatalog`, and what decides which saved themes the pickers offer
+/// and a pick may use.
 
 @ProviderFor(themeOverrides)
 final themeOverridesProvider = ThemeOverridesProvider._();
 
-/// The theme editor's colors (#82), from `config/app`: what the app root
-/// installs in `ThemeCatalog`, and what decides which saved themes the
-/// pickers offer and a pick may use. None signed out.
+/// The themes the app draws (#82): [allThemes] but any that's hard to read
+/// (#83, `themeReads`), which the editor and the server refuse but one saved
+/// by hand, or before the checks, could be. What the app root installs in
+/// `ThemeCatalog`, and what decides which saved themes the pickers offer
+/// and a pick may use.
 
 final class ThemeOverridesProvider
     extends
@@ -116,9 +180,11 @@ final class ThemeOverridesProvider
           Map<TeamScheme, ThemeOverride>
         >
     with $Provider<Map<TeamScheme, ThemeOverride>> {
-  /// The theme editor's colors (#82), from `config/app`: what the app root
-  /// installs in `ThemeCatalog`, and what decides which saved themes the
-  /// pickers offer and a pick may use. None signed out.
+  /// The themes the app draws (#82): [allThemes] but any that's hard to read
+  /// (#83, `themeReads`), which the editor and the server refuse but one saved
+  /// by hand, or before the checks, could be. What the app root installs in
+  /// `ThemeCatalog`, and what decides which saved themes the pickers offer
+  /// and a pick may use.
   ThemeOverridesProvider._()
     : super(
         from: null,
@@ -155,7 +221,7 @@ final class ThemeOverridesProvider
   }
 }
 
-String _$themeOverridesHash() => r'd6378a204e38c249aeabfdf851ea012dc393adae';
+String _$themeOverridesHash() => r'fee80604dd5c8ed89de07b0d45e440a8f0edb028';
 
 /// The upload limit in bytes for documents and photos (ADMIN-7): the
 /// platform setting, capped at the storage rules' limit, which the server

@@ -201,6 +201,7 @@ String adminFailureText(AppLocalizations l10n, Object failure) =>
         // The theme editor (#82).
         'no-room' => l10n.adminThemesFull(customSchemes.length),
         'theme-needs-name' => l10n.adminThemeNameError,
+        'unreadable-theme' => l10n.adminThemeUnreadable,
         _ => l10n.errorAdminAction,
       },
       _ => l10n.errorAdminAction,

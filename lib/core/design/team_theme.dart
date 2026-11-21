@@ -2,6 +2,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_theme.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
+import 'package:battleplan/core/design/schemes.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -55,7 +56,35 @@ class GumdropSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = GumdropColors.of(context);
     if (colors.onCard) return child;
-    return _Themed(AppTheme.of(colors.scheme, onCard: true), child);
+    return _Themed(
+      AppTheme.of(colors.scheme, onCard: true, shipped: colors.shipped),
+      child,
+    );
+  }
+}
+
+/// [child] in the built-in scheme behind the one in effect, as the app
+/// ships it: none of the theme editor's colors, and for a saved theme the
+/// built-in one it starts from (#83, owner's request 2026-11-21: a theme
+/// with text the color of its background shouldn't make it "almost
+/// impossible to change the theme back to a readable theme without
+/// intervention via code"). The Super Admin Panel is drawn in it, so its
+/// Themes page, and Put back as it ships, always read.
+class ShippedSchemeTheme extends StatelessWidget {
+  const new({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = GumdropColors.of(context);
+    final scheme = colors.scheme.isCustom
+        ? ThemeCatalog.themeOf(colors.scheme)?.base ?? defaultTeamScheme
+        : colors.scheme;
+    return _Themed(
+      AppTheme.of(scheme, onCard: colors.onCard, shipped: true),
+      child,
+    );
   }
 }
 

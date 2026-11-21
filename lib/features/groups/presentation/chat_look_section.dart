@@ -133,7 +133,7 @@ class ChatLookSection extends ConsumerWidget {
             children: [
               for (final candy in order)
                 _ColorTile(
-                  label: chatCandyName(l10n, candy),
+                  label: chatCandyName(l10n, candy, c: c),
                   accent: chatCandyAccent(c, candy),
                   selected: picked == candy,
                   onTap: () => save(theme.copyWith(bubbleColor: candy.stored)),
@@ -396,7 +396,9 @@ class _ColorTile extends StatelessWidget {
                         AppIcons.check,
                         size: 22,
                         weight: 800,
-                        color: teamSwatch ? GumdropColors.switchKnob : c.ink,
+                        color: teamSwatch
+                            ? GumdropColors.switchKnob
+                            : c.inkOn(accent),
                       )
                     : null,
               ),

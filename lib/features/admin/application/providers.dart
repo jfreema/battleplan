@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/theme_readability.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/theme_override.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
@@ -29,12 +30,21 @@ Stream<AppConfig> appConfig(Ref ref) {
   return ref.watch(adminRepositoryProvider).watchConfig();
 }
 
-/// The theme editor's colors (#82), from `config/app`: what the app root
-/// installs in `ThemeCatalog`, and what decides which saved themes the
-/// pickers offer and a pick may use. None signed out.
+/// Every theme in `config/app.themes` (#82), as saved: the Super Admin
+/// Panel's Themes page lists them all, even one that's hard to read, so it
+/// can be put right. None signed out.
+@Riverpod(keepAlive: true)
+Map<TeamScheme, ThemeOverride> allThemes(Ref ref) =>
+    ref.watch(appConfigProvider.select((c) => c.value?.themes ?? const {}));
+
+/// The themes the app draws (#82): [allThemes] but any that's hard to read
+/// (#83, `themeReads`), which the editor and the server refuse but one saved
+/// by hand, or before the checks, could be. What the app root installs in
+/// `ThemeCatalog`, and what decides which saved themes the pickers offer
+/// and a pick may use.
 @Riverpod(keepAlive: true)
 Map<TeamScheme, ThemeOverride> themeOverrides(Ref ref) =>
-    ref.watch(appConfigProvider.select((c) => c.value?.themes ?? const {}));
+    readableThemes(ref.watch(allThemesProvider));
 
 /// The upload limit in bytes for documents and photos (ADMIN-7): the
 /// platform setting, capped at the storage rules' limit, which the server

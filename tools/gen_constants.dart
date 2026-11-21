@@ -240,6 +240,36 @@ void _dartNotifyKinds(StringBuffer b, Map<String, dynamic> json) {
   b.writeln('};');
 }
 
+/// The built-in schemes' text and what it sits on (#83), for the theme
+/// editor's server check. The app reads its own `SchemeRoles`, which a test
+/// checks against this.
+void _tsSchemeInk(StringBuffer b, Map<String, dynamic> json) {
+  final ink = json['schemeInk'] as Map<String, dynamic>?;
+  if (ink == null) return;
+  b
+    ..writeln()
+    ..writeln(
+      "/** Each built-in scheme's text, and what it sits on, as '#RRGGBB' (#83): the theme editor's server check. */",
+    )
+    ..writeln(
+      'export const SCHEME_INK: Readonly<Record<string, SchemeInk>> = {',
+    );
+  ink.forEach((scheme, v) {
+    if (scheme.startsWith(r'$')) return;
+    final colors = (v as Map<String, dynamic>).entries
+        .map((e) => "${e.key}: '${e.value}'")
+        .join(', ');
+    b.writeln('  $scheme: { $colors },');
+  });
+  b
+    ..writeln('};')
+    ..writeln()
+    ..writeln(
+      'export type SchemeInk = { page: string; text: string; tabbar: string; field: string; '
+      'card: string; cardText: string; cardField: string; popup: string; candyInk: string };',
+    );
+}
+
 String _ts(Map<String, dynamic> json) {
   final b = StringBuffer()
     ..writeln('// $_header')
@@ -296,6 +326,7 @@ String _ts(Map<String, dynamic> json) {
         'export type ${_pascal(name)} = (typeof ${name}Values)[number];',
       );
   });
+  _tsSchemeInk(b, json);
   final kinds = json['notifyKinds'] as Map<String, dynamic>?;
   if (kinds != null) {
     b

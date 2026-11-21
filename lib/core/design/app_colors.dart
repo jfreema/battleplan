@@ -39,7 +39,8 @@ class AppColors extends ThemeExtension<AppColors> {
       maybe: text(g.lemon),
       notGoing: text(g.cherry),
       bubbleMine: g.you.face,
-      onBubbleMine: g.ink,
+      // White on a theme's own dark "you" (#83).
+      onBubbleMine: g.inkOn(g.you),
       bubbleOther: g.surface,
       // A card's text: Candy Pop's cards are white under navy (#72).
       onBubbleOther: g.roles.cardText,

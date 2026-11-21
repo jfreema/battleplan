@@ -11,26 +11,34 @@ import 'package:battleplan/core/widgets/scheme_swatch.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/admin/presentation/admin_widgets.dart';
+import 'package:battleplan/features/admin/presentation/theme_palette.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The three colors a theme can set (#82).
-enum ThemeColor { accent, page, card }
+/// The colors a theme can set: the "you" color, the page, the text on it,
+/// the cards, and the text on them (#82, #83).
+enum ThemeColor { accent, page, text, card, cardText }
 
 /// The theme editor at `/admin/themes/<scheme>`, or `/admin/themes/new`
 /// (#82, owner's request 2026-11-20: "make the app's default buttons and
 /// whatever is always coral colored, customizable for the theme ... Allow
 /// the background and the background of the bubbles to be changed ... and
-/// allow new themes to be saved").
+/// allow new themes to be saved"; #83, 2026-11-21: "all the text color to
+/// be changed", "add more colors to each option ... have it say the name
+/// of the color in addition to showing the color code", and "a protection
+/// in there that prevents text and background from being the same color").
 ///
 /// Any theme can set its "you" color (coral today: buttons, your messages,
-/// the picked tab, unread counts), its background, and its cards and
-/// bubbles; each empty field keeps the original. A saved theme also has a
-/// name and the built-in theme it starts from. A preview shows the colors
-/// as they're typed, and a color that leaves text unreadable can't be saved
-/// ([themeProblems]). Saving changes the theme for everyone at once.
+/// the picked tab, unread counts), its background and its text, and its
+/// cards and their text; each empty field keeps the original. Each color
+/// says its name, and Choose a color offers the candy colors, the team
+/// colors, and every built-in theme's own. A saved theme also has a name
+/// and the built-in theme it starts from. A preview shows the colors as
+/// they're typed. A color that leaves anything hard to read says so under
+/// the field that can fix it, and Save won't send it ([themeProblems]); the
+/// server checks again. Saving changes the theme for everyone at once.
 class AdminThemeEditorScreen extends ConsumerStatefulWidget {
   /// [scheme] to edit, or null for a new theme. [missing] when the link
   /// names no scheme or a saved theme that's gone.
@@ -83,18 +91,24 @@ class _AdminThemeEditorScreenState
     final theme = scheme == null ? null : themes[scheme];
     _name.text = theme?.name ?? '';
     _base = theme?.base ?? defaultTeamScheme;
-    _hex[ThemeColor.accent]!.text = hexOfColor(theme?.accent) ?? '';
-    _hex[ThemeColor.page]!.text = hexOfColor(theme?.page) ?? '';
-    _hex[ThemeColor.card]!.text = hexOfColor(theme?.card) ?? '';
+    for (final (field, argb) in [
+      (ThemeColor.accent, theme?.accent),
+      (ThemeColor.page, theme?.page),
+      (ThemeColor.text, theme?.text),
+      (ThemeColor.card, theme?.card),
+      (ThemeColor.cardText, theme?.cardText),
+    ]) {
+      _hex[field]!.text = hexOfColor(argb) ?? '';
+    }
   }
 
-  /// The built-in roles the theme starts from.
-  SchemeRoles get _baseRoles {
+  /// The built-in scheme the theme starts from, and its roles.
+  TeamScheme get _baseScheme {
     final scheme = _scheme;
-    return SchemeRoles.builtIn(
-      scheme == null || scheme.isCustom ? _base : scheme,
-    );
+    return scheme == null || scheme.isCustom ? _base : scheme;
   }
+
+  SchemeRoles get _baseRoles => SchemeRoles.builtIn(_baseScheme);
 
   /// [c]'s field as `#RRGGBB` (the # optional), or null when it's empty or
   /// not a color.
@@ -108,12 +122,16 @@ class _AdminThemeEditorScreenState
   bool _badHex(ThemeColor c) =>
       _hex[c]!.text.trim().isNotEmpty && _color(c) == null;
 
+  bool _set(ThemeColor c) => _color(c) != null;
+
   ThemeOverride get _theme => ThemeOverride(
     name: _isSaved ? _name.text.trim() : null,
     base: _isSaved ? _base : null,
     accent: _color(ThemeColor.accent),
     page: _color(ThemeColor.page),
     card: _color(ThemeColor.card),
+    text: _color(ThemeColor.text),
+    cardText: _color(ThemeColor.cardText),
   );
 
   SchemeRoles get _roles {
@@ -123,10 +141,67 @@ class _AdminThemeEditorScreenState
       page: color(t.page),
       card: color(t.card),
       you: color(t.accent),
+      text: color(t.text),
+      cardText: color(t.cardText),
     );
   }
 
   Set<ThemeProblem> get _problems => themeProblems(_baseRoles, _roles);
+
+  /// The field that can fix [p]: the one changed, where two could.
+  ThemeColor _fieldFor(ThemeProblem p) => switch (p) {
+    ThemeProblem.textOnPage =>
+      _set(ThemeColor.text)
+          ? ThemeColor.text
+          : _set(ThemeColor.page)
+          ? ThemeColor.page
+          : ThemeColor.accent,
+    ThemeProblem.textOnBars => ThemeColor.text,
+    ThemeProblem.textOnCard =>
+      _set(ThemeColor.cardText)
+          ? ThemeColor.cardText
+          : _set(ThemeColor.card)
+          ? ThemeColor.card
+          : ThemeColor.text,
+    ThemeProblem.inkOnAccent => ThemeColor.accent,
+    ThemeProblem.accentHidden =>
+      _set(ThemeColor.accent)
+          ? ThemeColor.accent
+          : _set(ThemeColor.page)
+          ? ThemeColor.page
+          : _set(ThemeColor.card)
+          ? ThemeColor.card
+          : ThemeColor.accent,
+  };
+
+  /// What's wrong with [field]'s color, if anything.
+  String? _problemAt(AppLocalizations l10n, ThemeColor field) {
+    final base = _baseScheme.label(l10n);
+    for (final p in ThemeProblem.values) {
+      if (!_problems.contains(p) || _fieldFor(p) != field) continue;
+      return switch ((p, field)) {
+        (ThemeProblem.inkOnAccent, _) => l10n.adminThemeInkOnAccent,
+        (ThemeProblem.accentHidden, ThemeColor.page) =>
+          l10n.adminThemePageHidesAccent,
+        (ThemeProblem.accentHidden, ThemeColor.card) =>
+          l10n.adminThemeCardHidesAccent,
+        (ThemeProblem.accentHidden, _) => l10n.adminThemeAccentHidden,
+        (ThemeProblem.textOnPage, ThemeColor.page) => l10n.adminThemeTextOnPage,
+        (ThemeProblem.textOnPage, ThemeColor.accent) =>
+          l10n.adminThemeAccentHidden,
+        (ThemeProblem.textOnPage, _) => l10n.adminThemeTextOnBackground,
+        (ThemeProblem.textOnBars, _) =>
+          _isSaved
+              ? l10n.adminThemeTextOnBarsSaved(base)
+              : l10n.adminThemeTextOnBars(base),
+        (ThemeProblem.textOnCard, ThemeColor.card) => l10n.adminThemeTextOnCard,
+        (ThemeProblem.textOnCard, ThemeColor.cardText) =>
+          l10n.adminThemeCardTextUnreadable,
+        (ThemeProblem.textOnCard, _) => l10n.adminThemeTextOnCards,
+      };
+    }
+    return null;
+  }
 
   bool get _canSave =>
       _problems.isEmpty &&
@@ -153,6 +228,8 @@ class _AdminThemeEditorScreenState
             accent: t.accent,
             page: t.page,
             card: t.card,
+            text: t.text,
+            cardText: t.cardText,
           ),
       done: l10n.adminThemeSaved,
     );
@@ -190,12 +267,24 @@ class _AdminThemeEditorScreenState
     if (done && mounted) _close();
   }
 
+  /// Opens the colors to choose from for [field], and puts the one picked
+  /// in its box.
+  Future<void> _choose(ThemeColor field, String title, Color current) async {
+    final picked = await showColorChooser(
+      context,
+      title: title,
+      current: current,
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _hex[field]!.text = ColorMath.hex(picked));
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final config = ref.watch(appConfigProvider);
-    final themes = ref.watch(themeOverridesProvider);
+    final themes = ref.watch(allThemesProvider);
     if (!_loaded && config.value != null) _load(themes);
     final scheme = _scheme;
     final title = scheme == null
@@ -216,10 +305,34 @@ class _AdminThemeEditorScreenState
       );
     } else {
       final roles = _roles;
-      final problems = _problems;
       final base = _baseRoles;
-      String? problem(ThemeProblem p, String text) =>
-          problems.contains(p) ? text : null;
+      final cardTextFollows = base.cardText == base.text;
+
+      Widget field(
+        ThemeColor field, {
+        required String title,
+        required String help,
+        required Color original,
+        required Color color,
+        String? emptyNote,
+      }) => _ColorField(
+        title: title,
+        help: help,
+        controller: _hex[field]!,
+        color: color,
+        emptyNote:
+            emptyNote ??
+            l10n.adminThemeOriginalNamed(
+              colorNameOf(l10n, original),
+              ColorMath.hex(original),
+            ),
+        hint: ColorMath.hex(original),
+        badHex: _badHex(field),
+        problem: _problemAt(l10n, field),
+        onChanged: () => setState(() {}),
+        onChoose: () => unawaited(_choose(field, title, color)),
+      );
+
       body = AdminBody(
         maxWidth: 640,
         children: [
@@ -261,51 +374,41 @@ class _AdminThemeEditorScreenState
             title: l10n.adminThemePreview,
             children: [ThemePreview(roles: roles)],
           ),
-          _ColorField(
+          field(
+            ThemeColor.accent,
             title: l10n.adminThemeAccent,
             help: l10n.adminThemeAccentHelp,
-            controller: _hex[ThemeColor.accent]!,
             original: base.you,
             color: roles.you,
-            presets: _accentPresets,
-            badHex: _badHex(ThemeColor.accent),
-            problem: problem(
-              ThemeProblem.inkOnAccent,
-              l10n.adminThemeInkOnAccent,
-            ),
-            onChanged: () => setState(() {}),
           ),
-          _ColorField(
+          field(
+            ThemeColor.page,
             title: l10n.adminThemePage,
             help: l10n.adminThemePageHelp,
-            controller: _hex[ThemeColor.page]!,
             original: base.page,
             color: roles.page,
-            presets: [
-              for (final s in builtInSchemes) SchemeRoles.builtIn(s).page,
-            ],
-            badHex: _badHex(ThemeColor.page),
-            problem: problem(
-              ThemeProblem.textOnPage,
-              l10n.adminThemeTextOnPage,
-            ),
-            onChanged: () => setState(() {}),
           ),
-          _ColorField(
+          field(
+            ThemeColor.text,
+            title: l10n.adminThemeText,
+            help: l10n.adminThemeTextHelp,
+            original: base.text,
+            color: roles.text,
+          ),
+          field(
+            ThemeColor.card,
             title: l10n.adminThemeCard,
             help: l10n.adminThemeCardHelp,
-            controller: _hex[ThemeColor.card]!,
             original: base.card,
             color: roles.card,
-            presets: [
-              for (final s in builtInSchemes) SchemeRoles.builtIn(s).card,
-            ],
-            badHex: _badHex(ThemeColor.card),
-            problem: problem(
-              ThemeProblem.textOnCard,
-              l10n.adminThemeTextOnCard,
-            ),
-            onChanged: () => setState(() {}),
+          ),
+          field(
+            ThemeColor.cardText,
+            title: l10n.adminThemeCardText,
+            help: l10n.adminThemeCardTextHelp,
+            original: base.cardText,
+            color: roles.cardText,
+            emptyNote: cardTextFollows ? l10n.adminThemeFollowsText : null,
           ),
           Wrap(
             alignment: WrapAlignment.end,
@@ -343,133 +446,173 @@ class _AdminThemeEditorScreenState
   }
 }
 
-/// The candy faces and a few more, for the "you" color.
-const List<Color> _accentPresets = [
-  CandyFaces.coral,
-  CandyFaces.tangerine,
-  CandyFaces.lemon,
-  Color(0xFFFDD023),
-  CandyFaces.mint,
-  CandyFaces.blueRaspberry,
-  CandyFaces.grape,
-  CandyFaces.bubblegum,
-  Color(0xFFFFFFFF),
-  Color(0xFFC0C5CC),
-];
-
-/// One of a theme's colors: what it is, a swatch of it now, its `#RRGGBB`
-/// (empty for the original), a row of colors to pick from, and what's wrong
-/// with it, if anything.
+/// One of a theme's colors: what it is, a swatch of it now with its name
+/// and code, a box for its `#RRGGBB` (empty for the original), Choose a
+/// color, and what's wrong with it, if anything.
 class _ColorField extends StatelessWidget {
   const new({
     required this.title,
     required this.help,
     required this.controller,
-    required this.original,
     required this.color,
-    required this.presets,
+    required this.emptyNote,
+    required this.hint,
     required this.badHex,
     required this.problem,
     required this.onChanged,
+    required this.onChoose,
   });
 
   final String title;
   final String help;
   final TextEditingController controller;
 
-  /// The base's color, which an empty field keeps.
-  final Color original;
-
   /// The color now, as the preview shows it.
   final Color color;
-  final List<Color> presets;
+
+  /// What an empty box means: the original, by name and code.
+  final String emptyNote;
+  final String hint;
   final bool badHex;
 
   /// Why it can't be saved, or null.
   final String? problem;
   final VoidCallback onChanged;
+  final VoidCallback onChoose;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final outline = theme.colorScheme.outline;
-    void use(String hex) {
-      controller.text = hex;
-      onChanged();
-    }
-
+    final text = theme.textTheme;
+    final empty = controller.text.trim().isEmpty;
     return AdminSectionCard(
       title: title,
       children: [
-        Text(help, style: theme.textTheme.bodyMedium),
+        Text(help, style: text.bodyMedium),
         const SizedBox(height: Space.md),
+        // The color now, by name and code.
         Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: _Dot(color: color, ring: outline, size: 44),
-            ),
+            ColorDot(color: color, size: 44),
             const SizedBox(width: Space.md),
             Expanded(
-              child: TextField(
-                controller: controller,
-                maxLength: 7,
-                decoration: InputDecoration(
-                  labelText: l10n.adminThemeHex,
-                  hintText: ColorMath.hex(original),
-                  helperText: l10n.adminThemeHexHelp(ColorMath.hex(original)),
-                  helperMaxLines: 2,
-                  errorText: badHex ? l10n.adminThemeHexError : problem,
-                  errorMaxLines: 4,
-                  counterText: '',
-                ),
-                onChanged: (_) => onChanged(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    colorNameOf(l10n, color),
+                    style: text.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  Text(ColorMath.hex(color), style: text.bodyMedium),
+                ],
               ),
             ),
           ],
+        ),
+        const SizedBox(height: Space.md),
+        TextField(
+          controller: controller,
+          maxLength: 7,
+          decoration: InputDecoration(
+            labelText: l10n.adminThemeColorCode,
+            hintText: hint,
+            helperText: empty ? emptyNote : null,
+            helperMaxLines: 3,
+            errorText: badHex ? l10n.adminThemeHexError : problem,
+            errorMaxLines: 5,
+            counterText: '',
+          ),
+          onChanged: (_) => onChanged(),
         ),
         const SizedBox(height: Space.sm),
         Wrap(
           spacing: Space.sm,
-          runSpacing: Space.sm,
+          runSpacing: Space.xs,
           children: [
-            for (final p in presets.toSet())
-              Semantics(
-                button: true,
-                label: l10n.adminThemeUseColor(ColorMath.hex(p)),
-                excludeSemantics: true,
-                child: InkWell(
-                  customBorder: const CircleBorder(),
-                  onTap: () => use(ColorMath.hex(p)),
-                  child: Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: _Dot(color: p, ring: outline, size: 32),
-                  ),
-                ),
+            OutlinedButton.icon(
+              icon: const Icon(AppIcons.colorScheme),
+              label: Text(l10n.adminThemeChoose),
+              onPressed: onChoose,
+            ),
+            if (!empty)
+              TextButton.icon(
+                icon: const Icon(AppIcons.reset),
+                label: Text(l10n.adminThemeUseOriginal),
+                onPressed: () {
+                  controller.clear();
+                  onChanged();
+                },
               ),
           ],
         ),
-        if (controller.text.isNotEmpty)
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: TextButton.icon(
-              icon: const Icon(AppIcons.reset),
-              label: Text(l10n.adminThemeUseOriginal),
-              onPressed: () => use(''),
-            ),
-          ),
       ],
     );
   }
 }
 
-class _Dot extends StatelessWidget {
-  const new({required this.color, required this.ring, required this.size});
+/// The colors to choose from, by name and code (#83): the candy colors,
+/// the team colors, and each built-in theme's own. Returns the one picked,
+/// or null.
+Future<Color?> showColorChooser(
+  BuildContext context, {
+  required String title,
+  required Color current,
+}) => showModalBottomSheet<Color>(
+  context: context,
+  isScrollControlled: true,
+  useSafeArea: true,
+  showDragHandle: true,
+  builder: (context) {
+    final l10n = AppLocalizations.of(context);
+    final text = Theme.of(context).textTheme;
+    return FractionallySizedBox(
+      heightFactor: 0.85,
+      child: ListView(
+        padding: const EdgeInsets.only(bottom: Space.lg),
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(Space.lg, 0, Space.lg, Space.sm),
+            child: Text(
+              '${l10n.adminThemeChoose}: $title',
+              style: text.titleMedium,
+            ),
+          ),
+          for (final group in themePalette(l10n)) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                Space.lg,
+                Space.md,
+                Space.lg,
+                Space.xs,
+              ),
+              child: Text(group.title, style: text.titleSmall),
+            ),
+            for (final named in group.colors)
+              ListTile(
+                leading: ColorDot(color: named.color, size: 32),
+                title: Text(named.name),
+                subtitle: Text(ColorMath.hex(named.color)),
+                trailing: named.color.toARGB32() == current.toARGB32()
+                    ? const Icon(AppIcons.check)
+                    : null,
+                onTap: () => Navigator.of(context).pop(named.color),
+              ),
+          ],
+        ],
+      ),
+    );
+  },
+);
+
+/// A round swatch of [color], ringed so a color like the page's still
+/// shows.
+class ColorDot extends StatelessWidget {
+  const new({required this.color, required this.size, super.key});
 
   final Color color;
-  final Color ring;
   final double size;
 
   @override
@@ -479,7 +622,10 @@ class _Dot extends StatelessWidget {
     decoration: BoxDecoration(
       color: color,
       shape: BoxShape.circle,
-      border: Border.all(color: ring, width: 1.5),
+      border: Border.all(
+        color: Theme.of(context).colorScheme.outline,
+        width: 1.5,
+      ),
     ),
   );
 }
@@ -527,12 +673,23 @@ class ThemePreview extends StatelessWidget {
                       SchemeSwatch.roles(r),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: Text(
-                          l10n.adminThemePreviewHeading,
-                          style: text.titleLarge?.copyWith(
-                            color: r.text,
-                            fontWeight: FontWeight.w800,
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.adminThemePreviewHeading,
+                              style: text.titleLarge?.copyWith(
+                                color: r.text,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            Text(
+                              l10n.adminThemePreviewCardDetail,
+                              style: text.bodyMedium?.copyWith(
+                                color: Color.alphaBlend(r.pageMuted, r.page),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -553,7 +710,9 @@ class ThemePreview extends StatelessWidget {
                         ),
                         Text(
                           l10n.adminThemePreviewCardDetail,
-                          style: text.bodyMedium?.copyWith(color: r.cardMuted),
+                          style: text.bodyMedium?.copyWith(
+                            color: Color.alphaBlend(r.cardMuted, r.card),
+                          ),
                         ),
                         const SizedBox(height: 10),
                         Container(
@@ -561,11 +720,11 @@ class ThemePreview extends StatelessWidget {
                             horizontal: 16,
                             vertical: 8,
                           ),
-                          decoration: candy(r.you, r.candyLipCoral),
+                          decoration: candy(r.you, r.youLip),
                           child: Text(
                             l10n.adminThemePreviewButton,
                             style: text.labelLarge?.copyWith(
-                              color: r.candyInk,
+                              color: r.youInk,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
@@ -596,11 +755,11 @@ class ThemePreview extends StatelessWidget {
                         horizontal: 14,
                         vertical: 8,
                       ),
-                      decoration: candy(r.you, r.candyLipCoral),
+                      decoration: candy(r.you, r.youLip),
                       child: Text(
                         l10n.adminThemePreviewMine,
                         style: text.bodyMedium?.copyWith(
-                          color: r.candyInk,
+                          color: r.youInk,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -609,7 +768,8 @@ class ThemePreview extends StatelessWidget {
                 ],
               ),
             ),
-            // The tab bar, the middle tab picked.
+            // The tab bar, the middle tab picked in the "you" color, as
+            // the app draws it.
             Container(
               color: r.tabbar,
               padding: const EdgeInsets.symmetric(vertical: 10),
@@ -621,24 +781,13 @@ class ThemePreview extends StatelessWidget {
                     AppIcons.schedule,
                     AppIcons.person,
                   ].indexed)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 4,
-                      ),
-                      decoration: i == 1
-                          ? BoxDecoration(
-                              color: r.accentMark,
-                              borderRadius: BorderRadius.circular(16),
-                            )
-                          : null,
-                      child: Icon(
-                        icon,
-                        size: 22,
-                        color: i == 1
-                            ? ColorMath.onColor(r.accentMark, dark: r.candyInk)
-                            : r.pageMuted,
-                      ),
+                    Icon(
+                      icon,
+                      size: 24,
+                      fill: i == 1 ? 1 : 0,
+                      color: i == 1
+                          ? r.you
+                          : Color.alphaBlend(r.pageMuted, r.tabbar),
                     ),
                 ],
               ),

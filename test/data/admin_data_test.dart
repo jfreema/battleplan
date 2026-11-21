@@ -581,17 +581,26 @@ void main() {
         'accent': '#FDD023',
         'page': null,
         'card': null,
+        'text': null,
+        'cardText': null,
       });
       functions.handlers['adminSaveTheme'] = (_) => {
         'ok': true,
         'scheme': 'army',
       };
-      await repo.saveTheme(scheme: TeamScheme.army, page: 0xFF111111);
+      await repo.saveTheme(
+        scheme: TeamScheme.army,
+        page: 0xFF111111,
+        text: 0xFFFFFFFF,
+        cardText: 0xFFF4EAD0,
+      );
       expect(functions.lastData('adminSaveTheme'), {
         'scheme': 'army',
         'accent': null,
         'page': '#111111',
         'card': null,
+        'text': '#FFFFFF',
+        'cardText': '#F4EAD0',
       });
       functions.handlers['adminSaveTheme'] = (_) => {'ok': true};
       await expectLater(

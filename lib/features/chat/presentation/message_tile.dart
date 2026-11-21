@@ -473,7 +473,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     final foreground = announcement
         ? c.ink
         : mine
-        ? (custom == null ? c.ink : bubbleTextOn(c, custom))
+        ? (custom == null ? c.inkOn(c.you) : bubbleTextOn(c, custom))
         : c.textOnPage;
     final muted = mine || announcement ? foreground : c.textMutedOnPage;
     final time = m.createdAt == null
@@ -1299,7 +1299,7 @@ class _OpenPlayBadge extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            PlaysIcon(size: 16, color: c.ink),
+            PlaysIcon(size: 16, color: c.inkOn(c.sticker)),
             const SizedBox(width: 5),
             Text(
               AppLocalizations.of(context).playOpen,
@@ -1308,7 +1308,7 @@ class _OpenPlayBadge extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
                   height: 1.2,
-                  color: c.ink,
+                  color: c.inkOn(c.sticker),
                 ),
               ),
             ),
@@ -1452,7 +1452,9 @@ class OutgoingTextTile extends StatelessWidget {
     final c = GumdropColors.of(context);
     final custom = bubbleColor;
     final background = custom ?? c.you.face;
-    final foreground = custom == null ? c.ink : bubbleTextOn(c, custom);
+    final foreground = custom == null
+        ? c.inkOn(c.you)
+        : bubbleTextOn(c, custom);
     return Padding(
       padding: const EdgeInsets.fromLTRB(Space.lg, 2, Space.lg, Space.xs),
       child: Column(

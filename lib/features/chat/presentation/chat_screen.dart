@@ -1464,7 +1464,7 @@ class _NewMessagesDivider extends StatelessWidget {
               fontSize: 12,
               height: 1,
               letterSpacing: 0.72,
-              color: c.ink,
+              color: c.inkOn(c.you),
             ),
           ),
         ),

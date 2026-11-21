@@ -17,20 +17,28 @@ import 'package:material_ui/material_ui.dart';
 /// palette with [GumdropColors.of], and the fonts and shapes with
 /// [GumdropStyle.of].
 abstract final class AppTheme {
-  static final _cache = <(TeamScheme, bool), ThemeData>{};
+  static final _cache = <(TeamScheme, bool, bool), ThemeData>{};
 
   /// The theme for [scheme], on the page or ([onCard]) on a card, built once
-  /// and kept: five schemes in two contexts.
-  static ThemeData of(TeamScheme scheme, {bool onCard = false}) {
+  /// and kept: two per scheme. [shipped] is a built-in [scheme] as the app
+  /// ships it, without the theme editor's colors (#83): the Super Admin
+  /// Panel's.
+  static ThemeData of(
+    TeamScheme scheme, {
+    bool onCard = false,
+    bool shipped = false,
+  }) {
     // Built again once the theme editor's colors change (#82).
     if (_version != ThemeCatalog.version) {
       _cache.clear();
       _version = ThemeCatalog.version;
     }
-    return _cache.putIfAbsent((
-      scheme,
-      onCard,
-    ), () => build(GumdropColors.forScheme(scheme, onCard: onCard)));
+    return _cache.putIfAbsent(
+      (scheme, onCard, shipped),
+      () => build(
+        GumdropColors.forScheme(scheme, onCard: onCard, shipped: shipped),
+      ),
+    );
   }
 
   static int _version = 0;
@@ -60,6 +68,9 @@ abstract final class AppTheme {
     // Text in a role's color must read on what this context's text is on:
     // the page and its pop-ups, or the card.
     final textBackgrounds = [background, container];
+    // Writing on the "you" face: the ink, or white on a theme's own dark
+    // "you" (#83).
+    final youInk = g.inkOn(g.you);
     Color readable(Color c) => ColorMath.readable(c, textBackgrounds);
     // White or ink on a role's color; black where neither reads.
     Color on(Color c) {
@@ -93,7 +104,7 @@ abstract final class AppTheme {
       primary: primary,
       onPrimary: on(primary),
       primaryContainer: g.you.face,
-      onPrimaryContainer: g.ink,
+      onPrimaryContainer: youInk,
       secondary: secondary,
       onSecondary: on(secondary),
       secondaryContainer: g.inputFill,
@@ -272,7 +283,7 @@ abstract final class AppTheme {
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: g.you.face,
-        foregroundColor: g.ink,
+        foregroundColor: youInk,
         elevation: 0,
         focusElevation: 0,
         hoverElevation: 0,
@@ -304,10 +315,10 @@ abstract final class AppTheme {
           // Unpicked: the muted text of where the well is, the page's or
           // the card's (Candy Pop's differ, #72).
           foregroundColor: WidgetStateProperty.resolveWith(
-            (s) => s.contains(WidgetState.selected) ? g.ink : muted,
+            (s) => s.contains(WidgetState.selected) ? youInk : muted,
           ),
           iconColor: WidgetStateProperty.resolveWith(
-            (s) => s.contains(WidgetState.selected) ? g.ink : muted,
+            (s) => s.contains(WidgetState.selected) ? youInk : muted,
           ),
           textStyle: WidgetStatePropertyAll(label.copyWith(fontSize: 16)),
           shape: const WidgetStatePropertyAll(StadiumBorder()),
@@ -390,7 +401,7 @@ abstract final class AppTheme {
         fillColor: WidgetStateProperty.resolveWith(
           (s) => s.contains(WidgetState.selected) ? g.you.face : null,
         ),
-        checkColor: WidgetStatePropertyAll(g.ink),
+        checkColor: WidgetStatePropertyAll(youInk),
         side: WidgetStateBorderSide.resolveWith(
           (s) => s.contains(WidgetState.selected)
               ? BorderSide(color: g.you.face, width: 2)
@@ -436,7 +447,7 @@ abstract final class AppTheme {
       // Unread counts are coral, "you" (SPEC §7.2), not the warning red.
       badgeTheme: BadgeThemeData(
         backgroundColor: g.you.face,
-        textColor: g.ink,
+        textColor: youInk,
         // Nothing under 12 px (SPEC §7.3).
         textStyle: label.copyWith(fontSize: 12),
       ),
@@ -553,6 +564,7 @@ abstract final class AppTheme {
     TextStyle label,
   ) {
     bool selected(Set<WidgetState> s) => s.contains(WidgetState.selected);
+    final youInk = g.inkOn(g.you);
     return ChipThemeData(
       color: WidgetStateProperty.resolveWith(
         (s) => s.contains(WidgetState.disabled)
@@ -570,11 +582,11 @@ abstract final class AppTheme {
       labelStyle: label.copyWith(
         fontSize: 14,
         color: WidgetStateColor.resolveWith(
-          (s) => selected(s) ? g.ink : g.textPrimary,
+          (s) => selected(s) ? youInk : g.textPrimary,
         ),
       ),
-      secondaryLabelStyle: label.copyWith(color: g.ink),
-      checkmarkColor: g.ink,
+      secondaryLabelStyle: label.copyWith(color: youInk),
+      checkmarkColor: youInk,
       iconTheme: IconThemeData(color: g.textPrimary, size: 18),
       deleteIconColor: g.textMutedOnPage,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),

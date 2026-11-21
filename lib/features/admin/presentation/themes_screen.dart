@@ -24,7 +24,10 @@ class AdminThemesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final config = ref.watch(appConfigProvider);
-    final themes = ref.watch(themeOverridesProvider);
+    // Every theme as saved, and the ones the app draws: one that's hard to
+    // read (#83) is listed, turned off, so it can be put right.
+    final themes = ref.watch(allThemesProvider);
+    final shown = ref.watch(themeOverridesProvider);
     final saved = [
       for (final s in customSchemes)
         if (schemeAvailable(s, themes)) s,
@@ -36,7 +39,11 @@ class AdminThemesScreen extends ConsumerWidget {
       // Drawn from the theme itself, so a save shows here at once.
       leading: SchemeSwatch.roles(SchemeRoles.themed(scheme, themes[scheme])),
       title: Text(themes[scheme]?.name ?? scheme.label(l10n)),
-      subtitle: Text(subtitle),
+      subtitle: Text(
+        themes.containsKey(scheme) && !shown.containsKey(scheme)
+            ? l10n.adminThemeTurnedOff
+            : subtitle,
+      ),
       trailing: const Icon(AppIcons.chevronRight),
       onTap: () => unawaited(context.push('/admin/themes/${scheme.value}')),
     );

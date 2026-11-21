@@ -169,7 +169,7 @@ class _TeamRow extends ConsumerWidget {
                   fontSize: 13,
                   height: 1,
                   fontWeight: FontWeight.w700,
-                  color: muted ? quiet : c.ink,
+                  color: muted ? quiet : c.inkOn(c.you),
                 ),
               ),
             ),

@@ -257,7 +257,7 @@ class _DayCell extends StatelessWidget {
                 '${day.day}',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: isSelected
-                      ? c.ink
+                      ? c.inkOn(c.you)
                       : inMonth
                       ? null
                       : scheme.outline,
@@ -281,7 +281,7 @@ class _DayCell extends StatelessWidget {
                       // types stay apart in every scheme.
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? c.ink
+                            ? c.inkOn(c.you)
                             : e.isCanceled
                             ? scheme.outline
                             : typeAccent(context, e.type).text,

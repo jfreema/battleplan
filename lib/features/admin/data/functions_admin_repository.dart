@@ -474,6 +474,8 @@ class FunctionsAdminRepository implements AdminRepository {
     int? accent,
     int? page,
     int? card,
+    int? text,
+    int? cardText,
   }) async {
     final result = await _call('adminSaveTheme', {
       'scheme': ?scheme?.value,
@@ -482,6 +484,8 @@ class FunctionsAdminRepository implements AdminRepository {
       'accent': _hex(accent),
       'page': _hex(page),
       'card': _hex(card),
+      'text': _hex(text),
+      'cardText': _hex(cardText),
     });
     return TeamScheme.tryParse(result['scheme'] as String?) ??
         (throw const UnknownFailure('adminSaveTheme: no scheme'));

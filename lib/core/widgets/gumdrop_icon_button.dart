@@ -45,7 +45,7 @@ Widget unreadBadge(
             fontSize: 12,
             height: 19 / 12,
             fontWeight: FontWeight.w700,
-            color: c.ink,
+            color: c.inkOn(c.you),
           ),
         ),
       ),

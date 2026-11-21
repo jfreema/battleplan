@@ -6,6 +6,7 @@ import 'package:battleplan/app/route_extra_codec.dart';
 import 'package:battleplan/app/update_required_screen.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/links.dart';
 import 'package:battleplan/core/open_sheets.dart';
@@ -1292,22 +1293,28 @@ class _AdminPanelState extends State<_AdminPanel> {
     );
   }
 
+  // In the built-in scheme as it ships, whatever the theme editor set
+  // (#83): a theme that's hard to read can always be put right here.
   @override
-  Widget build(BuildContext context) {
-    if (_AdminPanel._loaded) return widget.page();
-    final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.adminPanel)),
-      body: _error == null
-          ? const Center(child: CircularProgressIndicator())
-          : LoadError(
-              onRetry: () {
-                setState(() => _error = null);
-                _load();
-              },
-            ),
-    );
-  }
+  Widget build(BuildContext context) => ShippedSchemeTheme(
+    child: Builder(
+      builder: (context) {
+        if (_AdminPanel._loaded) return widget.page();
+        final l10n = AppLocalizations.of(context);
+        return Scaffold(
+          appBar: AppBar(title: Text(l10n.adminPanel)),
+          body: _error == null
+              ? const Center(child: CircularProgressIndicator())
+              : LoadError(
+                  onRetry: () {
+                    setState(() => _error = null);
+                    _load();
+                  },
+                ),
+        );
+      },
+    ),
+  );
 }
 
 /// [routes] and every route under them with their screens in the scheme I

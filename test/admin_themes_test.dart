@@ -5,9 +5,12 @@
 // new themes to be saved"): a theme's button color, background and cards,
 // a readability check before saving, new saved themes in every picker, and
 // deleting or putting back.
+import 'dart:async';
+
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/schemes.dart';
+import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/admin/presentation/admin_widgets.dart';
 import 'package:battleplan/features/admin/presentation/theme_editor_screen.dart';
@@ -89,6 +92,35 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  /// Opens Choose a color under [field] and picks [name].
+  Future<void> chooseColor(
+    WidgetTester tester,
+    String field,
+    String name,
+  ) async {
+    final choose = find.descendant(
+      of: find.widgetWithText(AdminSectionCard, field),
+      matching: find.text('Choose a color'),
+    );
+    await tester.ensureVisible(choose);
+    await tester.pumpAndSettle();
+    await tester.tap(choose);
+    await tester.pumpAndSettle();
+    final row = find.widgetWithText(ListTile, name);
+    await tester.scrollUntilVisible(
+      row,
+      200,
+      scrollable: find
+          .descendant(
+            of: find.byType(BottomSheet),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await tester.tap(row.first);
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('Themes is a section of the panel, listing every built-in '
       'theme as it ships', (tester) async {
     await open(tester, '/admin');
@@ -152,12 +184,10 @@ void main() {
     await tester.tap(find.text('Navy').last);
     await tester.pumpAndSettle();
     expect(preview(tester).page, SchemeRoles.navy.page);
-    // A color from the row under the field.
-    final gold = find.bySemanticsLabel('Use #FDD023');
-    await tester.ensureVisible(gold);
-    await tester.tap(gold);
-    await tester.pumpAndSettle();
+    // Gold, chosen by name from Geaux Tigahs' colors.
+    await chooseColor(tester, 'Buttons and your messages', 'Gold');
     expect(preview(tester).you, const Color(0xFFFDD023));
+    expect(find.text('#FDD023'), findsWidgets);
     await save(tester);
     expect(admin.savedThemes.single, (TeamScheme.custom1, nightGame));
 
@@ -186,12 +216,22 @@ void main() {
       ),
       findsOneWidget,
     );
-    // Too dark for the button writing.
+    // Near black takes white writing, but vanishes into the olive.
     await tester.enterText(hex('Buttons and your messages'), '#101010');
     await tester.pump();
     expect(
       find.text(
-        "The writing on buttons won't be easy to read on this color. Try a "
+        "This color won't stand out on the background, the cards, or the tab "
+        'bar. Try one with more contrast.',
+      ),
+      findsOneWidget,
+    );
+    // Mid gray: neither dark nor white writing reads on it.
+    await tester.enterText(hex('Buttons and your messages'), '#808080');
+    await tester.pump();
+    expect(
+      find.text(
+        'Neither dark nor white writing reads well on this color. Try a '
         'lighter or darker one.',
       ),
       findsOneWidget,
@@ -323,5 +363,174 @@ void main() {
     await open(tester, '/admin/themes/new', size: const Size(390, 4000));
     expect(find.byType(ThemePreview), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets("the text colors save, and a text that won't read says where "
+      '(#83)', (tester) async {
+    final admin = await open(tester, '/admin/themes/purplegold');
+    await chooseColor(tester, 'Text', 'Gold');
+    expect(preview(tester).text, const Color(0xFFFDD023));
+    // The card text follows the text here.
+    expect(preview(tester).cardText, const Color(0xFFFDD023));
+    await save(tester);
+    expect(admin.savedThemes.single, (
+      TeamScheme.purplegold,
+      const ThemeOverride(text: 0xFFFDD023),
+    ));
+
+    // Not awaited: a push finishes when its page is closed.
+    unawaited(
+      GoRouter.of(tester.element(find.byType(Scaffold).last))
+          .push<void>('/admin/themes/army'),
+    );
+    await tester.pumpAndSettle();
+    // Dark text on a light page, where Army green's bars stay olive.
+    await tester.enterText(hex('Background'), '#FBF5E6');
+    await tester.enterText(hex('Cards and bubbles'), '#FFFFFF');
+    await tester.enterText(hex('Text'), '#1A1A18');
+    await tester.pump();
+    expect(
+      find.text(
+        "This text won't be easy to read in the tab bar and text boxes, which "
+        "keep Army green's colors. Try a lighter or darker one.",
+      ),
+      findsOneWidget,
+    );
+    // Text the color of the page.
+    await tester.enterText(hex('Background'), '');
+    await tester.enterText(hex('Cards and bubbles'), '');
+    await tester.enterText(hex('Text'), '#474C2B');
+    await tester.pump();
+    expect(
+      find.text(
+        "This text won't be easy to read on the background. Try a lighter or "
+        'darker one.',
+      ),
+      findsOneWidget,
+    );
+    // Candy Pop's own card text.
+    // Not awaited: a push finishes when its page is closed.
+    unawaited(
+      GoRouter.of(tester.element(find.byType(Scaffold).last))
+          .push<void>('/admin/themes/candypop'),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(hex('Text on cards and bubbles'), '#FFFFFF');
+    await tester.pump();
+    expect(
+      find.text(
+        "This text won't be easy to read on the cards. Try a lighter or darker "
+        'one.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('every color says its name and code; one typed says the '
+      'nearest name', (tester) async {
+    await open(tester, '/admin/themes/wildcat');
+    // The originals, by name.
+    expect(find.text('Coral'), findsOneWidget);
+    expect(find.text('Dark maroon'), findsOneWidget);
+    expect(find.text('Wine'), findsOneWidget);
+    expect(find.text('#5E1224'), findsWidgets);
+    expect(
+      find.text('Empty uses the original, Dark maroon (#5E1224).'),
+      findsOneWidget,
+    );
+    await tester.enterText(hex('Buttons and your messages'), '#7F1D1D');
+    await tester.pump();
+    expect(find.text('Maroon'), findsOneWidget);
+    await tester.enterText(hex('Buttons and your messages'), '#7E1C1D');
+    await tester.pump();
+    expect(find.text('Close to Maroon'), findsOneWidget);
+    // Choose a color has the candies, the team colors, and each theme's.
+    final choose = find
+        .descendant(
+          of: find.widgetWithText(AdminSectionCard, 'Background'),
+          matching: find.text('Choose a color'),
+        )
+        .first;
+    await tester.ensureVisible(choose);
+    await tester.pumpAndSettle();
+    await tester.tap(choose);
+    await tester.pumpAndSettle();
+    for (final heading in ['Candy colors', 'Team colors']) {
+      expect(find.text(heading), findsOneWidget);
+    }
+    expect(find.widgetWithText(ListTile, 'Coral'), findsOneWidget);
+    expect(find.widgetWithText(ListTile, 'Maroon'), findsOneWidget);
+  });
+
+  testWidgets('a theme the server refuses says why', (tester) async {
+    final admin = await open(tester, '/admin/themes/army');
+    admin.failWith = const ActionRefused('unreadable-theme');
+    await tester.enterText(hex('Buttons and your messages'), '#FDD023');
+    await tester.pump();
+    await save(tester);
+    expect(
+      find.text(
+        "Those colors would make some text hard to read, so the theme wasn't "
+        'saved.',
+      ),
+      findsOneWidget,
+    );
+    expect(path(tester), '/admin/themes/army');
+  });
+
+  testWidgets('a hard-to-read theme saved by hand is never drawn, and is '
+      'listed turned off so it can be fixed', (tester) async {
+    await open(
+      tester,
+      '/admin/themes',
+      config: const AppConfig(
+        themes: {
+          // Army green's cream type, as its background.
+          TeamScheme.army: ThemeOverride(page: 0xFFF4EAD0),
+          TeamScheme.custom2: ThemeOverride(
+            name: 'Fog',
+            base: TeamScheme.light,
+            text: 0xFFFBF5E6,
+          ),
+        },
+      ),
+    );
+    expect(
+      find.text('Turned off: hard to read. Open it to fix it.'),
+      findsNWidgets(2),
+    );
+    expect(
+      GumdropColors.forScheme(TeamScheme.army).page,
+      SchemeRoles.army.page,
+    );
+    expect(ThemeCatalog.available, isNot(contains(TeamScheme.custom2)));
+  });
+
+  testWidgets('the panel draws in my scheme as it ships, whatever a theme '
+      'changed', (tester) async {
+    // My default, Dark, with a deep blue page of its own.
+    await open(
+      tester,
+      '/admin/themes',
+      config: const AppConfig(
+        themes: {TeamScheme.dark: ThemeOverride(page: 0xFF101828)},
+      ),
+    );
+    final panel = GumdropColors.of(
+      tester.element(find.text('Built-in themes')),
+    );
+    expect(panel.shipped, isTrue);
+    expect(panel.page, SchemeRoles.dark.page);
+    expect(
+      tester.widget<Scaffold>(find.byType(Scaffold).last).backgroundColor ??
+          Theme.of(tester.element(find.text('Built-in themes')))
+              .scaffoldBackgroundColor,
+      SchemeRoles.dark.page,
+    );
+    // Outside it, the theme's page.
+    expect(
+      GumdropColors.forScheme(TeamScheme.dark).page,
+      const Color(0xFF101828),
+    );
   });
 }

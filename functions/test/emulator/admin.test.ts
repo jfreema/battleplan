@@ -1119,19 +1119,19 @@ describe('the theme editor (#82)', () => {
   it('saves a built-in scheme\'s colors over a fresh config, upper-cased, and audits it', async () => {
     const r = await asRoot<{ scheme: string }>(admin.adminSaveTheme, { scheme: 'army', accent: '#1e90ff', page: null });
     expect(r.scheme).toBe('army');
-    expect(await themes()).toEqual({ army: { accent: '#1E90FF', page: null, card: null } });
+    expect(await themes()).toEqual({ army: { accent: '#1E90FF', page: null, card: null, text: null, cardText: null } });
     const [entry] = await audits('saveTheme');
     expect(entry).toMatchObject({ actorId: 'root', targetType: 'theme', targetId: 'army', before: null, after: { accent: '#1E90FF' } });
   });
 
   it('keeps the other themes and settings when one is saved', async () => {
-    await db().collection(Collections.config).doc('app').set({ supportEmail: 'help@example.com', themes: { navy: { accent: '#111111', page: null, card: null } } });
+    await db().collection(Collections.config).doc('app').set({ supportEmail: 'help@example.com', themes: { navy: { accent: '#FDD023', page: null, card: null } } });
     await asRoot(admin.adminSaveTheme, { scheme: 'sky', card: '#FFFFFF' });
     const saved = (await db().collection(Collections.config).doc('app').get()).data()!;
     expect(saved.supportEmail).toBe('help@example.com');
     expect(saved.themes).toEqual({
-      navy: { accent: '#111111', page: null, card: null },
-      sky: { accent: null, page: null, card: '#FFFFFF' },
+      navy: { accent: '#FDD023', page: null, card: null },
+      sky: { accent: null, page: null, card: '#FFFFFF', text: null, cardText: null },
     });
   });
 
@@ -1142,7 +1142,7 @@ describe('the theme editor (#82)', () => {
     expect(second.scheme).toBe('custom2');
     // An edit with colors only keeps the name and base.
     await asRoot(admin.adminSaveTheme, { scheme: 'custom1', page: '#000000' });
-    expect((await themes()).custom1).toEqual({ name: 'Night Game', base: 'dark', accent: null, page: '#000000', card: null });
+    expect((await themes()).custom1).toEqual({ name: 'Night Game', base: 'dark', accent: null, page: '#000000', card: null, text: null, cardText: null });
     // A deleted slot is the next one taken.
     await asRoot(admin.adminDeleteTheme, { scheme: 'custom1' });
     expect((await asRoot<{ scheme: string }>(admin.adminSaveTheme, { name: 'Again', base: 'navy' })).scheme).toBe('custom1');
@@ -1170,8 +1170,35 @@ describe('the theme editor (#82)', () => {
     expect(await themes()).toEqual({});
   });
 
+  it('saves text colors, and refuses colors that leave text hard to read, saving nothing (#83)', async () => {
+    await asRoot(admin.adminSaveTheme, { scheme: 'purplegold', text: '#fdd023' });
+    expect((await themes()).purplegold).toEqual({ accent: null, page: null, card: null, text: '#FDD023', cardText: null });
+    // Maroon buttons on Light take white writing.
+    await asRoot(admin.adminSaveTheme, { name: 'Maroon Day', base: 'light', accent: '#7F1D1D' });
+    for (const [bad, part] of [
+      [{ scheme: 'army', page: '#F4EAD0' }, 'text on page'],
+      [{ scheme: 'army', text: '#474C2B' }, 'text on page'],
+      [{ scheme: 'candypop', cardText: '#FFFFFF' }, 'text on cards'],
+      [{ scheme: 'army', page: '#FBF5E6', card: '#FFFFFF', text: '#1A1A18' }, 'text on tab bar'],
+      [{ scheme: 'light', accent: '#808080' }, 'writing on buttons'],
+      [{ scheme: 'wildcat', accent: '#701C30' }, 'buttons on page'],
+      [{ name: 'Gray', base: 'light', accent: '#808080' }, 'writing on buttons'],
+    ] as [object, string][]) {
+      await expect(asRoot(admin.adminSaveTheme, bad)).rejects.toMatchObject({
+        code: 'failed-precondition',
+        details: { reason: 'unreadable-theme', parts: expect.arrayContaining([part]) },
+      });
+    }
+    // An edit is checked against the base it keeps.
+    await expect(asRoot(admin.adminSaveTheme, { scheme: 'custom1', text: '#FBF5E6' })).rejects.toMatchObject({
+      details: { reason: 'unreadable-theme' },
+    });
+    expect(Object.keys(await themes()).sort()).toEqual(['custom1', 'purplegold']);
+    expect((await audits('saveTheme')).length).toBe(2);
+  });
+
   it('deleting a built-in scheme\'s colors puts it back and leaves picks of it alone', async () => {
-    await asRoot(admin.adminSaveTheme, { scheme: 'army', accent: '#123456' });
+    await asRoot(admin.adminSaveTheme, { scheme: 'army', accent: '#79BBFF' });
     await groups().doc('thunder').update({ colorScheme: 'army' });
     await asRoot(admin.adminDeleteTheme, { scheme: 'army' });
     expect(await themes()).toEqual({});

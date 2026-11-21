@@ -47,6 +47,20 @@ void main() {
       expect(themesFromConfig('nope'), isEmpty);
     });
 
+    test('reads the text colors too (#83)', () {
+      expect(
+        themesFromConfig({
+          'purplegold': {'text': '#fdd023', 'cardText': null},
+          // Text alone is a change.
+          'candypop': {'cardText': '#1238A8'},
+        }),
+        {
+          TeamScheme.purplegold: const ThemeOverride(text: 0xFFFDD023),
+          TeamScheme.candypop: const ThemeOverride(cardText: 0xFF1238A8),
+        },
+      );
+    });
+
     test('colors go to and from #RRGGBB', () {
       expect(colorFromHex('#f45b5b'), 0xFFF45B5B);
       expect(colorFromHex(' #F45B5B '), 0xFFF45B5B);
@@ -206,13 +220,15 @@ void main() {
         } else {
           expect(r.accentMark, base.accentMark, reason: '$scheme');
         }
-        // A dark ink lip stays; a coral one takes a deeper blue.
+        // A dark ink lip stays; a coral one takes a deeper blue. Coral's
+        // own lip, for the "Cherry" people pick, stays as it ships.
+        expect(r.candyLipCoral, base.candyLipCoral, reason: '$scheme');
         if (ColorMath.luminance(base.candyLipCoral) < 0.03) {
-          expect(r.candyLipCoral, base.candyLipCoral, reason: '$scheme');
+          expect(r.youLip, base.candyLipCoral, reason: '$scheme');
         } else {
           expect(
             ColorMath.hueDistance(
-              ColorMath.lch(r.candyLipCoral).h,
+              ColorMath.lch(r.youLip).h,
               ColorMath.lch(blue).h,
             ),
             lessThan(25),
@@ -271,10 +287,37 @@ void main() {
       expect(themeProblems(army, army.withOverrides(card: army.cardText)), {
         ThemeProblem.textOnCard,
       });
+      // Near black takes white writing, but vanishes into the olive.
       expect(
         themeProblems(army, army.withOverrides(you: const Color(0xFF101010))),
-        {ThemeProblem.inkOnAccent},
+        {ThemeProblem.accentHidden},
       );
+      // Mid gray: neither the ink nor white reads on it.
+      expect(
+        themeProblems(
+          SchemeRoles.light,
+          SchemeRoles.light.withOverrides(you: const Color(0xFF808080)),
+        ),
+        contains(ThemeProblem.inkOnAccent),
+      );
+      // Dark text, where the tab bar and text boxes stay olive.
+      expect(
+        themeProblems(
+          army,
+          army.withOverrides(
+            page: const Color(0xFFFBF5E6),
+            card: const Color(0xFFFFFFFF),
+            text: const Color(0xFF1A1A18),
+          ),
+        ),
+        {ThemeProblem.textOnBars},
+      );
+      // Text the color of the page: hard to read everywhere it's written.
+      expect(themeProblems(army, army.withOverrides(text: army.page)), {
+        ThemeProblem.textOnPage,
+        ThemeProblem.textOnBars,
+        ThemeProblem.textOnCard,
+      });
       expect(
         themeProblems(
           army,
@@ -285,6 +328,159 @@ void main() {
           ),
         ),
         isEmpty,
+      );
+    });
+  });
+
+  group('text colors (#83)', () {
+    test("the card's text follows the text but in Candy Pop, and muted text, "
+        'lines and rings in the text color follow too, readable', () {
+      const white = Color(0xFFFFFFFF);
+      final army = SchemeRoles.army.withOverrides(text: white);
+      expect(army.text, white);
+      expect(army.cardText, white);
+      // Army green's muted text and outlines are its cream at an opacity.
+      expect(
+        army.pageMuted,
+        white.withValues(alpha: SchemeRoles.army.pageMuted.a),
+      );
+      expect(army.outline, white.withValues(alpha: SchemeRoles.army.outline.a));
+      expect(
+        army.cardOutline,
+        white.withValues(alpha: SchemeRoles.army.cardOutline.a),
+      );
+      // Candy Pop's navy on white cards stays.
+      final candy = SchemeRoles.candypop.withOverrides(
+        text: const Color(0xFFFDD023),
+      );
+      expect(candy.cardText, SchemeRoles.candypop.cardText);
+      expect(candy.cardMuted, SchemeRoles.candypop.cardMuted);
+      // Its own card text, set.
+      expect(
+        SchemeRoles.candypop
+            .withOverrides(cardText: const Color(0xFF1238A8))
+            .cardText,
+        const Color(0xFF1238A8),
+      );
+      // Navy's muted text is its own blue-gray, mixed again with gold.
+      final navy = SchemeRoles.navy.withOverrides(
+        text: const Color(0xFFFDD023),
+      );
+      expect(readability(navy.pageMuted, navy.page), greaterThanOrEqualTo(4.5));
+      expect(navy.pageMuted, isNot(SchemeRoles.navy.pageMuted));
+    });
+
+    test('colored text and marks on a new page or card are made to read, '
+        'their hues kept', () {
+      // A lighter olive than Army green's: its pale pink red would fade.
+      const page = Color(0xFF8A9060);
+      const card = Color(0xFF9DA374);
+      final r = SchemeRoles.army.withOverrides(
+        page: page,
+        card: card,
+        text: const Color(0xFF111111),
+      );
+      for (final (fg, what) in [
+        (r.accentText, 'red'),
+        (r.goingText, 'going'),
+        (r.maybeText, 'maybe'),
+        (r.gameText, 'game'),
+        (r.grapePageText, 'grape'),
+        (r.bubblegumPageText, 'bubblegum'),
+        (r.blueRaspberryPageText, 'blue raspberry'),
+      ]) {
+        expect(readability(fg, page), greaterThanOrEqualTo(4.5), reason: what);
+      }
+      for (final (fg, what) in [
+        (r.cardGoingText, 'going'),
+        (r.cardAccentText, 'red'),
+        (r.cardMaybeText, 'maybe'),
+        (r.typeGame, 'game'),
+        (r.typePractice, 'practice'),
+        (r.typeOther, 'other'),
+      ]) {
+        expect(readability(fg, card), greaterThanOrEqualTo(4.5), reason: what);
+      }
+      expect(readability(r.accentMark, page), greaterThanOrEqualTo(3));
+      expect(readability(r.notGoingIcon, page), greaterThanOrEqualTo(3));
+      // The red stays red.
+      expect(
+        ColorMath.hueDistance(
+          ColorMath.lch(r.accentText).h,
+          ColorMath.lch(SchemeRoles.army.accentText).h,
+        ),
+        lessThan(30),
+      );
+    });
+
+    test('maroon "you" takes white writing, everywhere it writes', () {
+      const maroon = Color(0xFF7F1D1D);
+      ThemeCatalog.install(const {
+        TeamScheme.light: ThemeOverride(accent: 0xFF7F1D1D),
+      });
+      final r = SchemeRoles.of(TeamScheme.light);
+      expect(r.youInk, const Color(0xFFFFFFFF));
+      expect(themeProblems(SchemeRoles.light, r), isEmpty);
+      final c = GumdropColors.forScheme(TeamScheme.light);
+      expect(c.you.face, maroon);
+      expect(c.inkOn(c.you), const Color(0xFFFFFFFF));
+      // The rest of the candies keep the ink.
+      expect(c.inkOn(c.mint), c.ink);
+      final theme = AppTheme.of(TeamScheme.light);
+      expect(
+        theme.floatingActionButtonTheme.foregroundColor,
+        const Color(0xFFFFFFFF),
+      );
+      expect(theme.badgeTheme.textColor, const Color(0xFFFFFFFF));
+      expect(theme.colorScheme.onPrimaryContainer, const Color(0xFFFFFFFF));
+    });
+
+    test('"Cherry", for an icon, stays coral under a theme\'s own "you"', () {
+      ThemeCatalog.install(const {
+        TeamScheme.army: ThemeOverride(accent: 0xFF79BBFF),
+      });
+      final c = GumdropColors.forScheme(TeamScheme.army);
+      expect(c.you.face, const Color(0xFF79BBFF));
+      expect(c.coral.face, CandyFaces.coral);
+      expect(c.coral.lip, SchemeRoles.army.candyLipCoral);
+    });
+  });
+
+  group('hard-to-read themes are never drawn (#83)', () {
+    test('readableThemes drops them; the rest stay', () {
+      const bad = ThemeOverride(page: 0xFFF4EAD0);
+      const good = ThemeOverride(accent: 0xFFFDD023);
+      const badSaved = ThemeOverride(
+        name: 'Fog',
+        base: TeamScheme.light,
+        text: 0xFFFBF5E6,
+      );
+      final shown = readableThemes(const {
+        TeamScheme.army: bad,
+        TeamScheme.navy: good,
+        TeamScheme.custom1: badSaved,
+      });
+      expect(shown, {TeamScheme.navy: good});
+      expect(themeReads(TeamScheme.army, bad), isFalse);
+      expect(themeReads(TeamScheme.custom1, badSaved), isFalse);
+    });
+
+    test("the Super Admin Panel's theme is a scheme as it ships", () {
+      ThemeCatalog.install(const {
+        TeamScheme.army: ThemeOverride(page: 0xFF101010, accent: 0xFF79BBFF),
+      });
+      final shipped = AppTheme.of(TeamScheme.army, shipped: true);
+      final g = shipped.extension<GumdropColors>()!;
+      expect(g.shipped, isTrue);
+      expect(g.page, SchemeRoles.army.page);
+      expect(g.you.face, CandyFaces.coral);
+      // Its card context is too.
+      expect(g.card.shipped, isTrue);
+      expect(g.card.surface, SchemeRoles.army.card);
+      // The app's own takes the theme.
+      expect(
+        AppTheme.of(TeamScheme.army).extension<GumdropColors>()!.page,
+        const Color(0xFF101010),
       );
     });
   });

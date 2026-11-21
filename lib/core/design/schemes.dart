@@ -88,6 +88,8 @@ class SchemeRoles {
     required this.blueRaspberryLip,
     required this.cherryLip,
     this.you = CandyFaces.coral,
+    this._youLip,
+    this._youInk,
   });
 
   /// Page fill; ring around the unread dot and the badge; the game screen's bottom fade.
@@ -233,71 +235,190 @@ class SchemeRoles {
 
   /// The "you" candy's face: the main button, the + and send, your
   /// messages, the picked tab, and unread counts. Coral in every built-in
-  /// scheme; a theme can set its own in the theme editor (#82), light
-  /// enough for the scheme's [candyInk] on it.
+  /// scheme; a theme can set its own in the theme editor (#82).
   final Color you;
 
-  /// These roles with a theme's own [page], [card], and [you] (#82). The
-  /// pop-up color follows the card where it was the card's. A new [you]
-  /// brings its marks along: a coral underline or tab marker
-  /// ([accentMark]) takes it, made to read on the page, and a coral lip
-  /// ([candyLipCoral]) takes a deeper shade of it; a scheme's own (gold,
-  /// silver, a dark ink lip) stays.
-  SchemeRoles withOverrides({Color? page, Color? card, Color? you}) {
-    final newYou = you != null && you != this.you ? you : null;
+  final Color? _youLip;
+  final Color? _youInk;
+
+  /// The "you" candy's lip: [candyLipCoral] but under a theme's own [you]
+  /// (#82), where a coral lip takes a deeper shade of it.
+  Color get youLip => _youLip ?? candyLipCoral;
+
+  /// Text and icons on the "you" face: the [candyInk], or white on a theme's
+  /// own [you] the ink doesn't read on, like maroon (#83).
+  Color get youInk => _youInk ?? candyInk;
+
+  /// These roles with a theme's own colors (#82, #83): the [page], the
+  /// [card], the text on them ([text], [cardText]), and [you]. What depends
+  /// on them follows, so a theme can't leave anything hard to read that it
+  /// didn't have to:
+  ///
+  /// * The card's text follows [text] where it was the page's (all but
+  ///   Candy Pop), and the pop-up color follows [card] where it was the
+  ///   card's.
+  /// * Muted text, outlines, dividers, and rings in the text's color take
+  ///   the new text color; muted text is then made to read 4.5:1.
+  /// * Colored text (Going, Maybe, warnings, event types, the candies' text
+  ///   shades) on a new page or card is made to read 4.5:1 there, its hue
+  ///   kept; marks (the tab marker, underlines, the Not going x) 3:1.
+  /// * A new [you] brings its marks along: a coral mark takes it, a coral
+  ///   lip ([youLip]) takes a deeper shade of it, and its writing
+  ///   ([youInk]) is white where the ink doesn't read; a scheme's own gold,
+  ///   silver, or ink stays.
+  ///
+  /// Anything still hard to read is the theme's own pick (text on a page
+  /// too close to it), which `themeProblems` finds and the editor and the
+  /// server refuse.
+  SchemeRoles withOverrides({
+    Color? page,
+    Color? card,
+    Color? you,
+    Color? text,
+    Color? cardText,
+  }) {
     final newPage = page ?? this.page;
+    final newCard = card ?? this.card;
+    final newText = text ?? this.text;
+    final newCardText =
+        cardText ??
+        (text != null && this.cardText == this.text ? text : this.cardText);
+    final newYou = you != null && you != this.you ? you : null;
+    final pageChanged = newPage != this.page;
+    final cardChanged = newCard != this.card;
+    final textChanged = newText != this.text;
+    final cardTextChanged = newCardText != this.cardText;
+
+    // A role in the base text's color, at any opacity, takes the new one's.
+    Color onText(Color role) => _sameRgb(role, this.text) && textChanged
+        ? newText.withValues(alpha: role.a)
+        : role;
+    Color onCardText(Color role) =>
+        _sameRgb(role, this.cardText) && cardTextChanged
+        ? newCardText.withValues(alpha: role.a)
+        : role;
+    // Muted text: follows the text, as a mix toward the background where
+    // it's its own color; then readable, where the text itself is (a text
+    // that isn't is the theme's own problem, said once).
+    Color muted(Color role, Color fg, Color bg, Color newFg, Color newBg) {
+      if (newFg == fg && newBg == bg) return role;
+      final mixed = _sameRgb(role, fg)
+          ? newFg.withValues(alpha: role.a)
+          : Color.lerp(newBg, newFg, _mixOf(role, fg, bg))!;
+      return ColorMath.contrast(newFg, newBg) < 4.5
+          ? mixed
+          : _readableOn(mixed, newBg, 4.5);
+    }
+
+    Color onPage(Color role, {double minimum = 4.5}) =>
+        pageChanged ? _readableOn(role, newPage, minimum) : role;
+    Color onCard(Color role) =>
+        cardChanged ? _readableOn(role, newCard, 4.5) : role;
+
     final youLch = newYou == null ? null : ColorMath.lch(newYou);
+    final markBase = newYou != null && _coralish(accentMark)
+        ? newYou
+        : accentMark;
     return SchemeRoles(
       page: newPage,
-      text: text,
-      pageMuted: pageMuted,
-      hairline: hairline,
-      outline: outline,
+      text: newText,
+      pageMuted: muted(pageMuted, this.text, this.page, newText, newPage),
+      hairline: onText(hairline),
+      outline: onText(outline),
       tabbar: tabbar,
-      tabbarLine: tabbarLine,
+      tabbarLine: onText(tabbarLine),
       field: field,
-      fieldRim: fieldRim,
-      card: card ?? this.card,
+      fieldRim: onText(fieldRim),
+      card: newCard,
       cardRim: cardRim,
-      cardMuted: cardMuted,
-      cardTrack: cardTrack,
-      cardOutline: cardOutline,
-      cardText: cardText,
+      cardMuted: muted(
+        cardMuted,
+        this.cardText,
+        this.card,
+        newCardText,
+        newCard,
+      ),
+      cardTrack: onCardText(cardTrack),
+      cardOutline: onCardText(cardOutline),
+      cardText: newCardText,
       cardField: cardField,
-      cardMaybeText: cardMaybeText,
+      cardMaybeText: onCard(cardMaybeText),
       candyInk: candyInk,
-      candyLipCoral: youLch == null || ColorMath.luminance(candyLipCoral) < 0.03
-          ? candyLipCoral
-          : ColorMath.fromLch(math.max(youLch.l - 28, 0), youLch.c, youLch.h),
+      candyLipCoral: candyLipCoral,
       candyLipMint: candyLipMint,
       candyLipLemon: candyLipLemon,
       candyLipTangerine: candyLipTangerine,
       titleDrop: titleDrop,
-      avatarRing: avatarRing,
-      accentText: accentText,
-      accentMark: newYou == null || !_coralish(accentMark)
-          ? accentMark
-          : ColorMath.readable(newYou, [newPage], minimum: 3),
-      notGoingIcon: notGoingIcon,
-      goingText: goingText,
-      maybeText: maybeText,
-      cardGoingText: cardGoingText,
-      cardAccentText: cardAccentText,
-      gameText: gameText,
-      typeGame: typeGame,
-      typePractice: typePractice,
-      typeOther: typeOther,
-      grapePageText: grapePageText,
-      bubblegumPageText: bubblegumPageText,
-      blueRaspberryPageText: blueRaspberryPageText,
-      blueRaspberryCardText: blueRaspberryCardText,
+      avatarRing: onText(avatarRing),
+      accentText: onPage(accentText),
+      accentMark: pageChanged || markBase != accentMark
+          ? _readableOn(markBase, newPage, 3)
+          : accentMark,
+      notGoingIcon: onPage(notGoingIcon, minimum: 3),
+      goingText: onPage(goingText),
+      maybeText: onPage(maybeText),
+      cardGoingText: onCard(cardGoingText),
+      cardAccentText: onCard(cardAccentText),
+      gameText: onPage(gameText),
+      typeGame: onCard(typeGame),
+      typePractice: onCard(typePractice),
+      typeOther: onCard(typeOther),
+      grapePageText: onPage(grapePageText),
+      bubblegumPageText: onPage(bubblegumPageText),
+      blueRaspberryPageText: onPage(blueRaspberryPageText),
+      blueRaspberryCardText: onCard(blueRaspberryCardText),
       grapeLip: grapeLip,
       bubblegumLip: bubblegumLip,
       blueRaspberryLip: blueRaspberryLip,
       cherryLip: cherryLip,
-      popup: card != null && popup == this.card ? card : popup,
-      you: you ?? this.you,
+      popup: cardChanged && popup == this.card ? newCard : popup,
+      you: newYou ?? this.you,
+      youLip: youLch == null || ColorMath.luminance(candyLipCoral) < 0.03
+          ? _youLip
+          : ColorMath.fromLch(math.max(youLch.l - 28, 0), youLch.c, youLch.h),
+      youInk: newYou == null ? _youInk : _inkOn(newYou),
     );
+  }
+
+  /// The ink, or white where the ink doesn't read 4.5:1 and white reads
+  /// better (#83): the writing on a "you" face of [face].
+  Color _inkOn(Color face) {
+    final ink = ColorMath.contrast(candyInk, face);
+    if (ink >= 4.5) return candyInk;
+    return ColorMath.contrast(_white, face) > ink ? _white : candyInk;
+  }
+
+  static const _white = Color(0xFFFFFFFF);
+
+  /// Whether [a] and [b] are the same color but for their opacity.
+  static bool _sameRgb(Color a, Color b) =>
+      (a.toARGB32() & 0xFFFFFF) == (b.toARGB32() & 0xFFFFFF);
+
+  /// How far [muted] is from [bg] toward [fg] (0 to 1): a muted text color
+  /// as a mix of the text and the page, so a new pair mixes the same.
+  static double _mixOf(Color muted, Color fg, Color bg) {
+    final flat = Color.alphaBlend(muted, bg);
+    var sum = 0.0;
+    var weight = 0.0;
+    for (final (m, f, b) in [
+      (flat.r, fg.r, bg.r),
+      (flat.g, fg.g, bg.g),
+      (flat.b, fg.b, bg.b),
+    ]) {
+      final span = f - b;
+      if (span.abs() < 0.08) continue;
+      sum += (m - b) / span * span.abs();
+      weight += span.abs();
+    }
+    return weight == 0 ? 0.8 : (sum / weight).clamp(0.5, 1.0);
+  }
+
+  /// [color] (as drawn over [bg], if see-through) made to read [minimum]:1
+  /// on [bg], its hue kept; [color] itself when it already does.
+  static Color _readableOn(Color color, Color bg, double minimum) {
+    final flat = Color.alphaBlend(color, bg);
+    if (ColorMath.contrast(flat, bg) >= minimum) return color;
+    return ColorMath.readable(flat, [bg], minimum: minimum);
   }
 
   /// Whether [color] is a coral mark a theme's own "you" color replaces.
@@ -895,6 +1016,8 @@ class SchemeRoles {
       page: color(theme.page),
       card: color(theme.card),
       you: color(theme.accent),
+      text: color(theme.text),
+      cardText: color(theme.cardText),
     );
   }
 }
