@@ -4105,7 +4105,9 @@ mixin _$AppConfig {
  bool get emailAdminAlerts;/// The email plan's daily limit for this project, every email counted
 /// (#47); null until set, when the server uses this project's default
 /// ([defaultEmailsPerDay]).
- int? get emailsPerDay; Announcement? get announcementBanner;
+ int? get emailsPerDay; Announcement? get announcementBanner;/// The theme editor's colors (#82): changes to built-in schemes, and the
+/// saved themes in their slots, by scheme.
+ Map<TeamScheme, ThemeOverride> get themes;
 /// Create a copy of AppConfig
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -4117,20 +4119,20 @@ $AppConfigCopyWith<AppConfig> get copyWith => _$AppConfigCopyWithImpl<AppConfig>
 @override
 bool operator ==(Object other) {
   final _this = this as AppConfig;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppConfig&&(identical(other.allowUserGroupCreation, _this.allowUserGroupCreation) || other.allowUserGroupCreation == _this.allowUserGroupCreation)&&(identical(other.maxGroupsCreatedPerUserPerDay, _this.maxGroupsCreatedPerUserPerDay) || other.maxGroupsCreatedPerUserPerDay == _this.maxGroupsCreatedPerUserPerDay)&&(identical(other.defaultStorageQuotaMb, _this.defaultStorageQuotaMb) || other.defaultStorageQuotaMb == _this.defaultStorageQuotaMb)&&(identical(other.maxUploadMb, _this.maxUploadMb) || other.maxUploadMb == _this.maxUploadMb)&&(identical(other.supportEmail, _this.supportEmail) || other.supportEmail == _this.supportEmail)&&(identical(other.emailAdminAlerts, _this.emailAdminAlerts) || other.emailAdminAlerts == _this.emailAdminAlerts)&&(identical(other.emailsPerDay, _this.emailsPerDay) || other.emailsPerDay == _this.emailsPerDay)&&(identical(other.announcementBanner, _this.announcementBanner) || other.announcementBanner == _this.announcementBanner));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppConfig&&(identical(other.allowUserGroupCreation, _this.allowUserGroupCreation) || other.allowUserGroupCreation == _this.allowUserGroupCreation)&&(identical(other.maxGroupsCreatedPerUserPerDay, _this.maxGroupsCreatedPerUserPerDay) || other.maxGroupsCreatedPerUserPerDay == _this.maxGroupsCreatedPerUserPerDay)&&(identical(other.defaultStorageQuotaMb, _this.defaultStorageQuotaMb) || other.defaultStorageQuotaMb == _this.defaultStorageQuotaMb)&&(identical(other.maxUploadMb, _this.maxUploadMb) || other.maxUploadMb == _this.maxUploadMb)&&(identical(other.supportEmail, _this.supportEmail) || other.supportEmail == _this.supportEmail)&&(identical(other.emailAdminAlerts, _this.emailAdminAlerts) || other.emailAdminAlerts == _this.emailAdminAlerts)&&(identical(other.emailsPerDay, _this.emailsPerDay) || other.emailsPerDay == _this.emailsPerDay)&&(identical(other.announcementBanner, _this.announcementBanner) || other.announcementBanner == _this.announcementBanner)&&const DeepCollectionEquality().equals(other.themes, _this.themes));
 }
 
 
 @override
 int get hashCode {
   final _this = this as AppConfig;
-  return Object.hash(runtimeType,_this.allowUserGroupCreation,_this.maxGroupsCreatedPerUserPerDay,_this.defaultStorageQuotaMb,_this.maxUploadMb,_this.supportEmail,_this.emailAdminAlerts,_this.emailsPerDay,_this.announcementBanner);
+  return Object.hash(runtimeType,_this.allowUserGroupCreation,_this.maxGroupsCreatedPerUserPerDay,_this.defaultStorageQuotaMb,_this.maxUploadMb,_this.supportEmail,_this.emailAdminAlerts,_this.emailsPerDay,_this.announcementBanner,const DeepCollectionEquality().hash(_this.themes));
 }
 
 @override
 String toString() {
   final _this = this as AppConfig;
-  return 'AppConfig(allowUserGroupCreation: ${_this.allowUserGroupCreation}, maxGroupsCreatedPerUserPerDay: ${_this.maxGroupsCreatedPerUserPerDay}, defaultStorageQuotaMb: ${_this.defaultStorageQuotaMb}, maxUploadMb: ${_this.maxUploadMb}, supportEmail: ${_this.supportEmail}, emailAdminAlerts: ${_this.emailAdminAlerts}, emailsPerDay: ${_this.emailsPerDay}, announcementBanner: ${_this.announcementBanner})';
+  return 'AppConfig(allowUserGroupCreation: ${_this.allowUserGroupCreation}, maxGroupsCreatedPerUserPerDay: ${_this.maxGroupsCreatedPerUserPerDay}, defaultStorageQuotaMb: ${_this.defaultStorageQuotaMb}, maxUploadMb: ${_this.maxUploadMb}, supportEmail: ${_this.supportEmail}, emailAdminAlerts: ${_this.emailAdminAlerts}, emailsPerDay: ${_this.emailsPerDay}, announcementBanner: ${_this.announcementBanner}, themes: ${_this.themes})';
 }
 
 
@@ -4141,7 +4143,7 @@ abstract mixin class $AppConfigCopyWith<$Res>  {
   factory $AppConfigCopyWith(AppConfig value, $Res Function(AppConfig) _then) = _$AppConfigCopyWithImpl;
 @useResult
 $Res call({
- bool allowUserGroupCreation, int maxGroupsCreatedPerUserPerDay, int defaultStorageQuotaMb, int maxUploadMb, String supportEmail, bool emailAdminAlerts, int? emailsPerDay, Announcement? announcementBanner
+ bool allowUserGroupCreation, int maxGroupsCreatedPerUserPerDay, int defaultStorageQuotaMb, int maxUploadMb, String supportEmail, bool emailAdminAlerts, int? emailsPerDay, Announcement? announcementBanner, Map<TeamScheme, ThemeOverride> themes
 });
 
 
@@ -4158,7 +4160,7 @@ class _$AppConfigCopyWithImpl<$Res>
 
 /// Create a copy of AppConfig
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? allowUserGroupCreation = null,Object? maxGroupsCreatedPerUserPerDay = null,Object? defaultStorageQuotaMb = null,Object? maxUploadMb = null,Object? supportEmail = null,Object? emailAdminAlerts = null,Object? emailsPerDay = freezed,Object? announcementBanner = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? allowUserGroupCreation = null,Object? maxGroupsCreatedPerUserPerDay = null,Object? defaultStorageQuotaMb = null,Object? maxUploadMb = null,Object? supportEmail = null,Object? emailAdminAlerts = null,Object? emailsPerDay = freezed,Object? announcementBanner = freezed,Object? themes = null,}) {
   return _then(AppConfig(
 allowUserGroupCreation: null == allowUserGroupCreation ? _self.allowUserGroupCreation : allowUserGroupCreation // ignore: cast_nullable_to_non_nullable
 as bool,maxGroupsCreatedPerUserPerDay: null == maxGroupsCreatedPerUserPerDay ? _self.maxGroupsCreatedPerUserPerDay : maxGroupsCreatedPerUserPerDay // ignore: cast_nullable_to_non_nullable
@@ -4168,7 +4170,8 @@ as int,supportEmail: null == supportEmail ? _self.supportEmail : supportEmail //
 as String,emailAdminAlerts: null == emailAdminAlerts ? _self.emailAdminAlerts : emailAdminAlerts // ignore: cast_nullable_to_non_nullable
 as bool,emailsPerDay: freezed == emailsPerDay ? _self.emailsPerDay : emailsPerDay // ignore: cast_nullable_to_non_nullable
 as int?,announcementBanner: freezed == announcementBanner ? _self.announcementBanner : announcementBanner // ignore: cast_nullable_to_non_nullable
-as Announcement?,
+as Announcement?,themes: null == themes ? _self.themes : themes // ignore: cast_nullable_to_non_nullable
+as Map<TeamScheme, ThemeOverride>,
   ));
 }
 /// Create a copy of AppConfig
@@ -4265,10 +4268,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool allowUserGroupCreation,  int maxGroupsCreatedPerUserPerDay,  int defaultStorageQuotaMb,  int maxUploadMb,  String supportEmail,  bool emailAdminAlerts,  int? emailsPerDay,  Announcement? announcementBanner)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool allowUserGroupCreation,  int maxGroupsCreatedPerUserPerDay,  int defaultStorageQuotaMb,  int maxUploadMb,  String supportEmail,  bool emailAdminAlerts,  int? emailsPerDay,  Announcement? announcementBanner,  Map<TeamScheme, ThemeOverride> themes)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AppConfig() when $default != null:
-return $default(_that.allowUserGroupCreation,_that.maxGroupsCreatedPerUserPerDay,_that.defaultStorageQuotaMb,_that.maxUploadMb,_that.supportEmail,_that.emailAdminAlerts,_that.emailsPerDay,_that.announcementBanner);case _:
+return $default(_that.allowUserGroupCreation,_that.maxGroupsCreatedPerUserPerDay,_that.defaultStorageQuotaMb,_that.maxUploadMb,_that.supportEmail,_that.emailAdminAlerts,_that.emailsPerDay,_that.announcementBanner,_that.themes);case _:
   return orElse();
 
 }
@@ -4286,10 +4289,10 @@ return $default(_that.allowUserGroupCreation,_that.maxGroupsCreatedPerUserPerDay
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool allowUserGroupCreation,  int maxGroupsCreatedPerUserPerDay,  int defaultStorageQuotaMb,  int maxUploadMb,  String supportEmail,  bool emailAdminAlerts,  int? emailsPerDay,  Announcement? announcementBanner)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool allowUserGroupCreation,  int maxGroupsCreatedPerUserPerDay,  int defaultStorageQuotaMb,  int maxUploadMb,  String supportEmail,  bool emailAdminAlerts,  int? emailsPerDay,  Announcement? announcementBanner,  Map<TeamScheme, ThemeOverride> themes)  $default,) {final _that = this;
 switch (_that) {
 case _AppConfig():
-return $default(_that.allowUserGroupCreation,_that.maxGroupsCreatedPerUserPerDay,_that.defaultStorageQuotaMb,_that.maxUploadMb,_that.supportEmail,_that.emailAdminAlerts,_that.emailsPerDay,_that.announcementBanner);case _:
+return $default(_that.allowUserGroupCreation,_that.maxGroupsCreatedPerUserPerDay,_that.defaultStorageQuotaMb,_that.maxUploadMb,_that.supportEmail,_that.emailAdminAlerts,_that.emailsPerDay,_that.announcementBanner,_that.themes);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -4306,10 +4309,10 @@ return $default(_that.allowUserGroupCreation,_that.maxGroupsCreatedPerUserPerDay
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool allowUserGroupCreation,  int maxGroupsCreatedPerUserPerDay,  int defaultStorageQuotaMb,  int maxUploadMb,  String supportEmail,  bool emailAdminAlerts,  int? emailsPerDay,  Announcement? announcementBanner)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool allowUserGroupCreation,  int maxGroupsCreatedPerUserPerDay,  int defaultStorageQuotaMb,  int maxUploadMb,  String supportEmail,  bool emailAdminAlerts,  int? emailsPerDay,  Announcement? announcementBanner,  Map<TeamScheme, ThemeOverride> themes)?  $default,) {final _that = this;
 switch (_that) {
 case _AppConfig() when $default != null:
-return $default(_that.allowUserGroupCreation,_that.maxGroupsCreatedPerUserPerDay,_that.defaultStorageQuotaMb,_that.maxUploadMb,_that.supportEmail,_that.emailAdminAlerts,_that.emailsPerDay,_that.announcementBanner);case _:
+return $default(_that.allowUserGroupCreation,_that.maxGroupsCreatedPerUserPerDay,_that.defaultStorageQuotaMb,_that.maxUploadMb,_that.supportEmail,_that.emailAdminAlerts,_that.emailsPerDay,_that.announcementBanner,_that.themes);case _:
   return null;
 
 }
@@ -4321,7 +4324,7 @@ return $default(_that.allowUserGroupCreation,_that.maxGroupsCreatedPerUserPerDay
 
 
 class _AppConfig extends AppConfig {
-  const _AppConfig({this.allowUserGroupCreation = true, this.maxGroupsCreatedPerUserPerDay = Limits.groupsCreatedPerUserPerDay, this.defaultStorageQuotaMb = Limits.defaultStorageQuotaMb, this.maxUploadMb = Limits.maxUploadMb, this.supportEmail = '', this.emailAdminAlerts = true, this.emailsPerDay, this.announcementBanner}): super._();
+  const _AppConfig({this.allowUserGroupCreation = true, this.maxGroupsCreatedPerUserPerDay = Limits.groupsCreatedPerUserPerDay, this.defaultStorageQuotaMb = Limits.defaultStorageQuotaMb, this.maxUploadMb = Limits.maxUploadMb, this.supportEmail = '', this.emailAdminAlerts = true, this.emailsPerDay, this.announcementBanner,  Map<TeamScheme, ThemeOverride> themes = const <TeamScheme, ThemeOverride>{}}): _themes = themes,super._();
   
 
 @override@JsonKey() final  bool allowUserGroupCreation;
@@ -4337,6 +4340,17 @@ class _AppConfig extends AppConfig {
 /// ([defaultEmailsPerDay]).
 @override final  int? emailsPerDay;
 @override final  Announcement? announcementBanner;
+/// The theme editor's colors (#82): changes to built-in schemes, and the
+/// saved themes in their slots, by scheme.
+ final  Map<TeamScheme, ThemeOverride> _themes;
+/// The theme editor's colors (#82): changes to built-in schemes, and the
+/// saved themes in their slots, by scheme.
+@override@JsonKey() Map<TeamScheme, ThemeOverride> get themes {
+  if (_themes is EqualUnmodifiableMapView) return _themes;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_themes);
+}
+
 
 /// Create a copy of AppConfig
 /// with the given fields replaced by the non-null parameter values.
@@ -4348,18 +4362,18 @@ _$AppConfigCopyWith<_AppConfig> get copyWith => __$AppConfigCopyWithImpl<_AppCon
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppConfig&&(identical(other.allowUserGroupCreation, allowUserGroupCreation) || other.allowUserGroupCreation == allowUserGroupCreation)&&(identical(other.maxGroupsCreatedPerUserPerDay, maxGroupsCreatedPerUserPerDay) || other.maxGroupsCreatedPerUserPerDay == maxGroupsCreatedPerUserPerDay)&&(identical(other.defaultStorageQuotaMb, defaultStorageQuotaMb) || other.defaultStorageQuotaMb == defaultStorageQuotaMb)&&(identical(other.maxUploadMb, maxUploadMb) || other.maxUploadMb == maxUploadMb)&&(identical(other.supportEmail, supportEmail) || other.supportEmail == supportEmail)&&(identical(other.emailAdminAlerts, emailAdminAlerts) || other.emailAdminAlerts == emailAdminAlerts)&&(identical(other.emailsPerDay, emailsPerDay) || other.emailsPerDay == emailsPerDay)&&(identical(other.announcementBanner, announcementBanner) || other.announcementBanner == announcementBanner));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppConfig&&(identical(other.allowUserGroupCreation, allowUserGroupCreation) || other.allowUserGroupCreation == allowUserGroupCreation)&&(identical(other.maxGroupsCreatedPerUserPerDay, maxGroupsCreatedPerUserPerDay) || other.maxGroupsCreatedPerUserPerDay == maxGroupsCreatedPerUserPerDay)&&(identical(other.defaultStorageQuotaMb, defaultStorageQuotaMb) || other.defaultStorageQuotaMb == defaultStorageQuotaMb)&&(identical(other.maxUploadMb, maxUploadMb) || other.maxUploadMb == maxUploadMb)&&(identical(other.supportEmail, supportEmail) || other.supportEmail == supportEmail)&&(identical(other.emailAdminAlerts, emailAdminAlerts) || other.emailAdminAlerts == emailAdminAlerts)&&(identical(other.emailsPerDay, emailsPerDay) || other.emailsPerDay == emailsPerDay)&&(identical(other.announcementBanner, announcementBanner) || other.announcementBanner == announcementBanner)&&const DeepCollectionEquality().equals(other.themes, _themes));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,allowUserGroupCreation,maxGroupsCreatedPerUserPerDay,defaultStorageQuotaMb,maxUploadMb,supportEmail,emailAdminAlerts,emailsPerDay,announcementBanner);
+    return Object.hash(runtimeType,allowUserGroupCreation,maxGroupsCreatedPerUserPerDay,defaultStorageQuotaMb,maxUploadMb,supportEmail,emailAdminAlerts,emailsPerDay,announcementBanner,const DeepCollectionEquality().hash(_themes));
 }
 
 @override
 String toString() {
-    return 'AppConfig(allowUserGroupCreation: $allowUserGroupCreation, maxGroupsCreatedPerUserPerDay: $maxGroupsCreatedPerUserPerDay, defaultStorageQuotaMb: $defaultStorageQuotaMb, maxUploadMb: $maxUploadMb, supportEmail: $supportEmail, emailAdminAlerts: $emailAdminAlerts, emailsPerDay: $emailsPerDay, announcementBanner: $announcementBanner)';
+    return 'AppConfig(allowUserGroupCreation: $allowUserGroupCreation, maxGroupsCreatedPerUserPerDay: $maxGroupsCreatedPerUserPerDay, defaultStorageQuotaMb: $defaultStorageQuotaMb, maxUploadMb: $maxUploadMb, supportEmail: $supportEmail, emailAdminAlerts: $emailAdminAlerts, emailsPerDay: $emailsPerDay, announcementBanner: $announcementBanner, themes: $themes)';
 }
 
 
@@ -4370,7 +4384,7 @@ abstract mixin class _$AppConfigCopyWith<$Res> implements $AppConfigCopyWith<$Re
   factory _$AppConfigCopyWith(_AppConfig value, $Res Function(_AppConfig) _then) = __$AppConfigCopyWithImpl;
 @override @useResult
 $Res call({
- bool allowUserGroupCreation, int maxGroupsCreatedPerUserPerDay, int defaultStorageQuotaMb, int maxUploadMb, String supportEmail, bool emailAdminAlerts, int? emailsPerDay, Announcement? announcementBanner
+ bool allowUserGroupCreation, int maxGroupsCreatedPerUserPerDay, int defaultStorageQuotaMb, int maxUploadMb, String supportEmail, bool emailAdminAlerts, int? emailsPerDay, Announcement? announcementBanner, Map<TeamScheme, ThemeOverride> themes
 });
 
 
@@ -4387,7 +4401,7 @@ class __$AppConfigCopyWithImpl<$Res>
 
 /// Create a copy of AppConfig
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? allowUserGroupCreation = null,Object? maxGroupsCreatedPerUserPerDay = null,Object? defaultStorageQuotaMb = null,Object? maxUploadMb = null,Object? supportEmail = null,Object? emailAdminAlerts = null,Object? emailsPerDay = freezed,Object? announcementBanner = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? allowUserGroupCreation = null,Object? maxGroupsCreatedPerUserPerDay = null,Object? defaultStorageQuotaMb = null,Object? maxUploadMb = null,Object? supportEmail = null,Object? emailAdminAlerts = null,Object? emailsPerDay = freezed,Object? announcementBanner = freezed,Object? themes = null,}) {
   return _then(_AppConfig(
 allowUserGroupCreation: null == allowUserGroupCreation ? _self.allowUserGroupCreation : allowUserGroupCreation // ignore: cast_nullable_to_non_nullable
 as bool,maxGroupsCreatedPerUserPerDay: null == maxGroupsCreatedPerUserPerDay ? _self.maxGroupsCreatedPerUserPerDay : maxGroupsCreatedPerUserPerDay // ignore: cast_nullable_to_non_nullable
@@ -4397,7 +4411,8 @@ as int,supportEmail: null == supportEmail ? _self.supportEmail : supportEmail //
 as String,emailAdminAlerts: null == emailAdminAlerts ? _self.emailAdminAlerts : emailAdminAlerts // ignore: cast_nullable_to_non_nullable
 as bool,emailsPerDay: freezed == emailsPerDay ? _self.emailsPerDay : emailsPerDay // ignore: cast_nullable_to_non_nullable
 as int?,announcementBanner: freezed == announcementBanner ? _self.announcementBanner : announcementBanner // ignore: cast_nullable_to_non_nullable
-as Announcement?,
+as Announcement?,themes: null == themes ? _self._themes : themes // ignore: cast_nullable_to_non_nullable
+as Map<TeamScheme, ThemeOverride>,
   ));
 }
 

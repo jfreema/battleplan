@@ -13,7 +13,7 @@ library;
 
 import 'dart:io';
 
-import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/theme_override.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -32,7 +32,7 @@ void main() {
 
   for (final MapEntry(key: name, value: pump) in goldenScreens.entries) {
     // The five color schemes (SET-2).
-    for (final scheme in TeamScheme.values) {
+    for (final scheme in builtInSchemes) {
       testWidgets('$name (${scheme.value})', skip: skip != null, (
         tester,
       ) async {

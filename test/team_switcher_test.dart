@@ -4,6 +4,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/theme_override.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/team_switcher_button.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
@@ -237,7 +238,7 @@ void main() {
 
   testWidgets('reads well: a heading, 48 px targets, contrast in all five '
       'schemes, and 200% text', (tester) async {
-    for (final scheme in TeamScheme.values) {
+    for (final scheme in builtInSchemes) {
       await pump(tester, scheme: scheme);
       await openSwitcher(tester);
       final handle = tester.ensureSemantics();

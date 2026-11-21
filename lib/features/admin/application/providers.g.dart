@@ -97,6 +97,66 @@ final class AppConfigProvider
 
 String _$appConfigHash() => r'd1b65630e089e29f4fb7029e8d1ea7dda8320dc8';
 
+/// The theme editor's colors (#82), from `config/app`: what the app root
+/// installs in `ThemeCatalog`, and what decides which saved themes the
+/// pickers offer and a pick may use. None signed out.
+
+@ProviderFor(themeOverrides)
+final themeOverridesProvider = ThemeOverridesProvider._();
+
+/// The theme editor's colors (#82), from `config/app`: what the app root
+/// installs in `ThemeCatalog`, and what decides which saved themes the
+/// pickers offer and a pick may use. None signed out.
+
+final class ThemeOverridesProvider
+    extends
+        $FunctionalProvider<
+          Map<TeamScheme, ThemeOverride>,
+          Map<TeamScheme, ThemeOverride>,
+          Map<TeamScheme, ThemeOverride>
+        >
+    with $Provider<Map<TeamScheme, ThemeOverride>> {
+  /// The theme editor's colors (#82), from `config/app`: what the app root
+  /// installs in `ThemeCatalog`, and what decides which saved themes the
+  /// pickers offer and a pick may use. None signed out.
+  ThemeOverridesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'themeOverridesProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$themeOverridesHash();
+
+  @$internal
+  @override
+  $ProviderElement<Map<TeamScheme, ThemeOverride>> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  Map<TeamScheme, ThemeOverride> create(Ref ref) {
+    return themeOverrides(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Map<TeamScheme, ThemeOverride> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Map<TeamScheme, ThemeOverride>>(
+        value,
+      ),
+    );
+  }
+}
+
+String _$themeOverridesHash() => r'd6378a204e38c249aeabfdf851ea012dc393adae';
+
 /// The upload limit in bytes for documents and photos (ADMIN-7): the
 /// platform setting, capped at the storage rules' limit, which the server
 /// enforces whatever this says.

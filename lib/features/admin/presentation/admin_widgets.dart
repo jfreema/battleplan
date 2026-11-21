@@ -7,6 +7,7 @@ import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/services/time_zones.dart';
+import 'package:battleplan/core/theme_override.dart';
 import 'package:battleplan/core/widgets/back_chevron.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
@@ -26,7 +27,8 @@ enum AdminSection {
   users('/admin/users'),
   reports('/admin/reports'),
   audit('/admin/audit'),
-  settings('/admin/settings');
+  settings('/admin/settings'),
+  themes('/admin/themes');
 
   new(this.path);
 
@@ -63,6 +65,7 @@ class AdminScaffold extends StatelessWidget {
     AdminSection.reports => AppIcons.report,
     AdminSection.audit => AppIcons.history,
     AdminSection.settings => AppIcons.tune,
+    AdminSection.themes => AppIcons.colorScheme,
   };
 
   @override
@@ -172,6 +175,7 @@ String adminSectionLabel(AppLocalizations l10n, AdminSection s) => switch (s) {
   AdminSection.reports => l10n.reportsTitle,
   AdminSection.audit => l10n.adminAuditLog,
   AdminSection.settings => l10n.adminSettings,
+  AdminSection.themes => l10n.adminThemes,
 };
 
 /// True at 840 px and up, where lists become tables (ADMIN).
@@ -194,6 +198,9 @@ String adminFailureText(AppLocalizations l10n, Object failure) =>
         'name-mismatch' => l10n.adminNameMismatch,
         'owner' => l10n.adminOwnerMustTransfer,
         'nothing-to-delete' => l10n.adminNothingToDelete,
+        // The theme editor (#82).
+        'no-room' => l10n.adminThemesFull(customSchemes.length),
+        'theme-needs-name' => l10n.adminThemeNameError,
         _ => l10n.errorAdminAction,
       },
       _ => l10n.errorAdminAction,

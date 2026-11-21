@@ -1,4 +1,5 @@
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/theme_override.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/groups.dart';
@@ -349,7 +350,7 @@ void main() {
 
   testWidgets('reads well: 48 px targets, contrast in all five schemes, and '
       '200% text', (tester) async {
-    for (final scheme in TeamScheme.values) {
+    for (final scheme in builtInSchemes) {
       await scenes.pumpTeam(
         tester,
         scheme: scheme,

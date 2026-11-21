@@ -7,6 +7,8 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/features/admin/application/providers.dart'
+    show themeOverridesProvider;
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/presentation/chat_look_section.dart';
@@ -75,7 +77,10 @@ class TeamSchemeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final group = ref.watch(groupProvider(groupId)).value;
-    final mine = ref.watch(defaultSchemeControllerProvider);
+    final themes = ref.watch(themeOverridesProvider);
+    final mine =
+        usableScheme(ref.watch(defaultSchemeControllerProvider), themes) ??
+        defaultTeamScheme;
 
     void failed(AppFailure e) {
       if (context.mounted) {
@@ -136,8 +141,11 @@ class TeamSchemeScreen extends ConsumerWidget {
           ? const SizedBox.shrink()
           : _page(
               TeamSchemeSection(
-                group: group,
+                group: group.copyWith(
+                  colorScheme: usableScheme(group.colorScheme, themes),
+                ),
                 mine: mine,
+                schemes: ThemeCatalog.available,
                 onPick: pick,
                 onReset: reset,
               ),

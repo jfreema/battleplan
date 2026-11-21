@@ -188,7 +188,7 @@ export type UserStatus = (typeof userStatusValues)[number];
 export const themePreferenceValues = ['system', 'light', 'dark', 'candy', 'arena', 'olive'] as const;
 export type ThemePreference = (typeof themePreferenceValues)[number];
 
-export const teamSchemeValues = ['army', 'darkarmy', 'light', 'dark', 'navy', 'sky', 'skyblue', 'candypop', 'wildcat', 'purplegold', 'scoreboard'] as const;
+export const teamSchemeValues = ['army', 'darkarmy', 'light', 'dark', 'navy', 'sky', 'skyblue', 'candypop', 'wildcat', 'purplegold', 'scoreboard', 'custom1', 'custom2', 'custom3', 'custom4', 'custom5', 'custom6', 'custom7', 'custom8', 'custom9', 'custom10', 'custom11', 'custom12'] as const;
 export type TeamScheme = (typeof teamSchemeValues)[number];
 
 export const avatarColorValues = ['blueRaspberry', 'lemon', 'mint', 'grape', 'bubblegum', 'tangerine', 'cherry'] as const;

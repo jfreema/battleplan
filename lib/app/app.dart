@@ -2,8 +2,11 @@ import 'package:battleplan/app/app_services.dart';
 import 'package:battleplan/app/push_handler.dart';
 import 'package:battleplan/app/router.dart';
 import 'package:battleplan/core/design/app_theme.dart';
+import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/admin/admin.dart';
+import 'package:battleplan/features/admin/application/providers.dart'
+    show themeOverridesProvider;
 import 'package:battleplan/features/auth/application/session_service.dart';
 import 'package:battleplan/features/auth/presentation/verify_email_banner.dart';
 import 'package:battleplan/features/notifications/application/push_registration.dart';
@@ -34,6 +37,8 @@ class BattleplanApp extends ConsumerWidget {
       // This device's copy of my team schemes, for a cold start (SET-2).
       ..watch(teamSchemeCacheProvider);
     final banner = ref.watch(appEnvProvider).bannerLabel;
+    // The theme editor's colors (#82), in place before any scheme is drawn.
+    ThemeCatalog.install(ref.watch(themeOverridesProvider));
     final scheme = ref.watch(appSchemeProvider);
     final zone = ref.watch(viewerTimeZoneProvider).value;
     final app = MaterialApp.router(

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/time_zones.dart';
+import 'package:battleplan/core/theme_override.dart';
 import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/chat/domain/message.dart' show PageCursor;
@@ -367,7 +368,7 @@ void main() {
 
   testWidgets('reads well: the notice heard once, 48 px targets, contrast '
       'in all five schemes, and 200% text', (tester) async {
-    for (final scheme in TeamScheme.values) {
+    for (final scheme in builtInSchemes) {
       final events = _FlakyEvents([practice('1', 1)])
         ..fails = 1
         ..afterData = true;

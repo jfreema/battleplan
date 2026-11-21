@@ -4,6 +4,9 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/logging.dart';
 import 'package:battleplan/core/scheme_defaults.dart';
+import 'package:battleplan/core/theme_override.dart';
+import 'package:battleplan/features/admin/application/providers.dart'
+    show themeOverridesProvider;
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/settings/domain/local_prefs_repository.dart';
@@ -69,12 +72,21 @@ class DefaultSchemeController extends _$DefaultSchemeController {
 @Riverpod(keepAlive: true)
 TeamScheme appScheme(Ref ref) {
   // Watched always and first, so the controller exists from the first frame.
-  final mine = ref.watch(defaultSchemeControllerProvider);
+  final mine = usableDefault(ref);
   final auth = ref.watch(authUserProvider);
   // The default only once auth has loaded with nobody signed in. While it
   // restores, `mine` is the cached default, so a cold start doesn't flash.
   return auth.hasValue && auth.value == null ? defaultTeamScheme : mine;
 }
+
+/// My default ([DefaultSchemeController]), or Dark while it's a saved
+/// theme that isn't there (deleted, or not loaded yet, #82).
+TeamScheme usableDefault(Ref ref) =>
+    usableScheme(
+      ref.watch(defaultSchemeControllerProvider),
+      ref.watch(themeOverridesProvider),
+    ) ??
+    defaultTeamScheme;
 
 /// The scheme a member sees a team in (SET-2, owner's request 2026-11-08):
 /// their own explicit [pick], else the team's [teamDefault] its admins set,
@@ -101,9 +113,12 @@ TeamScheme teamScheme(Ref ref, GroupId groupId) {
       return (true, mine != null, mine?.colorScheme);
     }),
   );
-  final fallback = ref.watch(defaultSchemeControllerProvider);
+  final fallback = usableDefault(ref);
+  // A saved theme that isn't there (#82) counts as no pick or default.
+  final themes = ref.watch(themeOverridesProvider);
+  final usablePick = usableScheme(pick, themes);
   if (loaded && !member) return fallback;
-  if (loaded && pick != null) return pick;
+  if (loaded && usablePick != null) return usablePick;
   if (loaded) {
     final (teamLoaded, teamDefault) = ref.watch(
       groupProvider(groupId).select((a) => (a.hasValue, a.value?.colorScheme)),
@@ -111,7 +126,7 @@ TeamScheme teamScheme(Ref ref, GroupId groupId) {
     if (teamLoaded) {
       return resolveTeamScheme(
         pick: null,
-        teamDefault: teamDefault,
+        teamDefault: usableScheme(teamDefault, themes),
         mine: fallback,
       );
     }
@@ -119,9 +134,12 @@ TeamScheme teamScheme(Ref ref, GroupId groupId) {
   // Still loading: this device's last copy, so a cold start into a team
   // paints in the right scheme on its first frame.
   final uid = ref.watch(authUserProvider.select((a) => a.value?.uid));
-  return ref
-          .watch(localPrefsRepositoryProvider)
-          .teamScheme(groupId.value, uid: uid) ??
+  return usableScheme(
+        ref
+            .watch(localPrefsRepositoryProvider)
+            .teamScheme(groupId.value, uid: uid),
+        themes,
+      ) ??
       fallback;
 }
 

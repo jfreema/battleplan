@@ -4,6 +4,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/color_math.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/theme_override.dart';
 import 'package:battleplan/core/widgets/team_dot.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
@@ -115,7 +116,7 @@ void main() {
   testWidgets('every scheme rings exactly the colors under 3:1 on its card', (
     tester,
   ) async {
-    for (final scheme in TeamScheme.values) {
+    for (final scheme in builtInSchemes) {
       await open(tester, scheme);
       final surface = GumdropColors.of(
         tester.element(find.byType(TeamDot).first),

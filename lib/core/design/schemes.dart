@@ -1,9 +1,16 @@
+import 'dart:math' as math;
+
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/color_math.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart' show GumdropColors;
+import 'package:battleplan/core/scheme_defaults.dart';
+import 'package:battleplan/core/theme_override.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
+import 'package:flutter/foundation.dart' show mapEquals;
 import 'package:material_ui/material_ui.dart';
 
 export 'package:battleplan/core/scheme_defaults.dart';
+export 'package:battleplan/core/theme_override.dart';
 
 /// The candy faces, the same in every scheme (SPEC §7.4).
 abstract final class CandyFaces {
@@ -30,9 +37,9 @@ abstract final class CandyFaces {
 
 /// The 32 color roles of one Open Field color scheme (SPEC SET-2, §7.4),
 /// from the design's schemes.json, plus the eight values the app derives
-/// for colors the design doesn't draw, and four for cards whose colors
-/// aren't the page's (Candy Pop's white cards, #72). [GumdropColors.forScheme] fills the
-/// theme from them.
+/// for colors the design doesn't draw, four for cards whose colors aren't
+/// the page's (Candy Pop's white cards, #72), and the "you" candy's face
+/// (#82). [GumdropColors.forScheme] fills the theme from them.
 @immutable
 class SchemeRoles {
   const new({
@@ -80,6 +87,7 @@ class SchemeRoles {
     required this.bubblegumLip,
     required this.blueRaspberryLip,
     required this.cherryLip,
+    this.you = CandyFaces.coral,
   });
 
   /// Page fill; ring around the unread dot and the badge; the game screen's bottom fade.
@@ -222,6 +230,82 @@ class SchemeRoles {
   /// Derived: cherry.lip, the warning red's: ink where the candies have ink
   /// lips, otherwise a darker red than [CandyFaces.cherry].
   final Color cherryLip;
+
+  /// The "you" candy's face: the main button, the + and send, your
+  /// messages, the picked tab, and unread counts. Coral in every built-in
+  /// scheme; a theme can set its own in the theme editor (#82), light
+  /// enough for the scheme's [candyInk] on it.
+  final Color you;
+
+  /// These roles with a theme's own [page], [card], and [you] (#82). The
+  /// pop-up color follows the card where it was the card's. A new [you]
+  /// brings its marks along: a coral underline or tab marker
+  /// ([accentMark]) takes it, made to read on the page, and a coral lip
+  /// ([candyLipCoral]) takes a deeper shade of it; a scheme's own (gold,
+  /// silver, a dark ink lip) stays.
+  SchemeRoles withOverrides({Color? page, Color? card, Color? you}) {
+    final newYou = you != null && you != this.you ? you : null;
+    final newPage = page ?? this.page;
+    final youLch = newYou == null ? null : ColorMath.lch(newYou);
+    return SchemeRoles(
+      page: newPage,
+      text: text,
+      pageMuted: pageMuted,
+      hairline: hairline,
+      outline: outline,
+      tabbar: tabbar,
+      tabbarLine: tabbarLine,
+      field: field,
+      fieldRim: fieldRim,
+      card: card ?? this.card,
+      cardRim: cardRim,
+      cardMuted: cardMuted,
+      cardTrack: cardTrack,
+      cardOutline: cardOutline,
+      cardText: cardText,
+      cardField: cardField,
+      cardMaybeText: cardMaybeText,
+      candyInk: candyInk,
+      candyLipCoral: youLch == null || ColorMath.luminance(candyLipCoral) < 0.03
+          ? candyLipCoral
+          : ColorMath.fromLch(math.max(youLch.l - 28, 0), youLch.c, youLch.h),
+      candyLipMint: candyLipMint,
+      candyLipLemon: candyLipLemon,
+      candyLipTangerine: candyLipTangerine,
+      titleDrop: titleDrop,
+      avatarRing: avatarRing,
+      accentText: accentText,
+      accentMark: newYou == null || !_coralish(accentMark)
+          ? accentMark
+          : ColorMath.readable(newYou, [newPage], minimum: 3),
+      notGoingIcon: notGoingIcon,
+      goingText: goingText,
+      maybeText: maybeText,
+      cardGoingText: cardGoingText,
+      cardAccentText: cardAccentText,
+      gameText: gameText,
+      typeGame: typeGame,
+      typePractice: typePractice,
+      typeOther: typeOther,
+      grapePageText: grapePageText,
+      bubblegumPageText: bubblegumPageText,
+      blueRaspberryPageText: blueRaspberryPageText,
+      blueRaspberryCardText: blueRaspberryCardText,
+      grapeLip: grapeLip,
+      bubblegumLip: bubblegumLip,
+      blueRaspberryLip: blueRaspberryLip,
+      cherryLip: cherryLip,
+      popup: card != null && popup == this.card ? card : popup,
+      you: you ?? this.you,
+    );
+  }
+
+  /// Whether [color] is a coral mark a theme's own "you" color replaces.
+  static bool _coralish(Color color) {
+    final c = ColorMath.lch(color);
+    return c.c > 30 &&
+        ColorMath.hueDistance(c.h, ColorMath.lch(CandyFaces.coral).h) < 20;
+  }
 
   static const army = SchemeRoles(
     page: Color(0xFF474C2B),
@@ -777,8 +861,9 @@ class SchemeRoles {
     cherryLip: Color(0xFF8E1C23),
   );
 
-  /// The roles of [scheme].
-  static SchemeRoles of(TeamScheme scheme) => switch (scheme) {
+  /// The roles a built-in [scheme] ships with; Dark's for a saved theme's
+  /// slot, whose base gives its roles instead ([of]).
+  static SchemeRoles builtIn(TeamScheme scheme) => switch (scheme) {
     TeamScheme.army => army,
     TeamScheme.darkarmy => darkarmy,
     TeamScheme.light => light,
@@ -790,7 +875,60 @@ class SchemeRoles {
     TeamScheme.scoreboard => scoreboard,
     TeamScheme.purplegold => purplegold,
     TeamScheme.wildcat => wildcat,
+    _ => dark,
   };
+
+  /// The roles of [scheme], with the colors the theme editor set (#82,
+  /// [ThemeCatalog]): a built-in scheme's own, or a saved theme's base's.
+  static SchemeRoles of(TeamScheme scheme) =>
+      themed(scheme, ThemeCatalog.themeOf(scheme));
+
+  /// The roles of [scheme] with [theme]'s colors, saved or not (the theme
+  /// editor's preview, #82). A saved slot with no theme is the default's.
+  static SchemeRoles themed(TeamScheme scheme, ThemeOverride? theme) {
+    final base = builtIn(
+      scheme.isCustom ? theme?.base ?? defaultTeamScheme : scheme,
+    );
+    if (theme == null) return base;
+    Color? color(int? argb) => argb == null ? null : Color(argb);
+    return base.withOverrides(
+      page: color(theme.page),
+      card: color(theme.card),
+      you: color(theme.accent),
+    );
+  }
+}
+
+/// The colors the theme editor set (#82), from `config/app.themes`, as
+/// the app root installs them ([install]) whenever they change, so every
+/// [SchemeRoles.of] and `AppTheme` sees them. Held here rather than passed
+/// down because the roles are read everywhere a scheme is drawn.
+abstract final class ThemeCatalog {
+  static Map<TeamScheme, ThemeOverride> _themes = const {};
+  static int _version = 0;
+
+  /// Goes up with each change, so `AppTheme`'s cache knows to rebuild.
+  static int get version => _version;
+
+  /// What's installed now.
+  static Map<TeamScheme, ThemeOverride> get themes => _themes;
+
+  /// Puts [themes] in place; nothing happens when they're what's there.
+  static void install(Map<TeamScheme, ThemeOverride> themes) {
+    if (mapEquals(themes, _themes)) return;
+    _themes = Map.unmodifiable(themes);
+    _version++;
+  }
+
+  /// [scheme]'s theme, if the editor set one.
+  static ThemeOverride? themeOf(TeamScheme scheme) => _themes[scheme];
+
+  /// The schemes the pickers offer: the built-in ones, then the saved
+  /// themes, in slot order.
+  static List<TeamScheme> get available => [
+    for (final s in TeamScheme.values)
+      if (schemeAvailable(s, _themes)) s,
+  ];
 }
 
 /// What each scheme is called, and whether its page is dark.
@@ -798,7 +936,19 @@ extension TeamSchemeLook on TeamScheme {
   /// Light text on a dark page (Army green, Forest green, Dark, Navy,
   /// and Candy Pop's deep blue). The cards are dark too, but Candy Pop's, which are white
   /// ([GumdropColors.brightness] tells a card's own).
-  bool get isDark =>
+  bool get isDark {
+    final theme = ThemeCatalog.themeOf(this);
+    final page = theme?.page;
+    // A theme's own page says it; a saved one is as dark as its base.
+    if (page != null) {
+      return ThemeData.estimateBrightnessForColor(Color(page)) ==
+          Brightness.dark;
+    }
+    if (isCustom) return (theme?.base ?? defaultTeamScheme).isDark;
+    return _shipsDark;
+  }
+
+  bool get _shipsDark =>
       this == TeamScheme.army ||
       this == TeamScheme.darkarmy ||
       this == TeamScheme.dark ||
@@ -821,6 +971,7 @@ extension TeamSchemeLook on TeamScheme {
     TeamScheme.scoreboard => l10n.schemeScoreboard,
     TeamScheme.purplegold => l10n.schemePurplegold,
     TeamScheme.wildcat => l10n.schemeWildcat,
+    _ => ThemeCatalog.themeOf(this)?.name ?? l10n.savedThemeUnnamed,
   };
 
   /// The short line under the name: "Army green page, cream type".
@@ -836,5 +987,8 @@ extension TeamSchemeLook on TeamScheme {
     TeamScheme.scoreboard => l10n.schemeScoreboardShort,
     TeamScheme.purplegold => l10n.schemePurplegoldShort,
     TeamScheme.wildcat => l10n.schemeWildcatShort,
+    _ => l10n.savedThemeShort(
+      (ThemeCatalog.themeOf(this)?.base ?? defaultTeamScheme).label(l10n),
+    ),
   };
 }

@@ -2,6 +2,7 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/theme_override.dart';
 import 'package:battleplan/features/admin/data/functions_admin_repository.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
@@ -544,4 +545,62 @@ void main() {
     };
     expect(await repo.updateConfig(const AppConfig()), 4);
   });
+
+  test(
+    "reads the theme editor's themes, and saves and deletes them (#82)",
+    () async {
+      await db.doc('config/app').set({
+        'themes': {
+          'army': {'accent': '#1E90FF', 'page': null, 'card': null},
+          'custom1': {'name': 'Night Game', 'base': 'navy', 'card': '#202A44'},
+          'custom2': {'name': 'No base'},
+        },
+      });
+      expect((await repo.watchConfig().first).themes, {
+        TeamScheme.army: const ThemeOverride(accent: 0xFF1E90FF),
+        TeamScheme.custom1: const ThemeOverride(
+          name: 'Night Game',
+          base: TeamScheme.navy,
+          card: 0xFF202A44,
+        ),
+      });
+
+      functions.handlers['adminSaveTheme'] = (_) => {
+        'ok': true,
+        'scheme': 'custom2',
+      };
+      final slot = await repo.saveTheme(
+        name: ' Sunrise ',
+        base: TeamScheme.light,
+        accent: 0xFFFDD023,
+      );
+      expect(slot, TeamScheme.custom2);
+      expect(functions.lastData('adminSaveTheme'), {
+        'name': 'Sunrise',
+        'base': 'light',
+        'accent': '#FDD023',
+        'page': null,
+        'card': null,
+      });
+      functions.handlers['adminSaveTheme'] = (_) => {
+        'ok': true,
+        'scheme': 'army',
+      };
+      await repo.saveTheme(scheme: TeamScheme.army, page: 0xFF111111);
+      expect(functions.lastData('adminSaveTheme'), {
+        'scheme': 'army',
+        'accent': null,
+        'page': '#111111',
+        'card': null,
+      });
+      functions.handlers['adminSaveTheme'] = (_) => {'ok': true};
+      await expectLater(
+        repo.saveTheme(scheme: TeamScheme.army),
+        throwsA(isA<UnknownFailure>()),
+      );
+
+      await repo.deleteTheme(TeamScheme.custom1);
+      expect(functions.lastData('adminDeleteTheme'), {'scheme': 'custom1'});
+    },
+  );
 }

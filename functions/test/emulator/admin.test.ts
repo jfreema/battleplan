@@ -165,6 +165,8 @@ describe('only super admins (ADMIN-8)', () => {
     ['adminUpdateConfig', admin.adminUpdateConfig, {}],
     ['adminUpdateGroup', admin.adminUpdateGroup, { groupId: 'thunder', name: 'Renamed' }],
     ['adminUpdatePlayer', admin.adminUpdatePlayer, { playerId: 'emma', displayName: 'Em' }],
+    ['adminSaveTheme', admin.adminSaveTheme, { scheme: 'army', accent: '#123456' }],
+    ['adminDeleteTheme', admin.adminDeleteTheme, { scheme: 'army' }],
   ];
 
   it.each(calls)('%s refuses team owners and anyone without the claim', async (_name, fn, data) => {
@@ -1108,6 +1110,91 @@ describe('platform settings (ADMIN-7) and createGroup', () => {
     expect((await groups().doc(second.groupId).get()).get('storageQuotaBytes')).toBe(2048 * MB);
     // The default is every team's without its own limit, so the first moved too.
     expect((await groups().doc(first.groupId).get()).get('storageQuotaBytes')).toBe(2048 * MB);
+  });
+});
+
+describe('the theme editor (#82)', () => {
+  const themes = async () => ((await db().collection(Collections.config).doc('app').get()).get('themes') ?? {}) as Record<string, unknown>;
+
+  it('saves a built-in scheme\'s colors over a fresh config, upper-cased, and audits it', async () => {
+    const r = await asRoot<{ scheme: string }>(admin.adminSaveTheme, { scheme: 'army', accent: '#1e90ff', page: null });
+    expect(r.scheme).toBe('army');
+    expect(await themes()).toEqual({ army: { accent: '#1E90FF', page: null, card: null } });
+    const [entry] = await audits('saveTheme');
+    expect(entry).toMatchObject({ actorId: 'root', targetType: 'theme', targetId: 'army', before: null, after: { accent: '#1E90FF' } });
+  });
+
+  it('keeps the other themes and settings when one is saved', async () => {
+    await db().collection(Collections.config).doc('app').set({ supportEmail: 'help@example.com', themes: { navy: { accent: '#111111', page: null, card: null } } });
+    await asRoot(admin.adminSaveTheme, { scheme: 'sky', card: '#FFFFFF' });
+    const saved = (await db().collection(Collections.config).doc('app').get()).data()!;
+    expect(saved.supportEmail).toBe('help@example.com');
+    expect(saved.themes).toEqual({
+      navy: { accent: '#111111', page: null, card: null },
+      sky: { accent: null, page: null, card: '#FFFFFF' },
+    });
+  });
+
+  it('puts new themes in the first free slot, keeps a name and base an edit leaves out, and refuses a thirteenth', async () => {
+    const first = await asRoot<{ scheme: string }>(admin.adminSaveTheme, { name: ' Night Game ', base: 'dark', accent: '#FFAA00' });
+    expect(first.scheme).toBe('custom1');
+    const second = await asRoot<{ scheme: string }>(admin.adminSaveTheme, { name: 'Sunrise', base: 'light' });
+    expect(second.scheme).toBe('custom2');
+    // An edit with colors only keeps the name and base.
+    await asRoot(admin.adminSaveTheme, { scheme: 'custom1', page: '#000000' });
+    expect((await themes()).custom1).toEqual({ name: 'Night Game', base: 'dark', accent: null, page: '#000000', card: null });
+    // A deleted slot is the next one taken.
+    await asRoot(admin.adminDeleteTheme, { scheme: 'custom1' });
+    expect((await asRoot<{ scheme: string }>(admin.adminSaveTheme, { name: 'Again', base: 'navy' })).scheme).toBe('custom1');
+    for (let i = 3; i <= 12; i++) await asRoot(admin.adminSaveTheme, { name: `Theme ${i}`, base: 'army' });
+    await expect(asRoot(admin.adminSaveTheme, { name: 'One more', base: 'army' })).rejects.toMatchObject({
+      code: 'failed-precondition',
+      details: { reason: 'no-room' },
+    });
+  });
+
+  it('refuses a saved theme with no name or base, a saved theme as a base, and colors that aren\'t #RRGGBB', async () => {
+    await expect(asRoot(admin.adminSaveTheme, { base: 'army' })).rejects.toMatchObject({ details: { reason: 'theme-needs-name' } });
+    await expect(asRoot(admin.adminSaveTheme, { scheme: 'custom3', name: 'No base' })).rejects.toMatchObject({
+      details: { reason: 'theme-needs-name' },
+    });
+    for (const bad of [
+      { name: 'Loop', base: 'custom1' },
+      { name: 'x'.repeat(31), base: 'army' },
+      { scheme: 'army', accent: 'red' },
+      { scheme: 'army', page: '#12345' },
+      { scheme: 'plaid', accent: '#123456' },
+    ]) {
+      await expect(asRoot(admin.adminSaveTheme, bad)).rejects.toMatchObject({ code: 'invalid-argument' });
+    }
+    expect(await themes()).toEqual({});
+  });
+
+  it('deleting a built-in scheme\'s colors puts it back and leaves picks of it alone', async () => {
+    await asRoot(admin.adminSaveTheme, { scheme: 'army', accent: '#123456' });
+    await groups().doc('thunder').update({ colorScheme: 'army' });
+    await asRoot(admin.adminDeleteTheme, { scheme: 'army' });
+    expect(await themes()).toEqual({});
+    expect((await groups().doc('thunder').get()).get('colorScheme')).toBe('army');
+  });
+
+  it('deleting a saved theme clears every pick of it: members\', teams\' and people\'s own', async () => {
+    await asRoot(admin.adminSaveTheme, { name: 'Night Game', base: 'dark' });
+    await asRoot(admin.adminSaveTheme, { name: 'Sunrise', base: 'light' });
+    const members = db().collection(Collections.groupMembers);
+    await members.doc('thunder_sam').update({ colorScheme: 'custom1' });
+    await members.doc('thunder_lee').update({ colorScheme: 'custom2' });
+    await groups().doc('thunder').update({ colorScheme: 'custom1' });
+    await users().doc('pat').update({ colorScheme: 'custom1' });
+    const r = await asRoot<{ cleared: number }>(admin.adminDeleteTheme, { scheme: 'custom1' });
+    expect(r.cleared).toBe(3);
+    expect(Object.keys(await themes())).toEqual(['custom2']);
+    expect((await members.doc('thunder_sam').get()).get('colorScheme')).toBeUndefined();
+    expect((await members.doc('thunder_lee').get()).get('colorScheme')).toBe('custom2');
+    expect((await groups().doc('thunder').get()).get('colorScheme')).toBeUndefined();
+    expect((await users().doc('pat').get()).get('colorScheme')).toBeUndefined();
+    const [entry] = await audits('deleteTheme');
+    expect(entry).toMatchObject({ targetId: 'custom1', before: { name: 'Night Game', base: 'dark' }, after: { picksCleared: 3 } });
   });
 });
 

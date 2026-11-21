@@ -141,4 +141,23 @@ abstract interface class AdminRepository {
   /// Saves platform settings (ADMIN-7). Returns how many teams the storage
   /// limit moved, as it's every team's that doesn't have its own.
   Future<int> updateConfig(AppConfig config);
+
+  /// Saves a theme's colors in `config/app.themes` (#82): over a built-in
+  /// [scheme], or a saved theme's (with its [name] and [base]). With no
+  /// [scheme], saves a new theme in the first free slot, or refuses with
+  /// `no-room` when all twelve are taken. Null colors keep the base's.
+  /// Returns the scheme it saved under.
+  Future<TeamScheme> saveTheme({
+    TeamScheme? scheme,
+    String? name,
+    TeamScheme? base,
+    int? accent,
+    int? page,
+    int? card,
+  });
+
+  /// Takes a theme's colors away (#82): a built-in scheme goes back to how
+  /// it ships; a saved theme is deleted, and anyone using it (a pick, a
+  /// team's default, their own default) gets what comes next.
+  Future<void> deleteTheme(TeamScheme scheme);
 }

@@ -546,7 +546,7 @@ void _reads(Color fg, Color bg, String what, {double min = 4.5}) {
 
 void main() {
   group('the roles (Appendix A.2)', () {
-    for (final (i, scheme) in TeamScheme.values.indexed) {
+    for (final (i, scheme) in builtInSchemes.indexed) {
       test('${scheme.value} matches the spec', () {
         final roles = _roles(SchemeRoles.of(scheme));
         expect(roles.keys.toSet(), _a2.keys.toSet());
@@ -561,7 +561,7 @@ void main() {
     }
 
     test('the candy faces are the same in every scheme', () {
-      for (final scheme in TeamScheme.values) {
+      for (final scheme in builtInSchemes) {
         final c = GumdropColors.forScheme(scheme);
         expect(c.you.face, CandyFaces.coral);
         expect(c.cherry.face, CandyFaces.cherry);
@@ -583,7 +583,7 @@ void main() {
         ColorMath.contrast(CandyFaces.coral, CandyFaces.cherry),
         greaterThanOrEqualTo(1.4),
       );
-      for (final scheme in TeamScheme.values) {
+      for (final scheme in builtInSchemes) {
         final r = SchemeRoles.of(scheme);
         final c = GumdropColors.forScheme(scheme);
         expect(c.cherry.lip, r.cherryLip);
@@ -613,7 +613,7 @@ void main() {
 
     test('Army greens, Dark, Navy, and Candy Pop are dark; Light, Sky Blue, '
         "and Sky Blue Pop light; cards agree, but Candy Pop's white ones", () {
-      expect(TeamScheme.values.where((s) => s.isDark), [
+      expect(builtInSchemes.where((s) => s.isDark), [
         TeamScheme.army,
         TeamScheme.darkarmy,
         TeamScheme.dark,
@@ -623,7 +623,7 @@ void main() {
         TeamScheme.purplegold,
         TeamScheme.scoreboard,
       ]);
-      for (final scheme in TeamScheme.values) {
+      for (final scheme in builtInSchemes) {
         final want = scheme.isDark ? Brightness.dark : Brightness.light;
         final card = scheme == TeamScheme.candypop ? Brightness.light : want;
         expect(GumdropColors.forScheme(scheme).brightness, want);
@@ -635,7 +635,7 @@ void main() {
   });
 
   group('contrast (Appendix A.4)', () {
-    for (final scheme in TeamScheme.values) {
+    for (final scheme in builtInSchemes) {
       test('${scheme.value}: every text role reads on what it sits on', () {
         final r = SchemeRoles.of(scheme);
         for (final (fg, bg, what) in [
@@ -691,7 +691,7 @@ void main() {
   });
 
   group('the card context (4.3)', () {
-    for (final scheme in TeamScheme.values) {
+    for (final scheme in builtInSchemes) {
       test('${scheme.value}: the card texts take their places', () {
         final r = SchemeRoles.of(scheme);
         final page = GumdropColors.forScheme(scheme);
@@ -738,7 +738,7 @@ void main() {
   });
 
   group("the Material theme's text reads (SPEC §7.6)", () {
-    for (final scheme in TeamScheme.values) {
+    for (final scheme in builtInSchemes) {
       for (final onCard in [false, true]) {
         final where = '${scheme.value} ${onCard ? 'card' : 'page'}';
         test(where, () {
@@ -816,7 +816,7 @@ void main() {
 
   group('themes', () {
     test('built once per scheme and context, two each at most', () {
-      for (final scheme in TeamScheme.values) {
+      for (final scheme in builtInSchemes) {
         for (final onCard in [false, true]) {
           expect(
             identical(
@@ -829,7 +829,7 @@ void main() {
       }
       expect(
         AppTheme.cachedThemes,
-        lessThanOrEqualTo(2 * TeamScheme.values.length),
+        lessThanOrEqualTo(2 * builtInSchemes.length),
       );
     });
 
@@ -930,7 +930,7 @@ void main() {
 
   testWidgets("a list tile's title is in the text color and its subtitle "
       'muted, in every scheme', (tester) async {
-    for (final scheme in TeamScheme.values) {
+    for (final scheme in builtInSchemes) {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.of(scheme),

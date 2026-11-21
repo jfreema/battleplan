@@ -349,7 +349,7 @@ void main() {
 
   // Every screen in every color scheme: their colors all differ.
   for (final MapEntry(key: name, value: pump) in screens.entries) {
-    for (final scheme in TeamScheme.values) {
+    for (final scheme in builtInSchemes) {
       testWidgets('$name (${scheme.value}) meets the guidelines', (
         tester,
       ) async {
@@ -947,7 +947,7 @@ void main() {
             (c) => labelOf(c)?.startsWith('Your default (') ?? false,
           );
         }
-        for (final scheme in TeamScheme.values) {
+        for (final scheme in builtInSchemes) {
           final title = scheme.label(l10n);
           await tabTo(
             tester,

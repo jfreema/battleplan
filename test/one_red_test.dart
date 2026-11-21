@@ -63,7 +63,7 @@ Iterable<BoxDecoration> _filled(Finder of, Color color, WidgetTester tester) =>
 
 void main() {
   group('the warning red is only for warnings', () {
-    for (final scheme in TeamScheme.values) {
+    for (final scheme in builtInSchemes) {
       testWidgets('${scheme.value}: Not going, Canceled, and Owes take it, '
           'with white text', (tester) async {
         final c = GumdropColors.forScheme(scheme);
@@ -122,7 +122,7 @@ void main() {
     });
 
     testWidgets("Material's badges, the theme's", (tester) async {
-      for (final scheme in TeamScheme.values) {
+      for (final scheme in builtInSchemes) {
         expect(
           AppTheme.of(scheme).badgeTheme.backgroundColor,
           CandyFaces.coral,
@@ -133,7 +133,7 @@ void main() {
 
   group('colors people picked keep their look', () {
     test('a "Cherry" icon color is coral, as it was', () {
-      for (final scheme in TeamScheme.values) {
+      for (final scheme in builtInSchemes) {
         final c = GumdropColors.forScheme(scheme);
         expect(Avatar.faceOf(c, AvatarColor.cherry), CandyFaces.coral);
         // Nobody's hashed color turns the warning red either.
@@ -144,7 +144,7 @@ void main() {
     });
 
     test('a "Cherry" chat color is coral, as it was', () {
-      for (final scheme in TeamScheme.values) {
+      for (final scheme in builtInSchemes) {
         final c = GumdropColors.forScheme(scheme);
         expect(chatCandyAccent(c, ChatCandy.cherry), c.you);
       }

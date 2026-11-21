@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/theme_override.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/documents/domain/document.dart';
 import 'package:flutter/rendering.dart';
@@ -34,7 +35,7 @@ void main() {
     createdAt: DateTime(2026, 11),
   );
 
-  for (final scheme in TeamScheme.values) {
+  for (final scheme in builtInSchemes) {
     testWidgets('${scheme.value}: the name and every icon are white on the '
         'black bar', (tester) async {
       final docs = FakeDocumentRepository([photo]);

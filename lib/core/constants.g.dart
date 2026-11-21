@@ -253,7 +253,19 @@ enum TeamScheme {
   candypop('candypop'),
   wildcat('wildcat'),
   purplegold('purplegold'),
-  scoreboard('scoreboard');
+  scoreboard('scoreboard'),
+  custom1('custom1'),
+  custom2('custom2'),
+  custom3('custom3'),
+  custom4('custom4'),
+  custom5('custom5'),
+  custom6('custom6'),
+  custom7('custom7'),
+  custom8('custom8'),
+  custom9('custom9'),
+  custom10('custom10'),
+  custom11('custom11'),
+  custom12('custom12');
 
   const TeamScheme(this.value);
 

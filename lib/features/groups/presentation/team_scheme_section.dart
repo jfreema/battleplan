@@ -21,12 +21,16 @@ class TeamSchemeSection extends StatelessWidget {
   const new({
     required this.group,
     required this.mine,
+    required this.schemes,
     required this.onPick,
     required this.onReset,
     super.key,
   });
 
   final Group group;
+
+  /// The schemes to offer: the built-in ones and the saved themes (#82).
+  final List<TeamScheme> schemes;
 
   /// My own default, which the System default row shows: what I'd see.
   final TeamScheme mine;
@@ -65,7 +69,7 @@ class TeamSchemeSection extends StatelessWidget {
           },
         ),
         Container(height: 1, color: c.divider),
-        for (final scheme in TeamScheme.values) ...[
+        for (final scheme in schemes) ...[
           SchemeRow(
             scheme: scheme,
             title: scheme.label(l10n),

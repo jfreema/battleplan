@@ -1,5 +1,6 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/theme_override.dart';
 import 'package:battleplan/features/chat/domain/message.dart' show PageCursor;
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/players/domain/player.dart';
@@ -385,6 +386,11 @@ abstract class AppConfig with _$AppConfig {
     /// ([defaultEmailsPerDay]).
     int? emailsPerDay,
     Announcement? announcementBanner,
+
+    /// The theme editor's colors (#82): changes to built-in schemes, and the
+    /// saved themes in their slots, by scheme.
+    @Default(<TeamScheme, ThemeOverride>{})
+    Map<TeamScheme, ThemeOverride> themes,
   }) = _AppConfig;
 
   const new _();

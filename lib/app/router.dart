@@ -618,6 +618,28 @@ GoRouter router(Ref ref) {
             builder: (_, _) =>
                 _AdminPanel(() => admin_panel.PlatformSettingsScreen()),
           ),
+          // The theme editor (#82): the list, then a theme by its scheme's
+          // value, or `new`.
+          GoRoute(
+            path: 'themes',
+            builder: (_, _) =>
+                _AdminPanel(() => admin_panel.AdminThemesScreen()),
+            routes: [
+              GoRoute(
+                path: ':scheme',
+                builder: (_, state) {
+                  final id = state.pathParameters['scheme']!;
+                  final scheme = TeamScheme.tryParse(id);
+                  return _AdminPanel(
+                    () => admin_panel.AdminThemeEditorScreen(
+                      scheme: scheme,
+                      missing: scheme == null && id != 'new',
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
         ],
       ),
       // Create a Team, or with `?kind=group`, Create a Group (TEAM-14).

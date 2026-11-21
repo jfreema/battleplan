@@ -1,6 +1,7 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/theme_override.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/admin/domain/admin_repository.dart';
 import 'package:battleplan/features/chat/domain/message.dart' show PageCursor;
@@ -464,6 +465,31 @@ class FunctionsAdminRepository implements AdminRepository {
     });
     return (result['teamsUpdated'] as num?)?.toInt() ?? 0;
   }
+
+  @override
+  Future<TeamScheme> saveTheme({
+    TeamScheme? scheme,
+    String? name,
+    TeamScheme? base,
+    int? accent,
+    int? page,
+    int? card,
+  }) async {
+    final result = await _call('adminSaveTheme', {
+      'scheme': ?scheme?.value,
+      'name': ?name?.trim(),
+      'base': ?base?.value,
+      'accent': _hex(accent),
+      'page': _hex(page),
+      'card': _hex(card),
+    });
+    return TeamScheme.tryParse(result['scheme'] as String?) ??
+        (throw const UnknownFailure('adminSaveTheme: no scheme'));
+  }
+
+  @override
+  Future<void> deleteTheme(TeamScheme scheme) =>
+      _call('adminDeleteTheme', {'scheme': scheme.value});
 }
 
 /// A palette color as the team docs store it, `#RRGGBB`, or null.
@@ -499,6 +525,7 @@ AppConfig appConfigFromFirestore(Map<String, dynamic> d) {
             expiresAt: expires,
           )
         : null,
+    themes: themesFromConfig(d['themes']),
   );
 }
 

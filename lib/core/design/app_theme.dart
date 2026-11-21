@@ -6,6 +6,7 @@ import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_shape.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
+import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/widgets/back_chevron.dart';
 import 'package:flutter/services.dart';
@@ -20,11 +21,19 @@ abstract final class AppTheme {
 
   /// The theme for [scheme], on the page or ([onCard]) on a card, built once
   /// and kept: five schemes in two contexts.
-  static ThemeData of(TeamScheme scheme, {bool onCard = false}) =>
-      _cache.putIfAbsent((
-        scheme,
-        onCard,
-      ), () => build(GumdropColors.forScheme(scheme, onCard: onCard)));
+  static ThemeData of(TeamScheme scheme, {bool onCard = false}) {
+    // Built again once the theme editor's colors change (#82).
+    if (_version != ThemeCatalog.version) {
+      _cache.clear();
+      _version = ThemeCatalog.version;
+    }
+    return _cache.putIfAbsent((
+      scheme,
+      onCard,
+    ), () => build(GumdropColors.forScheme(scheme, onCard: onCard)));
+  }
+
+  static int _version = 0;
 
   /// How many themes have been built (for a test).
   @visibleForTesting

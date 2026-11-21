@@ -1,5 +1,6 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/theme_override.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/admin/domain/play_test.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
@@ -135,7 +136,7 @@ void main() {
   testWidgets('reads well: the tag in all five schemes, and 200% text', (
     tester,
   ) async {
-    for (final scheme in TeamScheme.values) {
+    for (final scheme in builtInSchemes) {
       for (final path in ['/admin/users', '/admin/users/jane']) {
         await open(tester, path, scheme: scheme, size: const Size(390, 900));
         final handle = tester.ensureSemantics();

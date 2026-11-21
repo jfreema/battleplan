@@ -126,12 +126,17 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
       text: onCard ? cardText : pageText,
       ink: ink,
     );
-    final coral = candy(
-      CandyFaces.coral,
-      r.candyLipCoral,
-      r.accentText,
-      r.cardAccentText,
-    );
+    // "You": coral, or the color a theme set for it (#82), whose text is
+    // its own color made to read on the page or card (coral's text shades
+    // are the warning red's too, so they stay).
+    final coral = r.you == CandyFaces.coral
+        ? candy(r.you, r.candyLipCoral, r.accentText, r.cardAccentText)
+        : candy(
+            r.you,
+            r.candyLipCoral,
+            ColorMath.readable(r.you, [r.page]),
+            ColorMath.readable(r.you, [r.card]),
+          );
     return GumdropColors(
       scheme: scheme,
       roles: r,

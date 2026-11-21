@@ -8,6 +8,7 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/color_math.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/theme_override.dart';
 import 'package:battleplan/core/widgets/back_chevron.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
@@ -1511,7 +1512,7 @@ void main() {
       );
       expect(info.color, c.blueRaspberry.face);
       expect(info.color, isNot(scheme.errorContainer));
-      for (final s in TeamScheme.values) {
+      for (final s in builtInSchemes) {
         final g = GumdropColors.forScheme(s);
         expect(
           ColorMath.contrast(g.ink, g.blueRaspberry.face),

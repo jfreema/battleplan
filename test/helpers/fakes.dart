@@ -12,6 +12,7 @@ import 'package:battleplan/core/services/photo_drops.dart';
 import 'package:battleplan/core/services/photo_picker.dart';
 import 'package:battleplan/core/services/photo_saver.dart';
 import 'package:battleplan/core/services/sharer.dart';
+import 'package:battleplan/core/theme_override.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/admin/domain/admin_repository.dart';
 import 'package:battleplan/features/auth/domain/auth_repository.dart';
@@ -3881,6 +3882,46 @@ class FakeAdminRepository implements AdminRepository {
     savedConfigs.add(config);
     this.config = config;
     return teamsMoved;
+  }
+
+  /// The themes saved, as (scheme, theme), in order (#82).
+  final List<(TeamScheme, ThemeOverride)> savedThemes = [];
+
+  @override
+  Future<TeamScheme> saveTheme({
+    TeamScheme? scheme,
+    String? name,
+    TeamScheme? base,
+    int? accent,
+    int? page,
+    int? card,
+  }) async {
+    await _act('saveTheme');
+    final themes = _config.themes;
+    final slot =
+        scheme ??
+        customSchemes.where((s) => !themes.containsKey(s)).firstOrNull ??
+        (throw const ActionRefused('no-room'));
+    final theme = ThemeOverride(
+      name: slot.isCustom ? name?.trim() : null,
+      base: slot.isCustom ? base ?? themes[slot]?.base : null,
+      accent: accent,
+      page: page,
+      card: card,
+    );
+    savedThemes.add((slot, theme));
+    config = _config.copyWith(themes: {...themes, slot: theme});
+    return slot;
+  }
+
+  /// The themes deleted, in order (#82).
+  final List<TeamScheme> deletedThemes = [];
+
+  @override
+  Future<void> deleteTheme(TeamScheme scheme) async {
+    await _act('deleteTheme');
+    deletedThemes.add(scheme);
+    config = _config.copyWith(themes: {..._config.themes}..remove(scheme));
   }
 }
 

@@ -22,6 +22,7 @@ import { eraseMessage } from '../chat/service.js';
 import { deleteDocumentOf } from '../documents/service.js';
 import { resendApiKey } from '../email/service.js';
 import { alertTeamDeleted } from './alerts.js';
+import { DeleteThemeInput, SaveThemeInput, deleteTheme, saveTheme } from './themes.js';
 import { updatePlayerProfile } from '../players/service.js';
 import { closeReport, openReport, reopenReport } from '../safety/service.js';
 import { auth, db, storage } from '../shared/admin.js';
@@ -589,4 +590,29 @@ export const adminUpdateConfig = onCall(async (request) => {
   const { before, after, teamsUpdated } = await updateConfig(input);
   await audit({ actorId: actor, action: 'updateConfig', targetType: 'config', targetId: 'app', before, after });
   return { ok: true, teamsUpdated };
+});
+
+/** #82: saves a theme's colors, or a new saved theme; returns its scheme. */
+export const adminSaveTheme = onCall(async (request) => {
+  const actor = requireSuperAdmin(request);
+  const input = parse(SaveThemeInput, request.data);
+  const { scheme, before, after } = await saveTheme(input);
+  await audit({ actorId: actor, action: 'saveTheme', targetType: 'theme', targetId: scheme, before: before ?? undefined, after });
+  return { ok: true, scheme };
+});
+
+/** #82: takes a theme's colors away, or deletes a saved theme and its picks. */
+export const adminDeleteTheme = onCall(async (request) => {
+  const actor = requireSuperAdmin(request);
+  const { scheme } = parse(DeleteThemeInput, request.data);
+  const { before, cleared } = await deleteTheme(scheme);
+  await audit({
+    actorId: actor,
+    action: 'deleteTheme',
+    targetType: 'theme',
+    targetId: scheme,
+    before: before ?? undefined,
+    after: { picksCleared: cleared },
+  });
+  return { ok: true, cleared };
 });

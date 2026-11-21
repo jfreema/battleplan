@@ -8,6 +8,9 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/logging.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
+import 'package:battleplan/core/widgets/scheme_swatch.dart';
+import 'package:battleplan/features/admin/application/providers.dart'
+    show themeOverridesProvider;
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
@@ -65,12 +68,20 @@ class ColorSchemeScreen extends ConsumerWidget {
     }
     final group = id == null ? null : ref.watch(groupProvider(id)).value;
     final isGroup = group?.isGroup ?? false;
-    final mine = ref.watch(defaultSchemeControllerProvider);
-    final teamDefault = group?.colorScheme;
+    // The built-in schemes and the saved themes (#82); a saved theme that
+    // isn't there counts as none.
+    final themes = ref.watch(themeOverridesProvider);
+    final mine =
+        usableScheme(ref.watch(defaultSchemeControllerProvider), themes) ??
+        defaultTeamScheme;
+    final teamDefault = usableScheme(group?.colorScheme, themes);
     // My explicit pick for this team, or null when I follow the default.
     final pick = id == null
         ? mine
-        : ref.watch(myMembershipProvider(id))?.colorScheme;
+        : usableScheme(
+            ref.watch(myMembershipProvider(id))?.colorScheme,
+            themes,
+          );
     final title = id == null ? l10n.defaultColorScheme : l10n.colorScheme;
     final lede = id == null
         ? l10n.defaultColorSchemeLede
@@ -158,7 +169,7 @@ class ColorSchemeScreen extends ConsumerWidget {
                 ),
                 Container(height: 1, color: c.divider),
               ],
-              for (final scheme in TeamScheme.values) ...[
+              for (final scheme in ThemeCatalog.available) ...[
                 SchemeRow(
                   scheme: scheme,
                   title: scheme.label(l10n),
@@ -295,80 +306,4 @@ class SchemeRow extends StatelessWidget {
       child: row,
     );
   }
-}
-
-/// A little picture of [scheme] (SET-2): its page with a tiny card on it, a
-/// coral dot and a line of its text color. Decorative; the row names it.
-class SchemeSwatch extends StatelessWidget {
-  const new(this.scheme, {super.key});
-
-  final TeamScheme scheme;
-
-  @override
-  Widget build(BuildContext context) => ExcludeSemantics(
-    child: CustomPaint(
-      size: const Size(64, 44),
-      painter: _SwatchPainter(
-        SchemeRoles.of(scheme),
-        GumdropColors.of(context).outline,
-      ),
-    ),
-  );
-}
-
-class _SwatchPainter extends CustomPainter {
-  new(this.roles, this.ring);
-
-  final SchemeRoles roles;
-  final Color ring;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final outer = RRect.fromRectAndRadius(
-      Offset.zero & size,
-      const Radius.circular(10),
-    );
-    canvas.drawRRect(outer, Paint()..color = roles.page);
-    // The tiny card, on its 2 px lip.
-    const card = Rect.fromLTWH(9, 10, 46, 20);
-    final cardShape = RRect.fromRectAndRadius(card, const Radius.circular(6));
-    canvas
-      ..drawRRect(
-        cardShape.shift(const Offset(0, 2)),
-        Paint()..color = roles.cardRim,
-      )
-      ..drawRRect(cardShape, Paint()..color = roles.card)
-      ..drawRRect(
-        cardShape.deflate(0.75),
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5
-          ..color = roles.cardRim,
-      )
-      ..drawCircle(
-        card.topLeft + const Offset(5 + 3, 5.5 + 3),
-        3,
-        Paint()..color = CandyFaces.coral,
-      )
-      ..drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(card.left + 15, card.top + 6.5, 20, 4),
-          const Radius.circular(2),
-        ),
-        // The card's own text color (Candy Pop's navy, #72).
-        Paint()..color = roles.cardText,
-      )
-      // The inset ring in the screen's outline.
-      ..drawRRect(
-        outer.deflate(0.75),
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5
-          ..color = ring,
-      );
-  }
-
-  @override
-  bool shouldRepaint(_SwatchPainter old) =>
-      old.roles != roles || old.ring != ring;
 }

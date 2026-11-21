@@ -179,7 +179,7 @@ final class AppSchemeProvider
   }
 }
 
-String _$appSchemeHash() => r'0a577e4fd5a68f8fe55d824d81cea003dc7ae297';
+String _$appSchemeHash() => r'58fbfcb87838948bfa51b86834867ed94cd09342';
 
 /// The scheme I see [groupId] in ([resolveTeamScheme]): my pick on my
 /// membership, else the team's default, else my default. The team is read
@@ -258,7 +258,7 @@ final class TeamSchemeProvider
   }
 }
 
-String _$teamSchemeHash() => r'18e8a52990116634c64725575d581c635ca2db3b';
+String _$teamSchemeHash() => r'87ae080ac75cf8092c71c08c029a8c4589e8af40';
 
 /// The scheme I see [groupId] in ([resolveTeamScheme]): my pick on my
 /// membership, else the team's default, else my default. The team is read

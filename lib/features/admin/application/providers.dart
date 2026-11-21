@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/theme_override.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/admin/domain/admin_repository.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
@@ -27,6 +28,13 @@ Stream<AppConfig> appConfig(Ref ref) {
   if (uid == null) return Stream.value(const AppConfig());
   return ref.watch(adminRepositoryProvider).watchConfig();
 }
+
+/// The theme editor's colors (#82), from `config/app`: what the app root
+/// installs in `ThemeCatalog`, and what decides which saved themes the
+/// pickers offer and a pick may use. None signed out.
+@Riverpod(keepAlive: true)
+Map<TeamScheme, ThemeOverride> themeOverrides(Ref ref) =>
+    ref.watch(appConfigProvider.select((c) => c.value?.themes ?? const {}));
 
 /// The upload limit in bytes for documents and photos (ADMIN-7): the
 /// platform setting, capped at the storage rules' limit, which the server
