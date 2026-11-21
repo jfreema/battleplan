@@ -726,6 +726,57 @@ class SchemeRoles {
     cherryLip: Color(0xFF1E0A3C),
   );
 
+  /// Scoreboard (#81, owner's pick 2026-11-20 from the theme mockups: "Add
+  /// the scoreboard theme and call it "Scoreboard""): a stadium at night, a
+  /// black page with every word in scoreboard amber, cards a shade lighter
+  /// rimmed in dim amber, and a burnt-orange drop under titles.
+  static const scoreboard = SchemeRoles(
+    page: Color(0xFF0B0B0A),
+    text: Color(0xFFFFC83D),
+    pageMuted: Color(0xFFC2942E),
+    hairline: Color(0x24FFC83D),
+    outline: Color(0x66FFC83D),
+    tabbar: Color(0xFF050505),
+    tabbarLine: Color(0x33FFC83D),
+    field: Color(0xFF1D1912),
+    fieldRim: Color(0x33FFC83D),
+    card: Color(0xFF16130E),
+    cardRim: Color(0xFF8A6A16),
+    cardMuted: Color(0xFFCC9D33),
+    cardTrack: Color(0x38FFC83D),
+    cardOutline: Color(0x73FFC83D),
+    cardText: Color(0xFFFFC83D),
+    cardField: Color(0xFF1D1912),
+    cardMaybeText: Color(0xFFFFF06B),
+    popup: Color(0xFF16130E),
+    candyInk: Color(0xFF0B0B0A),
+    candyLipCoral: Color(0xFFC0262F),
+    candyLipMint: Color(0xFF137236),
+    candyLipLemon: Color(0xFFA88A12),
+    candyLipTangerine: Color(0xFF9E4B0A),
+    titleDrop: Color(0xFFB8480A),
+    avatarRing: Color(0x00000000),
+    accentText: Color(0xFFFF7566),
+    accentMark: Color(0xFFFF7566),
+    notGoingIcon: Color(0xFFFF7566),
+    goingText: Color(0xFF6FE08A),
+    maybeText: Color(0xFFFFF06B),
+    cardGoingText: Color(0xFF6FE08A),
+    cardAccentText: Color(0xFFFF7566),
+    gameText: Color(0xFFFF9D4D),
+    typeGame: Color(0xFFFF9D4D),
+    typePractice: Color(0xFFC4A7FF),
+    typeOther: Color(0xFFFF8AD0),
+    grapePageText: Color(0xFFC4A7FF),
+    bubblegumPageText: Color(0xFFFF8AD0),
+    blueRaspberryPageText: Color(0xFF7CC8FF),
+    blueRaspberryCardText: Color(0xFF7CC8FF),
+    grapeLip: Color(0xFF6C46CC),
+    bubblegumLip: Color(0xFFAE2770),
+    blueRaspberryLip: Color(0xFF2A63C9),
+    cherryLip: Color(0xFF8E1C23),
+  );
+
   /// The roles of [scheme].
   static SchemeRoles of(TeamScheme scheme) => switch (scheme) {
     TeamScheme.army => army,
@@ -736,6 +787,7 @@ class SchemeRoles {
     TeamScheme.sky => sky,
     TeamScheme.skyblue => skyblue,
     TeamScheme.candypop => candypop,
+    TeamScheme.scoreboard => scoreboard,
     TeamScheme.purplegold => purplegold,
     TeamScheme.wildcat => wildcat,
   };
@@ -753,7 +805,8 @@ extension TeamSchemeLook on TeamScheme {
       this == TeamScheme.navy ||
       this == TeamScheme.candypop ||
       this == TeamScheme.wildcat ||
-      this == TeamScheme.purplegold;
+      this == TeamScheme.purplegold ||
+      this == TeamScheme.scoreboard;
 
   /// "Army green", and the rest.
   String label(AppLocalizations l10n) => switch (this) {
@@ -765,6 +818,7 @@ extension TeamSchemeLook on TeamScheme {
     TeamScheme.sky => l10n.schemeSky,
     TeamScheme.skyblue => l10n.schemeSkyblue,
     TeamScheme.candypop => l10n.schemeCandypop,
+    TeamScheme.scoreboard => l10n.schemeScoreboard,
     TeamScheme.purplegold => l10n.schemePurplegold,
     TeamScheme.wildcat => l10n.schemeWildcat,
   };
@@ -779,6 +833,7 @@ extension TeamSchemeLook on TeamScheme {
     TeamScheme.sky => l10n.schemeSkyShort,
     TeamScheme.skyblue => l10n.schemeSkyblueShort,
     TeamScheme.candypop => l10n.schemeCandypopShort,
+    TeamScheme.scoreboard => l10n.schemeScoreboardShort,
     TeamScheme.purplegold => l10n.schemePurplegoldShort,
     TeamScheme.wildcat => l10n.schemeWildcatShort,
   };
