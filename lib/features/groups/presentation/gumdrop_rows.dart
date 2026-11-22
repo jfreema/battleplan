@@ -342,21 +342,19 @@ class PageTitle extends StatelessWidget {
           // split in two.
           final lines = size >= 0 || wordsFit(styleAt(sizes.last)) ? 2 : 1;
           final at = size < 0 ? sizes.last : size;
-          return Semantics(
-            header: true,
-            namesRoute: true,
-            child: Transform.rotate(
-              angle: -2 * math.pi / 180,
-              alignment: const Alignment(-1, 0.4),
-              child: OutlinedText(
-                title,
-                maxLines: lines,
-                overflow: TextOverflow.ellipsis,
-                // The outline and shadow grow with the size.
-                stroke: at * 0.11,
-                shadow: at >= 36 ? 4 : 3,
-                style: styleAt(at),
-              ),
+          return Transform.rotate(
+            angle: -2 * math.pi / 180,
+            alignment: const Alignment(-1, 0.4),
+            child: OutlinedText(
+              title,
+              header: true,
+              namesRoute: true,
+              maxLines: lines,
+              overflow: TextOverflow.ellipsis,
+              // The outline and shadow grow with the size.
+              stroke: at * 0.11,
+              shadow: at >= 36 ? 4 : 3,
+              style: styleAt(at),
             ),
           );
         },
@@ -543,24 +541,22 @@ class TopLevelBar extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                child: Semantics(
-                  header: true,
-                  child: Padding(
-                    // Level with the icons' center.
-                    padding: const EdgeInsets.only(top: 3),
-                    child: Align(
-                      alignment: AlignmentDirectional.centerStart,
-                      child: OutlinedText(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.headlineMedium!
-                            .copyWith(
-                              fontSize: 32.5,
-                              height: 37 / 32.5,
-                              letterSpacing: 32.5 * 0.04,
-                            ),
-                      ),
+                child: Padding(
+                  // Level with the icons' center.
+                  padding: const EdgeInsets.only(top: 3),
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: OutlinedText(
+                      title,
+                      header: true,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.headlineMedium!
+                          .copyWith(
+                            fontSize: 32.5,
+                            height: 37 / 32.5,
+                            letterSpacing: 32.5 * 0.04,
+                          ),
                     ),
                   ),
                 ),
@@ -997,9 +993,9 @@ TextStyle? switchRowTitle(BuildContext context) =>
     Theme.of(context).textTheme.bodyMedium?.copyWith(
       fontSize: 15,
       fontWeight: FontWeight.w800,
-      // Where the row is: the page's text, or a card's (Candy Pop's differ,
-      // #72; the rows are on the page since #32).
-      color: GumdropColors.of(context).textPrimary,
+      // The panel's lettering: switch rows sit in a panel of rows (#85),
+      // whose lettering is Candy Pop's navy on white (#86).
+      color: GumdropColors.of(context).card.textPrimary,
     );
 
 /// A heading inside a card (SPEC §7.3): the stencil 20 in the text color,

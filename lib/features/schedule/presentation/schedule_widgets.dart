@@ -631,11 +631,14 @@ class _RsvpPush extends StatelessWidget {
     final border = page ? 3.0 : 2.5;
     final shadow = page ? 3.0 : 2.5;
     final radius = BorderRadius.circular(page ? 13 : 10);
+    // On the panel color, so in the panel's lettering, on a card or on the
+    // event's page (Candy Pop's navy on white, #86).
+    final panel = c.card;
     final text = selected
         ? c.inkOn(accent)
         : enabled
-        ? c.textPrimary
-        : c.textMuted;
+        ? panel.textPrimary
+        : panel.textMuted;
     final glyph = switch (status) {
       RsvpStatus.going => AppIcons.going,
       RsvpStatus.maybe => AppIcons.maybe,

@@ -101,9 +101,23 @@ class SchemeRoles {
   factory camp(CampPalette p) {
     Color on(Color c, Color bg, {double minimum = 4.5}) =>
         ColorMath.readable(c, [bg], minimum: minimum);
-    // Muted text, made to read on the page, panels and fields, and the tab
-    // bar alike (Army green's panel is a shade lighter than its page).
-    final muted = ColorMath.readable(p.muted, [p.page, p.panel, p.tabBar]);
+    // Candy Pop's panels are white under navy lettering while its page is
+    // blue under white (#86): text boxes and menus opened from the page
+    // take the camouflage's deeper blue, where the page's white reads.
+    final twoLetterings = p.panelText != p.text;
+    final field = twoLetterings ? p.camoGround : p.panel;
+    // Muted text, made to read on the page, fields, and the tab bar alike,
+    // and on panels where they share the page's lettering (Army green's
+    // panel is a shade lighter than its page).
+    final muted = ColorMath.readable(p.muted, [
+      p.page,
+      field,
+      p.tabBar,
+      if (!twoLetterings) p.panel,
+    ]);
+    final cardMuted = twoLetterings
+        ? ColorMath.readable(p.panelMuted, [p.panel])
+        : muted;
     return SchemeRoles(
       palette: p,
       page: p.page,
@@ -113,17 +127,19 @@ class SchemeRoles {
       outline: p.ink,
       tabbar: p.tabBar,
       tabbarLine: p.ink,
-      field: p.panel,
+      field: field,
       fieldRim: p.ink,
       card: p.panel,
       cardRim: p.ink,
-      cardMuted: muted,
-      cardTrack: p.toolsRow,
+      cardMuted: cardMuted,
+      // Wells and tracks on panels: the tools row's shade, but on Candy
+      // Pop's white panels a pale blue its navy reads on (#86).
+      cardTrack: twoLetterings ? p.unansweredTag : p.toolsRow,
       cardOutline: p.ink,
-      cardText: p.text,
+      cardText: p.panelText,
       cardField: p.panel,
       cardMaybeText: on(p.orange, p.panel),
-      popup: p.panel,
+      popup: field,
       candyInk: p.ink,
       candyLipCoral: p.shadow,
       candyLipMint: p.shadow,
@@ -507,11 +523,29 @@ class SchemeRoles {
   /// camouflage.
   static final light = SchemeRoles.camp(CampPalette.light);
 
-  /// The roles of [scheme]'s Boot Camp Mix scheme ([TeamSchemeLook.look]):
-  /// Army green, Black or Light, whatever was stored.
+  /// Sky Blue (#86): a sky-blue page and paler sky-blue panels, navy
+  /// lettering, a navy and sky camouflage.
+  static final sky = SchemeRoles.camp(CampPalette.sky);
+
+  /// Candy Pop (#86): a bright blue page under white, white panels under
+  /// navy.
+  static final candypop = SchemeRoles.camp(CampPalette.candyPop);
+
+  /// Central Wildcats (#86): maroon and silver, with black ink.
+  static final wildcat = SchemeRoles.camp(CampPalette.wildcat);
+
+  /// Geaux Tigahs (#86): purple and gold.
+  static final purplegold = SchemeRoles.camp(CampPalette.purpleGold);
+
+  /// The roles of [scheme]'s Boot Camp Mix scheme ([TeamSchemeLook.look]),
+  /// whatever was stored.
   static SchemeRoles builtIn(TeamScheme scheme) => switch (scheme.look) {
     TeamScheme.army => army,
     TeamScheme.light => light,
+    TeamScheme.sky => sky,
+    TeamScheme.candypop => candypop,
+    TeamScheme.wildcat => wildcat,
+    TeamScheme.purplegold => purplegold,
     _ => dark,
   };
 
@@ -562,39 +596,42 @@ abstract final class ThemeCatalog {
   /// [scheme]'s theme, if the editor set one.
   static ThemeOverride? themeOf(TeamScheme scheme) => _themes[scheme];
 
-  /// The schemes the pickers offer (#85): Army green, Black and Light. The
+  /// The schemes the pickers offer: Boot Camp Mix's seven (#85, #86). The
   /// other built-in schemes and saved themes are no longer offered; a pick
   /// of one shows in its closest ([TeamSchemeLook.look]).
   static const List<TeamScheme> available = bootCampSchemes;
 }
 
 /// The Boot Camp Mix schemes, in picker order (#85, owner's pick
-/// 2026-11-22: "let's replace the existing themes with these 3 themes").
+/// 2026-11-22: "let's replace the existing themes with these 3 themes"; and
+/// #86, the same day: "add 4 new themes to the UI").
 const List<TeamScheme> bootCampSchemes = [
   TeamScheme.army,
   TeamScheme.dark,
   TeamScheme.light,
+  TeamScheme.sky,
+  TeamScheme.candypop,
+  TeamScheme.wildcat,
+  TeamScheme.purplegold,
 ];
 
 /// What each scheme is called, which Boot Camp Mix scheme it's drawn in,
 /// and whether its page is dark.
 extension TeamSchemeLook on TeamScheme {
-  /// The Boot Camp Mix scheme this is drawn in (#85): itself for Army
-  /// green, Black and Light; for a scheme the app no longer offers, the
-  /// closest. Stored picks are never rewritten, so an older app still shows
-  /// its own. Forest green goes to Army green; Navy, Central Wildcat, Geaux
-  /// Tigahs and Scoreboard to Black; Sky Blue, Sky Blue Pop and Candy Pop to
-  /// Light; a saved theme to Black or Light by how dark its page is.
+  /// The Boot Camp Mix scheme this is drawn in (#85, #86): itself for the
+  /// seven; for a scheme the app no longer offers, the closest. Stored picks
+  /// are never rewritten, so an older app still shows its own. Forest green
+  /// goes to Army green; Navy and Scoreboard to Black; Sky Blue Pop to Sky
+  /// Blue; a saved theme to Black or Light by how dark its page is.
   TeamScheme get look => switch (this) {
     TeamScheme.army || TeamScheme.darkarmy => TeamScheme.army,
-    TeamScheme.light ||
-    TeamScheme.sky ||
-    TeamScheme.skyblue ||
-    TeamScheme.candypop => TeamScheme.light,
+    TeamScheme.light => TeamScheme.light,
+    TeamScheme.sky || TeamScheme.skyblue => TeamScheme.sky,
+    TeamScheme.candypop => TeamScheme.candypop,
+    TeamScheme.wildcat => TeamScheme.wildcat,
+    TeamScheme.purplegold => TeamScheme.purplegold,
     TeamScheme.dark ||
     TeamScheme.navy ||
-    TeamScheme.wildcat ||
-    TeamScheme.purplegold ||
     TeamScheme.scoreboard => TeamScheme.dark,
     _ => _savedLook,
   };
@@ -610,13 +647,22 @@ extension TeamSchemeLook on TeamScheme {
     return light ? TeamScheme.light : TeamScheme.dark;
   }
 
-  /// Light text on a dark page: Army green and Black.
-  bool get isDark => look != TeamScheme.light;
+  /// Light text on a dark page: every scheme but Light and Sky Blue, as
+  /// its page decides.
+  bool get isDark =>
+      ThemeData.estimateBrightnessForColor(
+        SchemeRoles.builtIn(this).palette.page,
+      ) ==
+      Brightness.dark;
 
-  /// "Army green", "Black" or "Light": what this is drawn in.
+  /// "Army green", "Black", "Sky Blue" and the rest: what this is drawn in.
   String label(AppLocalizations l10n) => switch (look) {
     TeamScheme.army => l10n.schemeArmy,
     TeamScheme.light => l10n.schemeLight,
+    TeamScheme.sky => l10n.schemeSky,
+    TeamScheme.candypop => l10n.schemeCandypop,
+    TeamScheme.wildcat => l10n.schemeWildcat,
+    TeamScheme.purplegold => l10n.schemePurplegold,
     _ => l10n.schemeDark,
   };
 
@@ -624,6 +670,10 @@ extension TeamSchemeLook on TeamScheme {
   String shortLabel(AppLocalizations l10n) => switch (look) {
     TeamScheme.army => l10n.schemeArmyShort,
     TeamScheme.light => l10n.schemeLightShort,
+    TeamScheme.sky => l10n.schemeSkyShort,
+    TeamScheme.candypop => l10n.schemeCandypopShort,
+    TeamScheme.wildcat => l10n.schemeWildcatShort,
+    TeamScheme.purplegold => l10n.schemePurplegoldShort,
     _ => l10n.schemeDarkShort,
   };
 }

@@ -16,6 +16,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'helpers/contrast.dart';
 import 'helpers/fakes.dart';
 import 'helpers/pump_app.dart';
 
@@ -404,7 +405,7 @@ void main() {
         findsOneWidget,
       );
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
-      await expectLater(tester, meetsGuideline(textContrastGuideline));
+      await expectLater(tester, meetsGuideline(textContrast));
       handle.dispose();
 
       for (final width in [320.0, 360.0]) {

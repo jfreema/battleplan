@@ -15,6 +15,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'helpers/contrast.dart';
 import 'helpers/fakes.dart';
 import 'helpers/pump_app.dart';
 
@@ -422,7 +423,7 @@ void main() {
       await open(tester, size: const Size(390, 844));
       await openTeamTab(tester);
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
-      await expectLater(tester, meetsGuideline(textContrastGuideline));
+      await expectLater(tester, meetsGuideline(textContrast));
       await tester.tap(find.text(claimSentence));
       await tester.pumpAndSettle();
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));

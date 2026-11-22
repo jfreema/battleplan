@@ -251,9 +251,10 @@ class _Stat extends StatelessWidget {
         color: c.textMuted,
       ),
     );
-    // Light's numbers are solid ink, the open reports' red in an ink
-    // outline; elsewhere outlined in the text color (#85).
-    final light = page.brightness == Brightness.light;
+    // On a light panel (Light's, Sky Blue's, Candy Pop's white) the numbers
+    // are solid ink, the open reports' red in an ink outline; elsewhere
+    // outlined in the text color (#85, #86).
+    final light = c.brightness == Brightness.light;
     final numberStyle = TextStyle(
       fontFamily: AppFonts.stencil,
       fontWeight: FontWeight.w900,

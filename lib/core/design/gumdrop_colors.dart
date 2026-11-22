@@ -183,7 +183,9 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
       raisedBorderWidth: 3,
       raisedHighlight: const Color(0x00000000),
       raisedLip: p.shadow,
-      well: r.cardTrack,
+      // Wells (a segmented choice, a number's disc): the panel's track, but
+      // on Candy Pop's blue page its deeper blue, where white reads (#86).
+      well: onCard || r.cardText == r.text ? r.cardTrack : r.field,
       inputFill: onCard ? r.cardField : r.field,
       inputBorder: onCard ? r.cardOutline : r.outline,
       divider: r.hairline,

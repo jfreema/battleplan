@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'helpers/contrast.dart';
 import 'helpers/fakes.dart';
 import 'helpers/pump_app.dart';
 
@@ -117,7 +118,7 @@ void main() {
     );
   });
 
-  testWidgets('reads well: contrast and targets in all three schemes, and '
+  testWidgets('reads well: contrast and targets in all seven schemes, and '
       '200% text, the number under its label', (tester) async {
     for (final scheme in bootCampSchemes) {
       await open(tester, scheme: scheme, reports: 2);
@@ -126,7 +127,7 @@ void main() {
         find.bySemanticsLabel('Users: 48. Every account.'),
         findsOneWidget,
       );
-      await expectLater(tester, meetsGuideline(textContrastGuideline));
+      await expectLater(tester, meetsGuideline(textContrast));
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
       handle.dispose();
     }

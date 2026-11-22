@@ -22,8 +22,15 @@ class OutlinedText extends StatelessWidget {
     this.semanticsLabel,
     this.textScaler,
     this.fill = CampPalette.titleFill,
+    this.header = false,
+    this.namesRoute = false,
     super.key,
   });
+
+  /// The semantics identifier every outlined lettering carries, so the
+  /// accessibility checks can find it: it reads by its ink outline, which
+  /// stands apart from every page and panel (#86), not by its fill.
+  static const semanticsIdentifier = 'outlined-lettering';
 
   final String text;
 
@@ -44,6 +51,13 @@ class OutlinedText extends StatelessWidget {
   /// The lettering's fill: white, or a count's color (Going's green).
   final Color fill;
 
+  /// A heading for screen readers (a page's title, the event's), on the
+  /// lettering's own node: a [Semantics] around it would be a node apart.
+  final bool header;
+
+  /// It names the route (a page's title).
+  final bool namesRoute;
+
   /// The text scaling; the system's unless given (a date on a pennant
   /// that doesn't grow keeps [TextScaler.noScaling]).
   final TextScaler? textScaler;
@@ -60,6 +74,9 @@ class OutlinedText extends StatelessWidget {
     final lines = maxLines ?? inherited.maxLines;
     return Semantics(
       label: semanticsLabel ?? text,
+      identifier: semanticsIdentifier,
+      header: header ? true : null,
+      namesRoute: namesRoute ? true : null,
       excludeSemantics: true,
       child: Stack(
         children: [

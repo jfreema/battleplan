@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'helpers/contrast.dart';
 import 'helpers/fakes.dart';
 import 'helpers/pump_app.dart';
 import 'helpers/scenes.dart' as scenes;
@@ -349,7 +350,7 @@ void main() {
     });
   });
 
-  testWidgets('reads well: 48 px targets, contrast in all three schemes, and '
+  testWidgets('reads well: 48 px targets, contrast in all seven schemes, and '
       '200% text', (tester) async {
     for (final scheme in bootCampSchemes) {
       await scenes.pumpTeam(
@@ -361,7 +362,7 @@ void main() {
       await scenes.pushTo(tester, '/g/a/settings');
       final handle = tester.ensureSemantics();
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
-      await expectLater(tester, meetsGuideline(textContrastGuideline));
+      await expectLater(tester, meetsGuideline(textContrast));
       handle.dispose();
     }
     for (final width in [320.0, 360.0]) {

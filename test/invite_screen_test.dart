@@ -13,6 +13,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
+import 'helpers/contrast.dart';
 import 'helpers/fakes.dart';
 import 'helpers/pump_app.dart';
 import 'helpers/scenes.dart' as scenes;
@@ -502,7 +503,7 @@ void main() {
         ),
       );
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
-      await expectLater(tester, meetsGuideline(textContrastGuideline));
+      await expectLater(tester, meetsGuideline(textContrast));
       handle.dispose();
     }
     for (final width in [320.0, 360.0]) {

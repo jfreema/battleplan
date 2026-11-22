@@ -66,7 +66,6 @@ class ScheduleScreen extends ConsumerWidget {
     final canImport =
         canCreate && (me?.isAdmin ?? false) && !emptyOffersImport && !unknown;
 
-    final c = GumdropColors.of(context);
     // The red round + beside the filter (Boot Camp Mix, #85). Full storage
     // stops new events (STORE-4); the button stays and says why.
     final plus = canCreate
@@ -92,17 +91,14 @@ class ScheduleScreen extends ConsumerWidget {
         MediaQuery.sizeOf(context).width >= 340 &&
         MediaQuery.textScalerOf(context).scale(15) <= 15 * 1.3;
     final buttons = GumdropButtons.of(context);
-    final onPage = WidgetStatePropertyAll(c.page);
-    // Quiet: outlined, on the page's color, so it reads over the list
-    // scrolling under it.
+    // A push button in the panel color (#85), opaque over the list
+    // scrolling under it, lettered as panels are (#86).
     final import = roomy
         ? OutlinedButton.icon(
-            style: buttons
-                .secondary(
-                  height: 44,
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                )
-                .copyWith(backgroundColor: onPage),
+            style: buttons.secondary(
+              height: 44,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+            ),
             onPressed: openImport,
             icon: const Icon(AppIcons.download, size: 20),
             label: Text(
@@ -112,7 +108,7 @@ class ScheduleScreen extends ConsumerWidget {
             ),
           )
         : IconButton(
-            style: buttons.icon(size: 44).copyWith(backgroundColor: onPage),
+            style: buttons.icon(size: 44),
             tooltip: l10n.scheduleImport,
             onPressed: openImport,
             icon: const Icon(AppIcons.download, size: 22),

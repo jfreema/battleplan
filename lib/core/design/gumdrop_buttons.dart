@@ -84,7 +84,9 @@ class GumdropButtons {
   }) => _style(
     face: colors.raisedFace,
     lip: colors.raisedLip,
-    foreground: colors.textPrimary,
+    // The panel's lettering, on the panel color (Candy Pop's navy on
+    // white, #86).
+    foreground: colors.roles.cardText,
     highlight: 1.5,
     highlightColor: colors.raisedHighlight,
     side: colors.raisedBorderWidth == 0

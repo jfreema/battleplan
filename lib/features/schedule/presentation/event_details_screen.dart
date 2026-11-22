@@ -497,18 +497,16 @@ class _Hero extends StatelessWidget {
               if (word.isNotEmpty) TextSpan(text: word, style: titleAt(size)),
           ],
         );
-        return Semantics(
-          header: true,
-          child: Transform.rotate(
-            angle: -2 * 3.141592653589793 / 180,
-            alignment: const Alignment(-1, 0.4),
-            child: OutlinedText(
-              shown,
-              semanticsLabel: event.title,
-              stroke: size * 0.12,
-              shadow: size >= 38 ? 4 : 3,
-              style: titleAt(size),
-            ),
+        return Transform.rotate(
+          angle: -2 * 3.141592653589793 / 180,
+          alignment: const Alignment(-1, 0.4),
+          child: OutlinedText(
+            shown,
+            semanticsLabel: event.title,
+            header: true,
+            stroke: size * 0.12,
+            shadow: size >= 38 ? 4 : 3,
+            style: titleAt(size),
           ),
         );
       },

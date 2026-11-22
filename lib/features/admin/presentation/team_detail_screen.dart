@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
@@ -177,7 +178,6 @@ class _Actions extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final repo = ref.read(adminRepositoryProvider);
-    final scheme = Theme.of(context).colorScheme;
     final id = group.id;
     final suspended = group.suspendedAt != null;
 
@@ -280,7 +280,10 @@ class _Actions extends ConsumerWidget {
               label: Text(suspended ? l10n.adminUnsuspend : l10n.adminSuspend),
             ),
             OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(foregroundColor: scheme.error),
+              // The warning red as it reads on the push button's panel color.
+              style: OutlinedButton.styleFrom(
+                foregroundColor: GumdropColors.of(context).card.cherry.text,
+              ),
               onPressed: () => unawaited(delete()),
               icon: const Icon(AppIcons.delete),
               label: Text(l10n.deleteTeam),

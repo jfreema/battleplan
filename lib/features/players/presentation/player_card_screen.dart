@@ -259,8 +259,10 @@ class PlayerCardScreen extends ConsumerWidget {
           if (isAdmin) ...[
             const SizedBox(height: Space.xl),
             OutlinedButton(
+              // The warning red as it reads on the push button's panel
+              // color (Candy Pop's white, #86).
               style: OutlinedButton.styleFrom(
-                foregroundColor: Theme.of(context).colorScheme.error,
+                foregroundColor: GumdropColors.of(context).card.cherry.text,
               ),
               onPressed: () async {
                 final ok = await showConfirmDialog(

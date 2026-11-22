@@ -495,7 +495,8 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
           ? null
           : Text(
               subtitle,
-              style: text.bodySmall?.copyWith(color: c.textMutedOnPage),
+              // In the panel of rows, so the panel's muted lettering.
+              style: text.bodySmall?.copyWith(color: c.card.textMutedOnPage),
             ),
       value: value,
       onChanged: onChanged,

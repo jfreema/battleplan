@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'helpers/contrast.dart';
 import 'helpers/fakes.dart';
 import 'helpers/pump_app.dart';
 
@@ -133,14 +134,14 @@ void main() {
     expect(find.textContaining('Google Play'), findsNothing);
   });
 
-  testWidgets('reads well: the tag in all three schemes, and 200% text', (
+  testWidgets('reads well: the tag in all seven schemes, and 200% text', (
     tester,
   ) async {
     for (final scheme in bootCampSchemes) {
       for (final path in ['/admin/users', '/admin/users/jane']) {
         await open(tester, path, scheme: scheme, size: const Size(390, 900));
         final handle = tester.ensureSemantics();
-        await expectLater(tester, meetsGuideline(textContrastGuideline));
+        await expectLater(tester, meetsGuideline(textContrast));
         handle.dispose();
       }
     }

@@ -60,11 +60,14 @@ class CampAppBar extends StatelessWidget implements PreferredSizeWidget {
     // Icon buttons among the actions are round buttons (#85): the panel
     // color in a 2.5 px ink outline, 36 across in a 48 px tap area.
     final c = GumdropColors.of(context);
+    // On the panel color, so in the panel's lettering (Candy Pop's navy
+    // on white, #86).
+    final onPanel = c.card.textOnPage;
     final round = IconButtonThemeData(
       style: ButtonStyle(
         backgroundColor: WidgetStatePropertyAll(c.surface),
-        foregroundColor: WidgetStatePropertyAll(c.textOnPage),
-        iconColor: WidgetStatePropertyAll(c.textOnPage),
+        foregroundColor: WidgetStatePropertyAll(onPanel),
+        iconColor: WidgetStatePropertyAll(onPanel),
         shape: WidgetStatePropertyAll(
           CircleBorder(side: BorderSide(color: c.ink, width: 2.5)),
         ),
@@ -76,7 +79,7 @@ class CampAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
     );
     final buttons = actions;
-    return AppBar(
+    final bar = AppBar(
       leading: leading,
       automaticallyImplyLeading: automaticallyImplyLeading,
       title: title,
@@ -105,5 +108,7 @@ class CampAppBar extends StatelessWidget implements PreferredSizeWidget {
       systemOverlayStyle: systemOverlayStyle,
       actionsPadding: actionsPadding,
     );
+    // Lettered for the camouflage (Sky Blue's white, #86).
+    return camo ? CampHeaderTheme(child: bar) : bar;
   }
 }

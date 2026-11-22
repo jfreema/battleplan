@@ -12,6 +12,7 @@ import 'package:battleplan/features/chat/presentation/photo_tray.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'helpers/contrast.dart';
 import 'helpers/fakes.dart';
 import 'helpers/pump_app.dart';
 
@@ -213,7 +214,7 @@ void main() {
     await pick(tester);
     expect(find.bySemanticsLabel('Photo 1 of 2'), findsOneWidget);
     await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
-    await expectLater(tester, meetsGuideline(textContrastGuideline));
+    await expectLater(tester, meetsGuideline(textContrast));
     handle.dispose();
     tester.platformDispatcher.textScaleFactorTestValue = 2;
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);

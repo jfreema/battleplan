@@ -18,6 +18,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'helpers/contrast.dart';
 import 'helpers/fakes.dart';
 import 'helpers/scenes.dart';
 
@@ -31,7 +32,7 @@ void main() {
     'Android tap targets': androidTapTargetGuideline,
     'iOS tap targets': iOSTapTargetGuideline,
     'labeled tap targets': labeledTapTargetGuideline,
-    'text contrast': textContrastGuideline,
+    'text contrast': textContrast,
   };
 
   // The main screens, and the sheets and screens most used from them.

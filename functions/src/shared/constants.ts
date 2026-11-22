@@ -267,11 +267,11 @@ export const SCHEME_INK: Readonly<Record<string, SchemeInk>> = {
   light: { page: '#F2EBE0', text: '#1A1A18', tabbar: '#FFFFFF', field: '#FFFFFF', card: '#FFFFFF', cardText: '#1A1A18', cardField: '#FFFFFF', popup: '#FFFFFF', candyInk: '#1A1A18' },
   dark: { page: '#0D0D0C', text: '#F4EAD0', tabbar: '#070707', field: '#252522', card: '#252522', cardText: '#F4EAD0', cardField: '#252522', popup: '#252522', candyInk: '#000000' },
   navy: { page: '#0D0D0C', text: '#F4EAD0', tabbar: '#070707', field: '#252522', card: '#252522', cardText: '#F4EAD0', cardField: '#252522', popup: '#252522', candyInk: '#000000' },
-  sky: { page: '#F2EBE0', text: '#1A1A18', tabbar: '#FFFFFF', field: '#FFFFFF', card: '#FFFFFF', cardText: '#1A1A18', cardField: '#FFFFFF', popup: '#FFFFFF', candyInk: '#1A1A18' },
-  skyblue: { page: '#F2EBE0', text: '#1A1A18', tabbar: '#FFFFFF', field: '#FFFFFF', card: '#FFFFFF', cardText: '#1A1A18', cardField: '#FFFFFF', popup: '#FFFFFF', candyInk: '#1A1A18' },
-  candypop: { page: '#F2EBE0', text: '#1A1A18', tabbar: '#FFFFFF', field: '#FFFFFF', card: '#FFFFFF', cardText: '#1A1A18', cardField: '#FFFFFF', popup: '#FFFFFF', candyInk: '#1A1A18' },
-  wildcat: { page: '#0D0D0C', text: '#F4EAD0', tabbar: '#070707', field: '#252522', card: '#252522', cardText: '#F4EAD0', cardField: '#252522', popup: '#252522', candyInk: '#000000' },
-  purplegold: { page: '#0D0D0C', text: '#F4EAD0', tabbar: '#070707', field: '#252522', card: '#252522', cardText: '#F4EAD0', cardField: '#252522', popup: '#252522', candyInk: '#000000' },
+  sky: { page: '#BCD9F5', text: '#0B1531', tabbar: '#BCD9F5', field: '#BCD9F5', card: '#BCD9F5', cardText: '#0B1531', cardField: '#BCD9F5', popup: '#BCD9F5', candyInk: '#0B1531' },
+  skyblue: { page: '#BCD9F5', text: '#0B1531', tabbar: '#BCD9F5', field: '#BCD9F5', card: '#BCD9F5', cardText: '#0B1531', cardField: '#BCD9F5', popup: '#BCD9F5', candyInk: '#0B1531' },
+  candypop: { page: '#1748D4', text: '#FFFFFF', tabbar: '#0B1640', field: '#1238A8', card: '#FFFFFF', cardText: '#0B1640', cardField: '#FFFFFF', popup: '#1238A8', candyInk: '#0B1640' },
+  wildcat: { page: '#5E1224', text: '#FFFFFF', tabbar: '#0B0B0B', field: '#701C30', card: '#701C30', cardText: '#FFFFFF', cardField: '#701C30', popup: '#701C30', candyInk: '#0B0B0B' },
+  purplegold: { page: '#461D7C', text: '#FFFFFF', tabbar: '#2E1157', field: '#55278F', card: '#55278F', cardText: '#FFFFFF', cardField: '#55278F', popup: '#55278F', candyInk: '#170730' },
   scoreboard: { page: '#0D0D0C', text: '#F4EAD0', tabbar: '#070707', field: '#252522', card: '#252522', cardText: '#F4EAD0', cardField: '#252522', popup: '#252522', candyInk: '#000000' },
 };
 

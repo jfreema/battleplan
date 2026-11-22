@@ -104,7 +104,8 @@ class GumdropIconButton extends StatelessWidget {
         icon,
         size: 20,
         weight: red ? 700 : null,
-        color: red ? Colors.white : c.textOnPage,
+        // On the panel color, so in the panel's lettering (#86).
+        color: red ? Colors.white : c.card.textOnPage,
       ),
     );
     final glyph = !dot

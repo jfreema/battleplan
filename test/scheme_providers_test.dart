@@ -261,8 +261,8 @@ void main() {
       expect(c.read(teamSchemeProvider(_a)), TeamScheme.army);
     });
 
-    test('a pick or team default the app no longer offers reads as the '
-        'closest of the three, and is never rewritten (#85)', () async {
+    test('a pick the app no longer offers reads as the closest of the '
+        'seven, and is never rewritten (#85, #86)', () async {
       final users = FakeUserRepository()..colorScheme = TeamScheme.dark;
       final c = await container(
         users: users,
@@ -283,7 +283,8 @@ void main() {
         ..listen(teamSchemeProvider(_b), (_, _) {});
       await _settle();
       expect(c.read(teamSchemeProvider(_a)), TeamScheme.dark);
-      expect(c.read(teamSchemeProvider(_b)), TeamScheme.light);
+      // Candy Pop is a Boot Camp Mix scheme again (#86).
+      expect(c.read(teamSchemeProvider(_b)), TeamScheme.candypop);
       // Nothing is written back.
       expect(users.colorScheme, TeamScheme.dark);
     });

@@ -1005,10 +1005,11 @@ class _PhoneBar extends StatelessWidget implements PreferredSizeWidget {
           final round = IconButtonThemeData(
             style: ButtonStyle(
               backgroundColor: WidgetStatePropertyAll(c.surface),
+              // On the panel color, so in the panel's lettering (#86).
               iconColor: WidgetStateProperty.resolveWith(
                 (s) => s.contains(WidgetState.disabled)
                     ? c.roles.palette.disabledIcon
-                    : c.textOnPage,
+                    : c.card.textOnPage,
               ),
               shape: WidgetStatePropertyAll(
                 CircleBorder(side: BorderSide(color: c.ink, width: 2.5)),
@@ -1119,11 +1120,12 @@ class _Tools extends StatelessWidget {
       backgroundColor: WidgetStateProperty.resolveWith(
         (s) => s.contains(WidgetState.selected) ? mustard : c.surface,
       ),
+      // The panel's lettering on the panel color (#86).
       foregroundColor: WidgetStateProperty.resolveWith(
-        (s) => s.contains(WidgetState.selected) ? c.ink : c.textOnPage,
+        (s) => s.contains(WidgetState.selected) ? c.ink : c.card.textOnPage,
       ),
       iconColor: WidgetStateProperty.resolveWith(
-        (s) => s.contains(WidgetState.selected) ? c.ink : c.textOnPage,
+        (s) => s.contains(WidgetState.selected) ? c.ink : c.card.textOnPage,
       ),
       shape: WidgetStatePropertyAll(
         CircleBorder(side: BorderSide(color: c.ink, width: 2.5)),

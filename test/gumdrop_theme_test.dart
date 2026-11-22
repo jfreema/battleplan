@@ -15,34 +15,122 @@ import 'package:battleplan/core/widgets/team_badge.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The design's tokens (#85), by name: Army green, Black, Light.
+/// The design's tokens (#85, #86), by name, in [bootCampSchemes]' order:
+/// Army green, Black, Light, Sky Blue, Candy Pop, Central Wildcats, Geaux
+/// Tigahs.
 const _tokens = <String, List<int>>{
-  'ink': [0xFF1A1A18, 0xFF000000, 0xFF1A1A18],
-  'shadow': [0xFF1A1A18, 0xFF363A28, 0xFF1A1A18],
-  'page': [0xFF474C2B, 0xFF0D0D0C, 0xFFF2EBE0],
-  'pageDots': [0x331A1A18, 0x0EF4EAD0, 0x1A1A1A18],
-  'panel': [0xFF575A3A, 0xFF252522, 0xFFFFFFFF],
-  'tabBar': [0xFF3D4124, 0xFF070707, 0xFFFFFFFF],
-  'text': [0xFFF4EAD0, 0xFFF4EAD0, 0xFF1A1A18],
-  'muted': [0xFFD3CCAE, 0xFFB5B1A2, 0xFF5E584B],
-  'mustard': [0xFFF2C230, 0xFFF2C230, 0xFFEFBE2B],
-  'balloon': [0xFFF2C230, 0xFF93CFF5, 0xFFEFBE2B],
-  'red': [0xFFDB442F, 0xFFDB442F, 0xFFD4432C],
-  'blue': [0xFF5FA3C8, 0xFF4F93B9, 0xFF4A86A8],
-  'green': [0xFF9AD04A, 0xFF8DC63F, 0xFF86B93B],
-  'orange': [0xFFF5A040, 0xFFF2983A, 0xFFEE9230],
-  'purple': [0xFFAD8CD6, 0xFF9B79C4, 0xFF8C68AD],
-  'unansweredTag': [0xFF7E8160, 0xFF47473F, 0xFFDCD3C3],
-  'answerRow': [0xFF4C5130, 0xFF1B1B19, 0xFFFAEDB2],
-  'toolsRow': [0xFF4C5130, 0xFF1A1A18, 0xFFE6DCCB],
-  'disabledIcon': [0xFF8E9173, 0xFF64645C, 0xFFB2AB9B],
-  'camoGround': [0xFF3F4722, 0xFF23241F, 0xFFC7B787],
-  'camoBig': [0xFF2A3016, 0xFF161713, 0xFFA69468],
-  'camoMid': [0xFF7F7A48, 0xFF3A3C33, 0xFFE0D4AC],
-  'camoSmall': [0xFF14170B, 0xFF070706, 0xFF6E6143],
-  'headerHalftone': [0x33F4EAD0, 0x1FF4EAD0, 0x73FFFFFF],
-  'headerLettering': [0xFFF4EAD0, 0xFFF4EAD0, 0xFF1A1A18],
-  'ballChain': [0xFF1A1A18, 0xFF77786E, 0xFF1A1A18],
+  'ink': [
+    0xFF1A1A18, 0xFF000000, 0xFF1A1A18, //
+    0xFF0B1531, 0xFF0B1640, 0xFF0B0B0B, 0xFF170730,
+  ],
+  'shadow': [
+    0xFF1A1A18, 0xFF363A28, 0xFF1A1A18, //
+    0xFF0B1531, 0xFF0B1640, 0xFF0B0B0B, 0xFF170730,
+  ],
+  'page': [
+    0xFF474C2B, 0xFF0D0D0C, 0xFFF2EBE0, //
+    0xFFBCD9F5, 0xFF1748D4, 0xFF5E1224, 0xFF461D7C,
+  ],
+  'pageDots': [
+    0x331A1A18, 0x0EF4EAD0, 0x1A1A1A18, //
+    0x210B1531, 0x21FFFFFF, 0x1CC0C5CC, 0x1CFDD023,
+  ],
+  'panel': [
+    0xFF575A3A, 0xFF252522, 0xFFFFFFFF, //
+    0xFFBCD9F5, 0xFFFFFFFF, 0xFF701C30, 0xFF55278F,
+  ],
+  'tabBar': [
+    0xFF3D4124, 0xFF070707, 0xFFFFFFFF, //
+    0xFFBCD9F5, 0xFF0B1640, 0xFF0B0B0B, 0xFF2E1157,
+  ],
+  'text': [
+    0xFFF4EAD0, 0xFFF4EAD0, 0xFF1A1A18, //
+    0xFF0B1531, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+  ],
+  'muted': [
+    0xFFD3CCAE, 0xFFB5B1A2, 0xFF5E584B, //
+    0xFF34476E, 0xFFDCE6FF, 0xFFCDD1D8, 0xFFD5C6F0,
+  ],
+  'panelText': [
+    0xFFF4EAD0, 0xFFF4EAD0, 0xFF1A1A18, //
+    0xFF0B1531, 0xFF0B1640, 0xFFFFFFFF, 0xFFFFFFFF,
+  ],
+  'panelMuted': [
+    0xFFD3CCAE, 0xFFB5B1A2, 0xFF5E584B, //
+    0xFF34476E, 0xFF4B5A8C, 0xFFCDD1D8, 0xFFD5C6F0,
+  ],
+  'mustard': [
+    0xFFF2C230, 0xFFF2C230, 0xFFEFBE2B, //
+    0xFFF5C731, 0xFFFFD43A, 0xFFC9CED6, 0xFFFDD023,
+  ],
+  'balloon': [
+    0xFFF2C230, 0xFF93CFF5, 0xFFEFBE2B, //
+    0xFFF5C731, 0xFFFFD43A, 0xFFC9CED6, 0xFFFDD023,
+  ],
+  'red': [
+    0xFFDB442F, 0xFFDB442F, 0xFFD4432C, //
+    0xFFE2463A, 0xFFF2473D, 0xFFEE4B37, 0xFFE8473A,
+  ],
+  'blue': [
+    0xFF5FA3C8, 0xFF4F93B9, 0xFF4A86A8, //
+    0xFF4C90E2, 0xFF35B0FF, 0xFF5FA8E0, 0xFF5AA5EE,
+  ],
+  'green': [
+    0xFF9AD04A, 0xFF8DC63F, 0xFF86B93B, //
+    0xFF7CC84E, 0xFF5ED36A, 0xFF86C94A, 0xFF7FCB52,
+  ],
+  'orange': [
+    0xFFF5A040, 0xFFF2983A, 0xFFEE9230, //
+    0xFFF5943A, 0xFFFF9A2E, 0xFFF59A3A, 0xFFF79A3C,
+  ],
+  'purple': [
+    0xFFAD8CD6, 0xFF9B79C4, 0xFF8C68AD, //
+    0xFFA98BEB, 0xFFB58BFF, 0xFFB08AE0, 0xFFC7A6FF,
+  ],
+  'unansweredTag': [
+    0xFF7E8160, 0xFF47473F, 0xFFDCD3C3, //
+    0xFFE6F1FC, 0xFFC9D3EE, 0xFF8A5562, 0xFF7A56AE,
+  ],
+  'answerRow': [
+    0xFF4C5130, 0xFF1B1B19, 0xFFFAEDB2, //
+    0xFFFBEFB4, 0xFFFFF1B0, 0xFF5A1525, 0xFF481F7C,
+  ],
+  'toolsRow': [
+    0xFF4C5130, 0xFF1A1A18, 0xFFE6DCCB, //
+    0xFFA9CBEE, 0xFF1240B8, 0xFF681A2E, 0xFF4E2287,
+  ],
+  'disabledIcon': [
+    0xFF8E9173, 0xFF64645C, 0xFFB2AB9B, //
+    0xFF6F86AB, 0xFFA3B0D6, 0xFFA88892, 0xFF9A86C0,
+  ],
+  'camoGround': [
+    0xFF3F4722, 0xFF23241F, 0xFFC7B787, //
+    0xFF2F5596, 0xFF1238A8, 0xFF55111F, 0xFF3F1A72,
+  ],
+  'camoBig': [
+    0xFF2A3016, 0xFF161713, 0xFFA69468, //
+    0xFF1E3A70, 0xFF0C2A86, 0xFF350A14, 0xFF2A0F50,
+  ],
+  'camoMid': [
+    0xFF7F7A48, 0xFF3A3C33, 0xFFE0D4AC, //
+    0xFF6390CC, 0xFF3F6FF2, 0xFF8A2E42, 0xFF6C3DB0,
+  ],
+  'camoSmall': [
+    0xFF14170B, 0xFF070706, 0xFF6E6143, //
+    0xFF0E1D42, 0xFF0B1640, 0xFF0B0B0B, 0xFF150628,
+  ],
+  'headerHalftone': [
+    0x33F4EAD0, 0x1FF4EAD0, 0x73FFFFFF, //
+    0x57FFFFFF, 0x38FFFFFF, 0x24FFFFFF, 0x29FFFFFF,
+  ],
+  'headerLettering': [
+    0xFFF4EAD0, 0xFFF4EAD0, 0xFF1A1A18, //
+    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+  ],
+  'ballChain': [
+    0xFF1A1A18, 0xFF77786E, 0xFF1A1A18, //
+    0xFF0B1531, 0xFFDCE6FF, 0xFFC0C5CC, 0xFFFDD023,
+  ],
 };
 
 /// Each token's value in [p], by the name the design uses.
@@ -55,6 +143,8 @@ Map<String, Color> _palette(CampPalette p) => {
   'tabBar': p.tabBar,
   'text': p.text,
   'muted': p.muted,
+  'panelText': p.panelText,
+  'panelMuted': p.panelMuted,
   'mustard': p.mustard,
   'balloon': p.balloon,
   'red': p.red,
@@ -109,16 +199,25 @@ void main() {
       test('${scheme.value}: the roles come from the tokens', () {
         final r = SchemeRoles.of(scheme);
         final p = r.palette;
+        // Candy Pop letters its page white and its white panels navy (#86):
+        // its text boxes and menus opened from the page take a deeper blue.
+        final two = p.panelText != p.text;
+        final field = two ? p.camoGround : p.panel;
         expect(r.page, p.page);
         expect(r.text, p.text);
-        expect(r.cardText, p.text);
+        expect(r.cardText, p.panelText);
         expect(
           r.pageMuted,
-          ColorMath.readable(p.muted, [p.page, p.panel, p.tabBar]),
+          ColorMath.readable(p.muted, [
+            p.page,
+            field,
+            p.tabBar,
+            if (!two) p.panel,
+          ]),
         );
         expect(r.card, p.panel);
-        expect(r.field, p.panel);
-        expect(r.popup, p.panel);
+        expect(r.field, field);
+        expect(r.popup, field);
         expect(r.tabbar, p.tabBar);
         for (final line in [
           r.hairline,
@@ -137,28 +236,33 @@ void main() {
       });
     }
 
-    test('only the three are offered, and Black is the default', () {
+    test('the seven are offered, and Black is the default', () {
       expect(ThemeCatalog.available, [
         TeamScheme.army,
         TeamScheme.dark,
         TeamScheme.light,
+        TeamScheme.sky,
+        TeamScheme.candypop,
+        TeamScheme.wildcat,
+        TeamScheme.purplegold,
       ]);
       expect(defaultTeamScheme, TeamScheme.dark);
     });
 
-    test('every other stored scheme is drawn in the closest of the three, and '
+    test('every other stored scheme is drawn in the closest of the seven, and '
         'never rewritten', () {
       const want = {
         TeamScheme.army: TeamScheme.army,
         TeamScheme.darkarmy: TeamScheme.army,
         TeamScheme.light: TeamScheme.light,
-        TeamScheme.sky: TeamScheme.light,
-        TeamScheme.skyblue: TeamScheme.light,
-        TeamScheme.candypop: TeamScheme.light,
+        TeamScheme.sky: TeamScheme.sky,
+        // Sky Blue Pop is Sky Blue now (#86).
+        TeamScheme.skyblue: TeamScheme.sky,
+        TeamScheme.candypop: TeamScheme.candypop,
         TeamScheme.dark: TeamScheme.dark,
         TeamScheme.navy: TeamScheme.dark,
-        TeamScheme.wildcat: TeamScheme.dark,
-        TeamScheme.purplegold: TeamScheme.dark,
+        TeamScheme.wildcat: TeamScheme.wildcat,
+        TeamScheme.purplegold: TeamScheme.purplegold,
         TeamScheme.scoreboard: TeamScheme.dark,
         // A saved slot with nothing in it.
         TeamScheme.custom1: TeamScheme.dark,
@@ -224,17 +328,34 @@ void main() {
       }
     });
 
-    test('Army green and Black are dark, Light light, cards too', () {
-      expect(bootCampSchemes.where((s) => s.isDark), [
-        TeamScheme.army,
-        TeamScheme.dark,
+    test("light pages are Light and Sky Blue; cards agree but Candy Pop's "
+        'white ones', () {
+      expect(bootCampSchemes.where((s) => !s.isDark), [
+        TeamScheme.light,
+        TeamScheme.sky,
       ]);
       for (final scheme in bootCampSchemes) {
         final want = scheme.isDark ? Brightness.dark : Brightness.light;
+        final card = scheme == TeamScheme.candypop ? Brightness.light : want;
         expect(GumdropColors.forScheme(scheme).brightness, want);
-        expect(GumdropColors.forScheme(scheme, onCard: true).brightness, want);
+        expect(GumdropColors.forScheme(scheme, onCard: true).brightness, card);
         expect(AppTheme.of(scheme).brightness, want);
-        expect(AppTheme.of(scheme, onCard: true).brightness, want);
+        expect(AppTheme.of(scheme, onCard: true).brightness, card);
+      }
+    });
+
+    test("the camouflage is lettered in its own color: white on Sky Blue's "
+        'blue one, over a page lettered in navy (#86)', () {
+      final sky = SchemeRoles.sky.palette;
+      expect(sky.headerLettering, const Color(0xFFFFFFFF));
+      expect(sky.text, isNot(sky.headerLettering));
+      for (final scheme in bootCampSchemes) {
+        final p = SchemeRoles.of(scheme).palette;
+        expect(
+          ColorMath.contrast(p.headerLettering, p.camoGround),
+          greaterThanOrEqualTo(4.5),
+          reason: scheme.value,
+        );
       }
     });
   });
@@ -303,7 +424,9 @@ void main() {
         expect(card.blueRaspberry.text, r.blueRaspberryCardText);
         expect(page.textMutedOnPage, r.pageMuted);
         expect(card.textMutedOnPage, r.cardMuted);
-        expect(page.well, r.cardTrack);
+        // On Candy Pop's blue page its wells are its text boxes' deeper
+        // blue (#86).
+        expect(page.well, r.cardText == r.text ? r.cardTrack : r.field);
         expect(card.well, r.cardTrack);
         // Plain headings have no drop; big titles are outlined.
         expect(page.headingShadow.a, 0);
@@ -364,8 +487,9 @@ void main() {
               _reads(fg, s.surfaceContainerLow, '$where $name on cards');
             }
           }
-          if (!onCard) {
-            // Panels and pop-ups are one color.
+          if (!onCard && scheme != TeamScheme.candypop) {
+            // Panels and pop-ups are one color, but in Candy Pop, whose
+            // pop-ups from the page are a deeper blue than its white panels.
             expect(s.surfaceContainerLow, s.surfaceContainer);
           }
           for (final (fg, bg, name) in [

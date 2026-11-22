@@ -13,6 +13,7 @@ import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'helpers/contrast.dart';
 import 'helpers/fakes.dart';
 import 'helpers/scenes.dart' as scenes;
 
@@ -357,13 +358,13 @@ void main() {
       handle.dispose();
     });
 
-    testWidgets('reads well: contrast in all three schemes, and 200% text', (
+    testWidgets('reads well: contrast in all seven schemes, and 200% text', (
       tester,
     ) async {
       for (final scheme in bootCampSchemes) {
         await openEvent(tester, scheme: scheme);
         final handle = tester.ensureSemantics();
-        await expectLater(tester, meetsGuideline(textContrastGuideline));
+        await expectLater(tester, meetsGuideline(textContrast));
         handle.dispose();
         await openPoll(
           tester,
@@ -372,7 +373,7 @@ void main() {
           scheme: scheme,
         );
         final again = tester.ensureSemantics();
-        await expectLater(tester, meetsGuideline(textContrastGuideline));
+        await expectLater(tester, meetsGuideline(textContrast));
         again.dispose();
       }
       tester.platformDispatcher.textScaleFactorTestValue = 2;

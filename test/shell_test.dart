@@ -722,9 +722,9 @@ void main() {
       GoRouter.of(tester.element(find.byType(Scaffold).first))
           .go('/g/a/scheme');
       await tester.pumpAndSettle();
-      // A stored Sky Blue Pop is drawn, and named, as Light (#85).
-      expect(find.text('Group default (Light)'), findsOneWidget);
-      expect(page(tester), SchemeRoles.light.page);
+      // A stored Sky Blue Pop is drawn, and named, as Sky Blue (#86).
+      expect(find.text('Group default (Sky Blue)'), findsOneWidget);
+      expect(page(tester), SchemeRoles.sky.page);
     });
 
     testWidgets('a pick of a scheme that left is drawn and checked as the '

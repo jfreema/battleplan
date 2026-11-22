@@ -38,7 +38,7 @@ class CampHeader extends StatelessWidget {
           child: MediaQuery.removePadding(
             context: context,
             removeTop: top,
-            child: child,
+            child: CampHeaderTheme(child: child),
           ),
         ),
       ),
@@ -218,4 +218,54 @@ class PageDots extends StatelessWidget {
     ),
     child: child,
   );
+}
+
+/// [child] lettered for the camouflage (#86): where the scheme's header
+/// lettering isn't its page's text (Sky Blue's white on its blue
+/// camouflage, over a page lettered in navy), the page's text colors, the
+/// icons, and the app bar's lettering take the header's. Elsewhere it's
+/// [child] as it is.
+class CampHeaderTheme extends StatelessWidget {
+  const new({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final c = GumdropColors.of(context);
+    final lettering = c.roles.palette.headerLettering;
+    if (c.onCard || lettering == c.textOnPage) return child;
+    final muted = lettering.withValues(alpha: 0.86);
+    final header = c.copyWith(
+      textOnPage: lettering,
+      textPrimary: lettering,
+      headingText: lettering,
+      textMutedOnPage: muted,
+    );
+    return Theme(
+      data: theme.copyWith(
+        extensions: [
+          for (final e in theme.extensions.values)
+            if (e is GumdropColors) header else e,
+        ],
+        iconTheme: theme.iconTheme.copyWith(color: lettering),
+        appBarTheme: theme.appBarTheme.copyWith(
+          foregroundColor: lettering,
+          iconTheme: IconThemeData(color: lettering),
+          actionsIconTheme: IconThemeData(color: lettering),
+          titleTextStyle: theme.appBarTheme.titleTextStyle?.copyWith(
+            color: lettering,
+          ),
+        ),
+      ),
+      child: DefaultTextStyle.merge(
+        style: TextStyle(color: lettering),
+        child: IconTheme.merge(
+          data: IconThemeData(color: lettering),
+          child: child,
+        ),
+      ),
+    );
+  }
 }

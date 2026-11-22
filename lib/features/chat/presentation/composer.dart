@@ -242,6 +242,9 @@ class _ComposerState extends State<Composer> {
         ? l10n.addPhotosToMessage
         : l10n.addToMessage;
     final c = GumdropColors.of(context);
+    // The box is a panel, so lettered as panels are (Candy Pop's navy on
+    // white, #86).
+    final panel = c.card;
     // Boot Camp Mix's composer (#85): one rounded panel (corner 27) in a
     // 3 px ink outline on a hard 3/3 shadow, the + at its left and Send at
     // its right, a 36 px red round button in a 2.5 px ink outline with a
@@ -252,7 +255,7 @@ class _ComposerState extends State<Composer> {
       minimumSize: const Size(48, 46),
       padding: EdgeInsets.zero,
       iconSize: 24,
-      foregroundColor: c.textOnPage,
+      foregroundColor: panel.textOnPage,
     );
     final red = c.cherry.face;
     final sendStyle =
@@ -373,8 +376,8 @@ class _ComposerState extends State<Composer> {
                     // What's typed looks as it will once sent, but in
                     // the box's weight (ChatText).
                     style: ChatText.of(Theme.of(context).textTheme.bodyLarge)
-                        .copyWith(color: c.textOnPage),
-                    cursorColor: c.textOnPage,
+                        .copyWith(color: panel.textOnPage),
+                    cursorColor: panel.textOnPage,
                     onChanged: (_) => setState(() {}),
                     decoration: InputDecoration(
                       hintText: hint,
@@ -384,7 +387,7 @@ class _ComposerState extends State<Composer> {
                         fontFamily: AppFonts.body,
                         fontWeight: FontWeight.w500,
                         fontSize: 17,
-                        color: c.textMutedOnPage,
+                        color: panel.textMutedOnPage,
                       ),
                       prefixIcon: plus,
                       prefixIconConstraints: const BoxConstraints(
@@ -398,7 +401,7 @@ class _ComposerState extends State<Composer> {
                       ),
                       isDense: true,
                       filled: true,
-                      fillColor: c.inputFill,
+                      fillColor: panel.inputFill,
                       // 48 px tall, the smallest tap target (the
                       // design's 46 is just under it).
                       contentPadding: EdgeInsets.fromLTRB(

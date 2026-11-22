@@ -2,8 +2,8 @@
 // protection in there that prevents text and background from being the
 // same color", then "I only want to block colors that are nearly
 // identical"): which colors over each stored scheme sit on one that looks
-// nearly the same, as the app draws it (since Boot Camp Mix, #85, the
-// closest of Army green, Black and Light). No emulators needed.
+// nearly the same, as the app draws it (since Boot Camp Mix, #85 and #86,
+// the closest of its seven schemes). No emulators needed.
 import { describe, expect, it } from 'vitest';
 import {
   builtInSchemeValues,
@@ -71,8 +71,8 @@ describe('unreadableParts', () => {
   });
 
   it('refuses a "you" color nearly the same as the page, cards or tab bar', () => {
-    // Central Wildcat is drawn as Black: a near-black page and charcoal cards.
-    expect(unreadableParts('wildcat', theme({ accent: '#141413' }))).toEqual(
+    // Central Wildcats' maroon page and a shade lighter cards (#86).
+    expect(unreadableParts('wildcat', theme({ accent: '#661729' }))).toEqual(
       expect.arrayContaining(['buttons on page', 'buttons on cards']),
     );
     expect(unreadableParts('army', theme({ accent: '#3D4124' }))).toContain('picked tab on tab bar');

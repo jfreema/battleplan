@@ -186,7 +186,12 @@ abstract final class AppTheme {
         titleTextStyle: textTheme.titleLarge?.copyWith(fontSize: 25),
         iconTheme: IconThemeData(color: text),
         actionsIconTheme: IconThemeData(color: text),
-        systemOverlayStyle: g.brightness == Brightness.dark
+        // The status bar sits on the camouflage (#85), so its icons go by
+        // the camouflage's ground: light on Sky Blue's blue one over a
+        // light page (#86).
+        systemOverlayStyle:
+            ThemeData.estimateBrightnessForColor(g.roles.palette.camoGround) ==
+                Brightness.dark
             ? SystemUiOverlayStyle.light
             : SystemUiOverlayStyle.dark,
       ),
