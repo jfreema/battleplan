@@ -210,14 +210,11 @@ void main() {
       expect(find.text('vs. Eagles'), findsOneWidget);
       expect(find.text('Team dinner'), findsOneWidget);
       expect(find.text('Last game'), findsNothing);
-      // The time and place on one line.
-      expect(find.text('6:00–7:30 PM · Riverside Park'), findsNWidgets(2));
+      // The time, then the place with the count (#85).
+      expect(find.text('6:00–7:30 PM'), findsNWidgets(2));
       expect(find.textContaining('Riverside Park'), findsNWidgets(3));
-      // Out of the group's 20 members, and that I haven't answered.
-      expect(
-        find.text("12/20 going · You haven't answered", findRichText: true),
-        findsOneWidget,
-      );
+      // Out of the group's 20 members.
+      expect(find.text('Riverside Park · 12/20 going'), findsOneWidget);
       // Each upcoming event has the answer buttons.
       expect(find.byType(RsvpChoice), findsNWidgets(3));
       // Each card has its date block, so tomorrow's two show the day twice.
@@ -239,7 +236,9 @@ void main() {
         find.byType(SegmentedButton<RsvpStatus>).first,
       );
       expect(chosen.selected, {RsvpStatus.going});
-      expect(find.text('1/20 going', findRichText: true), findsOneWidget);
+      expect(find.text('Riverside Park · 1/20 going'), findsOneWidget);
+      // My answer, stamped on the panel (#85).
+      expect(find.text('Going!'), findsOneWidget);
     });
 
     testWidgets('screen readers hear the card count in words, not "7/12"', (
@@ -251,7 +250,7 @@ void main() {
         players: emma(),
         events: [event('e1', counts: const RsvpCounts(going: 1))],
       );
-      expect(find.text('1/1 going', findRichText: true), findsOneWidget);
+      expect(find.text('Riverside Park · 1/1 going'), findsOneWidget);
       expect(
         find.bySemanticsLabel(RegExp('1 of 1 players going')),
         findsOneWidget,
@@ -263,10 +262,7 @@ void main() {
         basicGroup: true,
         events: [event('e1', counts: const RsvpCounts(going: 12))],
       );
-      expect(
-        find.bySemanticsLabel(RegExp("12 of 20 going, You haven't answered")),
-        findsOneWidget,
-      );
+      expect(find.bySemanticsLabel(RegExp('12 of 20 going')), findsOneWidget);
       semantics.dispose();
     });
 
@@ -350,25 +346,33 @@ void main() {
       expect(find.byType(RsvpButtons), findsNothing);
     });
 
-    testWidgets('a long title has the row up to the type word, which sits at '
-        'the right end', (tester) async {
+    testWidgets('a long title is cut short on its line, and the kind is the '
+        "pennant's color and its spoken name (#85)", (tester) async {
+      final semantics = tester.ensureSemantics();
       await openSchedule(
         tester,
         events: [
-          event('s', title: 'Season kickoff BBQ', type: EventType.social),
+          event(
+            's',
+            title: 'Season kickoff BBQ and awards night at the park',
+            type: EventType.social,
+          ),
         ],
       );
-      final title = tester.getRect(find.text('Season kickoff BBQ'));
-      final word = tester.getRect(find.text('SOCIAL'));
-      final row = tester.getRect(
-        find
-            .ancestor(of: find.text('SOCIAL'), matching: find.byType(Row))
-            .first,
+      final title = tester.widget<Text>(
+        find.text('Season kickoff BBQ and awards night at the park'),
       );
-      // Pushed right, 10 after the title, which has the rest of the row
-      // (the two used to split it in half, cutting titles short).
-      expect(word.right, moreOrLessEquals(row.right, epsilon: 0.5));
-      expect(word.left, moreOrLessEquals(title.right + 10, epsilon: 0.5));
+      expect(title.maxLines, 1);
+      expect(title.overflow, TextOverflow.ellipsis);
+      expect(find.bySemanticsLabel(RegExp('Social, ')), findsOneWidget);
+      final pennant = tester.widget<DatePennant>(find.byType(DatePennant));
+      expect(
+        pennant.color,
+        GumdropColors.of(tester.element(find.byType(DatePennant)))
+            .bubblegum
+            .face,
+      );
+      semantics.dispose();
     });
 
     testWidgets('the type filter (SCHED-2)', (tester) async {
@@ -404,7 +408,7 @@ void main() {
       matching: find.text(label),
     );
 
-    testWidgets('Going, Maybe, and Not going are on the row; a second tap '
+    testWidgets("Going, Maybe, and Can't go are on the row; a second tap "
         'on the chosen one clears it', (tester) async {
       final rsvps = await openSchedule(
         tester,
@@ -413,7 +417,7 @@ void main() {
       );
       expect(answer('Going'), findsOneWidget);
       expect(answer('Maybe'), findsOneWidget);
-      expect(answer('Not going'), findsOneWidget);
+      expect(answer("Can't go"), findsOneWidget);
       await tester.tap(answer('Going'));
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.status, RsvpStatus.going);
@@ -468,7 +472,7 @@ void main() {
               ),
             );
       bool beside() =>
-          tester.getCenter(find.text('Al')).dy >
+          tester.getCenter(find.text('Al?')).dy >
           tester.getTopLeft(find.byType(RsvpChoice)).dy;
 
       await openSchedule(
@@ -523,12 +527,12 @@ void main() {
         players: players,
         events: [event('e1')],
       );
-      expect(find.text('Emma'), findsOneWidget);
-      expect(find.text('Liam'), findsOneWidget);
+      expect(find.text('Emma?'), findsOneWidget);
+      expect(find.text('Liam?'), findsOneWidget);
       expect(answer('Going'), findsNWidgets(2));
       await tester.tap(answer('Going').first);
       await tester.pumpAndSettle();
-      await tester.tap(answer('Not going').last);
+      await tester.tap(answer("Can't go").last);
       await tester.pumpAndSettle();
       expect(
         {for (final r in rsvps.rsvps) r.participantId: r.status},
@@ -1609,8 +1613,8 @@ void main() {
       );
       // The list has the answer buttons per player.
       expect(find.byType(RsvpChoice), findsNWidgets(2));
-      expect(find.text('Emma'), findsOneWidget);
-      expect(find.text('Liam'), findsOneWidget);
+      expect(find.text('Emma?'), findsOneWidget);
+      expect(find.text('Liam?'), findsOneWidget);
       await openDetails(tester, 'Practice');
       // One row per player, and no All my players row (PLAYER-11).
       expect(find.byType(SegmentedButton<RsvpStatus>), findsNWidgets(2));
@@ -1715,9 +1719,9 @@ void main() {
       expect(selected('p1'), {RsvpStatus.maybe});
       expect(selected('p2'), {RsvpStatus.going});
 
-      // Emma's Not going changes only Emma's, and keeps her note.
+      // Emma's Can't go changes only Emma's, and keeps her note.
       await tester.tap(
-        find.descendant(of: row('p1'), matching: find.text('Not going')),
+        find.descendant(of: row('p1'), matching: find.text("Can't go")),
       );
       await tester.pumpAndSettle();
       expect(answerOf('p1')?.status, RsvpStatus.notGoing);
@@ -1871,7 +1875,7 @@ void main() {
       );
       // One row on the list: theirs, as You.
       expect(find.byType(RsvpChoice), findsOneWidget);
-      expect(find.text('You'), findsOneWidget);
+      expect(find.text('You?'), findsOneWidget);
       await openDetails(tester, 'Practice');
       // One set of buttons: their player's. The pending player isn't there.
       expect(find.byType(SegmentedButton<RsvpStatus>), findsOneWidget);
@@ -1933,7 +1937,8 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('You'), findsOneWidget);
+      // One person: the card asks the question instead of naming them.
+      expect(find.text('Are you going?'), findsOneWidget);
       await tester.tap(find.text('Schedule'));
       await tester.pumpAndSettle();
       // Never two answers of their own.
@@ -1993,7 +1998,7 @@ void main() {
       await tester.tap(
         find.descendant(
           of: find.byType(RsvpButtons),
-          matching: find.text('Not going'),
+          matching: find.text("Can't go"),
         ),
       );
       await tester.pumpAndSettle();
@@ -2216,7 +2221,7 @@ void main() {
       await openDetails(tester, 'Practice');
       await tester.tap(find.text('Sam Rivera'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Not going').last);
+      await tester.tap(find.text("Can't go").last);
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.participantId, 'sam');
       expect(rsvps.rsvps.single.status, RsvpStatus.notGoing);
@@ -2446,7 +2451,8 @@ void main() {
         messages: FakeMessageRepository([card('e1')]),
       );
       expect(find.text('vs. Eagles'), findsOneWidget);
-      expect(find.text('Riverside Park'), findsOneWidget);
+      // The time, with the place beside it (#85).
+      expect(find.text('6:00–7:30 PM  · Riverside Park'), findsOneWidget);
       await tester.tap(find.text('vs. Eagles'));
       await tester.pumpAndSettle();
       expect(find.text('Directions'), findsOneWidget);
@@ -2494,10 +2500,8 @@ void main() {
       Finder onCard(Finder f) =>
           find.descendant(of: find.byType(EventCard), matching: f);
       expect(onCard(find.byType(SegmentedButton<RsvpStatus>)), findsOneWidget);
-      expect(
-        find.text("0/20 going · You haven't answered", findRichText: true),
-        findsOneWidget,
-      );
+      expect(onCard(find.text('Are you going?')), findsOneWidget);
+      expect(onCard(find.text('0/20 going')), findsOneWidget);
       await tester.tap(onCard(find.text('Going')));
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.status, RsvpStatus.going);
@@ -2552,16 +2556,14 @@ void main() {
       // (PLAYER-11).
       expect(find.byType(SegmentedButton<RsvpStatus>), findsNWidgets(2));
       expect(find.text('All my players'), findsNothing);
-      expect(find.text('Emma'), findsOneWidget);
-      expect(find.text('Liam'), findsOneWidget);
+      expect(find.text('Emma?'), findsOneWidget);
+      expect(find.text('Liam?'), findsOneWidget);
       await tester.tap(find.text('Going').last);
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.participantId, 'p2');
-      // Who's still waiting, as the schedule's card says it (SPEC §6.2).
-      expect(
-        find.text("1/2 going · Emma hasn't answered", findRichText: true),
-        findsOneWidget,
-      );
+      // The count; the dot by Emma's name says she's still to answer (#85).
+      expect(find.text('1/2 going'), findsOneWidget);
+      expect(find.text('Are your players going?'), findsOneWidget);
     });
 
     testWidgets('a guardian of two players answers each on their own row on '
@@ -2604,24 +2606,21 @@ void main() {
       );
       expect(find.byType(RsvpButtons), findsNWidgets(2));
       expect(
-        find.descendant(of: row('p1'), matching: find.text('Emma')),
+        find.descendant(of: row('p1'), matching: find.text('Emma?')),
         findsOneWidget,
       );
       expect(
-        find.descendant(of: row('p2'), matching: find.text('Liam')),
+        find.descendant(of: row('p2'), matching: find.text('Liam?')),
         findsOneWidget,
       );
-      // Emma's Not going answers for Emma alone.
+      // Emma's Can't go answers for Emma alone.
       await tester.tap(
-        find.descendant(of: row('p1'), matching: find.text('Not going')),
+        find.descendant(of: row('p1'), matching: find.text("Can't go")),
       );
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.participantId, 'p1');
       expect(rsvps.rsvps.single.status, RsvpStatus.notGoing);
-      expect(
-        find.text("0/2 going · Liam hasn't answered", findRichText: true),
-        findsOneWidget,
-      );
+      expect(find.text('0/2 going'), findsOneWidget);
       // Then Liam's Going, for Liam alone; Emma's stays.
       await tester.tap(
         find.descendant(of: row('p2'), matching: find.text('Going')),
@@ -2759,7 +2758,7 @@ void main() {
       expect(find.text('Pat Kim'), findsNothing);
       await tester.tap(find.text('Emma').last);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Not going').last);
+      await tester.tap(find.text("Can't go").last);
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.status, RsvpStatus.notGoing);
     });

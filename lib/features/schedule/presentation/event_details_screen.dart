@@ -1693,20 +1693,24 @@ class _CardRsvpRow extends StatelessWidget {
   final int pills;
   final Widget choice;
 
-  /// The room between a card's pills, as [RsvpChoice] leaves it.
-  static const double _pillGap = 4;
+  /// The room between a card's buttons, as [RsvpChoice] leaves it.
+  static const double _pillGap = 9;
 
   @override
   Widget build(BuildContext context) {
     final text = label;
     if (text == null) return choice;
     final c = GumdropColors.of(context);
+    // Boot Camp Mix (#85): "NOAH?" in stencil, mustard on the dark schemes'
+    // answer row and ink on Light's pale one.
     final style = GumdropStyle.of(context).label(
       TextStyle(
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w900,
         fontSize: 15,
         height: 1.2,
-        color: c.textMuted,
+        color: c.brightness == Brightness.dark
+            ? c.roles.palette.mustard
+            : c.textPrimary,
       ),
     );
     final name = Semantics(
@@ -1717,19 +1721,21 @@ class _CardRsvpRow extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.only(right: 6),
-            child: Text(text, style: style, maxLines: 1),
+            child: Text('$text?', style: style, maxLines: 1),
           ),
           if (unanswered)
             Positioned(
               top: -2,
               right: -2,
               child: Container(
-                width: 8,
-                height: 8,
-                // Coral: yours to answer, not a warning (#12).
+                width: 9,
+                height: 9,
+                // Your own color: yours to answer, not a warning (#12), in
+                // an ink ring so it shows on any panel (#85).
                 decoration: BoxDecoration(
                   color: c.you.face,
                   shape: BoxShape.circle,
+                  border: Border.all(color: c.ink, width: 1.5),
                 ),
               ),
             ),
@@ -1739,7 +1745,7 @@ class _CardRsvpRow extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final painter = TextPainter(
-          text: TextSpan(text: text, style: style),
+          text: TextSpan(text: '$text?', style: style),
           maxLines: 1,
           textDirection: Directionality.of(context),
           textScaler: MediaQuery.textScalerOf(context),

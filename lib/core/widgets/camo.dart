@@ -172,3 +172,50 @@ class _Blot {
     return path..close();
   }
 }
+
+/// A grid of round dots (#85, SPEC §7.4): the page's 8 px grid
+/// (`CampPalette.pageDots`), or the halftone on a colored block, like an
+/// event's header or date pennant. Drawn over whatever is under it.
+class DotGridPainter extends CustomPainter {
+  new({required this.color, this.spacing = 8, this.radius = 1.15});
+
+  final Color color;
+
+  /// From one dot's middle to the next.
+  final double spacing;
+  final double radius;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (color.a == 0) return;
+    final paint = Paint()..color = color;
+    canvas
+      ..save()
+      ..clipRect(Offset.zero & size);
+    for (var y = spacing / 2; y < size.height; y += spacing) {
+      for (var x = spacing / 2; x < size.width; x += spacing) {
+        canvas.drawCircle(Offset(x, y), radius, paint);
+      }
+    }
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(DotGridPainter old) =>
+      old.color != color || old.spacing != spacing || old.radius != radius;
+}
+
+/// [child] on the page's 8 px dot grid (#85), drawn behind it.
+class PageDots extends StatelessWidget {
+  const new({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => CustomPaint(
+    painter: DotGridPainter(
+      color: GumdropColors.of(context).roles.palette.pageDots,
+    ),
+    child: child,
+  );
+}

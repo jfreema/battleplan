@@ -14,9 +14,10 @@ import 'package:battleplan/core/haptics.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
-import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/camp_balloon.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
+import 'package:battleplan/core/widgets/dog_tag.dart';
 import 'package:battleplan/core/widgets/linkified_text.dart';
 import 'package:battleplan/core/widgets/plays_icon.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
@@ -37,7 +38,6 @@ import 'package:battleplan/features/safety/application/providers.dart';
 import 'package:battleplan/features/safety/safety.dart';
 import 'package:battleplan/features/schedule/schedule.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
-import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -459,23 +459,28 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     }
     final deleted = m.deletedAt != null;
     // An admin's announcement (CHAT-15) looks the same from everyone: a
-    // lemon bubble.
+    // mustard balloon.
     final announcement = m.announcement && !deleted;
     final custom = mine && !announcement ? widget.bubbleColor : null;
-    // Others' messages have no bubble: their text is on the page (SPEC
-    // §7.3). Mine are coral, or the chat look's color, with ink text, or
-    // white on a dark team color. An announcement is a lemon card.
-    final background = announcement
-        ? c.lemon.face
+    // Every message is a speech balloon (Boot Camp Mix, #85, SPEC §7.4):
+    // others' in the panel color, mine in my own color (mustard, or light
+    // blue in Black) or the chat look's, with ink text, or white on a dark
+    // team color. An announcement is a mustard one. A deleted message is an
+    // empty outline.
+    final panel = c.card;
+    final background = deleted
+        ? null
+        : announcement
+        ? c.roles.palette.mustard
         : mine
         ? custom ?? c.you.face
-        : null;
+        : panel.surface;
     final foreground = announcement
         ? c.ink
         : mine
         ? (custom == null ? c.inkOn(c.you) : bubbleTextOn(c, custom))
-        : c.textOnPage;
-    final muted = mine || announcement ? foreground : c.textMutedOnPage;
+        : panel.textOnPage;
+    final muted = mine || announcement ? foreground : panel.textMutedOnPage;
     final time = m.createdAt == null
         ? null
         : MaterialLocalizations.of(context).formatTimeOfDay(
@@ -510,7 +515,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
               ? TextStyle(
                   fontWeight: FontWeight.w900,
                   color: c.ink,
-                  backgroundColor: c.lemon.face,
+                  backgroundColor: c.roles.palette.mustard,
                 )
               : const TextStyle(fontWeight: FontWeight.w900),
         ),
@@ -559,15 +564,17 @@ class _MessageTileState extends ConsumerState<MessageTile> {
         m.type == MessageType.event && m.eventId != null && !deleted;
     final card = isPoll || isEvent;
 
-    // Inside the bubble, at the top (CHAT-1): the name (stencil) with the
-    // players and time beside it in small muted type on a group's first
-    // message (mine shows only the time), and "edited" or "Pinned" on any
-    // message that is.
+    // The time on a group's first message, and "edited" or "Pinned" on any
+    // message that is (CHAT-1): above others' balloons with their name
+    // (#85), inside mine and in a direct conversation.
     final meta = [
       if (widget.startsGroup) ?time,
       if (widget.startsGroup) headerMarks else marks,
     ].where((p) => p.isNotEmpty).join(' · ');
     final named = widget.startsGroup && !mine && !direct;
+    // Others' names, with the time, sit above their balloon or card, as the
+    // design's speech balloons have them (#85).
+    final nameAbove = named && !isPoll;
     final metaStyle = ChatText.face(theme.textTheme.bodySmall).copyWith(
       fontSize: 13,
       height: 20 / 13,
@@ -575,29 +582,22 @@ class _MessageTileState extends ConsumerState<MessageTile> {
       color: muted,
       letterSpacing: 0,
     );
-    final innerHeader = card || (!named && meta.isEmpty)
+    final innerHeader = card || nameAbove || meta.isEmpty
         ? null
         : Padding(
             padding: EdgeInsets.only(bottom: mine ? Space.xs : 1),
-            child: Text.rich(
+            child: Text(
+              meta,
               textWidthBasis: TextWidthBasis.longestLine,
-              TextSpan(
-                children: [
-                  if (named) ..._nameSpans(m, foreground, muted),
-                  if (meta.isNotEmpty)
-                    TextSpan(text: named ? '\u2002$meta' : meta),
-                ],
-              ),
               style: mine ? metaStyle.copyWith(fontSize: 12) : metaStyle,
             ),
           );
 
-    // Photos sit inside the bubble, above the caption (CHAT-3). A play
+    // Photos sit inside the balloon, above the caption (CHAT-3). A play
     // posted from Plays opens the play instead, to play its steps
     // (BOARD-5).
     final playId = m.playId;
-    // Others' photos have no bubble to sit in, so no frame or inset.
-    final bubbled = mine || announcement;
+    final bubbled = !deleted;
     final photos = deleted || m.attachments.isEmpty
         ? null
         : PhotoGrid(
@@ -725,17 +725,19 @@ class _MessageTileState extends ConsumerState<MessageTile> {
           ),
       ],
     ];
-    // Each of mine is its own bubble, fitted to its text and no wider than
-    // the design's (bubbleMaxWidth), rounded with a small tail corner at
-    // the bottom right (§3.14). A one-line bubble is still 48 tall, a full
-    // tap target (SPEC §7.6), with its text centered. Others' text has no
-    // bubble, so it takes only its lines, and a run of short messages
-    // reads as one.
-    final shaped = card || background != null;
+    // Each message is its own balloon, fitted to its text and no wider
+    // than the design's (bubbleMaxWidth), corner 19, in a 3 px ink outline
+    // with a pointed tail: from the left near the top on the first of
+    // someone's run, toward their tag, and from the right near the bottom
+    // on the last of mine (#85). A one-line balloon is still 48 tall, a
+    // full tap target (SPEC §7.6), with its text centered.
     final besideAvatar = !mine && !direct;
-    final radius = announcement
-        ? BorderRadius.circular(18)
-        : bubbleRadius(mine: mine, tail: mine);
+    final tail = deleted || announcement
+        ? BalloonTail.none
+        : mine
+        ? (widget.endsGroup ? BalloonTail.right : BalloonTail.none)
+        : (widget.startsGroup ? BalloonTail.left : BalloonTail.none);
+    final radius = BorderRadius.circular(19);
     final padding = photos != null && bubbled
         ? EdgeInsets.fromLTRB(
             photoInset,
@@ -743,15 +745,13 @@ class _MessageTileState extends ConsumerState<MessageTile> {
             photoInset,
             hasText ? 9 : photoInset,
           )
-        : mine || announcement
-        ? const EdgeInsets.symmetric(horizontal: 16, vertical: 12)
-        // Others' text sits straight on the page.
-        : EdgeInsets.zero;
+        // Inside the 3 px outline.
+        : const EdgeInsets.fromLTRB(16, 10, 16, 11);
     final content = ConstrainedBox(
       constraints: BoxConstraints(
         maxWidth: bubbleMaxWidth(context, besideAvatar: besideAvatar),
         // Each bubble is a 48 px target for its menu (SPEC §7.6).
-        minHeight: shaped ? kMinInteractiveDimension : 0,
+        minHeight: kMinInteractiveDimension,
       ),
       child: Padding(
         padding: padding,
@@ -767,22 +767,13 @@ class _MessageTileState extends ConsumerState<MessageTile> {
         ),
       ),
     );
-    final bg = background;
     final textBubble = DecoratedBox(
-      decoration: BoxDecoration(
-        color: deleted ? null : bg,
-        border: deleted && mine
-            ? Border.all(color: c.divider, width: 2)
-            : announcement
-            ? Border.all(color: c.lemon.lip, width: 2)
-            // My bubble on a page close to its color keeps an ink edge.
-            : mine && bg != null && ColorMath.contrast(bg, c.page) < 2
-            ? Border.all(color: c.ink, width: 2)
-            : null,
-        borderRadius: radius,
-        boxShadow: announcement
-            ? [BoxShadow(color: c.lemon.lip, offset: const Offset(0, 3))]
-            : null,
+      decoration: ShapeDecoration(
+        color: background,
+        shape: BalloonBorder(
+          tail: tail,
+          side: BorderSide(color: deleted ? c.divider : c.ink, width: 3),
+        ),
       ),
       child: content,
     );
@@ -823,22 +814,26 @@ class _MessageTileState extends ConsumerState<MessageTile> {
       color: c.textMutedOnPage,
       fontWeight: FontWeight.w800,
     );
-    // Event cards keep the name and time above them, on the page, in the
-    // head line others' messages have. A poll card says who asked inside
-    // it.
-    final header = !isEvent
+    // Others' balloons and event cards have the name and time above them,
+    // on the page: the name in stencil, the time beside it in small muted
+    // type (#85). A poll card says who asked inside it.
+    final header = !isEvent && !nameAbove
         ? null
-        : widget.startsGroup && !mine
+        : nameAbove
         ? Padding(
-            padding: const EdgeInsets.only(bottom: Space.xs),
+            padding: const EdgeInsetsDirectional.only(start: 3, bottom: 3),
             child: Text.rich(
               TextSpan(
                 children: [
                   ..._nameSpans(m, c.textOnPage, c.textMutedOnPage),
-                  if (meta.isNotEmpty) TextSpan(text: ' $meta'),
+                  if (meta.isNotEmpty) TextSpan(text: '\u2002$meta'),
                 ],
               ),
-              style: metaStyle,
+              style: metaStyle.copyWith(
+                fontSize: 12.5,
+                height: 18 / 12.5,
+                color: c.textMutedOnPage,
+              ),
             ),
           )
         : widget.startsGroup && time != null
@@ -860,121 +855,95 @@ class _MessageTileState extends ConsumerState<MessageTile> {
           )
         : null;
 
-    // Text on the page is only as tall as its lines, too small a target
-    // for a screen reader's tap and long-press: there the menu is one of
-    // its actions instead (SPEC §7.6). Touch, the mouse, and the keyboard
-    // work on it as on any message.
-    Widget menuAction(Widget child) => shaped || deleted
-        ? child
-        : Semantics(
-            container: true,
-            customSemanticsActions: {
-              CustomSemanticsAction(label: l10n.messageMenu): () =>
-                  unawaited(_openMenu()),
-            },
-            child: child,
-          );
     final column = Column(
       crossAxisAlignment: mine
           ? CrossAxisAlignment.end
           : CrossAxisAlignment.start,
       children: [
         ?header,
-        menuAction(
-          GestureDetector(
-            excludeFromSemantics: !shaped,
-            onTap: () => setState(() => _showTime = !_showTime),
-            // Swipe right to reply (CHAT-13, phones).
-            onHorizontalDragUpdate: widget.onReply == null || web
-                ? null
-                : (d) => setState(
-                    () => _swipe = (_swipe + d.delta.dx).clamp(0, 96),
-                  ),
-            onHorizontalDragEnd: widget.onReply == null || web
-                ? null
-                : (_) {
-                    if (_swipe >= _swipeToReply) {
-                      Haptics.selection();
-                      widget.onReply!();
-                    }
-                    setState(() => _swipe = 0);
-                  },
-            // Long-press and right-click open the menu from anywhere on
-            // the row (#19), below. Double-tap loves it (CHAT-6).
-            // Not on polls: waiting for a second tap would hold up voting.
-            onDoubleTap:
-                deleted ||
-                    web ||
-                    isPoll ||
-                    isEvent ||
-                    ref.watch(viewingAsSuperAdminProvider(m.groupId))
-                ? null
-                : () {
-                    Haptics.light();
-                    fireAndForget(_react(Reaction.love));
-                  },
-            // Full keyboard navigation (SPEC §7.6): Tab reaches each
-            // message, and Enter, Space, the menu key, or Shift+F10 opens
-            // its menu, as long-press and right-click do.
-            child: FocusableActionDetector(
-              enabled: !deleted,
-              onShowFocusHighlight: (on) => setState(() => _focused = on),
-              shortcuts: const {
-                SingleActivator(LogicalKeyboardKey.contextMenu):
-                    ActivateIntent(),
-                SingleActivator(LogicalKeyboardKey.f10, shift: true):
-                    ActivateIntent(),
-              },
-              actions: {
-                ActivateIntent: CallbackAction<ActivateIntent>(
-                  onInvoke: (_) => unawaited(_openMenu()),
-                ),
-              },
-              child: Transform.translate(
-                offset: Offset(_swipe, 0),
-                child: Row(
-                  // Fitted to the bubble or card, so mine sit on the right
-                  // at any width; a poll card is as wide as it may be, up
-                  // to its own cap.
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (mine && _hovering && !deleted) _hoverButton(),
-                    Flexible(
-                      // The visible focus ring (SPEC §7.6): around the
-                      // bubble or card, or a little outside text that's on
-                      // the page, so it doesn't cross the letters.
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          bubble,
-                          if (_focused)
-                            Positioned(
-                              left: shaped ? 0 : -6,
-                              right: shaped ? 0 : -6,
-                              top: shaped ? 0 : -3,
-                              bottom: shaped ? 0 : -3,
-                              child: IgnorePointer(
-                                child: DecoratedBox(
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                      color: c.textOnPage,
-                                      width: 2,
-                                    ),
-                                    borderRadius: card
-                                        ? BorderRadius.circular(18)
-                                        : background == null
-                                        ? BorderRadius.circular(10)
-                                        : radius,
+        GestureDetector(
+          onTap: () => setState(() => _showTime = !_showTime),
+          // Swipe right to reply (CHAT-13, phones).
+          onHorizontalDragUpdate: widget.onReply == null || web
+              ? null
+              : (d) =>
+                    setState(() => _swipe = (_swipe + d.delta.dx).clamp(0, 96)),
+          onHorizontalDragEnd: widget.onReply == null || web
+              ? null
+              : (_) {
+                  if (_swipe >= _swipeToReply) {
+                    Haptics.selection();
+                    widget.onReply!();
+                  }
+                  setState(() => _swipe = 0);
+                },
+          // Long-press and right-click open the menu from anywhere on
+          // the row (#19), below. Double-tap loves it (CHAT-6).
+          // Not on polls: waiting for a second tap would hold up voting.
+          onDoubleTap:
+              deleted ||
+                  web ||
+                  isPoll ||
+                  isEvent ||
+                  ref.watch(viewingAsSuperAdminProvider(m.groupId))
+              ? null
+              : () {
+                  Haptics.light();
+                  fireAndForget(_react(Reaction.love));
+                },
+          // Full keyboard navigation (SPEC §7.6): Tab reaches each
+          // message, and Enter, Space, the menu key, or Shift+F10 opens
+          // its menu, as long-press and right-click do.
+          child: FocusableActionDetector(
+            enabled: !deleted,
+            onShowFocusHighlight: (on) => setState(() => _focused = on),
+            shortcuts: const {
+              SingleActivator(LogicalKeyboardKey.contextMenu): ActivateIntent(),
+              SingleActivator(LogicalKeyboardKey.f10, shift: true):
+                  ActivateIntent(),
+            },
+            actions: {
+              ActivateIntent: CallbackAction<ActivateIntent>(
+                onInvoke: (_) => unawaited(_openMenu()),
+              ),
+            },
+            child: Transform.translate(
+              offset: Offset(_swipe, 0),
+              child: Row(
+                // Fitted to the bubble or card, so mine sit on the right
+                // at any width; a poll card is as wide as it may be, up
+                // to its own cap.
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (mine && _hovering && !deleted) _hoverButton(),
+                  Flexible(
+                    // The visible focus ring (SPEC §7.6): around the
+                    // balloon or card.
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        bubble,
+                        if (_focused)
+                          Positioned.fill(
+                            child: IgnorePointer(
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: c.textOnPage,
+                                    width: 2,
                                   ),
+                                  borderRadius: card
+                                      ? BorderRadius.zero
+                                      : radius,
                                 ),
                               ),
                             ),
-                        ],
-                      ),
+                          ),
+                      ],
                     ),
-                    if (!mine && _hovering && !deleted) _hoverButton(),
-                  ],
-                ),
+                  ),
+                  if (!mine && _hovering && !deleted) _hoverButton(),
+                ],
               ),
             ),
           ),
@@ -1025,17 +994,16 @@ class _MessageTileState extends ConsumerState<MessageTile> {
       ],
     );
 
-    // Others' messages get their photo beside the first bubble of a group,
-    // in a slot as wide as a tap target, since it opens their page. A poll
-    // card takes the whole width and names who asked.
+    // Others' messages get their dog tag beside the first balloon of a
+    // group, in a slot as wide as a tap target, since it opens their page.
+    // A poll card takes the whole width and names who asked.
     final avatarSlot = SizedBox(
       width: kMinInteractiveDimension,
-      // Level with the head line; an event card has its head line above
-      // it (20 tall and 4 over the card), so the icon is level with the
-      // card.
+      // Their dog tag, a little below the top of the balloon or card under
+      // the name line (21 tall), as the design hangs it (#85).
       child: widget.startsGroup
           ? Padding(
-              padding: EdgeInsets.only(top: isEvent ? 24 : 0),
+              padding: EdgeInsets.only(top: nameAbove ? 25 : 4),
               child: _AuthorAvatar(message: m, onTap: openAuthor),
             )
           : null,
@@ -1046,9 +1014,10 @@ class _MessageTileState extends ConsumerState<MessageTile> {
       // within one person's run. Others' messages on the left, mine on the
       // right.
       padding: EdgeInsets.fromLTRB(
-        besideAvatar ? 16 : 20,
+        besideAvatar ? 14 : 20,
         widget.startsGroup ? 6 : 3,
-        20,
+        // Room for my balloon's tail.
+        mine ? 24 : 20,
         widget.endsGroup ? 6 : 3,
       ),
       child: Row(
@@ -1057,7 +1026,11 @@ class _MessageTileState extends ConsumerState<MessageTile> {
             : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (besideAvatar) avatarSlot,
+          if (besideAvatar) ...[
+            avatarSlot,
+            // Room for the balloon's tail, clear of the tag.
+            const SizedBox(width: _tailRoom),
+          ],
           Flexible(child: column),
         ],
       ),
@@ -1103,25 +1076,27 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     );
   }
 
-  /// The sender's name in the label font, and their players beside it in small
-  /// muted type ("Claire D." then "· Luke #7"), as the design has it.
+  /// The sender's name in stencil capitals, and their players beside it in
+  /// small muted type ("CLAIRE D." then "· Luke #7"), as the design has it
+  /// (#85).
   List<InlineSpan> _nameSpans(Message m, Color name, Color muted) {
     final full = nameWithPlayersOf(m.authorName, m.authorPlayerSummary);
     final short = shortNameOf(m.authorName);
     final split =
         full != m.authorName && full.startsWith(short) && full != short;
     final nameStyle = TextStyle(
-      fontFamily: AppFonts.body,
-      fontWeight: FontWeight.w800,
-      fontSize: 16,
-      height: 20 / 16,
+      fontFamily: AppFonts.stencil,
+      fontWeight: FontWeight.w900,
+      fontSize: 14.5,
+      height: 18 / 14.5,
+      letterSpacing: 14.5 * 0.055,
       color: name,
     );
     final rest = TextStyle(
       fontFamily: AppFonts.body,
       fontWeight: FontWeight.w700,
-      fontSize: 14,
-      height: 20 / 14,
+      fontSize: 12.5,
+      height: 18 / 12.5,
       color: muted,
     );
     return [
@@ -1132,26 +1107,16 @@ class _MessageTileState extends ConsumerState<MessageTile> {
   }
 }
 
+/// The gap between someone's dog tag and their balloon, where its tail
+/// points (#85).
+const double _tailRoom = 10;
+
 /// The text color on a bubble of [color]: ink, or white on a dark team
 /// color, whichever reads better (CHAT-18).
 Color bubbleTextOn(GumdropColors c, Color color) =>
     ColorMath.contrast(c.ink, color) >= ColorMath.contrast(Colors.white, color)
     ? c.ink
     : Colors.white;
-
-/// A bubble's corners (SPEC §7.3): 22, with the [tail] corner 6, at the
-/// bottom right of mine (and the top left of others', where they have a
-/// bubble).
-BorderRadius bubbleRadius({required bool mine, bool tail = true}) {
-  const round = Radius.circular(Corners.bubble);
-  const point = Radius.circular(Corners.bubbleTail);
-  return BorderRadius.only(
-    topLeft: !mine && tail ? point : round,
-    topRight: round,
-    bottomLeft: round,
-    bottomRight: mine && tail ? point : round,
-  );
-}
 
 /// The widest a message bubble grows (CHAT-1): others' nearly fill the
 /// column beside their photo, as the design has them, still leaving the
@@ -1163,7 +1128,7 @@ double bubbleMaxWidth(BuildContext context, {bool besideAvatar = false}) {
   final room =
       MediaQuery.sizeOf(context).width -
       2 * Space.lg -
-      (besideAvatar ? kMinInteractiveDimension - Space.xs : 0);
+      (besideAvatar ? kMinInteractiveDimension + _tailRoom - Space.xs : 0);
   return math.max(
     kMinInteractiveDimension,
     math.min(520, room * (besideAvatar ? 0.92 : 0.75)),
@@ -1223,9 +1188,10 @@ class ReadReceipt extends StatelessWidget {
   }
 }
 
-/// The author's photo beside their messages; tapping it opens their page
-/// (TEAM-15) when [onTap] is given. The 36 px photo sits 4 in from the top
-/// left of a full 48 × 48 tap target (SPEC §7.6), 8 from the bubble.
+/// The author's dog tag beside their messages (#85): their initials, or
+/// their photo, on a tag in their color; tapping it opens their page
+/// (TEAM-15) when [onTap] is given. The 42 × 30 tag sits 2 in from the
+/// left of a full 48 × 48 tap target (SPEC §7.6).
 class _AuthorAvatar extends ConsumerWidget {
   const new({required this.message, this.onTap});
 
@@ -1239,14 +1205,13 @@ class _AuthorAvatar extends ConsumerWidget {
         ? null
         : ref.watch(teamPhotoUrlProvider(path)).value;
     final avatar = Padding(
-      padding: const EdgeInsetsDirectional.only(start: Space.xs),
-      child: Avatar(
+      padding: const EdgeInsetsDirectional.only(start: 2, top: 4),
+      child: DogTag.chat(
         name: message.authorName,
         colorKey: message.authorId,
         // As it was when they sent it (SET-8).
         color: message.authorAvatarColor,
         imageUrl: url,
-        size: 36,
       ),
     );
     final tap = onTap;
@@ -1456,17 +1421,21 @@ class OutgoingTextTile extends StatelessWidget {
         ? c.inkOn(c.you)
         : bubbleTextOn(c, custom);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(Space.lg, 2, Space.lg, Space.xs),
+      // As a sent balloon of mine (MessageTile), with room for its tail.
+      padding: const EdgeInsets.fromLTRB(Space.lg, 2, 24, Space.xs),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Opacity(
             opacity: item.failed ? 0.6 : 0.8,
-            // As a sent bubble of mine (MessageTile): fitted to its text.
+            // As a sent balloon of mine (MessageTile): fitted to its text.
             child: DecoratedBox(
-              decoration: BoxDecoration(
+              decoration: ShapeDecoration(
                 color: background,
-                borderRadius: bubbleRadius(mine: true),
+                shape: BalloonBorder(
+                  tail: BalloonTail.right,
+                  side: BorderSide(color: c.ink, width: 3),
+                ),
               ),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
@@ -1474,7 +1443,7 @@ class OutgoingTextTile extends StatelessWidget {
                   minHeight: kMinInteractiveDimension,
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 9, 14, 10),
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 11),
                   child: Align(
                     alignment: AlignmentDirectional.centerStart,
                     widthFactor: 1,

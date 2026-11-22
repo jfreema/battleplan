@@ -1,11 +1,7 @@
-import 'dart:math' as math;
-
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/fonts.dart';
-import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
-import 'package:battleplan/core/design/gumdrop_shape.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/haptics.dart';
@@ -246,10 +242,10 @@ class _ComposerState extends State<Composer> {
         ? l10n.addPhotosToMessage
         : l10n.addToMessage;
     final c = GumdropColors.of(context);
-    final buttons = GumdropButtons.of(context);
-    // The 46 px + and Send gumdrops (§3.13): + secondary, Send in the
-    // "you" color. With nothing to send it stays candy-colored, its arrow
-    // faded, as the design draws the empty composer.
+    // Boot Camp Mix's composer (#85): one rounded panel (corner 27) in a
+    // 3 px ink outline on a hard 3/3 shadow, the + at its left and Send at
+    // its right, a 36 px red round button in a 2.5 px ink outline with a
+    // white arrow, its arrow faded with nothing to send.
     // The + sits inside the field, at its left edge: 24 px in 48 × 48.
     final addStyle = IconButton.styleFrom(
       fixedSize: const Size(48, 46),
@@ -258,35 +254,22 @@ class _ComposerState extends State<Composer> {
       iconSize: 24,
       foregroundColor: c.textOnPage,
     );
-    final sendLip = GumdropShape.lipFor(46);
-    final sendStyle = buttons
-        .icon(size: 46, accent: c.you)
-        .copyWith(
-          iconSize: const WidgetStatePropertyAll(22),
-          backgroundColor: WidgetStatePropertyAll(c.you.face),
-          iconColor: WidgetStateProperty.resolveWith(
-            (s) => s.contains(WidgetState.disabled)
-                ? c.inkOn(c.you).withValues(alpha: 0.5)
-                : c.inkOn(c.you),
-          ),
-          shape: WidgetStateProperty.resolveWith(
-            (s) => GumdropShape(
-              lip: sendLip,
-              lipColor: c.you.lip,
-              pressed: s.contains(WidgetState.pressed) ? 1 : 0,
-            ),
-          ),
-          padding: WidgetStateProperty.resolveWith(
-            (s) => s.contains(WidgetState.pressed)
-                ? EdgeInsets.only(top: sendLip)
-                : EdgeInsets.only(bottom: sendLip),
-          ),
+    final red = c.cherry.face;
+    final sendStyle =
+        IconButton.styleFrom(
+          fixedSize: const Size(48, 46),
+          minimumSize: const Size(48, 46),
+          padding: EdgeInsets.zero,
+          iconSize: 20,
+        ).copyWith(
+          // The round face is drawn by the icon's own box; the button is only
+          // its 48 px tap area.
+          backgroundColor: const WidgetStatePropertyAll(Colors.transparent),
+          overlayColor: WidgetStatePropertyAll(c.ink.withValues(alpha: 0.08)),
         );
     final inputBorder = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(23),
-      borderSide: c.fieldRim.a == 0
-          ? BorderSide.none
-          : BorderSide(color: c.fieldRim),
+      borderRadius: BorderRadius.circular(27),
+      borderSide: BorderSide(color: c.ink, width: 3),
     );
     final plus =
         (widget.onAttachBlocked != null &&
@@ -343,18 +326,42 @@ class _ComposerState extends State<Composer> {
             ],
           )
         : null;
+    final send = IconButton(
+      tooltip: l10n.send,
+      style: sendStyle,
+      onPressed: canSend ? _send : null,
+      icon: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: red,
+          shape: BoxShape.circle,
+          border: Border.all(color: c.ink, width: 2.5),
+        ),
+        child: Icon(
+          AppIcons.arrowUp,
+          weight: 700,
+          size: 20,
+          color: canSend ? Colors.white : Colors.white.withValues(alpha: 0.5),
+        ),
+      ),
+    );
     final box = SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 14),
+        padding: const EdgeInsets.fromLTRB(14, 4, 17, 10),
         child: Row(
-          // The buttons carry a 4 px lip below their faces; the box lines
-          // up with the faces.
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(bottom: sendLip),
+              child: DecoratedBox(
+                // The hard shadow under the panel.
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(27),
+                  boxShadow: [
+                    BoxShadow(color: c.pageShadow, offset: const Offset(3, 3)),
+                  ],
+                ),
                 child: Builder(
                   builder: (context) => TextField(
                     controller: _text,
@@ -384,6 +391,11 @@ class _ComposerState extends State<Composer> {
                         minWidth: 48,
                         minHeight: 46,
                       ),
+                      suffixIcon: send,
+                      suffixIconConstraints: const BoxConstraints(
+                        minWidth: 48,
+                        minHeight: 46,
+                      ),
                       isDense: true,
                       filled: true,
                       fillColor: c.inputFill,
@@ -392,13 +404,14 @@ class _ComposerState extends State<Composer> {
                       contentPadding: EdgeInsets.fromLTRB(
                         plus == null ? 16 : 0,
                         12,
-                        16,
+                        0,
                         12,
                       ),
                       border: inputBorder,
                       enabledBorder: inputBorder,
+                      // Focused, the outline thickens a little.
                       focusedBorder: inputBorder.copyWith(
-                        borderSide: BorderSide(color: c.textOnPage, width: 2),
+                        borderSide: BorderSide(color: c.ink, width: 3.5),
                       ),
                       // The counter appears only near the limit, on the
                       // page under the box.
@@ -414,17 +427,6 @@ class _ComposerState extends State<Composer> {
                     ),
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(width: Space.xs),
-            IconButton(
-              tooltip: l10n.send,
-              style: sendStyle,
-              onPressed: canSend ? _send : null,
-              // The paper plane points up and to the right (design §3.14).
-              icon: Transform.rotate(
-                angle: -math.pi / 4,
-                child: const Icon(AppIcons.send, weight: 700),
               ),
             ),
           ],

@@ -5,7 +5,7 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/ids.dart';
-import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/dog_tag.dart';
 import 'package:battleplan/core/widgets/gumdrop_icon_button.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/auth/presentation/your_icon_screen.dart';
@@ -375,11 +375,12 @@ void main() {
       tester,
     ) async {
       await pumpChat(tester, scheme: TeamScheme.army);
-      final avatars = tester
-          .widgetList<Avatar>(find.byType(Avatar, skipOffstage: false))
+      // Their dog tag (#85).
+      final tags = tester
+          .widgetList<DogTag>(find.byType(DogTag, skipOffstage: false))
           .where((a) => a.name == 'Sam Rivera');
-      expect(avatars, isNotEmpty);
-      expect(avatars.first.color, AvatarColor.mint);
+      expect(tags, isNotEmpty);
+      expect(tags.first.color, AvatarColor.mint);
     });
 
     testWidgets('photos, reactions, and the team switcher', (tester) async {
@@ -420,7 +421,7 @@ void main() {
     testWidgets('RSVP answers say their state in words with an icon, not '
         'color alone', (tester) async {
       await pumpEventDetails(tester, scheme: TeamScheme.navy);
-      for (final word in ['Going', 'Maybe', 'Not going']) {
+      for (final word in ['Going', 'Maybe', "Can't go"]) {
         final button = find.ancestor(
           of: find.text(word).first,
           matching: find.byType(SegmentedButton<RsvpStatus>),
@@ -429,7 +430,7 @@ void main() {
       }
       expect(find.text('GOING · 2'), findsOneWidget);
       expect(find.text('MAYBE · 1'), findsOneWidget);
-      expect(find.text('NOT GOING · 1'), findsOneWidget);
+      expect(find.text("CAN'T GO · 1"), findsOneWidget);
       expect(find.byIcon(AppIcons.going), findsWidgets);
       expect(find.byIcon(AppIcons.maybe), findsWidgets);
       expect(find.byIcon(AppIcons.notGoing), findsWidgets);
@@ -971,7 +972,7 @@ void main() {
     testWidgets('Tab reaches the RSVP pills and the event cards, with the '
         'ring', (tester) async {
       await pumpSchedule(tester, scheme: TeamScheme.skyblue);
-      for (final answer in ['Going', 'Maybe', 'Not going']) {
+      for (final answer in ['Going', 'Maybe', "Can't go"]) {
         await tabTo(
           tester,
           answer,

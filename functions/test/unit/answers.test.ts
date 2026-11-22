@@ -50,7 +50,7 @@ describe('the RSVP email', () => {
     expect(email.text).toContain('Is Emma going?');
     expect(email.text).toContain('Going: https://getbattleplan.app/a/t?s=going');
     expect(email.text).toContain('Maybe: https://getbattleplan.app/a/t?s=maybe');
-    expect(email.text).toContain('Not going: https://getbattleplan.app/a/t?s=not_going');
+    expect(email.text).toContain("Can't go: https://getbattleplan.app/a/t?s=not_going");
     expect(email.text).toContain("Andy Bernard sent this to everyone who hasn't RSVP'd.");
     expect(email.html).toContain('href="https://getbattleplan.app/a/t?s=going"');
     expect(email.html).toContain('Field &lt;3&gt;');
@@ -71,8 +71,8 @@ describe('the RSVP email', () => {
       sentBy: '',
       eventUrl: 'e',
     });
-    expect(two.text).toContain('Is Emma going?\n\nGoing: u?s=going&p=0\nNot going: u?s=not_going&p=0');
-    expect(two.text).toContain('Is Liam going?\n\nGoing: u?s=going&p=1\nNot going: u?s=not_going&p=1');
+    expect(two.text).toContain("Is Emma going?\n\nGoing: u?s=going&p=0\nCan't go: u?s=not_going&p=0");
+    expect(two.text).toContain("Is Liam going?\n\nGoing: u?s=going&p=1\nCan't go: u?s=not_going&p=1");
     expect(two.text).not.toContain(' and ');
     expect(two.html).toContain('href="u?s=going&amp;p=1"');
     expect(two.html.indexOf('Is Emma going?')).toBeLessThan(two.html.indexOf('href="u?s=going&amp;p=0"'));

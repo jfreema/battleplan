@@ -278,7 +278,7 @@ export function rsvpReminderEmail(input: {
   const answersOf = (ask: RsvpAsk): [string, string, boolean][] => [
     ['Going', ask.going, true],
     ...(ask.maybe ? [['Maybe', ask.maybe, false] as [string, string, boolean]] : []),
-    ['Not going', ask.notGoing, false],
+    ["Can't go", ask.notGoing, false],
   ];
   const by = `${input.sentBy || 'Your coach'} sent this to everyone who hasn't RSVP'd.`;
   const text = [

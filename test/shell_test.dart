@@ -1082,13 +1082,29 @@ void main() {
           'Default color scheme',
           find.textContaining('How Teams and Profile look for you.'),
         ),
-        // Your schedule (SCHED-2): its tabs start on the gutter.
-        ('/teams/schedule', 'Your schedule', find.text('Upcoming')),
+        // Your schedule (SCHED-2): its tabs start on the gutter, the
+        // current one's mustard tile (#85).
+        (
+          '/teams/schedule',
+          'Your schedule',
+          find
+              .ancestor(
+                of: find.text('Upcoming'),
+                matching: find.byWidgetPredicate(
+                  (w) =>
+                      w is Container &&
+                      w.decoration is BoxDecoration &&
+                      (w.decoration! as BoxDecoration).border != null,
+                ),
+              )
+              .first,
+        ),
         ('/g/a/settings', 'Admin settings', find.text('Member permissions')),
       ]) {
         await scenes.goTo(tester, route);
         expect(left(tester, find.text(title).last), 20, reason: route);
-        expect(left(tester, first), 20, reason: '$route body');
+        // Within a pixel: the schedule's tile is turned a little.
+        expect(left(tester, first), closeTo(20, 1), reason: '$route body');
       }
       // The Team tab, under the team's header: its card on the gutter, and
       // the roster's rows on the hairlines' edge, not 16 px inside.

@@ -87,7 +87,7 @@ void main() {
         );
         expect(c.cherry.face, c.roles.palette.red);
         expect(c.cantGo.face, CampPalette.cantGo);
-        expect(_textColor(tester, 'Not going'), c.inkOn(c.cantGo));
+        expect(_textColor(tester, "Can't go"), c.inkOn(c.cantGo));
         expect(_textColor(tester, 'Canceled'), c.inkOn(c.cherry));
         expect(_textColor(tester, 'Owes'), c.inkOn(c.cherry));
         // Other candies keep the ink.
@@ -228,31 +228,14 @@ void main() {
       expect(_textColor(tester, '7'), c.textOnPage);
     });
 
-    testWidgets('an unanswered card has one mark: a dot by the name, '
-        "and the count's own gray for who hasn't answered", (tester) async {
+    testWidgets('an unanswered row has one mark: a dot in my own color by '
+        'the name, and no red but the +', (tester) async {
       await pumpSchedule(tester, scheme: TeamScheme.dark);
       final c = GumdropColors.forScheme(TeamScheme.dark).card;
-      final note = find.byWidgetPredicate(
-        (w) =>
-            w is RichText &&
-            w.text.toPlainText().contains("Noah hasn't answered"),
-      );
-      expect(note, findsWidgets);
-      final span = tester.widget<RichText>(note.first).text as TextSpan;
-      // No run in another color: the count's muted text throughout.
-      void noColor(InlineSpan s) {
-        if (s is TextSpan) {
-          if (s != span) expect(s.style?.color, isNull);
-          s.children?.forEach(noColor);
-        }
-      }
-
-      noColor(span);
-      expect(span.style?.color, c.textMuted);
       // The dot by Noah's name where he hasn't answered (not on the game,
-      // where he has), in your own color; and nothing in the warning red.
+      // where he has), in my own color.
       final dots = [
-        for (final e in find.text('Noah').evaluate())
+        for (final e in find.text('Noah?').evaluate())
           ..._filled(
             find
                 .ancestor(
@@ -266,8 +249,12 @@ void main() {
       ];
       expect(dots, isNotEmpty);
       expect(dots.map((d) => d.shape), everyElement(BoxShape.circle));
+      // The only red fill is the + (#85: red is for adding, too).
       final schedule = find.byType(Scaffold).first;
-      expect(_filled(schedule, c.cherry.face, tester), isEmpty);
+      expect(
+        _filled(schedule, c.cherry.face, tester).length,
+        _filled(find.byTooltip('New event'), c.cherry.face, tester).length,
+      );
     });
   });
 }

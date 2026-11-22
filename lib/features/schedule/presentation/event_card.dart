@@ -7,6 +7,9 @@ import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/services/time_zones.dart';
+import 'package:battleplan/core/widgets/camo.dart';
+import 'package:battleplan/core/widgets/camp_lettering.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
@@ -20,6 +23,7 @@ import 'package:battleplan/features/schedule/presentation/schedule_screen.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_widgets.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// An event in the chat (CHAT-11): its type, title, day and time, and
@@ -102,14 +106,16 @@ class EventCard extends ConsumerWidget {
       );
     }
     final accent = typeAccent(context, event.type);
-    final type = typeLabel(l10n, event.type);
-    // The schedule's card (SPEC §7.3): the type's edge, the title and its
-    // type word, the time and place, then the answers and counts.
+    final day = ZonedTime.wallClock(zone, event.startAt);
+    final where = event.location?.label;
+    // Boot Camp Mix's event panel (#85, SPEC §5.4): a header in the event's
+    // color under a halftone, with the date on a starburst and the kind on
+    // a mustard tag over the title in outlined stencil; then the time and
+    // place, and the answers.
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 420),
       child: TapCard(
-        edge: accent.face,
-        padding: const EdgeInsets.fromLTRB(15, 10, 12, 10),
+        padding: EdgeInsets.zero,
         onTap: () => openEvent(
           context,
           event,
@@ -120,95 +126,167 @@ class EventCard extends ConsumerWidget {
             final card = GumdropColors.of(context);
             final muted = TextStyle(
               fontFamily: AppFonts.body,
-              fontWeight: FontWeight.w600,
-              fontSize: 15,
-              height: 19 / 15,
-              letterSpacing: -0.2,
+              fontWeight: FontWeight.w700,
+              fontSize: 14.5,
+              height: 20 / 14.5,
               color: card.textMuted,
             );
+            final strong = muted.copyWith(
+              fontSize: 15.5,
+              height: 20 / 15.5,
+              color: card.textPrimary,
+            );
+            final stencil = TextStyle(
+              fontFamily: AppFonts.stencil,
+              fontWeight: FontWeight.w900,
+              color: card.ink,
+            );
+            final header = DecoratedBox(
+              decoration: BoxDecoration(
+                color: accent.face,
+                border: Border(bottom: BorderSide(color: card.ink, width: 3)),
+              ),
+              child: CustomPaint(
+                painter: DotGridPainter(
+                  color: const Color(0x2B17131C),
+                  radius: 1.5,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(9, 5, 10, 4),
+                  child: Row(
+                    children: [
+                      Starburst(
+                        points: 12,
+                        inner: 0.8,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '${DateFormat.E(l10n.localeName).format(day)} · '
+                              '${DateFormat.MMM(l10n.localeName).format(day)}',
+                              maxLines: 1,
+                              textScaler: TextScaler.noScaling,
+                              style: stencil.copyWith(
+                                fontSize: 10.5,
+                                height: 12 / 10.5,
+                                letterSpacing: 10.5 * 0.07,
+                              ),
+                            ),
+                            Text(
+                              '${day.day}',
+                              maxLines: 1,
+                              textScaler: TextScaler.noScaling,
+                              style: stencil.copyWith(
+                                fontSize: 24.5,
+                                height: 1,
+                                letterSpacing: 24.5 * 0.02,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 11),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CampTag(eventKindLabel(l10n, event)),
+                            const SizedBox(height: 3),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: AlignmentDirectional.centerStart,
+                              child: OutlinedText(
+                                event.title,
+                                maxLines: 1,
+                                style: TextStyle(
+                                  fontFamily: AppFonts.stencil,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 31.5,
+                                  height: 37 / 31.5,
+                                  letterSpacing: 31.5 * 0.04,
+                                  decoration: event.isCanceled
+                                      ? TextDecoration.lineThrough
+                                      : null,
+                                  decorationColor: card.ink,
+                                  decorationThickness: 2,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
             return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (reminder || event.isCanceled)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Wrap(
-                      spacing: Space.sm,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        if (reminder)
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
+                header,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(11, 6, 11, 11),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (reminder || event.isCanceled)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Wrap(
+                            spacing: Space.sm,
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
-                              Icon(
-                                AppIcons.notifications,
-                                size: 16,
-                                color: card.textPrimary,
-                              ),
-                              const SizedBox(width: Space.xs),
-                              Text(
-                                l10n.eventCardReminder,
-                                style: Theme.of(context).textTheme.labelMedium
-                                    ?.copyWith(color: card.textPrimary),
-                              ),
+                              if (reminder)
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      AppIcons.notifications,
+                                      size: 16,
+                                      color: card.textPrimary,
+                                    ),
+                                    const SizedBox(width: Space.xs),
+                                    Text(
+                                      l10n.eventCardReminder,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelMedium
+                                          ?.copyWith(color: card.textPrimary),
+                                    ),
+                                  ],
+                                ),
+                              if (event.isCanceled) const CanceledBadge(),
                             ],
                           ),
-                        if (event.isCanceled) const CanceledBadge(),
-                      ],
-                    ),
-                  ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        event.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontFamily: AppFonts.body,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 18,
-                          height: 22 / 18,
-                          color: card.textPrimary,
-                          decoration: event.isCanceled
-                              ? TextDecoration.lineThrough
-                              : null,
                         ),
-                      ),
-                    ),
-                    if (event.title.trim().toLowerCase() != type.toLowerCase())
-                      Padding(
-                        padding: const EdgeInsets.only(left: 10),
-                        child: Text(
-                          type.toUpperCase(),
-                          maxLines: 1,
-                          softWrap: false,
-                          overflow: TextOverflow.ellipsis,
-                          style: GumdropStyle.of(context).label(
-                            TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                              height: 16 / 13,
-                              letterSpacing: 13 * 0.1,
-                              color: typeAccent(context, event.type).text,
+                      // The time, and the place beside it in muted type.
+                      Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: timeRange(l10n, event, zone),
+                              style: strong,
                             ),
-                          ),
+                            if (where != null) TextSpan(text: '  · $where'),
+                          ],
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: muted,
                       ),
-                  ],
-                ),
-                const SizedBox(height: 1),
-                Text(timeRange(l10n, event, zone, withDay: true), style: muted),
-                if (otherZoneLine(l10n, event, zone) case final z?)
-                  Text(z, style: muted),
-                if (event.location case final loc?)
-                  Text(loc.label, style: muted),
-                _CardRsvps(
-                  event: event,
-                  groupId: groupId,
-                  zone: zone,
-                  reminder: reminder,
+                      if (otherZoneLine(l10n, event, zone) case final z?)
+                        Text(z, style: muted),
+                      _CardRsvps(
+                        event: event,
+                        groupId: groupId,
+                        zone: zone,
+                        reminder: reminder,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             );
@@ -219,12 +297,11 @@ class EventCard extends ConsumerWidget {
   }
 }
 
-/// The card's attendance line and answer buttons, as the schedule's card
-/// has them (CHAT-11, SPEC §5.4.6, §7.5, SCHED-5): the mini bar, "2/4
-/// going" and who I answer for that hasn't answered, then one set of
-/// buttons per person I answer for (PLAYER-6) while I can still answer:
-/// the same answers as the event's page, without the notes. Canceled and
-/// started events take no answers.
+/// The card's question and answer buttons (CHAT-11, SPEC §5.4.6, §7.5,
+/// SCHED-5; Boot Camp Mix, #85): "IS NOAH GOING?" with "2/4 going" beside
+/// it, then one set of push buttons per person I answer for (PLAYER-6)
+/// while I can still answer: the same answers as the event's page, without
+/// the notes. Canceled and started events take no answers.
 class _CardRsvps extends ConsumerWidget {
   const new({
     required this.event,
@@ -273,13 +350,6 @@ class _CardRsvps extends ConsumerWidget {
       isTeam: group.hasPlayers,
       total: total,
     );
-    // Only while the buttons show, and once my answers have loaded.
-    final note = mineAnswered == null
-        ? null
-        : unansweredText(l10n, [
-            for (final p in mine)
-              if (answers[p.id] == null) p,
-          ]);
     final unanswered = group.hasPlayers
         ? math.max(0, players - event.rsvpCounts.answered)
         : math.max(
@@ -293,22 +363,51 @@ class _CardRsvps extends ConsumerWidget {
       height: 18 / 14,
       color: GumdropColors.of(context).textMuted,
     );
+    // Boot Camp Mix (#85): the question in stencil ("IS NOAH GOING?") with
+    // the count beside it, then push buttons across the panel, a row for
+    // each player I answer for (PLAYER-11).
+    final card = GumdropColors.of(context);
+    final ask = mine.isEmpty ? null : rsvpHeading(l10n, mine);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (count != null)
+        if (ask != null || count != null)
           Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: EventAttendance(
-              count: count,
-              spoken: group.hasPlayers
-                  ? l10n.rsvpPlayersGoing(goingOf(event, isTeam: true), total)
-                  : l10n.rsvpMembersGoing(goingOf(event, isTeam: false), total),
-              fraction: total <= 0
-                  ? 0
-                  : goingOf(event, isTeam: group.hasPlayers) / total,
-              note: note,
+            padding: const EdgeInsets.only(top: 5),
+            // The count wraps under the question where both don't fit.
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.end,
+              spacing: Space.sm,
+              children: [
+                if (ask != null)
+                  Text(
+                    ask,
+                    style: TextStyle(
+                      fontFamily: AppFonts.stencil,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16.5,
+                      height: 22 / 16.5,
+                      letterSpacing: 16.5 * 0.045,
+                      color: card.textPrimary,
+                    ),
+                  ),
+                if (count != null)
+                  Semantics(
+                    label: group.hasPlayers
+                        ? l10n.rsvpPlayersGoing(
+                            goingOf(event, isTeam: true),
+                            total,
+                          )
+                        : l10n.rsvpMembersGoing(
+                            goingOf(event, isTeam: false),
+                            total,
+                          ),
+                    excludeSemantics: true,
+                    child: Text(count, style: muted.copyWith(fontSize: 13.5)),
+                  ),
+              ],
             ),
           ),
         // A reminder also says how many on the team haven't answered
@@ -318,16 +417,15 @@ class _CardRsvps extends ConsumerWidget {
             padding: const EdgeInsets.only(top: 2),
             child: Text(l10n.rsvpNotAnswered(unanswered), style: muted),
           ),
-        // A row for each player I answer for, with no all-players
-        // shortcut (PLAYER-11).
         for (final p in mine)
           Padding(
-            padding: const EdgeInsets.only(top: Space.sm),
+            padding: const EdgeInsets.only(top: 2),
             child: RsvpButtons(
               event: event,
               participant: p,
               answer: answers[p.id],
-              label: cardRsvpLabel(l10n, p),
+              // The question names one person; several each get a name.
+              label: mine.length > 1 ? cardRsvpLabel(l10n, p) : null,
               enabled: true,
               allowMaybe: allowMaybe,
               compact: true,

@@ -55,8 +55,8 @@ String reactionEmoji(Reaction r) => switch (r) {
   Reaction.trophy => '🏆',
 };
 
-/// [r]'s emoji, with ❤️ drawn in [heart] (the theme's coral, as it always
-/// looked; the warning red is for warnings only since #12): some
+/// [r]'s emoji, with ❤️ drawn in [heart] (the scheme's red, as a heart
+/// always looks): some
 /// fonts, the web's among them, only have a plain black heart, which the
 /// color tints.
 TextSpan reactionSpan(Reaction r, {Color? heart}) => TextSpan(
@@ -197,84 +197,68 @@ class ReactionChips extends StatelessWidget {
     }
     final mine = me == null ? null : message.reactions[me];
     final l10n = AppLocalizations.of(context);
-    // Plain emoji with counts (SPEC §5.4.6), 18 apart and lined up with
-    // the message's edge, each in a 48 tall tap area that doesn't move the
-    // layout: the areas reach up over the message's bottom, so the emoji
-    // sit just under it. My reaction's count is underlined.
+    // Pill chips (Boot Camp Mix, #85, SPEC §5.4.6): the emoji and its count
+    // in stencil on the panel color, mine on my own color, in a 2.5 px ink
+    // outline, 6 apart and set in from the message's edge, each in a 48
+    // tall tap area that doesn't move the layout: the areas reach up over
+    // the message's bottom, so the chips overlap its edge, as the design
+    // has them.
+    final ink = c.ink;
     return _RaisedBy(
       by: _raise,
-      child: Wrap(
-        alignment: alignEnd ? WrapAlignment.end : WrapAlignment.start,
-        children: [
-          for (final r in reactionOrder)
-            if (counts[r] case final n?)
-              // Read as "Like, 2" rather than the emoji.
-              Semantics(
-                container: true,
-                button: true,
-                selected: r == mine,
-                label: l10n.reactionChipLabel(reactionName(l10n, r), n),
-                hint: onReact == null
-                    ? null
-                    : r == mine
-                    ? l10n.reactionChipRemoveHint
-                    : l10n.reactionChipAddHint,
-                excludeSemantics: true,
-                onTap: onReact == null ? onShowWho : () => onReact!(r),
-                onLongPress: onShowWho,
-                customSemanticsActions: {
-                  CustomSemanticsAction(label: l10n.whoReacted): onShowWho,
-                },
-                child: GestureDetector(
-                  onSecondaryTap: onShowWho,
+      child: Padding(
+        padding: EdgeInsetsDirectional.only(
+          start: alignEnd ? 0 : 16,
+          end: alignEnd ? 16 : 0,
+        ),
+        child: Wrap(
+          alignment: alignEnd ? WrapAlignment.end : WrapAlignment.start,
+          children: [
+            for (final r in reactionOrder)
+              if (counts[r] case final n?)
+                // Read as "Like, 2" rather than the emoji.
+                Semantics(
+                  container: true,
+                  button: true,
+                  selected: r == mine,
+                  label: l10n.reactionChipLabel(reactionName(l10n, r), n),
+                  hint: onReact == null
+                      ? null
+                      : r == mine
+                      ? l10n.reactionChipRemoveHint
+                      : l10n.reactionChipAddHint,
+                  excludeSemantics: true,
+                  onTap: onReact == null ? onShowWho : () => onReact!(r),
                   onLongPress: onShowWho,
-                  child: FocusRingInk(
-                    onTap: onReact == null ? onShowWho : () => onReact!(r),
-                    radius: BorderRadius.circular(12),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        minHeight: 48,
-                        minWidth: 48,
-                      ),
-                      child: Align(
-                        alignment: alignEnd
-                            ? AlignmentDirectional.centerEnd
-                            : AlignmentDirectional.centerStart,
-                        widthFactor: 1,
-                        child: Padding(
-                          padding: EdgeInsetsDirectional.only(
-                            start: alignEnd ? _gap : 0,
-                            end: alignEnd ? 0 : _gap,
-                          ),
-                          child: Text.rich(
-                            TextSpan(
-                              children: [
-                                TextSpan(
-                                  children: [
-                                    reactionSpan(r, heart: c.you.face),
-                                  ],
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                                const TextSpan(text: ' '),
-                                // My reaction's count is underlined.
-                                TextSpan(
-                                  text: '$n',
-                                  style: r == mine
-                                      ? TextStyle(
-                                          decoration: TextDecoration.underline,
-                                          decorationColor: c.accentMark,
-                                          decorationThickness: 2,
-                                        )
-                                      : null,
-                                ),
-                              ],
+                  customSemanticsActions: {
+                    CustomSemanticsAction(label: l10n.whoReacted): onShowWho,
+                  },
+                  child: GestureDetector(
+                    onSecondaryTap: onShowWho,
+                    onLongPress: onShowWho,
+                    child: FocusRingInk(
+                      onTap: onReact == null ? onShowWho : () => onReact!(r),
+                      radius: BorderRadius.circular(14),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          minHeight: 48,
+                          minWidth: 48,
+                        ),
+                        child: Align(
+                          alignment: alignEnd
+                              ? AlignmentDirectional.centerEnd
+                              : AlignmentDirectional.centerStart,
+                          widthFactor: 1,
+                          child: Padding(
+                            padding: EdgeInsetsDirectional.only(
+                              start: alignEnd ? _gap : 0,
+                              end: alignEnd ? 0 : _gap,
                             ),
-                            style: TextStyle(
-                              fontFamily: AppFonts.body,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15,
-                              height: 20 / 15,
-                              color: c.textOnPage,
+                            child: _Chip(
+                              reaction: r,
+                              count: n,
+                              mine: r == mine,
+                              ink: ink,
                             ),
                           ),
                         ),
@@ -282,18 +266,71 @@ class ReactionChips extends StatelessWidget {
                     ),
                   ),
                 ),
-              ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   /// Between one reaction and the next.
-  static const double _gap = 18;
+  static const double _gap = 6;
 
-  /// How far the tap areas reach up over the message: the emoji sit 4 px
-  /// under it.
-  static const double _raise = 10;
+  /// How far the tap areas reach up over the message: the chips overlap
+  /// its bottom edge by about 12 px.
+  static const double _raise = 23;
+}
+
+/// One reaction chip (#85): the emoji and its count in stencil, on the
+/// panel color or, for [mine], my own color, in a 2.5 px ink pill.
+class _Chip extends StatelessWidget {
+  const new({
+    required this.reaction,
+    required this.count,
+    required this.mine,
+    required this.ink,
+  });
+
+  final Reaction reaction;
+  final int count;
+  final bool mine;
+  final Color ink;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = GumdropColors.of(context);
+    final face = mine ? c.you.face : c.card.surface;
+    final text = mine ? c.inkOn(c.you) : c.card.textOnPage;
+    return DecoratedBox(
+      decoration: ShapeDecoration(
+        color: face,
+        shape: StadiumBorder(side: BorderSide(color: ink, width: 2.5)),
+      ),
+      child: Padding(
+        padding: const EdgeInsetsDirectional.fromSTEB(6, 1, 9, 1),
+        child: Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                // ❤️ in the scheme's red, as it always was a red heart.
+                children: [reactionSpan(reaction, heart: c.coral.face)],
+                style: const TextStyle(fontSize: 13),
+              ),
+              const TextSpan(text: ' '),
+              TextSpan(text: '$count'),
+            ],
+          ),
+          style: TextStyle(
+            fontFamily: AppFonts.stencil,
+            fontWeight: FontWeight.w900,
+            fontSize: 13,
+            height: 21 / 13,
+            letterSpacing: 13 * 0.04,
+            color: text,
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Draws [child] [by] px higher than it's laid out, and takes that much

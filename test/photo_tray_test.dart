@@ -80,7 +80,7 @@ void main() {
     // The box's text is their caption, and Send works without one.
     expect(find.text('Add a caption…'), findsOneWidget);
     final sendButton = tester.widget<IconButton>(
-      find.widgetWithIcon(IconButton, AppIcons.send).first,
+      find.widgetWithIcon(IconButton, AppIcons.arrowUp).first,
     );
     expect(sendButton.onPressed, isNotNull);
     await send(tester);

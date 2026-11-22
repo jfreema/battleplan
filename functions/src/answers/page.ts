@@ -26,7 +26,7 @@ export function answeredLine(person: AnswerFor, status: AnswerStatus): string {
   return status === 'going' ? `${who} ${verb} going.` : `${who} ${verb}n't going.`;
 }
 
-const LABELS: Record<AnswerStatus, string> = { going: 'Going', maybe: 'Maybe', not_going: 'Not going' };
+const LABELS: Record<AnswerStatus, string> = { going: 'Going', maybe: 'Maybe', not_going: "Can't go" };
 
 const STYLE = `
 :root{color-scheme:light dark;--brand:#2f5bea;--bg:#fff;--surface:#f4f6fb;--border:#d9deea;--text:#1a1c22;--muted:#4a5163}

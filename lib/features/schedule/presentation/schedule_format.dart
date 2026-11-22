@@ -42,14 +42,24 @@ Color typeColor(BuildContext context, EventType type) {
 /// as [typeColor].
 GumdropAccent typeAccent(BuildContext context, EventType type) {
   final g = GumdropColors.of(context);
+  // Boot Camp Mix (#85): red games, blue practices and meetings, purple
+  // socials, orange for anything else.
   return switch (type) {
     EventType.game => g.tangerine,
     EventType.practice => g.grape,
     EventType.meeting => g.blueRaspberry,
-    EventType.social => g.mint,
-    EventType.other => g.bubblegum,
+    EventType.social => g.bubblegum,
+    EventType.other => g.lemon,
   };
 }
+
+/// An event's kind as its tag says it: "Game · Home", "Practice" (#85,
+/// SPEC §5.4.5).
+String eventKindLabel(AppLocalizations l10n, Event event) => [
+  typeLabel(l10n, event.type),
+  if (event.isGame && event.homeAway == HomeAway.home) l10n.eventHome,
+  if (event.isGame && event.homeAway == HomeAway.away) l10n.eventAway,
+].join(' · ');
 
 IconData typeIcon(EventType type) => switch (type) {
   EventType.game => AppIcons.game,

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:battleplan/core/design/camp_palette.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
@@ -18,6 +20,7 @@ class OutlinedText extends StatelessWidget {
     this.textAlign,
     this.textWidthBasis,
     this.semanticsLabel,
+    this.textScaler,
     super.key,
   });
 
@@ -37,9 +40,14 @@ class OutlinedText extends StatelessWidget {
   final TextWidthBasis? textWidthBasis;
   final String? semanticsLabel;
 
+  /// The text scaling; the system's unless given (a date on a pennant
+  /// that doesn't grow keeps [TextScaler.noScaling]).
+  final TextScaler? textScaler;
+
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
+    final scaler = textScaler ?? MediaQuery.textScalerOf(context);
     // The style as the fill's Text resolves it, so the stroke matches.
     final inherited = DefaultTextStyle.of(context);
     final base = inherited.style.merge(
@@ -74,7 +82,7 @@ class OutlinedText extends StatelessWidget {
                 ],
               ),
             ),
-            textScaler: MediaQuery.textScalerOf(context),
+            textScaler: scaler,
             maxLines: lines,
             overflow: overflow ?? inherited.overflow,
             textAlign: textAlign ?? inherited.textAlign ?? TextAlign.start,
@@ -87,6 +95,7 @@ class OutlinedText extends StatelessWidget {
               color: CampPalette.titleFill,
               shadows: const [],
             ),
+            textScaler: scaler,
             maxLines: lines,
             overflow: overflow ?? inherited.overflow,
             textAlign: textAlign ?? inherited.textAlign,
@@ -151,4 +160,103 @@ class CampTag extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A starburst (#85, SPEC §7.4): a mustard star of [points] points in a
+/// 3 px ink edge, its inner corners [inner] of the way out, with [child]
+/// (ink lettering) on it: "IN 5 DAYS!", or an event's date in the chat.
+class Starburst extends StatelessWidget {
+  const new({
+    required this.child,
+    this.width = 86,
+    this.height = 62,
+    this.points = 14,
+    this.inner = 0.78,
+    this.turn = -6,
+    super.key,
+  });
+
+  final Widget child;
+  final double width;
+  final double height;
+  final int points;
+
+  /// How far out the inner corners sit, as a share of the outer ones.
+  final double inner;
+
+  /// How far it's turned, in degrees.
+  final double turn;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = GumdropColors.of(context);
+    return Transform.rotate(
+      angle: turn * 3.141592653589793 / 180,
+      child: CustomPaint(
+        painter: _StarburstPainter(
+          fill: c.roles.palette.mustard,
+          edge: c.ink,
+          points: points,
+          inner: inner,
+        ),
+        child: SizedBox(
+          width: width,
+          height: height,
+          child: Center(
+            child: DefaultTextStyle.merge(
+              style: TextStyle(color: c.ink),
+              child: child,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StarburstPainter extends CustomPainter {
+  new({
+    required this.fill,
+    required this.edge,
+    required this.points,
+    required this.inner,
+  });
+
+  final Color fill;
+  final Color edge;
+  final int points;
+  final double inner;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final rx = size.width / 2;
+    final ry = size.height / 2;
+    final path = Path();
+    for (var i = 0; i < points * 2; i++) {
+      final angle = -math.pi / 2 + math.pi * i / points;
+      final k = i.isEven ? 1.0 : inner;
+      final p =
+          center + Offset(math.cos(angle) * rx * k, math.sin(angle) * ry * k);
+      i == 0 ? path.moveTo(p.dx, p.dy) : path.lineTo(p.dx, p.dy);
+    }
+    path.close();
+    canvas
+      ..drawPath(path, Paint()..color = fill)
+      ..drawPath(
+        path,
+        Paint()
+          ..color = edge
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3
+          ..strokeJoin = StrokeJoin.round,
+      );
+  }
+
+  @override
+  bool shouldRepaint(_StarburstPainter old) =>
+      old.fill != fill ||
+      old.edge != edge ||
+      old.points != points ||
+      old.inner != inner;
 }

@@ -1,9 +1,12 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/camo.dart';
+import 'package:battleplan/core/widgets/camp_lettering.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_format.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -13,20 +16,21 @@ import 'package:material_ui/material_ui.dart';
 /// The schedule's Gumdrop Pop pieces (design §3.15, §3.16): cards, the date
 /// block, the going bar, answer discs, stat tiles, and the RSVP gumdrops.
 
-/// A tappable Open Field card (SPEC §7.3): the card color, a 2 px rim on a
-/// 4 px lip, corner 18, and its [child] in the card's colors
-/// ([GumdropSurface]). [edge], when given, is a 5 px stripe down its left
-/// side (the event type's candy). A [footer] sits under it on the card,
-/// outside what a tap opens: buttons of its own, like the answers. The
-/// keyboard focus rings the whole card (SPEC §7.6).
+/// A tappable Boot Camp Mix panel (#85, SPEC §7.3): the panel color, a 3 px
+/// ink outline on a hard 4/4 shadow, square, and its [child] in the card's
+/// colors ([GumdropSurface]). [edge], when given, is a 5 px stripe down its
+/// left side (the event type's color). A [footer] sits under it on the
+/// card, outside what a tap opens: buttons of its own, like the answers.
+/// The keyboard focus rings the whole card (SPEC §7.6).
 class TapCard extends StatefulWidget {
   const new({
     required this.child,
     this.onTap,
     this.footer,
     this.edge,
-    this.radius = 18,
+    this.radius = 0,
     this.padding = const EdgeInsets.fromLTRB(15, 8, 12, 4),
+    this.footerBand,
     super.key,
   });
 
@@ -36,6 +40,10 @@ class TapCard extends StatefulWidget {
   final Color? edge;
   final double radius;
   final EdgeInsetsGeometry padding;
+
+  /// The footer as its own band (#85): this color under a 3 px ink rule,
+  /// across the whole card, as the schedule's answer row is.
+  final Color? footerBand;
 
   @override
   State<TapCard> createState() => _TapCardState();
@@ -58,8 +66,25 @@ class _TapCardState extends State<TapCard> {
       onFocusChange: (f) => setState(() => _focused = f),
       child: Padding(padding: padding, child: widget.child),
     );
+    final band = widget.footerBand;
     final body = switch (widget.footer) {
       null => ink(resolved),
+      final footer when band != null => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ink(resolved),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: band,
+              border: Border(top: BorderSide(color: c.ink, width: 3)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(10, 2, 9, 4),
+              child: footer,
+            ),
+          ),
+        ],
+      ),
       final footer => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -70,10 +95,12 @@ class _TapCardState extends State<TapCard> {
     };
     return GumdropSurface(
       child: DecoratedBox(
-        // The 4 px lip under the card, in the rim's color.
+        // The hard shadow, down and to the right.
         decoration: BoxDecoration(
           borderRadius: radius,
-          boxShadow: [BoxShadow(color: rim.color, offset: const Offset(0, 4))],
+          boxShadow: [
+            BoxShadow(color: c.pageShadow, offset: const Offset(4, 4)),
+          ],
         ),
         // Outside the card, whose rim would cover a ring drawn on it.
         child: FocusRing(
@@ -104,63 +131,175 @@ class _TapCardState extends State<TapCard> {
   }
 }
 
-/// The date column on a schedule card (SPEC §7.3): the weekday over the day
-/// over the month, 38 wide. It reads as the day.
-class DateColumn extends StatelessWidget {
-  const new({required this.day, required this.semanticLabel, super.key});
+/// A schedule panel's date pennant (Boot Camp Mix, #85, SPEC §7.4): the
+/// event's color under a halftone, down the panel's left side and ending
+/// in a point edged in ink, with the weekday in small ink stencil over the
+/// day in big outlined stencil. It reads as the day.
+class DatePennant extends StatelessWidget {
+  const new({
+    required this.day,
+    required this.color,
+    this.semanticLabel,
+    super.key,
+  });
 
   final DateTime day;
-  final String semanticLabel;
+
+  /// The event's color.
+  final Color color;
+  final String? semanticLabel;
+
+  /// The pennant's width, to its point.
+  static const double width = 75;
+
+  /// Where the panel's text starts, clear of the point.
+  static const double textStart = 82;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final c = GumdropColors.of(context);
-    final style = GumdropStyle.of(context);
-    final small = style.label(
-      TextStyle(
-        fontWeight: FontWeight.w600,
-        fontSize: 13,
-        height: 14 / 13,
-        letterSpacing: 13 * 0.08,
-        color: c.textMuted,
-      ),
-    );
+    final l10n = AppLocalizations.of(context);
     return Semantics(
-      label: semanticLabel,
+      label: semanticLabel ?? dayLabel(l10n, day),
       excludeSemantics: true,
-      child: ConstrainedBox(
-        // 38 wide, growing with the text so each line stays one line.
-        constraints: const BoxConstraints(minWidth: 38),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              DateFormat.E(l10n.localeName).format(day).toUpperCase(),
-              maxLines: 1,
-              softWrap: false,
-              style: small,
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 1),
-              child: Text(
-                '${day.day}',
-                maxLines: 1,
-                softWrap: false,
-                style: style.display(
-                  TextStyle(
-                    fontSize: 34,
-                    height: 32 / 34,
-                    color: c.textPrimary,
+      child: CustomPaint(
+        painter: _PennantPainter(color: color, ink: c.ink),
+        child: SizedBox(
+          width: width,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(0, 4, 13, 4),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  DateFormat.E(l10n.localeName).format(day),
+                  maxLines: 1,
+                  textScaler: TextScaler.noScaling,
+                  style: TextStyle(
+                    fontFamily: AppFonts.stencil,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12.5,
+                    height: 14 / 12.5,
+                    letterSpacing: 12.5 * 0.09,
+                    color: c.inkOn(
+                      GumdropAccent(face: color, lip: c.ink, text: color),
+                    ),
                   ),
                 ),
-              ),
+                OutlinedText(
+                  '${day.day}',
+                  // The pennant doesn't grow with the text size.
+                  textScaler: TextScaler.noScaling,
+                  shadow: 2.5,
+                  maxLines: 1,
+                  style: const TextStyle(
+                    fontFamily: AppFonts.stencil,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 38,
+                    height: 39 / 38,
+                    letterSpacing: 38 * 0.02,
+                  ),
+                ),
+              ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The pennant: an ink shape with the color 4 px inside its point, and the
+/// halftone over the color.
+class _PennantPainter extends CustomPainter {
+  new({required this.color, required this.ink});
+
+  final Color color;
+  final Color ink;
+
+  Path _shape(Size size, double right) {
+    const point = 15.0;
+    return Path()
+      ..moveTo(0, 0)
+      ..lineTo(right - point, 0)
+      ..lineTo(right, size.height / 2)
+      ..lineTo(right - point, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawPath(_shape(size, size.width), Paint()..color = ink);
+    final face = _shape(size, size.width - 4);
+    canvas
+      ..drawPath(face, Paint()..color = color)
+      ..save()
+      ..clipPath(face);
+    DotGridPainter(
+      color: const Color(0x2B1B1D13),
+      radius: 1.5,
+    ).paint(canvas, size);
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_PennantPainter old) =>
+      old.color != color || old.ink != ink;
+}
+
+/// My answer stamped on a schedule panel (#85): "GOING!" with a check on
+/// green, "MAYBE" on orange, or "CAN'T GO" on salmon, in ink stencil in a
+/// 2.5 px ink outline on a 2/2 shadow, turned -5°.
+class AnswerStamp extends StatelessWidget {
+  const new({required this.status, super.key});
+
+  final RsvpStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = GumdropColors.of(context);
+    final l10n = AppLocalizations.of(context);
+    final accent = statusAccent(context, status);
+    final label = switch (status) {
+      RsvpStatus.going => '${statusLabel(l10n, status)}!',
+      _ => statusLabel(l10n, status),
+    };
+    return Transform.rotate(
+      angle: -5 * 3.141592653589793 / 180,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(6, 5, 8, 3),
+        decoration: BoxDecoration(
+          color: accent.face,
+          border: Border.all(color: c.ink, width: 2.5),
+          boxShadow: [
+            BoxShadow(color: c.pageShadow, offset: const Offset(2, 2)),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (status == RsvpStatus.going) ...[
+              Icon(
+                AppIcons.going,
+                size: 15,
+                weight: 700,
+                color: c.inkOn(accent),
+              ),
+              const SizedBox(width: 3),
+            ],
             Text(
-              DateFormat.MMM(l10n.localeName).format(day).toUpperCase(),
+              label,
               maxLines: 1,
-              softWrap: false,
-              style: small,
+              textScaler: TextScaler.noScaling,
+              style: TextStyle(
+                fontFamily: AppFonts.stencil,
+                fontWeight: FontWeight.w900,
+                fontSize: 15,
+                height: 1,
+                letterSpacing: 15 * 0.05,
+                color: c.inkOn(accent),
+              ),
             ),
           ],
         ),
@@ -169,41 +308,90 @@ class DateColumn extends StatelessWidget {
   }
 }
 
-/// The going bar: a track with [fraction] of it mint, [width] wide (null
-/// to fill) and [height] tall. Decoration only; the words beside it say
-/// the same.
-class GoingBar extends StatelessWidget {
-  const new({required this.fraction, this.width, this.height = 8, super.key});
+/// A month's label in the schedule (#85): its name in mustard stencil on
+/// an ink block, a mustard star before it, turned -1.2°.
+class MonthLabel extends StatelessWidget {
+  const new({required this.month, super.key});
 
-  final double fraction;
-  final double? width;
-  final double height;
+  final DateTime month;
 
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
-    return ExcludeSemantics(
-      child: Container(
-        width: width,
-        height: height,
-        decoration: BoxDecoration(
-          color: c.cardTrack,
-          borderRadius: BorderRadius.circular(height / 2 + 0.5),
-        ),
+    final l10n = AppLocalizations.of(context);
+    final mustard = c.roles.palette.mustard;
+    return Semantics(
+      header: true,
+      child: Align(
         alignment: AlignmentDirectional.centerStart,
-        child: FractionallySizedBox(
-          widthFactor: fraction.clamp(0, 1),
-          heightFactor: 1,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: c.mint.face,
-              borderRadius: BorderRadius.circular(height / 2 + 0.5),
+        child: Transform.rotate(
+          angle: -1.2 * 3.141592653589793 / 180,
+          child: Container(
+            color: c.ink,
+            padding: const EdgeInsets.fromLTRB(9, 2, 10, 0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CustomPaint(
+                  painter: _StarPainter(mustard),
+                  size: const Size(12, 12),
+                ),
+                const SizedBox(width: 7),
+                Flexible(
+                  child: Text(
+                    DateFormat.MMMM(l10n.localeName).format(month),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: AppFonts.stencil,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16,
+                      height: 22 / 16,
+                      letterSpacing: 16 * 0.08,
+                      color: mustard,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
       ),
     );
   }
+}
+
+/// A five-pointed star in [color].
+class _StarPainter extends CustomPainter {
+  new(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // The design's star, as fractions of its box.
+    const points = [
+      (0.50, 0.0),
+      (0.61, 0.35),
+      (0.98, 0.35),
+      (0.68, 0.57),
+      (0.79, 0.91),
+      (0.50, 0.70),
+      (0.21, 0.91),
+      (0.32, 0.57),
+      (0.02, 0.35),
+      (0.39, 0.35),
+    ];
+    final path = Path();
+    for (final (i, (x, y)) in points.indexed) {
+      final p = Offset(x * size.width, y * size.height);
+      i == 0 ? path.moveTo(p.dx, p.dy) : path.lineTo(p.dx, p.dy);
+    }
+    canvas.drawPath(path..close(), Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(_StarPainter old) => old.color != color;
 }
 
 /// A person's initials on a candy circle (design §3.9): their picked
@@ -264,12 +452,11 @@ class CandyInitials extends StatelessWidget {
   }
 }
 
-/// The RSVP choice: Going, Maybe, and Not going in equal parts, built on
+/// The RSVP choice: Going, Maybe, and Can't go in equal parts, built on
 /// [SegmentedButton] so it keeps its selection semantics and keyboard
-/// behavior. On the event's page, three 54 px gumdrops with their discs;
-/// [compact] (the schedule and chat cards, SPEC §7.3) three 36 px pills in
-/// a 48 px tap height: the picked one its candy (mint, lemon, cherry) on
-/// its lip, the others quiet, or all outlined while there's no answer.
+/// behavior: push buttons (#85), 50 tall on the event's page, and on the
+/// schedule and chat cards ([compact], SPEC §7.3) 36 tall in a 48 px tap
+/// height, the picked one in its answer's color pressed onto its shadow.
 ///
 /// Locked ([onChanged] null: past the deadline, once the event starts, an
 /// archived team, a super admin viewing), it's one flat tag with the answer
@@ -301,8 +488,8 @@ class RsvpChoice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final height = compact ? 48.0 : 50.0;
-    final gap = compact ? 4.0 : _gap;
+    final height = compact ? 48.0 : 53.0;
+    final gap = compact ? 9.0 : _gap;
     final enabled = onChanged != null;
     if (!enabled) {
       return _LockedAnswer(status: current, height: height, compact: compact);
@@ -324,22 +511,14 @@ class RsvpChoice extends StatelessWidget {
                   start: gap * i / n,
                   end: gap * (n - 1 - i) / n,
                 ),
-                child: compact
-                    ? _RsvpPill(
-                        status: s,
-                        label: statusLabel(l10n, s),
-                        selected: s == current,
-                        unanswered: current == null,
-                        enabled: enabled,
-                      )
-                    : _RsvpGumdrop(
-                        status: s,
-                        label: statusLabel(l10n, s),
-                        selected: s == current,
-                        enabled: enabled,
-                        compact: compact,
-                        height: height,
-                      ),
+                child: _RsvpPush(
+                  status: s,
+                  label: statusLabel(l10n, s),
+                  selected: s == current,
+                  enabled: enabled,
+                  page: !compact,
+                  height: height,
+                ),
               ),
             ),
         ],
@@ -475,18 +654,20 @@ class _LockedAnswer extends StatelessWidget {
   }
 }
 
-/// One RSVP button on the event's page (SPEC §7.3): 46 tall, corner 23,
-/// a 2 px border, stencil 600 16. Picked: the candy face on a 4 px lip in
-/// its lip color, the label at 700 17 in ink. Unpicked: a 2 px outline,
-/// the label in the text color and the icon in its answer's color. Every
-/// button sits 4 px up, so they line up.
-class _RsvpGumdrop extends StatelessWidget {
+/// One RSVP push button (Boot Camp Mix, #85, SPEC §7.3): the panel color
+/// in an ink outline on a hard shadow down and to the right; picked, its
+/// answer's color (green, orange, or Can't go's salmon) with the answer's
+/// icon, pressed onto its shadow. The label is stencil capitals, ink on a
+/// picked one. On the event's page ([page]) 50 tall, corner 13, a 3 px
+/// outline on a 3 px shadow; on the cards 36 tall, corner 10, 2.5 on 2.5,
+/// in a 48 px tap height.
+class _RsvpPush extends StatelessWidget {
   const new({
     required this.status,
     required this.label,
     required this.selected,
     required this.enabled,
-    required this.compact,
+    required this.page,
     required this.height,
   });
 
@@ -494,150 +675,47 @@ class _RsvpGumdrop extends StatelessWidget {
   final String label;
   final bool selected;
   final bool enabled;
-  final bool compact;
+
+  /// The event page's bigger buttons.
+  final bool page;
+
+  /// The tap height it's centered in.
   final double height;
 
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
     final accent = statusAccent(context, status);
-    final Color text;
-    final Color icon;
-    if (selected) {
-      // Ink on its candy; white on the warning red.
-      text = c.inkOn(accent);
-      icon = text;
-    } else if (!enabled) {
-      text = c.textMutedOnPage;
-      icon = c.textMutedOnPage;
-    } else {
-      text = c.textOnPage;
-      icon = switch (status) {
-        RsvpStatus.going => c.mint.text,
-        RsvpStatus.maybe => c.lemon.text,
-        RsvpStatus.notGoing => c.notGoingIcon,
-      };
-    }
-    final (glyph, size) = switch (status) {
-      RsvpStatus.going => (AppIcons.going, 18.0),
-      RsvpStatus.maybe => (AppIcons.maybe, 20.0),
-      RsvpStatus.notGoing => (AppIcons.notGoing, 16.0),
+    final face = page ? 50.0 : 36.0;
+    final border = page ? 3.0 : 2.5;
+    final shadow = page ? 3.0 : 2.5;
+    final radius = BorderRadius.circular(page ? 13 : 10);
+    final text = selected
+        ? c.inkOn(accent)
+        : enabled
+        ? c.textPrimary
+        : c.textMuted;
+    final glyph = switch (status) {
+      RsvpStatus.going => AppIcons.going,
+      RsvpStatus.maybe => AppIcons.maybe,
+      RsvpStatus.notGoing => AppIcons.notGoing,
     };
-    return SizedBox(
-      width: double.infinity,
-      height: height,
-      child: Padding(
-        // The lip's room below every button, picked or not.
-        padding: const EdgeInsets.only(bottom: 4),
-        child: ButtonFocusRing(
-          radius: BorderRadius.circular(23),
-          child: Container(
-            decoration: BoxDecoration(
-              color: selected ? accent.face : null,
-              borderRadius: BorderRadius.circular(23),
-              border: Border.all(
-                color: selected ? accent.lip : c.outline,
-                width: 2,
-              ),
-              boxShadow: selected
-                  ? [BoxShadow(color: accent.lip, offset: const Offset(0, 4))]
-                  : null,
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: Center(
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(glyph, size: size, weight: 700, color: icon),
-                    const SizedBox(width: 6),
-                    Text(
-                      label,
-                      maxLines: 1,
-                      style: GumdropStyle.of(context).label(
-                        TextStyle(
-                          fontWeight: selected
-                              ? FontWeight.w700
-                              : FontWeight.w600,
-                          fontSize: selected ? 17 : 16,
-                          height: 1,
-                          color: text,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// One card RSVP pill (SPEC §7.3): 36 px, corner 18, inside the 48 px
-/// segment. Picked, its candy with a 2 px outline and a 3 px lip in its lip
-/// color, raised onto the lip, with an ink label at 700; on a row with an
-/// answer, the others are quiet card-muted words; on a row with none, all
-/// three are outlined, with their icons in the answer colors.
-class _RsvpPill extends StatelessWidget {
-  const new({
-    required this.status,
-    required this.label,
-    required this.selected,
-    required this.unanswered,
-    required this.enabled,
-  });
-
-  final RsvpStatus status;
-  final String label;
-  final bool selected;
-  final bool unanswered;
-  final bool enabled;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = GumdropColors.of(context);
-    final accent = statusAccent(context, status);
-    final Color text;
-    final Color icon;
-    if (selected) {
-      // Ink on its candy; white on the warning red.
-      text = c.inkOn(accent);
-      icon = text;
-    } else if (unanswered && enabled) {
-      text = c.textPrimary;
-      icon = switch (status) {
-        RsvpStatus.going => c.mint.text,
-        RsvpStatus.maybe => c.lemon.text,
-        RsvpStatus.notGoing => c.cherry.text,
-      };
-    } else {
-      text = c.textMuted;
-      icon = c.textMuted;
-    }
-    final (glyph, size) = switch (status) {
-      RsvpStatus.going => (AppIcons.going, 16.0),
-      RsvpStatus.maybe => (AppIcons.maybe, 18.0),
-      RsvpStatus.notGoing => (AppIcons.notGoing, 14.0),
-    };
-    final pill = ButtonFocusRing(
-      radius: BorderRadius.circular(18),
+    final button = ButtonFocusRing(
+      radius: radius,
       child: Container(
-        height: 36,
+        height: face,
         decoration: BoxDecoration(
-          color: selected ? accent.face : null,
-          borderRadius: BorderRadius.circular(18),
-          border: selected
-              ? Border.all(color: accent.lip, width: 2)
-              : unanswered && enabled
-              ? Border.all(color: c.cardOutline, width: 1.5)
-              : null,
+          color: selected ? accent.face : c.surface,
+          borderRadius: radius,
+          border: Border.all(color: c.ink, width: border),
           boxShadow: selected
-              ? [BoxShadow(color: accent.lip, offset: const Offset(0, 3))]
-              : null,
+              ? null
+              : [
+                  BoxShadow(
+                    color: c.pageShadow,
+                    offset: Offset(shadow, shadow),
+                  ),
+                ],
         ),
         padding: const EdgeInsets.symmetric(horizontal: 6),
         child: Center(
@@ -646,15 +724,17 @@ class _RsvpPill extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(glyph, size: size, weight: 700, color: icon),
-                SizedBox(width: status == RsvpStatus.maybe ? 2 : 4),
+                if (selected) ...[
+                  Icon(glyph, size: page ? 20 : 16, weight: 700, color: text),
+                  const SizedBox(width: 4),
+                ],
                 Text(
                   label,
                   maxLines: 1,
                   style: GumdropStyle.of(context).label(
                     TextStyle(
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                      fontSize: page ? 20 : 15,
                       height: 1,
                       color: text,
                     ),
@@ -668,11 +748,16 @@ class _RsvpPill extends StatelessWidget {
     );
     return SizedBox(
       width: double.infinity,
-      height: 48,
-      child: Align(
-        child: Transform.translate(
-          offset: Offset(0, selected ? -1.5 : 0),
-          child: pill,
+      height: height,
+      child: Padding(
+        // Room for the shadow at the right and bottom of every button.
+        padding: EdgeInsets.only(right: shadow, bottom: page ? shadow : 0),
+        child: Align(
+          child: Transform.translate(
+            // Picked, pressed onto its shadow.
+            offset: selected ? Offset(shadow, shadow) : Offset.zero,
+            child: button,
+          ),
         ),
       ),
     );

@@ -4,13 +4,14 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
-import 'package:battleplan/core/design/gumdrop_shape.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/widgets/camo.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
+import 'package:battleplan/core/widgets/gumdrop_icon_button.dart';
 import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
@@ -27,6 +28,7 @@ import 'package:battleplan/features/schedule/presentation/event_details_screen.d
 import 'package:battleplan/features/schedule/presentation/event_row.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_format.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_retry.dart';
+import 'package:battleplan/features/schedule/presentation/schedule_widgets.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -65,21 +67,16 @@ class ScheduleScreen extends ConsumerWidget {
         canCreate && (me?.isAdmin ?? false) && !emptyOffersImport && !unknown;
 
     final c = GumdropColors.of(context);
+    // The red round + beside the filter (Boot Camp Mix, #85). Full storage
+    // stops new events (STORE-4); the button stays and says why.
     final plus = canCreate
-        ? FloatingActionButton(
-            // The team's tabs stay built side by side, and Documents
-            // has one too: no shared hero tag between them.
-            heroTag: null,
+        ? GumdropIconButton(
+            icon: AppIcons.add,
             tooltip: l10n.eventNew,
-            // Full storage stops new events (STORE-4); the button
-            // stays, flat in the well's color, to say why.
-            backgroundColor: full ? c.well : null,
-            foregroundColor: full ? c.textMuted : null,
-            shape: full ? const GumdropShape() : null,
+            red: true,
             onPressed: () => full
                 ? showStorageFull(context)
                 : unawaited(context.push('/g/${groupId.value}/schedule/new')),
-            child: const Icon(AppIcons.add, size: 28, weight: 700),
           )
         : null;
 
@@ -122,18 +119,11 @@ class ScheduleScreen extends ConsumerWidget {
           );
 
     return Scaffold(
-      floatingActionButton: plus == null || !canImport
-          ? plus
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              // Never past the screen's edge: the words give way first.
-              children: [
-                Flexible(child: import),
-                const SizedBox(width: Space.md),
-                plus,
-              ],
-            ),
-      body: ScheduleTabs(groupId: groupId),
+      floatingActionButton: canImport ? import : null,
+      // On the page's dot grid (#85).
+      body: PageDots(
+        child: ScheduleTabs(groupId: groupId, add: plus),
+      ),
     );
   }
 }
@@ -142,15 +132,17 @@ class ScheduleScreen extends ConsumerWidget {
 /// (SCHED-1, SCHED-2): one team's events, or with no [groupId] those of
 /// every team and group in Your schedule, each naming its team.
 class ScheduleTabs extends ConsumerWidget {
-  const new({this.groupId, super.key});
+  const new({this.groupId, this.add, super.key});
 
   /// Null is Your schedule (SCHED-2).
   final GroupId? groupId;
 
+  /// The + for a new event, beside the filter, where I may add one.
+  final Widget? add;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final c = GumdropColors.of(context);
     final filtered = ref.watch(
       scheduleViewProvider.select((o) => o.filters.isNotEmpty),
     );
@@ -158,71 +150,35 @@ class ScheduleTabs extends ConsumerWidget {
       length: 3,
       child: Column(
         children: [
-          // Upcoming, Past, Calendar, and the filter, on a hairline.
-          DecoratedBox(
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: c.divider)),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.only(left: 20, right: 10),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _Segments(
-                      labels: [
-                        l10n.scheduleUpcoming,
-                        l10n.schedulePast,
-                        l10n.scheduleCalendar,
-                      ],
+          // Upcoming, Past, Calendar, the filter and the + (#85).
+          Padding(
+            padding: const EdgeInsets.only(left: 20, right: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _Segments(
+                    labels: [
+                      l10n.scheduleUpcoming,
+                      l10n.schedulePast,
+                      l10n.scheduleCalendar,
+                    ],
+                  ),
+                ),
+                MergeSemantics(
+                  child: Semantics(
+                    value: filtered ? l10n.scheduleFilterOn : null,
+                    // A dot in my own color while a filter is on: a
+                    // setting of mine, not a warning (SCHED-2).
+                    child: GumdropIconButton(
+                      icon: AppIcons.filter,
+                      tooltip: l10n.scheduleFilter,
+                      dot: filtered,
+                      onPressed: () => unawaited(_openFilters(context)),
                     ),
                   ),
-                  MergeSemantics(
-                    child: Semantics(
-                      value: filtered ? l10n.scheduleFilterOn : null,
-                      child: IconButton(
-                        tooltip: l10n.scheduleFilter,
-                        constraints: const BoxConstraints.tightFor(
-                          width: 48,
-                          height: 48,
-                        ),
-                        padding: EdgeInsets.zero,
-                        color: c.textOnPage,
-                        onPressed: () => unawaited(_openFilters(context)),
-                        icon: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            const Icon(AppIcons.filter, size: 24),
-                            if (filtered)
-                              Positioned(
-                                top: -2,
-                                right: -3,
-                                child: Container(
-                                  width: 13,
-                                  height: 13,
-                                  decoration: BoxDecoration(
-                                    color: c.page,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: Container(
-                                    width: 9,
-                                    height: 9,
-                                    // Coral: a setting of mine is on, not
-                                    // a warning (SCHED-2).
-                                    decoration: BoxDecoration(
-                                      color: c.you.face,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+                ?add,
+              ],
             ),
           ),
           Expanded(
@@ -284,8 +240,9 @@ class _FilterSheet extends ConsumerWidget {
   }
 }
 
-/// Upcoming, Past and Calendar (SPEC §7.3): stencil 600 17, left-aligned,
-/// 24 px apart, the current one in the text color over a 4 px coral bar.
+/// Upcoming, Past and Calendar (SPEC §7.3; Boot Camp Mix, #85): stencil
+/// 16.5, left-aligned, 24 px apart, muted; the current one in ink on a
+/// mustard tile in a 2.5 px ink outline on a 2/2 shadow, turned -2°.
 /// Each is at least 48 × 48 to tap, and the space between them is tappable
 /// too. Labels shrink rather than run under the filter at large text sizes.
 class _Segments extends StatefulWidget {
@@ -359,40 +316,14 @@ class _SegmentsState extends State<_Segments> {
                       heightFactor: 1,
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(minHeight: 48),
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          alignment: Alignment.center,
-                          children: [
-                            FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                label,
-                                maxLines: 1,
-                                style: style.label(
-                                  TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w600,
-                                    color: controller.index == i
-                                        ? c.textOnPage
-                                        : c.textMutedOnPage,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            if (controller.index == i)
-                              Positioned(
-                                left: 0,
-                                right: 0,
-                                bottom: -2,
-                                child: Container(
-                                  height: 4,
-                                  decoration: BoxDecoration(
-                                    color: c.you.face,
-                                    borderRadius: BorderRadius.circular(2),
-                                  ),
-                                ),
-                              ),
-                          ],
+                        child: Center(
+                          widthFactor: 1,
+                          child: _ViewLabel(
+                            label: label,
+                            current: controller.index == i,
+                            style: style,
+                            colors: c,
+                          ),
                         ),
                       ),
                     ),
@@ -402,6 +333,57 @@ class _SegmentsState extends State<_Segments> {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// One of Upcoming, Past and Calendar: muted stencil, or for the current
+/// one ink stencil on a turned mustard tile (#85).
+class _ViewLabel extends StatelessWidget {
+  const new({
+    required this.label,
+    required this.current,
+    required this.style,
+    required this.colors,
+  });
+
+  final String label;
+  final bool current;
+  final GumdropStyle style;
+  final GumdropColors colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = colors;
+    final text = FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(
+        label,
+        maxLines: 1,
+        style: style.label(
+          TextStyle(
+            fontSize: 16.5,
+            fontWeight: FontWeight.w900,
+            height: 1,
+            color: current ? c.ink : c.textMutedOnPage,
+          ),
+        ),
+      ),
+    );
+    if (!current) return text;
+    return Transform.rotate(
+      angle: -2 * 3.141592653589793 / 180,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(11, 6, 10, 3),
+        decoration: BoxDecoration(
+          color: c.roles.palette.mustard,
+          border: Border.all(color: c.ink, width: 2.5),
+          boxShadow: [
+            BoxShadow(color: c.pageShadow, offset: const Offset(2, 2)),
+          ],
+        ),
+        child: text,
+      ),
     );
   }
 }
@@ -640,15 +622,33 @@ class EventList extends ConsumerWidget {
           );
         }
         final e = events[i];
-        return ScheduleEventRow(
+        final row = ScheduleEventRow(
           key: ValueKey(e.id.value),
           event: e,
           viewerZone: zone,
-          // Every card has its date block (SCHED-1, design §3.15).
+          // Every card has its date pennant (SCHED-1, #85).
           day: days[i],
           showTeam: team == null,
           openedFrom: team == null ? l10n.yourSchedule : null,
           rsvpRange: range,
+        );
+        // Each month starts under its label (#85).
+        final month = DateTime(days[i].year, days[i].month);
+        final newMonth =
+            i == 0 ||
+            days[i - 1].year != days[i].year ||
+            days[i - 1].month != days[i].month;
+        if (!newMonth) return row;
+        return Column(
+          key: ValueKey('month ${e.id.value}'),
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 1),
+              child: MonthLabel(month: month),
+            ),
+            row,
+          ],
         );
       },
     );

@@ -11,6 +11,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/photo_picker.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/services/time_zones.dart';
+import 'package:battleplan/core/widgets/camo.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
@@ -882,166 +883,172 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       );
     }
 
-    return Column(
-      children: [
-        // A team's next event, with Going and Not going while it waits on
-        // me (#43): never in a conversation, never a post in the chat.
-        if (!direct) NextUpStrip(groupId: widget.groupId),
-        // The pinned row, which is the search entry when nothing is pinned
-        // (CHAT-15, CHAT-20): a team's chat only; a conversation has its
-        // search in its header.
-        if (pinnedIds.isNotEmpty || (!direct && !viewing))
-          _PinnedRow(
-            groupId: widget.groupId,
-            ids: pinnedIds,
-            search: !direct && !viewing,
-            onOpen: (id) => unawaited(_jumpTo(id)),
-          ),
-        // A team's new member who isn't linked to a player yet: how to
-        // answer RSVPs (PLAYER-3). Its own widget, so the chat isn't
-        // rebuilt by what it watches; it's nothing for everyone else.
-        if (!direct && !viewing && !archived)
-          PlayerPickCard(groupId: widget.groupId),
-        Expanded(
-          child: Stack(
-            children: [
-              if (look != null) Positioned.fill(child: _Backdrop(look: look)),
-              list,
-              if (newBelow > 0 || newestBelow)
-                Positioned(
-                  right: Space.lg,
-                  bottom: Space.sm,
-                  child: FloatingActionButton.extended(
-                    heroTag: null,
-                    onPressed: _toBottom,
-                    icon: const Icon(AppIcons.arrowDown),
-                    label: Text(
-                      newBelow > 0
-                          ? l10n.newMessagesBelow(newBelow)
-                          : l10n.newestMessagesBelow,
+    // On the page's dot grid (#85).
+    return PageDots(
+      child: Column(
+        children: [
+          // A team's next event, with Going and Not going while it waits on
+          // me (#43): never in a conversation, never a post in the chat.
+          if (!direct) NextUpStrip(groupId: widget.groupId),
+          // The pinned row, which is the search entry when nothing is pinned
+          // (CHAT-15, CHAT-20): a team's chat only; a conversation has its
+          // search in its header.
+          if (pinnedIds.isNotEmpty || (!direct && !viewing))
+            _PinnedRow(
+              groupId: widget.groupId,
+              ids: pinnedIds,
+              search: !direct && !viewing,
+              onOpen: (id) => unawaited(_jumpTo(id)),
+            ),
+          // A team's new member who isn't linked to a player yet: how to
+          // answer RSVPs (PLAYER-3). Its own widget, so the chat isn't
+          // rebuilt by what it watches; it's nothing for everyone else.
+          if (!direct && !viewing && !archived)
+            PlayerPickCard(groupId: widget.groupId),
+          Expanded(
+            child: Stack(
+              children: [
+                if (look != null) Positioned.fill(child: _Backdrop(look: look)),
+                list,
+                if (newBelow > 0 || newestBelow)
+                  Positioned(
+                    right: Space.lg,
+                    bottom: Space.sm,
+                    child: FloatingActionButton.extended(
+                      heroTag: null,
+                      onPressed: _toBottom,
+                      icon: const Icon(AppIcons.arrowDown),
+                      label: Text(
+                        newBelow > 0
+                            ? l10n.newMessagesBelow(newBelow)
+                            : l10n.newestMessagesBelow,
+                      ),
                     ),
                   ),
-                ),
-              // Files dragged over the page (web): where they'll go.
-              if (_dragging && !viewing && !archived && !blockedOther)
-                Positioned.fill(
-                  child: _DropHint(storageFull: storageFull, direct: direct),
-                ),
-            ],
-          ),
-        ),
-        if (viewing)
-          Padding(
-            padding: const EdgeInsets.all(Space.lg),
-            child: Text(l10n.chatViewingReadOnly, textAlign: TextAlign.center),
-          )
-        else if (archived)
-          Padding(
-            padding: const EdgeInsets.all(Space.lg),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // A conversation closes when the other person deletes
-                // their account (CHAT-19).
-                Text(
-                  direct ? l10n.directClosed : l10n.chatArchived,
-                  textAlign: TextAlign.center,
-                ),
-                if (group.nextSeasonId case final next?) _NextSeason(next),
-              ],
-            ),
-          )
-        else if (blockedOther)
-          Padding(
-            padding: const EdgeInsets.all(Space.lg),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  l10n.directBlockedByMe(otherName),
-                  textAlign: TextAlign.center,
-                ),
-                TextButton(
-                  onPressed: () =>
-                      unawaited(unblock(context, ref, UserId(otherUid))),
-                  child: Text(l10n.unblock),
-                ),
-              ],
-            ),
-          )
-        else
-          Composer(
-            // "Message Thunder…", or the other person's name.
-            teamName: direct ? otherName : group.name,
-            replyingTo: _replyTo,
-            onCancelReply: () => setState(() => _replyTo = null),
-            mentionCandidates: candidates,
-            onMentionTyped: direct || _mentionsWanted
-                ? null
-                : () => setState(() => _mentionsWanted = true),
-            // @everyone is for admins (CHAT-14).
-            canMentionEveryone: isAdmin,
-            onAnnounce: isAdmin
-                ? () => setState(() => _announcing = true)
-                : null,
-            announcing: _announcing && isAdmin,
-            onCancelAnnouncement: () => setState(() => _announcing = false),
-            onSend: (text) {
-              // Photos waiting: they go, the text as their caption (#26).
-              if (tray.isNotEmpty) {
-                _sendTray(text, controller);
-                return;
-              }
-              // Whom it names, from the names in the text (CHAT-14).
-              final named = mentionsIn(
-                text,
-                candidates,
-                canMentionEveryone: isAdmin,
-              );
-              unawaited(
-                controller.send(
-                  text,
-                  replyToId: _replyTo?.id,
-                  mentions: named.uids,
-                  mentionNames: {
-                    for (final c in candidates)
-                      if (named.uids.contains(c.uid)) c.uid: c.name,
-                  },
-                  mentionsEveryone: named.everyone,
-                  announcement: _announcing && isAdmin,
-                ),
-              );
-              setState(() {
-                _replyTo = null;
-                _announcing = false;
-              });
-              _scrollToBottomSoon();
-            },
-            onPickPhotos: () => unawaited(_pickPhotos(picker)),
-            onTakePhoto: picker.canUseCamera
-                ? () => unawaited(_takePhoto(picker))
-                : null,
-            // What's waiting to go (#26); the box's text is its caption.
-            hasAttachments: tray.isNotEmpty,
-            tray: tray.isEmpty
-                ? null
-                : PhotoTrayStrip(
-                    photos: tray,
-                    onRemove: ref
-                        .read(photoTrayProvider(widget.groupId).notifier)
-                        .remove,
-                    onAddMore: storageFull
-                        ? null
-                        : () => unawaited(_pickPhotos(picker)),
+                // Files dragged over the page (web): where they'll go.
+                if (_dragging && !viewing && !archived && !blockedOther)
+                  Positioned.fill(
+                    child: _DropHint(storageFull: storageFull, direct: direct),
                   ),
-            // Polls (POLL-1) for admins, and for members if the team allows
-            // it (TEAM-5). Full storage doesn't stop them (STORE-4).
-            onCreatePoll: !direct && (isAdmin || group.membersCanCreatePolls)
-                ? () => unawaited(_createPoll(controller))
-                : null,
-            onAttachBlocked: storageFull ? _showFull : null,
+              ],
+            ),
           ),
-      ],
+          if (viewing)
+            Padding(
+              padding: const EdgeInsets.all(Space.lg),
+              child: Text(
+                l10n.chatViewingReadOnly,
+                textAlign: TextAlign.center,
+              ),
+            )
+          else if (archived)
+            Padding(
+              padding: const EdgeInsets.all(Space.lg),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // A conversation closes when the other person deletes
+                  // their account (CHAT-19).
+                  Text(
+                    direct ? l10n.directClosed : l10n.chatArchived,
+                    textAlign: TextAlign.center,
+                  ),
+                  if (group.nextSeasonId case final next?) _NextSeason(next),
+                ],
+              ),
+            )
+          else if (blockedOther)
+            Padding(
+              padding: const EdgeInsets.all(Space.lg),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    l10n.directBlockedByMe(otherName),
+                    textAlign: TextAlign.center,
+                  ),
+                  TextButton(
+                    onPressed: () =>
+                        unawaited(unblock(context, ref, UserId(otherUid))),
+                    child: Text(l10n.unblock),
+                  ),
+                ],
+              ),
+            )
+          else
+            Composer(
+              // "Message Thunder…", or the other person's name.
+              teamName: direct ? otherName : group.name,
+              replyingTo: _replyTo,
+              onCancelReply: () => setState(() => _replyTo = null),
+              mentionCandidates: candidates,
+              onMentionTyped: direct || _mentionsWanted
+                  ? null
+                  : () => setState(() => _mentionsWanted = true),
+              // @everyone is for admins (CHAT-14).
+              canMentionEveryone: isAdmin,
+              onAnnounce: isAdmin
+                  ? () => setState(() => _announcing = true)
+                  : null,
+              announcing: _announcing && isAdmin,
+              onCancelAnnouncement: () => setState(() => _announcing = false),
+              onSend: (text) {
+                // Photos waiting: they go, the text as their caption (#26).
+                if (tray.isNotEmpty) {
+                  _sendTray(text, controller);
+                  return;
+                }
+                // Whom it names, from the names in the text (CHAT-14).
+                final named = mentionsIn(
+                  text,
+                  candidates,
+                  canMentionEveryone: isAdmin,
+                );
+                unawaited(
+                  controller.send(
+                    text,
+                    replyToId: _replyTo?.id,
+                    mentions: named.uids,
+                    mentionNames: {
+                      for (final c in candidates)
+                        if (named.uids.contains(c.uid)) c.uid: c.name,
+                    },
+                    mentionsEveryone: named.everyone,
+                    announcement: _announcing && isAdmin,
+                  ),
+                );
+                setState(() {
+                  _replyTo = null;
+                  _announcing = false;
+                });
+                _scrollToBottomSoon();
+              },
+              onPickPhotos: () => unawaited(_pickPhotos(picker)),
+              onTakePhoto: picker.canUseCamera
+                  ? () => unawaited(_takePhoto(picker))
+                  : null,
+              // What's waiting to go (#26); the box's text is its caption.
+              hasAttachments: tray.isNotEmpty,
+              tray: tray.isEmpty
+                  ? null
+                  : PhotoTrayStrip(
+                      photos: tray,
+                      onRemove: ref
+                          .read(photoTrayProvider(widget.groupId).notifier)
+                          .remove,
+                      onAddMore: storageFull
+                          ? null
+                          : () => unawaited(_pickPhotos(picker)),
+                    ),
+              // Polls (POLL-1) for admins, and for members if the team allows
+              // it (TEAM-5). Full storage doesn't stop them (STORE-4).
+              onCreatePoll: !direct && (isAdmin || group.membersCanCreatePolls)
+                  ? () => unawaited(_createPoll(controller))
+                  : null,
+              onAttachBlocked: storageFull ? _showFull : null,
+            ),
+        ],
+      ),
     );
   }
 }

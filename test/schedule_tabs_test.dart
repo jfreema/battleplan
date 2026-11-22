@@ -33,10 +33,11 @@ void main() {
           findsOneWidget,
         );
       }
-      // The words stay 24 apart, with the space between them tappable.
+      // The words stay 24 apart, the current one's mustard tile (12.5 past
+      // its word) included, with the space between them tappable (#85).
       final upcoming = tester.getRect(find.text('Upcoming'));
       final past = tester.getRect(find.text('Past'));
-      expect(past.left - upcoming.right, moreOrLessEquals(24, epsilon: 0.5));
+      expect(past.left - upcoming.right, moreOrLessEquals(36.5, epsilon: 1));
       await tester.tapAt(Offset(past.left - 6, past.center.dy));
       await tester.pumpAndSettle();
       expect(

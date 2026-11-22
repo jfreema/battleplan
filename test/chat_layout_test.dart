@@ -3,10 +3,12 @@
 // CHAT-18, POLL-3).
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/color_math.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/camp_lettering.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/presentation/chat_screen.dart';
 import 'package:battleplan/features/chat/presentation/message_tile.dart';
@@ -16,7 +18,6 @@ import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/polls/domain/poll.dart';
 import 'package:battleplan/features/polls/presentation/poll_card.dart';
-import 'package:battleplan/features/schedule/presentation/schedule_widgets.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -234,9 +235,9 @@ void main() {
     });
   });
 
-  group("others' messages on the page", () {
-    testWidgets('a run of one-line messages sits close, with the menu as a '
-        "screen reader's action", (tester) async {
+  group("others' messages in balloons (#85)", () {
+    testWidgets('each one-line message is its own balloon, a 48 px target '
+        'with the menu on long-press', (tester) async {
       final handle = tester.ensureSemantics();
       await openChat(tester, [
         msg('m3', 3, text: 'save me a cone'),
@@ -245,13 +246,13 @@ void main() {
       ]);
       final a = tester.getRect(find.text('on my way'));
       final b = tester.getRect(find.text('save me a cone'));
-      // 23 px lines, 3 + 3 between them.
-      expect(b.top - a.top, closeTo(29, 0.5));
+      // 48 px balloons, 3 + 3 between them.
+      expect(b.top - a.top, closeTo(54, 0.5));
       final data = tester
           .getSemantics(find.text('on my way'))
           .getSemanticsData();
-      expect(data.hasAction(SemanticsAction.customAction), isTrue);
-      expect(data.hasAction(SemanticsAction.tap), isFalse);
+      // A tap shows the time.
+      expect(data.hasAction(SemanticsAction.tap), isTrue);
       // Long-press still opens the menu.
       await tester.longPress(find.text('on my way'));
       await tester.pumpAndSettle();
@@ -274,8 +275,7 @@ void main() {
       final text = tester
           .getSemantics(find.text('I can drive'))
           .getSemanticsData();
-      expect(text.hasAction(SemanticsAction.customAction), isTrue);
-      expect(text.hasAction(SemanticsAction.tap), isFalse);
+      expect(text.hasAction(SemanticsAction.tap), isTrue);
       expect(text.label, isNot(contains('Who is driving?')));
       final quote = tester
           .getSemantics(
@@ -287,8 +287,8 @@ void main() {
       handle.dispose();
     });
 
-    testWidgets('reactions start under the text, just below it, each a 48 px '
-        'target (CHAT-6)', (tester) async {
+    testWidgets('reactions start under the text, overlapping the balloon, '
+        'each a 48 px target (CHAT-6)', (tester) async {
       final handle = tester.ensureSemantics();
       await openChat(tester, [
         msg('m2', 2, text: 'next one'),
@@ -305,11 +305,12 @@ void main() {
       final area = tester.getRect(chip);
       expect(target.height, greaterThanOrEqualTo(48));
       expect(area.left, closeTo(text.left, 0.5));
-      // The emoji sit 4 px under the text, and the tap area reaches up over
-      // the text's last 10 px.
-      expect(area.top, closeTo(text.bottom - 10, 0.5));
+      // The tap area reaches up over the balloon's bottom (11 under the
+      // text), so the chips overlap its edge.
+      expect(area.top, closeTo(text.bottom - 12, 0.5));
       final next = tester.getRect(find.text('next one'));
-      expect(next.top - text.bottom, lessThan(48));
+      // The chips take only what shows under the balloon.
+      expect(next.top - text.bottom, lessThan(60));
       // The reaction gets the tap there, and gives my reaction.
       await tester.tapAt(Offset(area.left + 8, area.top + 3));
       await tester.pumpAndSettle();
@@ -317,9 +318,7 @@ void main() {
       handle.dispose();
     });
 
-    testWidgets('their photos sit side by side, 100 tall and 6 apart', (
-      tester,
-    ) async {
+    testWidgets('their photos sit side by side in the balloon', (tester) async {
       await openChat(tester, [
         msg(
           'm1',
@@ -335,9 +334,9 @@ void main() {
       expect(tiles, findsNWidgets(3));
       final first = tester.getRect(tiles.at(0));
       final second = tester.getRect(tiles.at(1));
-      expect(first.height, 100);
-      expect(second.left - first.right, closeTo(6, 0.5));
-      expect(tester.widget<PhotoGrid>(find.byType(PhotoGrid)).onPage, isTrue);
+      expect(second.height, first.height);
+      expect(second.left, greaterThan(first.right));
+      expect(tester.widget<PhotoGrid>(find.byType(PhotoGrid)).onPage, isFalse);
     });
 
     testWidgets("a reply's quote on the page and in my bubble reads well "
@@ -379,8 +378,8 @@ void main() {
   });
 
   group('event cards', () {
-    testWidgets("the chat's card has the schedule's attendance line, with "
-        "who I answer for that hasn't answered", (tester) async {
+    testWidgets("the chat's card asks the question, with the count beside "
+        'it, under the name in stencil (#85)', (tester) async {
       await pumpTeam(
         tester,
         scheme: TeamScheme.army,
@@ -390,21 +389,20 @@ void main() {
       );
       await tester.pumpAndSettle();
       // Noah, the coach's player, hasn't answered the practice.
-      expect(find.byType(GoingBar), findsOneWidget);
-      expect(
-        find.textContaining("Noah hasn't answered", findRichText: true),
-        findsOneWidget,
-      );
-      expect(find.textContaining('3/4 going', findRichText: true), findsOne);
-      // Sam's name over it, in the head line others' messages have.
+      expect(find.text('Is Noah going?'), findsWidgets);
+      expect(find.text('3/4 going'), findsOneWidget);
+      // Its header: the kind on a tag, the title outlined.
+      expect(find.text('PRACTICE'), findsWidgets);
+      expect(find.byType(OutlinedText), findsWidgets);
+      // Sam's name over it, in stencil, as over others' balloons.
       final head = tester.widget<RichText>(
         find.textContaining('Sam Rivera', findRichText: true).first,
       );
       // Text.rich puts its span under one with the line's style.
       final line = (head.text as TextSpan).children!.first as TextSpan;
       final name = line.children!.first as TextSpan;
-      expect(name.style?.fontSize, 16);
-      expect(name.style?.fontWeight, FontWeight.w800);
+      expect(name.style?.fontFamily, AppFonts.stencil);
+      expect(name.style?.fontWeight, FontWeight.w900);
     });
   });
 

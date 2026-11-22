@@ -68,6 +68,8 @@ class GumdropIconButton extends StatelessWidget {
     required this.tooltip,
     required this.onPressed,
     this.badgeLabel,
+    this.red = false,
+    this.dot = false,
     super.key,
   });
 
@@ -78,21 +80,54 @@ class GumdropIconButton extends StatelessWidget {
   /// The unread count to show (1 to 99+), or null for none.
   final String? badgeLabel;
 
+  /// The red one, for adding (the schedule's +, #85): white icon.
+  final bool red;
+
+  /// A 13 px dot in my own color on its corner, in an ink ring: a setting
+  /// of mine is on (the schedule's filter).
+  final bool dot;
+
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
-    final glyph = Container(
+    final face = Container(
       width: 36,
       height: 36,
       decoration: BoxDecoration(
-        color: c.surface,
+        color: red ? c.cherry.face : c.surface,
         shape: BoxShape.circle,
         border: Border.all(color: c.ink, width: 2.5),
         boxShadow: [BoxShadow(color: c.pageShadow, offset: const Offset(2, 2))],
       ),
       alignment: Alignment.center,
-      child: Icon(icon, size: 20, color: c.textOnPage),
+      child: Icon(
+        icon,
+        size: 20,
+        weight: red ? 700 : null,
+        color: red ? Colors.white : c.textOnPage,
+      ),
     );
+    final glyph = !dot
+        ? face
+        : Stack(
+            clipBehavior: Clip.none,
+            children: [
+              face,
+              Positioned(
+                top: -4,
+                right: -4,
+                child: Container(
+                  width: 13,
+                  height: 13,
+                  decoration: BoxDecoration(
+                    color: c.you.face,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: c.ink, width: 2.5),
+                  ),
+                ),
+              ),
+            ],
+          );
     return IconButton(
       tooltip: tooltip,
       color: c.textOnPage,

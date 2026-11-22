@@ -192,12 +192,9 @@ void main() {
     await tester.pumpAndSettle();
     // One row, mine, as You.
     expect(find.byType(RsvpChoice), findsOneWidget);
-    expect(find.text('Emma'), findsNothing);
-    expect(find.text('You'), findsOneWidget);
-    expect(
-      find.textContaining(RegExp(r'^1/\d+ going'), findRichText: true),
-      findsOneWidget,
-    );
+    expect(find.text('Emma?'), findsNothing);
+    expect(find.text('You?'), findsOneWidget);
+    expect(find.textContaining(RegExp(r'1/\d+ going')), findsOneWidget);
     await tester.tap(
       find.descendant(
         of: find.byType(RsvpChoice),

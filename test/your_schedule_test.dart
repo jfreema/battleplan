@@ -329,9 +329,9 @@ void main() {
       expect(rsvps.rsvps.single.participantId, 'p1');
       expect(rsvps.rsvps.single.status, RsvpStatus.going);
       // The card counts it, as on the schedule.
-      expect(find.text('1/1 going', findRichText: true), findsOneWidget);
+      expect(find.textContaining('1/1 going'), findsOneWidget);
 
-      await tester.tap(answer('Fall party', 'Not going'));
+      await tester.tap(answer('Fall party', "Can't go"));
       await tester.pumpAndSettle();
       final mine = rsvps.rsvps.singleWhere((r) => r.groupId.value == 'p');
       expect(mine.eventId, const EventId('p1'));

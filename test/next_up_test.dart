@@ -115,7 +115,7 @@ void main() {
         findsOneWidget,
       );
       expect(pill('Going'), findsOneWidget);
-      expect(pill('Not going'), findsOneWidget);
+      expect(pill("Can't go"), findsOneWidget);
       // Maybe is on the event's page.
       expect(pill('Maybe'), findsNothing);
 
@@ -124,7 +124,7 @@ void main() {
       expect(rsvps.rsvps.single.status, RsvpStatus.going);
       expect(rsvps.rsvps.single.participantId, 'p1');
       // The answer, as a tag, in place of the buttons.
-      expect(pill('Not going'), findsNothing);
+      expect(pill("Can't go"), findsNothing);
       expect(pill('Going'), findsOneWidget);
       expect(find.byType(RsvpChoice), findsNothing);
     });

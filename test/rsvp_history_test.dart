@@ -162,7 +162,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('3 past events'), findsOneWidget);
       expect(find.text('Going · 1'), findsOneWidget);
-      expect(find.text('Not going · 1'), findsOneWidget);
+      expect(find.text("Can't go · 1"), findsOneWidget);
       expect(find.text('No answer · 1'), findsOneWidget);
       expect(find.text('Practice A'), findsOneWidget);
       expect(find.text('Practice C'), findsOneWidget);
