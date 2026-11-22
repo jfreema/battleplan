@@ -21,6 +21,7 @@ class OutlinedText extends StatelessWidget {
     this.textWidthBasis,
     this.semanticsLabel,
     this.textScaler,
+    this.fill = CampPalette.titleFill,
     super.key,
   });
 
@@ -39,6 +40,9 @@ class OutlinedText extends StatelessWidget {
   final TextAlign? textAlign;
   final TextWidthBasis? textWidthBasis;
   final String? semanticsLabel;
+
+  /// The lettering's fill: white, or a count's color (Going's green).
+  final Color fill;
 
   /// The text scaling; the system's unless given (a date on a pennant
   /// that doesn't grow keeps [TextScaler.noScaling]).
@@ -91,10 +95,7 @@ class OutlinedText extends StatelessWidget {
           ),
           Text(
             text,
-            style: base.copyWith(
-              color: CampPalette.titleFill,
-              shadows: const [],
-            ),
+            style: base.copyWith(color: fill, shadows: const []),
             textScaler: scaler,
             maxLines: lines,
             overflow: overflow ?? inherited.overflow,

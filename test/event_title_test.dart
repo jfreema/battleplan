@@ -1,9 +1,10 @@
 // The event page's title (#74, owner's report 2026-11-20: "makes event
 // header too big", with "@ Springfield Isotopes" broken as "Springfie /
-// ld"): an opponent's name is Lilita 36 at most, steps down for a long
-// word, and never breaks a word in two; "vs." or "@" stays with the first
+// ld"): the title is the big outlined stencil (51 since Boot Camp Mix,
+// #85), steps down for a long word, and never breaks a word in two; "vs." or "@" stays with the first
 // word; and "Who's going" lets RSVP for a player go under it.
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/widgets/camp_lettering.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -46,9 +47,14 @@ void main() {
   /// The title's paragraph: "@ Springfield Isotopes".
   RenderParagraph title(WidgetTester tester, String opponent) =>
       tester.renderObject<RenderParagraph>(
-        find.byWidgetPredicate(
-          (w) => w is RichText && w.text.toPlainText().endsWith(opponent),
-        ),
+        find
+            .descendant(
+              of: find.byType(OutlinedText),
+              matching: find.byWidgetPredicate(
+                (w) => w is RichText && w.text.toPlainText().endsWith(opponent),
+              ),
+            )
+            .first,
       );
 
   /// [p]'s text laid out as it is, to ask about its lines.
@@ -97,9 +103,12 @@ void main() {
     }
   });
 
-  testWidgets('a short name is Lilita 36, no longer 48', (tester) async {
-    await openEvent(tester, 'Eagles');
-    expect(title(tester, 'Eagles').text.style?.fontSize, 36);
+  testWidgets('a short name is the big outlined stencil, 51 (#85)', (
+    tester,
+  ) async {
+    // Wide enough for the test font's 1 em letters.
+    await openEvent(tester, 'Eagles', width: 1000);
+    expect(title(tester, 'Eagles').text.style?.fontSize, 51);
   });
 
   testWidgets('RSVP for a player goes under "Who\'s going" when both '

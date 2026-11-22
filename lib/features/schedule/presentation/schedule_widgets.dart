@@ -4,7 +4,6 @@ import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/team_theme.dart';
-import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/camo.dart';
 import 'package:battleplan/core/widgets/camp_lettering.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
@@ -392,64 +391,6 @@ class _StarPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_StarPainter old) => old.color != color;
-}
-
-/// A person's initials on a candy circle (design §3.9): their picked
-/// [color], or else the candy picked from [colorKey], as [Avatar] picks it,
-/// so a person has one color everywhere.
-class CandyInitials extends StatelessWidget {
-  const new({
-    required this.name,
-    required this.colorKey,
-    this.color,
-    this.size = 40,
-    super.key,
-  });
-
-  final String name;
-  final String colorKey;
-  final AvatarColor? color;
-  final double size;
-
-  static String initialsOf(String name) {
-    final parts = name
-        .replaceAll(RegExp(r'#\S*'), '')
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((p) => p.isNotEmpty);
-    if (parts.isEmpty) return '?';
-    final first = parts.first.characters.first;
-    final last = parts.length > 1 ? parts.last.characters.first : '';
-    return (first + last).toUpperCase();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final c = GumdropColors.of(context);
-    return ExcludeSemantics(
-      child: Container(
-        width: size,
-        height: size,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: Avatar.fillOf(c, color, colorKey),
-          shape: BoxShape.circle,
-        ),
-        child: Text(
-          initialsOf(name),
-          textScaler: TextScaler.noScaling,
-          style: GumdropStyle.of(context).label(
-            TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: size * 0.375,
-              height: 1,
-              color: c.ink,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 /// The RSVP choice: Going, Maybe, and Can't go in equal parts, built on

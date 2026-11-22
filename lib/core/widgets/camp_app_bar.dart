@@ -57,11 +57,32 @@ class CampAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final p = GumdropColors.of(context).roles.palette;
     final camo = backgroundColor == null;
+    // Icon buttons among the actions are round buttons (#85): the panel
+    // color in a 2.5 px ink outline, 36 across in a 48 px tap area.
+    final c = GumdropColors.of(context);
+    final round = IconButtonThemeData(
+      style: ButtonStyle(
+        backgroundColor: WidgetStatePropertyAll(c.surface),
+        foregroundColor: WidgetStatePropertyAll(c.textOnPage),
+        iconColor: WidgetStatePropertyAll(c.textOnPage),
+        shape: WidgetStatePropertyAll(
+          CircleBorder(side: BorderSide(color: c.ink, width: 2.5)),
+        ),
+        fixedSize: const WidgetStatePropertyAll(Size.square(36)),
+        minimumSize: const WidgetStatePropertyAll(Size.square(36)),
+        padding: const WidgetStatePropertyAll(EdgeInsets.zero),
+        iconSize: const WidgetStatePropertyAll(20),
+        tapTargetSize: MaterialTapTargetSize.padded,
+      ),
+    );
+    final buttons = actions;
     return AppBar(
       leading: leading,
       automaticallyImplyLeading: automaticallyImplyLeading,
       title: title,
-      actions: actions,
+      actions: buttons == null || !camo
+          ? buttons
+          : [for (final a in buttons) IconButtonTheme(data: round, child: a)],
       flexibleSpace: camo
           ? Stack(
               fit: StackFit.expand,

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
@@ -998,32 +999,65 @@ class _PhoneBar extends StatelessWidget implements PreferredSizeWidget {
               ?button(l10n.playRemoveStep, AppIcons.delete, onRemove),
             ]);
           }
+          // Boot Camp Mix (#85): Saved and Add step as push buttons, the
+          // icons as round buttons in an ink outline.
+          final c = GumdropColors.of(context);
+          final round = IconButtonThemeData(
+            style: ButtonStyle(
+              backgroundColor: WidgetStatePropertyAll(c.surface),
+              iconColor: WidgetStateProperty.resolveWith(
+                (s) => s.contains(WidgetState.disabled)
+                    ? c.roles.palette.disabledIcon
+                    : c.textOnPage,
+              ),
+              shape: WidgetStatePropertyAll(
+                CircleBorder(side: BorderSide(color: c.ink, width: 2.5)),
+              ),
+              fixedSize: const WidgetStatePropertyAll(Size.square(36)),
+              minimumSize: const WidgetStatePropertyAll(Size.square(36)),
+              padding: const WidgetStatePropertyAll(EdgeInsets.zero),
+              iconSize: const WidgetStatePropertyAll(20),
+              tapTargetSize: MaterialTapTargetSize.padded,
+            ),
+          );
+          final push = TextButtonThemeData(
+            style: GumdropButtons.of(context).secondary(
+              height: 40,
+              padding: const EdgeInsets.fromLTRB(9, 0, 11, 0),
+            ),
+          );
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: Space.xs),
-            child: Row(
-              children: [
-                if (back) const BackButton(),
-                ...lead,
-                const Spacer(),
-                ?undo,
-                ?redo,
-                _MoreButton(
-                  actions: [
-                    if (saveInMore) (label: saveLabel, onPressed: onSave),
-                    ...overflow,
-                    ...more,
+            child: IconButtonTheme(
+              data: round,
+              child: TextButtonTheme(
+                data: push,
+                child: Row(
+                  children: [
+                    if (back) const BackButton(),
+                    ...lead,
+                    const Spacer(),
+                    ?undo,
+                    ?redo,
+                    _MoreButton(
+                      actions: [
+                        if (saveInMore) (label: saveLabel, onPressed: onSave),
+                        ...overflow,
+                        ...more,
+                      ],
+                    ),
+                    if (!saveInMore)
+                      IconButton(
+                        tooltip: saveLabel,
+                        onPressed: onSave,
+                        // A candy in the "you" color, with an ink icon.
+                        style: GumdropButtons.of(context)
+                            .icon(accent: GumdropColors.of(context).you),
+                        icon: const Icon(AppIcons.save),
+                      ),
                   ],
                 ),
-                if (!saveInMore)
-                  IconButton(
-                    tooltip: saveLabel,
-                    onPressed: onSave,
-                    // A candy in the "you" color, with an ink icon.
-                    style: GumdropButtons.of(context)
-                        .icon(accent: GumdropColors.of(context).you),
-                    icon: const Icon(AppIcons.save),
-                  ),
-              ],
+              ),
             ),
           );
         },
@@ -1076,22 +1110,23 @@ class _Tools extends StatelessWidget {
       (BoardTool.erase, AppIcons.toolErase, l10n.toolErase),
     ];
     final side = compact ? kMinInteractiveDimension : 52.0;
-    // The picked tool is a candy in the "you" color with ink on it; the
-    // rest are the theme's tonal buttons. Set here, not left to the tonal
-    // defaults, which draw the picked one's icon in its face's color on a
-    // colored page (Olive, Candy).
+    // Boot Camp Mix (#85): round buttons in the panel color in an ink
+    // outline on the tools row's own color; the tool in hand is mustard
+    // with ink on it, turned -4°.
     final c = GumdropColors.of(context);
-    final scheme = Theme.of(context).colorScheme;
+    final mustard = c.roles.palette.mustard;
     final toolStyle = ButtonStyle(
       backgroundColor: WidgetStateProperty.resolveWith(
-        (s) => s.contains(WidgetState.selected)
-            ? c.you.face
-            : scheme.surfaceContainerHighest,
+        (s) => s.contains(WidgetState.selected) ? mustard : c.surface,
       ),
       foregroundColor: WidgetStateProperty.resolveWith(
-        (s) => s.contains(WidgetState.selected)
-            ? c.inkOn(c.you)
-            : scheme.onSurfaceVariant,
+        (s) => s.contains(WidgetState.selected) ? c.ink : c.textOnPage,
+      ),
+      iconColor: WidgetStateProperty.resolveWith(
+        (s) => s.contains(WidgetState.selected) ? c.ink : c.textOnPage,
+      ),
+      shape: WidgetStatePropertyAll(
+        CircleBorder(side: BorderSide(color: c.ink, width: 2.5)),
       ),
     );
     final buttons = [
@@ -1104,34 +1139,54 @@ class _Tools extends StatelessWidget {
               selected: t == tool,
               button: true,
               label: label,
-              child: IconButton.filledTonal(
-                isSelected: t == tool,
-                style: toolStyle,
-                iconSize: compact ? 24 : 26,
-                constraints: BoxConstraints.tightFor(width: side, height: side),
-                onPressed: () => onTool(t),
-                icon: Icon(icon),
+              child: Transform.rotate(
+                angle: t == tool ? -4 * math.pi / 180 : 0,
+                child: IconButton.filledTonal(
+                  isSelected: t == tool,
+                  style: toolStyle,
+                  iconSize: compact ? 22 : 24,
+                  constraints: BoxConstraints.tightFor(
+                    width: side,
+                    height: side,
+                  ),
+                  onPressed: () => onTool(t),
+                  icon: Icon(icon),
+                ),
               ),
             ),
           ),
         ),
     ];
+    // On the tools row's color, ruled off from the board in ink.
+    final rule = BorderSide(color: c.ink, width: 3);
     return vertical
-        ? SizedBox(
-            width: 72,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(vertical: Space.sm),
-              child: Column(children: buttons),
+        ? DecoratedBox(
+            decoration: BoxDecoration(
+              color: c.roles.palette.toolsRow,
+              border: Border(left: rule),
+            ),
+            child: SizedBox(
+              width: 72,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(vertical: Space.sm),
+                child: Column(children: buttons),
+              ),
             ),
           )
-        : SizedBox(
-            height: compact ? side + Space.sm : 68,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.symmetric(
-                horizontal: compact ? Space.xs : Space.sm,
+        : DecoratedBox(
+            decoration: BoxDecoration(
+              color: c.roles.palette.toolsRow,
+              border: Border(top: rule),
+            ),
+            child: SizedBox(
+              height: compact ? side + Space.sm : 68,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: EdgeInsets.symmetric(
+                  horizontal: compact ? Space.xs : Space.sm,
+                ),
+                child: Row(children: buttons),
               ),
-              child: Row(children: buttons),
             ),
           );
   }

@@ -1102,19 +1102,22 @@ void main() {
         ('/g/a/settings', 'Admin settings', find.text('Member permissions')),
       ]) {
         await scenes.goTo(tester, route);
-        expect(left(tester, find.text(title).last), 20, reason: route);
+        // Within a few pixels: the big title is turned a little (#85), so a
+        // two-line one's corner leans past the gutter.
+        expect(
+          left(tester, find.text(title).last),
+          closeTo(20, 3),
+          reason: route,
+        );
         // Within a pixel: the schedule's tile is turned a little.
         expect(left(tester, first), closeTo(20, 1), reason: '$route body');
       }
-      // The Team tab, under the team's header: its card on the gutter, and
-      // the roster's rows on the hairlines' edge, not 16 px inside.
+      // The Team tab, under the team's header: its card and the roster's
+      // panel on the gutter, and the rows inside the panel's 3 px outline
+      // and 8 px inset (#85), not 16 px more.
       await scenes.goTo(tester, '/g/a/team');
       expect(left(tester, find.byType(SettingsPanel).first), 20);
-      final rule = find.descendant(
-        of: find.byType(PageRows).first,
-        matching: find.byType(Container),
-      );
-      expect(left(tester, rule.first), 20);
+      expect(left(tester, find.byType(PageRows).first), 20);
       final tile = find
           .descendant(
             of: find.byType(PageRows).first,
@@ -1124,7 +1127,7 @@ void main() {
       final lead = find
           .descendant(of: tile, matching: find.byType(Container))
           .first;
-      expect(left(tester, lead), 20);
+      expect(left(tester, lead), 31);
     });
 
     // #14 step 4: its title is "Notifications" for every team, so the back
@@ -1150,7 +1153,7 @@ void main() {
             .dx,
         closeTo(28, 2),
       );
-      expect(left(tester, find.text('Notifications')), 20);
+      expect(left(tester, find.text('Notifications')), closeTo(20, 1.5));
       handle.dispose();
     });
 

@@ -276,10 +276,11 @@ class PageList extends StatelessWidget {
   );
 }
 
-/// A page's big title (SPEC §7.3): stencil 32 outlined, 20 px
-/// from the left, on up to two lines ("Notifications for this team"), as it
-/// scrolls away rather than holding the top. The route's heading for screen
-/// readers.
+/// A page's big title (SPEC §7.3; Boot Camp Mix, #85): white stencil
+/// capitals in a thick ink outline on a hard shadow (`OutlinedText`), 50
+/// stepping down to fit, turned -2°, 20 px from the left, on up to two lines
+/// ("NOTIFICATIONS FOR THIS TEAM"), as it scrolls away rather than holding
+/// the top. The route's heading for screen readers.
 class PageTitle extends StatelessWidget {
   const new(this.title, {super.key});
 
@@ -287,7 +288,7 @@ class PageTitle extends StatelessWidget {
 
   /// The sizes tried, largest first: each must hold every word whole and
   /// the title in two lines; with large text a long word steps it down.
-  static const List<double> sizes = [32, 28, 25];
+  static const List<double> sizes = [50, 42, 36, 30, 25];
 
   @override
   Widget build(BuildContext context) {
@@ -295,7 +296,7 @@ class PageTitle extends StatelessWidget {
     final scaler = MediaQuery.textScalerOf(context);
     final direction = Directionality.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 6, 20, 4),
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
       child: LayoutBuilder(
         builder: (context, constraints) {
           // No word broken across the lines.
@@ -326,8 +327,11 @@ class PageTitle extends StatelessWidget {
             return ok && wordsFit(style);
           }
 
-          TextStyle styleAt(double size) =>
-              base.copyWith(fontSize: size, height: (size + 4) / size);
+          TextStyle styleAt(double size) => base.copyWith(
+            fontSize: size,
+            height: 54 / 50,
+            letterSpacing: size * 0.025,
+          );
           final size = sizes.firstWhere(
             (size) => fits(styleAt(size)),
             orElse: () => -1,
@@ -337,14 +341,22 @@ class PageTitle extends StatelessWidget {
           // ready!" with large text, #16), else one, rather than a word
           // split in two.
           final lines = size >= 0 || wordsFit(styleAt(sizes.last)) ? 2 : 1;
+          final at = size < 0 ? sizes.last : size;
           return Semantics(
             header: true,
             namesRoute: true,
-            child: Text(
-              title,
-              maxLines: lines,
-              overflow: TextOverflow.ellipsis,
-              style: styleAt(size < 0 ? sizes.last : size),
+            child: Transform.rotate(
+              angle: -2 * math.pi / 180,
+              alignment: const Alignment(-1, 0.4),
+              child: OutlinedText(
+                title,
+                maxLines: lines,
+                overflow: TextOverflow.ellipsis,
+                // The outline and shadow grow with the size.
+                stroke: at * 0.11,
+                shadow: at >= 36 ? 4 : 3,
+                style: styleAt(at),
+              ),
             ),
           );
         },
@@ -562,8 +574,9 @@ class TopLevelBar extends StatelessWidget {
   );
 }
 
-/// Rows straight on the page (SPEC §7.3): a 1 px hairline above the first
-/// and under each.
+/// A list of rows in one ink panel (Boot Camp Mix, #85, SPEC §7.3): the
+/// panel color in a 3 px ink outline on a hard 4/4 shadow, the rows split
+/// by 3 px ink lines, each set in 8 from the left and 9 from the right.
 class PageRows extends StatelessWidget {
   const new({required this.children, super.key});
 
@@ -571,13 +584,36 @@ class PageRows extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final line = Container(height: 1, color: GumdropColors.of(context).divider);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        line,
-        for (final child in children) ...[child, line],
-      ],
+    if (children.isEmpty) return const SizedBox.shrink();
+    final c = GumdropColors.of(context);
+    final line = Container(height: 3, color: c.ink);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        boxShadow: [BoxShadow(color: c.pageShadow, offset: const Offset(4, 4))],
+      ),
+      child: Material(
+        color: c.surface,
+        shape: Border.all(color: c.ink, width: 3),
+        clipBehavior: Clip.antiAlias,
+        child: GumdropSurface(
+          // Inside the 3 px outline, which the shape draws over its edge.
+          child: Padding(
+            padding: const EdgeInsets.all(3),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final (i, child) in children.indexed) ...[
+                  if (i > 0) line,
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 0, 9, 0),
+                    child: child,
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -604,10 +640,11 @@ class PageListRow extends StatelessWidget {
   }
 }
 
-/// A row on the page (SPEC §7.3): at least 50 tall, a 22 px [icon] (or
-/// [leading]) in the text color, the title in Comic Neue 700 16/21, the
-/// subtitle in Comic Neue 600 14/19 muted, and a 20 px chevron when it opens
-/// something. [destructive] puts the icon and title in the accent text.
+/// A row in a panel of rows (SPEC §7.3; Boot Camp Mix, #85): at least 52
+/// tall, its [icon] in ink on a 36 px mustard round badge in an ink outline
+/// (or [leading]), the title in Comic Neue Bold 16.5/21, the subtitle 14/17
+/// muted, and a 20 px chevron when it opens something. [destructive] puts
+/// the badge in the red and the title in the accent text.
 /// Screen readers hear the row as one item, or as [semanticsLabel] when
 /// it's given (a sentence: "Luke #7, Uniforms, $25 left of $45"); with
 /// [trailingActions], the buttons in [trailing] stay items of their own.
@@ -670,7 +707,23 @@ class PageRow extends StatelessWidget {
     final color = titleColor ?? (destructive ? c.cherry.text : c.textOnPage);
     final sub = subtitle;
     final lead =
-        leading ?? (icon == null ? null : Icon(icon, size: 22, color: color));
+        leading ??
+        (icon == null
+            ? null
+            : Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: destructive ? c.cherry.face : c.roles.palette.mustard,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: c.ink, width: 2.5),
+                ),
+                child: Icon(
+                  icon,
+                  size: 22,
+                  color: destructive ? c.inkOn(c.cherry) : c.ink,
+                ),
+              ));
     final end =
         trailing ??
         (onTap != null && chevron
@@ -700,12 +753,12 @@ class PageRow extends StatelessWidget {
           child: _Spoken(
             label: semanticsLabel,
             child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 50),
+              constraints: const BoxConstraints(minHeight: 52),
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
+                padding: const EdgeInsets.symmetric(vertical: 5),
                 child: Row(
                   children: [
-                    if (lead != null) ...[lead, const SizedBox(width: 14)],
+                    if (lead != null) ...[lead, const SizedBox(width: 11)],
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -714,8 +767,8 @@ class PageRow extends StatelessWidget {
                           Text(
                             title,
                             style: text.bodyLarge?.copyWith(
-                              fontSize: 16,
-                              height: 21 / 16,
+                              fontSize: 16.5,
+                              height: 21 / 16.5,
                               fontWeight: bold
                                   ? FontWeight.w800
                                   : FontWeight.w700,
@@ -731,8 +784,8 @@ class PageRow extends StatelessWidget {
                                   : TextOverflow.ellipsis,
                               style: text.bodyMedium?.copyWith(
                                 fontSize: 14,
-                                height: 19 / 14,
-                                fontWeight: FontWeight.w600,
+                                height: 17 / 14,
+                                fontWeight: FontWeight.w700,
                                 color: c.textMutedOnPage,
                               ),
                             ),
@@ -784,8 +837,9 @@ class _Spoken extends StatelessWidget {
         );
 }
 
-/// A section label on the page (SPEC §7.3): stencil 600 13/16, spaced
-/// 0.12 em, capitals, muted. Screen readers hear it in plain case.
+/// A section heading on the page (SPEC §7.3; Boot Camp Mix, #85): stencil
+/// 900 20/25, spaced 0.045 em, capitals, in the text color ("JUST FOR
+/// YOU"). Screen readers hear it in plain case.
 class SectionLabel extends StatelessWidget {
   const new(this.text, {super.key});
 
@@ -800,23 +854,24 @@ class SectionLabel extends StatelessWidget {
       text.toUpperCase(),
       semanticsLabel: text,
       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-        fontSize: 13,
-        height: 16 / 13,
-        letterSpacing: 13 * 0.12,
-        color: GumdropColors.of(context).textMutedOnPage,
+        fontSize: 20,
+        height: 25 / 20,
+        fontWeight: FontWeight.w900,
+        letterSpacing: 20 * 0.045,
+        color: GumdropColors.of(context).textOnPage,
       ),
     ),
   );
 }
 
-/// A true card (SPEC §7.3): the team card, a player card, drawn as
-/// the event card without its edge: the card color, a 2 px rim on a 4 px
-/// lip, corner 18, and its [child] in the card context. A [Material], so
+/// A true card (SPEC §7.3): the team card, a player card, drawn as a Boot
+/// Camp Mix panel (#85): the panel color, a 3 px ink outline on a hard 4/4
+/// shadow, square, and its [child] in the card context. A [Material], so
 /// list tiles, switches, and ink inside draw on it.
 class SettingsPanel extends StatelessWidget {
   const new({
     required this.child,
-    this.radius = 18,
+    this.radius = 0,
     this.padding = const EdgeInsets.all(12),
     super.key,
   });
@@ -828,11 +883,11 @@ class SettingsPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
-    final rim = BorderSide(color: c.surfaceBorder, width: c.surfaceBorderWidth);
+    final rim = BorderSide(color: c.ink, width: 3);
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(radius),
-        boxShadow: [BoxShadow(color: rim.color, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: c.pageShadow, offset: const Offset(4, 4))],
       ),
       child: Material(
         color: c.surface,
@@ -849,10 +904,10 @@ class SettingsPanel extends StatelessWidget {
   }
 }
 
-/// A group of rows straight on the page (SPEC §7.3): a 1 px hairline above
-/// the first row and under each. [padding] insets the rows; [divided] is
-/// kept for callers and always on. A [ListTile] among the rows has no inset
-/// of its own, so it lines up with the hairlines and the rows around it.
+/// A group of rows in one ink panel (SPEC §7.3, #85), as [PageRows] draws
+/// them. [padding] insets the panel; [divided] is kept for callers and
+/// always on. A [ListTile] among the rows has no inset of its own, so it
+/// lines up with the rows around it.
 class SettingsCard extends StatelessWidget {
   const new({
     required this.children,
@@ -877,9 +932,9 @@ class SettingsCard extends StatelessWidget {
   );
 }
 
-/// A settings row (SPEC §7.3): at least 50 tall, a 22 px icon in the text
-/// color, the title in Comic Neue 700 16/21, the subtitle muted, and a chevron
-/// when it opens something. [highlighted] sets the title bold; a cherry
+/// A settings row (SPEC §7.3): a [PageRow], its icon on a mustard badge,
+/// the title in Comic Neue Bold, the subtitle muted, and a chevron when it
+/// opens something. [highlighted] sets the title bold; a cherry
 /// [accent] (Delete) puts the icon and title in the accent text. A
 /// [ListTile]'s semantics, through [PageRow].
 class SettingsRow extends StatelessWidget {

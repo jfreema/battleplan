@@ -199,23 +199,28 @@ class _ArchivedState extends State<_Archived> {
         // reach 4 px past it.
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
-          // On the row's own node, which PageRow merges.
-          child: MergeSemantics(
-            child: Semantics(
-              expanded: _open,
-              child: PageRow(
-                icon: AppIcons.archive,
-                title: l10n.archivedTeams,
-                subtitle: '${widget.count}',
-                onTap: () => setState(() => _open = !_open),
-                trailing: Icon(
-                  _open ? AppIcons.expandLess : AppIcons.expand,
-                  size: 20,
-                  weight: 700,
-                  color: c.textMutedOnPage,
+          // On the row's own node, which PageRow merges; in its own ink
+          // panel, as Join and Create are (#85).
+          child: PageRows(
+            children: [
+              MergeSemantics(
+                child: Semantics(
+                  expanded: _open,
+                  child: PageRow(
+                    icon: AppIcons.archive,
+                    title: l10n.archivedTeams,
+                    subtitle: '${widget.count}',
+                    onTap: () => setState(() => _open = !_open),
+                    trailing: Icon(
+                      _open ? AppIcons.expandLess : AppIcons.expand,
+                      size: 20,
+                      weight: 700,
+                      color: c.textMutedOnPage,
+                    ),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
         ),
         if (_open) ...[const SizedBox(height: 8), ...widget.children],

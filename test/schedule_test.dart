@@ -9,6 +9,8 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/services/time_zones.dart';
+import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/dog_tag.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
@@ -1530,14 +1532,15 @@ void main() {
     testWidgets("Who's going shows people's picked icon colors (§7.2)", (
       tester,
     ) async {
+      // Their dog tag's color (#85): the one they picked.
       Color fillOf(String id) {
-        final icon = find.byWidgetPredicate(
-          (w) => w is CandyInitials && w.colorKey == id,
+        final tag = tester.widget<DogTag>(
+          find.byWidgetPredicate((w) => w is DogTag && w.colorKey == id),
         );
-        final box = tester.widget<Container>(
-          find.descendant(of: icon, matching: find.byType(Container)).first,
+        return Avatar.faceOf(
+          GumdropColors.forScheme(TeamScheme.army),
+          tag.color ?? AvatarColor.blueRaspberry,
         );
-        return (box.decoration! as BoxDecoration).color!;
       }
 
       // A player: their self-linked member's color.

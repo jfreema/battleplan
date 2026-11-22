@@ -1,6 +1,5 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
-import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
@@ -93,12 +92,12 @@ void main() {
   testWidgets('waiting reports stand out in the warning red; none, they '
       "don't", (tester) async {
     await open(tester, reports: 5);
-    final c = GumdropColors.of(tester.element(find.text('Open reports')));
     Color? numberColor(String value) =>
         tester.widget<Text>(find.text(value)).style?.color;
-    expect(numberColor('5'), c.cherry.text);
+    // Salmon in an ink outline (#85).
+    expect(numberColor('5'), CampPalette.cantGo);
     await open(tester);
-    expect(numberColor('0'), isNot(c.cherry.text));
+    expect(numberColor('0'), isNot(CampPalette.cantGo));
   });
 
   testWidgets('a row with a list opens it, with a chevron; the others have '

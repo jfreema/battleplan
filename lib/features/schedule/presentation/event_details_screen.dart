@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/fonts.dart';
+import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
+import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/haptics.dart';
@@ -13,8 +15,10 @@ import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/back_chevron.dart';
 import 'package:battleplan/core/widgets/camp_app_bar.dart';
+import 'package:battleplan/core/widgets/camp_lettering.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
+import 'package:battleplan/core/widgets/dog_tag.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/core/widgets/load_error.dart';
@@ -372,16 +376,15 @@ class _Details extends ConsumerWidget {
                         ? loc.address
                         : null,
                     subtitleMaxLines: null,
-                    trailing: TextButton.icon(
-                      style: TextButton.styleFrom(
-                        minimumSize: const Size(48, 48),
+                    // A blue push button (#85).
+                    trailing: FilledButton.icon(
+                      style: GumdropButtons.of(context).accent(
+                        c.blueRaspberry,
+                        height: 42,
+                        padding: const EdgeInsets.fromLTRB(9, 0, 10, 0),
                       ),
                       onPressed: () => unawaited(openDirections(ref, loc)),
-                      icon: Icon(
-                        AppIcons.directions,
-                        size: 18,
-                        color: c.accentMark,
-                      ),
+                      icon: const Icon(AppIcons.directions, size: 18),
                       label: Text(l10n.eventDirections),
                     ),
                   ),
@@ -431,213 +434,187 @@ class _Details extends ConsumerWidget {
   }
 }
 
-/// The top of the event (SPEC §7.3): the stencil eyebrow (the type, and
-/// Home or Away) with how soon on the right, the opponent's crest and name
-/// in stencil 36 for a game (else the title in stencil 32), and when. A long
-/// word steps the size down, so no word ever breaks in two (#74).
+/// The top of the event (SPEC §7.3; Boot Camp Mix, #85): the kind on a
+/// mustard tag ("GAME · HOME") with how soon on a starburst at the right,
+/// the opponent's initial on a round red badge beside the title in white
+/// stencil in a thick ink outline, turned a little (or the title alone),
+/// and when, in an ink-outlined box. A long word steps the size down, so no
+/// word ever breaks in two (#74).
 class _Hero extends StatelessWidget {
   const new({required this.event, required this.zone});
 
   final Event event;
   final String zone;
 
-  /// The opponent's name, largest first (48 until #74, owner's report
-  /// 2026-11-20: "makes event header too big"; "Springfield" broke in two).
-  static const nameSizes = [36.0, 32.0, 28.0, 25.0];
-
-  /// Any other title, as a page's title steps down ([PageTitle.sizes]).
-  static const titleSizes = [32.0, 28.0, 25.0];
+  /// The title's sizes, largest first (#74: no word broken in two).
+  static const titleSizes = [51.0, 44.0, 38.0, 32.0, 27.0];
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final c = GumdropColors.of(context);
-    final style = GumdropStyle.of(context);
-    final accent = typeAccent(context, event.type);
-    // The type's color on the page (social is the going color).
-    final eyebrowColor = event.type == EventType.social
-        ? c.successOnPage
-        : accent.text;
     final opponent = event.isGame ? event.opponent?.trim() ?? '' : '';
     final soon = _soonLabel(l10n, event, zone);
-    final eyebrow = [
-      typeLabel(l10n, event.type),
-      if (event.isGame && event.homeAway == HomeAway.home) l10n.eventHome,
-      if (event.isGame && event.homeAway == HomeAway.away) l10n.eventAway,
-    ].join(' · ');
+    final eyebrow = eventKindLabel(l10n, event);
     final strike = event.isCanceled ? TextDecoration.lineThrough : null;
-    // The crest and the big name only for a title that's the opponent
-    // ("vs. Eagles", "@ Eagles"); any other title is shown whole.
+    // The crest only for a title that's the opponent ("vs. Eagles",
+    // "@ Eagles"); any other title is shown alone.
     final match = opponent.isEmpty
         ? null
         : RegExp(r'^\s*(vs\.?|@)?\s*' + RegExp.escape(opponent) + r'\s*$')
               .firstMatch(event.title);
     final crestName = match == null ? null : opponent;
-    final prefix = match?.group(1);
+    // "vs." or "@" kept on the line of the name's first word by a no-break
+    // space (#74).
+    final shown = match?.group(1) == null
+        ? event.title
+        : event.title.replaceFirst(
+            RegExp(r'^(\s*(?:vs\.?|@))\s+'),
+            '${match!.group(1)}\u00A0',
+          );
+    final stencil = TextStyle(
+      fontFamily: AppFonts.stencil,
+      fontWeight: FontWeight.w900,
+      color: c.ink,
+    );
+    final title = LayoutBuilder(
+      builder: (context, box) {
+        TextStyle titleAt(double size) => stencil.copyWith(
+          fontSize: size,
+          height: (size + 3) / size,
+          letterSpacing: size * 0.025,
+          decoration: strike,
+          decorationColor: c.ink,
+          decorationThickness: 2,
+        );
+        final size = wholeWordSize(
+          context,
+          // Room for the outline and the turn.
+          maxWidth: box.maxWidth - 8,
+          sizes: titleSizes,
+          words: (size) => [
+            for (final word in shown.split(' '))
+              if (word.isNotEmpty) TextSpan(text: word, style: titleAt(size)),
+          ],
+        );
+        return Semantics(
+          header: true,
+          child: Transform.rotate(
+            angle: -2 * 3.141592653589793 / 180,
+            alignment: const Alignment(-1, 0.4),
+            child: OutlinedText(
+              shown,
+              semanticsLabel: event.title,
+              stroke: size * 0.12,
+              shadow: size >= 38 ? 4 : 3,
+              style: titleAt(size),
+            ),
+          ),
+        );
+      },
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 20),
+          constraints: const BoxConstraints(minHeight: 49),
           child: Row(
             children: [
-              Expanded(
-                child: Text(
-                  eyebrow.toUpperCase(),
-                  semanticsLabel: eyebrow,
-                  style: TextStyle(
-                    fontFamily: AppFonts.sticker,
-                    fontSize: 13,
-                    height: 16 / 13,
-                    letterSpacing: 13 * 0.18,
-                    color: eyebrowColor,
-                  ),
+              Flexible(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 3, top: 4),
+                  child: CampTag(eyebrow, size: 13.5),
                 ),
               ),
+              const Spacer(),
               if (event.isCanceled)
                 const CanceledBadge()
               else if (event.endedBefore(DateTime.now()))
                 const _EndedBadge()
-              else if (soon != null) ...[
-                Icon(AppIcons.time, size: 16, color: c.tangerine.text),
-                const SizedBox(width: 5),
-                Text(
-                  soon,
-                  style: TextStyle(
-                    fontFamily: AppFonts.body,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                    height: 20 / 15,
-                    color: c.textOnPage,
+              else if (soon != null)
+                Starburst(
+                  width: 104,
+                  height: 47,
+                  turn: 7,
+                  child: Text(
+                    '${soon.toUpperCase()}!',
+                    semanticsLabel: soon,
+                    maxLines: 1,
+                    textScaler: TextScaler.noScaling,
+                    style: stencil.copyWith(
+                      fontSize: 14.5,
+                      height: 1,
+                      letterSpacing: 14.5 * 0.05,
+                    ),
                   ),
                 ),
-              ],
             ],
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 2),
         if (crestName != null)
           Row(
             children: [
               ExcludeSemantics(
                 child: Container(
-                  width: 52,
-                  height: 52,
+                  width: 50,
+                  height: 50,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: c.tangerine.face,
                     shape: BoxShape.circle,
-                    border: Border.all(color: c.tangerine.lip, width: 2),
+                    border: Border.all(color: c.ink, width: 3),
                     boxShadow: [
                       BoxShadow(
-                        color: c.tangerine.lip,
-                        offset: const Offset(0, 3),
+                        color: c.pageShadow,
+                        offset: const Offset(3, 3),
                       ),
                     ],
                   ),
                   child: Text(
                     crestName.characters.first.toUpperCase(),
                     textScaler: TextScaler.noScaling,
-                    style: style.display(
-                      TextStyle(fontSize: 28, height: 1, color: c.ink),
+                    style: stencil.copyWith(
+                      fontSize: 28,
+                      height: 1,
+                      color: c.inkOn(c.tangerine),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, box) {
-                    TextStyle? nameAt(double size) =>
-                        theme.textTheme.displayMedium?.copyWith(
-                          fontSize: size,
-                          height: (size + 3) / size,
-                          decoration: strike,
-                        );
-                    // "vs." or "@", kept on the line of the name's first
-                    // word by a no-break space.
-                    final lead = prefix == null
-                        ? null
-                        : TextSpan(
-                            text: '$prefix\u00A0',
-                            style: style.label(
-                              TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w600,
-                                color: c.textMutedOnPage,
-                                shadows: const [],
-                              ),
-                            ),
-                          );
-                    final words = wordsOf(crestName);
-                    final size = wholeWordSize(
-                      context,
-                      maxWidth: box.maxWidth,
-                      sizes: nameSizes,
-                      words: (size) => [
-                        for (final (i, word) in words.indexed)
-                          TextSpan(
-                            style: nameAt(size),
-                            children: [
-                              if (i == 0 && lead != null) lead,
-                              TextSpan(text: word),
-                            ],
-                          ),
-                      ],
-                    );
-                    return Text.rich(
-                      TextSpan(
-                        children: [
-                          ?lead,
-                          TextSpan(text: crestName),
-                        ],
-                      ),
-                      semanticsLabel: event.title,
-                      style: nameAt(size),
-                    );
-                  },
-                ),
-              ),
+              const SizedBox(width: 13),
+              Expanded(child: title),
             ],
           )
         else
-          Semantics(
-            header: true,
-            child: LayoutBuilder(
-              builder: (context, box) {
-                TextStyle? titleAt(double size) =>
-                    theme.textTheme.headlineMedium?.copyWith(
-                      fontSize: size,
-                      height: (size + 4) / size,
-                      decoration: strike,
-                    );
-                final size = wholeWordSize(
-                  context,
-                  maxWidth: box.maxWidth,
-                  sizes: titleSizes,
-                  words: (size) => [
-                    for (final word in wordsOf(event.title))
-                      TextSpan(text: word, style: titleAt(size)),
-                  ],
-                );
-                return Text(event.title, style: titleAt(size));
-              },
-            ),
-          ),
+          title,
         const SizedBox(height: 7),
-        Text(
-          [
-            if (!event.allDay)
-              dayLabel(l10n, ZonedTime.wallClock(zone, event.startAt)),
-            timeRange(l10n, event, zone, withDay: event.allDay),
-          ].join(' · '),
-          style: TextStyle(
-            fontFamily: AppFonts.body,
-            fontWeight: FontWeight.w800,
-            fontSize: 17,
-            height: 22 / 17,
-            color: c.textOnPage,
+        // When, in an ink-outlined box, turned a little.
+        Transform.rotate(
+          angle: -1.2 * 3.141592653589793 / 180,
+          alignment: Alignment.centerLeft,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(12, 5, 11, 2),
+            decoration: BoxDecoration(
+              color: c.surface,
+              border: Border.all(color: c.ink, width: 3),
+              boxShadow: [
+                BoxShadow(color: c.pageShadow, offset: const Offset(3, 3)),
+              ],
+            ),
+            child: Text(
+              [
+                if (!event.allDay)
+                  dayLabel(l10n, ZonedTime.wallClock(zone, event.startAt)),
+                timeRange(l10n, event, zone, withDay: event.allDay),
+              ].join(' · '),
+              style: stencil.copyWith(
+                fontSize: 17.5,
+                height: 24 / 17.5,
+                letterSpacing: 17.5 * 0.05,
+                color: c.card.textPrimary,
+              ),
+            ),
           ),
         ),
       ],
@@ -981,11 +958,16 @@ class _RsvpSection extends ConsumerWidget {
                   child: _Count(
                     count: tally[s] ?? 0,
                     label: s == null ? l10n.rsvpNoReply : statusLabel(l10n, s),
+                    // Boot Camp Mix (#85): the answer's own color, in
+                    // an ink outline.
                     color: switch (s) {
-                      RsvpStatus.going => c.successOnPage,
-                      RsvpStatus.maybe => c.lemon.text,
-                      RsvpStatus.notGoing => c.cherry.text,
-                      null => c.textOnPage,
+                      RsvpStatus.going => c.mint.face,
+                      RsvpStatus.maybe => c.lemon.face,
+                      RsvpStatus.notGoing => CampPalette.cantGo,
+                      null =>
+                        c.roles.palette.text == c.ink
+                            ? CampPalette.titleFill
+                            : c.roles.palette.text,
                     },
                   ),
                 ),
@@ -1304,8 +1286,7 @@ Future<void> _restoreRsvp(
   }
 }
 
-/// Going, Maybe, Not going, and No reply, each with its people and
-/// One count on the event screen (SPEC §7.3): the number in stencil 40 in
+/// One count on the event screen (SPEC §7.3; #85): the number in big stencil in
 /// its answer's color, and its label in small capitals under it.
 class _Count extends StatelessWidget {
   const new({required this.count, required this.label, required this.color});
@@ -1317,28 +1298,33 @@ class _Count extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
-    final style = GumdropStyle.of(context);
     return MergeSemantics(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          OutlinedText(
             '$count',
-            style: style.display(
-              TextStyle(fontSize: 40, height: 42 / 40, color: color),
+            fill: color,
+            stroke: 5,
+            style: const TextStyle(
+              fontFamily: AppFonts.stencil,
+              fontWeight: FontWeight.w900,
+              fontSize: 44,
+              height: 42 / 44,
+              letterSpacing: 44 * 0.03,
             ),
           ),
+          const SizedBox(height: 3),
           Text(
             label.toUpperCase(),
             semanticsLabel: label,
-            style: style.label(
-              TextStyle(
-                fontSize: 13,
-                height: 16 / 13,
-                letterSpacing: 13 * 0.04,
-                fontWeight: FontWeight.w600,
-                color: c.textMutedOnPage,
-              ),
+            style: TextStyle(
+              fontFamily: AppFonts.stencil,
+              fontWeight: FontWeight.w900,
+              fontSize: 13,
+              height: 16 / 13,
+              letterSpacing: 13 * 0.08,
+              color: c.textOnPage,
             ),
           ),
         ],
@@ -1347,8 +1333,10 @@ class _Count extends StatelessWidget {
   }
 }
 
-/// The people by answer (SPEC §7.3): a small label for each answer with
-/// its dot ("GOING · 10"), then a row per person with a hairline above.
+/// The people by answer (SPEC §7.3; Boot Camp Mix, #85): an ink label for
+/// each answer in its color with its dot ("GOING · 10"), then a row per
+/// person, their dog tag hanging from the ball chain that rules off the
+/// row.
 class _AttendeeGroups extends StatelessWidget {
   const new({
     required this.people,
@@ -1397,40 +1385,31 @@ class _AttendeeGroups extends StatelessWidget {
         for (final s in groups)
           if (byStatus[s] case final list? when list.isNotEmpty) ...[
             Padding(
-              padding: const EdgeInsets.only(top: 16, bottom: 4),
-              child: Row(
-                children: [
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: s == null
-                          ? c.textMutedOnPage
-                          : statusAccent(context, s).face,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Flexible(
-                    // "No reply", as the count above it says.
-                    child: SectionLabel(
-                      '${s == null ? l10n.rsvpNoReply : statusLabel(l10n, s)}'
-                      ' · ${list.length}',
-                    ),
-                  ),
-                ],
+              padding: const EdgeInsets.only(top: 14, bottom: 6),
+              child: _GroupLabel(
+                // "No reply", as the count above it says.
+                text:
+                    '${s == null ? l10n.rsvpNoReply : statusLabel(l10n, s)}'
+                    ' · ${list.length}',
+                color: switch (s) {
+                  null =>
+                    c.roles.palette.text == c.ink
+                        ? CampPalette.titleFill
+                        : c.roles.palette.text,
+                  RsvpStatus.notGoing => CampPalette.cantGo,
+                  final s => statusAccent(context, s).face,
+                },
               ),
             ),
-            for (final (p, r) in list) ...[
-              Container(height: 1, color: c.divider),
+            for (final (i, (p, r)) in list.indexed)
               _AttendeeRow(
                 participant: p,
                 rsvp: r,
                 color: colorOf(p),
                 answeredBy: _answeredBy(l10n, p, r),
                 onTap: onTap?.call(p),
+                index: i,
               ),
-            ],
           ],
       ],
     );
@@ -1455,7 +1434,11 @@ class _AttendeeRow extends StatelessWidget {
     required this.answeredBy,
     required this.onTap,
     this.color,
+    this.index = 0,
   });
+
+  /// Down its group, so the tags swing one way, then the other.
+  final int index;
 
   final Participant participant;
   final Rsvp? rsvp;
@@ -1481,64 +1464,170 @@ class _AttendeeRow extends StatelessWidget {
       fontWeight: weight,
       color: color,
     );
+    final p = c.roles.palette;
     return FocusRingInk(
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 11),
-        child: Row(
-          children: [
-            CandyInitials(name: full, colorKey: participant.id, color: color),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(text: name),
-                        if (number.isNotEmpty)
-                          TextSpan(
-                            text: number,
-                            style: body(16, FontWeight.w700, c.textMutedOnPage),
-                          ),
-                      ],
-                    ),
-                    style: body(16, FontWeight.w800, c.textOnPage),
+      child: CustomPaint(
+        // The ball chain along the row's top, the tag hanging from it.
+        painter: _BallChainPainter(color: p.ballChain),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(6, 2.5, 4, 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              DogTag.hanging(
+                // Their initials, not the number's "#".
+                name: name,
+                colorKey: participant.id,
+                color: color,
+                turn: index.isEven ? -4 : 3,
+                // Someone not coming, or not sure yet, hangs a plain tag.
+                fill: s == RsvpStatus.going ? null : p.unansweredTag,
+              ),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(text: name),
+                            if (number.isNotEmpty)
+                              TextSpan(
+                                text: number,
+                                style: body(
+                                  17,
+                                  FontWeight.w700,
+                                  c.textMutedOnPage,
+                                ),
+                              ),
+                          ],
+                        ),
+                        style: body(17, FontWeight.w700, c.textOnPage),
+                      ),
+                      if (note.isNotEmpty)
+                        Text(
+                          '"$note"',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: body(15, FontWeight.w700, c.textOnPage),
+                        ),
+                      if (answeredBy case final by?)
+                        Text(
+                          by,
+                          style: body(14, FontWeight.w700, c.textMutedOnPage),
+                        ),
+                    ],
                   ),
-                  if (note.isNotEmpty)
-                    Text(
-                      '"$note"',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: body(15, FontWeight.w600, c.textOnPage),
-                    ),
-                  if (answeredBy case final by?)
-                    Text(
-                      by,
-                      style: body(14, FontWeight.w600, c.textMutedOnPage),
-                    ),
-                ],
+                ),
               ),
-            ),
-            if (s != null) ...[
-              const SizedBox(width: 12),
-              Icon(
-                statusIcon(s),
-                size: 22,
-                weight: 700,
-                color: switch (s) {
-                  RsvpStatus.going => c.successOnPage,
-                  RsvpStatus.maybe => c.lemon.text,
-                  RsvpStatus.notGoing => c.notGoingIcon,
-                },
-              ),
+              if (s != null) ...[
+                const SizedBox(width: 12),
+                // The answer as a badge in its color, with its icon.
+                Container(
+                  margin: const EdgeInsets.only(top: 16),
+                  width: 26,
+                  height: 26,
+                  decoration: BoxDecoration(
+                    color: switch (s) {
+                      RsvpStatus.notGoing => CampPalette.cantGo,
+                      final s => statusAccent(context, s).face,
+                    },
+                    shape: BoxShape.circle,
+                    border: Border.all(color: c.ink, width: 2.5),
+                  ),
+                  child: Icon(
+                    statusIcon(s),
+                    size: 15,
+                    weight: 700,
+                    color: c.ink,
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
   }
+}
+
+/// An answer's label over its people (#85): its name and count in stencil
+/// in [color] on an ink block, with a dot in [color], turned -1.2°.
+class _GroupLabel extends StatelessWidget {
+  const new({required this.text, required this.color});
+
+  final String text;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = GumdropColors.of(context);
+    return Semantics(
+      container: true,
+      header: true,
+      child: Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: Transform.rotate(
+          angle: -1.2 * 3.141592653589793 / 180,
+          child: Container(
+            color: c.ink,
+            padding: const EdgeInsets.fromLTRB(9, 2, 10, 0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 9,
+                  height: 9,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 7),
+                Flexible(
+                  child: Text(
+                    text.toUpperCase(),
+                    semanticsLabel: text,
+                    style: TextStyle(
+                      fontFamily: AppFonts.stencil,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15,
+                      height: 21 / 15,
+                      letterSpacing: 15 * 0.08,
+                      color: color,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The ball chain the dog tags hang from (#85): 1.4 px beads every 7 px
+/// along the top of a players row.
+class _BallChainPainter extends CustomPainter {
+  new({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color;
+    for (var x = 5.5; x < size.width; x += 7) {
+      canvas.drawCircle(Offset(x, 6.5), 1.4, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_BallChainPainter old) => old.color != color;
 }
 
 /// Admins: pick someone, then their answer (SCHED-4).

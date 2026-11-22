@@ -10,6 +10,7 @@ import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/theme_override.dart';
 import 'package:battleplan/core/widgets/back_chevron.dart';
 import 'package:battleplan/core/widgets/camp_app_bar.dart';
+import 'package:battleplan/core/widgets/camp_lettering.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/info_tag.dart';
@@ -83,7 +84,26 @@ class AdminScaffold extends StatelessWidget {
         onPressed: canPop ? null : () => context.go('/'),
         semanticLabel: canPop ? null : l10n.adminExit,
       ),
-      title: Text(title),
+      // The panel's name on a mustard tag over the page's in outlined
+      // stencil, on the camouflage (#85).
+      toolbarHeight: 62,
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CampTag(l10n.adminPanel),
+          OutlinedText(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.headlineMedium!.copyWith(
+              fontSize: 30,
+              height: 34 / 30,
+              letterSpacing: 30 * 0.035,
+            ),
+          ),
+        ],
+      ),
       actions: [
         ...actions,
         // The sections, from the top right on a phone.

@@ -1,8 +1,12 @@
+import 'dart:math' as math;
+
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
+import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/design/team_theme.dart';
+import 'package:battleplan/core/widgets/camp_lettering.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
@@ -56,7 +60,8 @@ class AdminDashboardScreen extends ConsumerWidget {
                   note: l10n.adminStatTeamsNote,
                   value: number.format(value.teams),
                   icon: AppIcons.group,
-                  accent: (c) => c.grape,
+                  // Boot Camp Mix's colors (#85): purple.
+                  accent: (c) => c.bubblegum,
                   route: AdminSection.teams.path,
                 ),
                 _Stat(
@@ -71,21 +76,26 @@ class AdminDashboardScreen extends ConsumerWidget {
                   note: l10n.adminStatActiveTeamsNote,
                   value: number.format(value.activeTeams),
                   icon: AppIcons.chat,
-                  accent: (c) => c.tangerine,
+                  accent: (c) => c.lemon,
                 ),
                 _Stat(
                   label: l10n.adminStatMessages,
                   note: l10n.adminStatMessagesNote,
                   value: number.format(value.messages),
                   icon: AppIcons.send,
-                  accent: (c) => c.bubblegum,
+                  accent: (c) => c.tangerine,
                 ),
                 _Stat(
                   label: l10n.adminStatStorage,
                   note: l10n.adminStatStorageNote,
                   value: formatBytes(value.storageBytes),
                   icon: AppIcons.storage,
-                  accent: (c) => c.lemon,
+                  // Mustard.
+                  accent: (c) => GumdropAccent(
+                    face: c.roles.palette.mustard,
+                    lip: c.pageShadow,
+                    text: c.textOnPage,
+                  ),
                 ),
                 // The day's one email budget (#47): its warning color once
                 // invites and RSVP emails have stopped, red when it's full.
@@ -177,9 +187,10 @@ class _StatGrid extends StatelessWidget {
   );
 }
 
-/// One total as a team card (Teams, SPEC §5.1): a 48 px badge with its icon
-/// on [accent]'s face, the label in the card's title style over [note], and
-/// the number at the end, or under the note with large text. A total with
+/// One total as a Boot Camp Mix panel (#85): a 44 px rounded badge in an
+/// ink outline with its icon on [accent]'s face, the label in stencil over
+/// [note], and the number in big outlined stencil at the end, or under the
+/// note with large text. A total with
 /// a list ([route]) opens it, with the card's chevron.
 class _Stat extends StatelessWidget {
   const new({
@@ -213,18 +224,20 @@ class _Stat extends StatelessWidget {
     final color = alert ? page.cherry : accent(page);
     final target = route;
     // The number under the words with large text, and a long one ("38 of
-    // 90", #47) on the narrowest screens (Slide Over, 320 wide), where it
-    // wouldn't fit beside them.
+    // 90", #47) on a phone, where its big stencil wouldn't fit beside them
+    // (#85).
     final stacked =
         MediaQuery.textScalerOf(context).scale(1) > 1.5 ||
-        (value.length > 6 && MediaQuery.sizeOf(context).width < 340);
+        (value.length > 6 && MediaQuery.sizeOf(context).width < 600);
+    // The stencil draws capitals whatever the string's case.
     final name = Text(
       label,
       style: TextStyle(
-        fontFamily: AppFonts.body,
-        fontWeight: FontWeight.w800,
-        fontSize: 18,
-        height: 22 / 18,
+        fontFamily: AppFonts.stencil,
+        fontWeight: FontWeight.w900,
+        fontSize: 19,
+        height: 22 / 19,
+        letterSpacing: 19 * 0.05,
         color: c.textPrimary,
       ),
     );
@@ -232,23 +245,31 @@ class _Stat extends StatelessWidget {
       note,
       style: TextStyle(
         fontFamily: AppFonts.body,
-        fontWeight: FontWeight.w600,
-        fontSize: 15,
-        height: 19 / 15,
-        letterSpacing: -0.2,
+        fontWeight: FontWeight.w700,
+        fontSize: 14,
+        height: 17 / 14,
         color: c.textMuted,
       ),
     );
-    final total = Text(
-      value,
-      style: TextStyle(
-        fontFamily: AppFonts.body,
-        fontWeight: FontWeight.w900,
-        fontSize: 22,
-        height: 26 / 22,
-        color: alert ? c.cherry.text : c.textPrimary,
-      ),
+    // Light's numbers are solid ink, the open reports' red in an ink
+    // outline; elsewhere outlined in the text color (#85).
+    final light = page.brightness == Brightness.light;
+    final numberStyle = TextStyle(
+      fontFamily: AppFonts.stencil,
+      fontWeight: FontWeight.w900,
+      fontSize: 30,
+      height: 1,
+      letterSpacing: 30 * 0.03,
+      color: c.ink,
     );
+    final total = light && !alert
+        ? Text(value, style: numberStyle)
+        : OutlinedText(
+            value,
+            fill: alert ? CampPalette.cantGo : c.textPrimary,
+            shadow: 2.5,
+            style: numberStyle,
+          );
     final words = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -265,30 +286,53 @@ class _Stat extends StatelessWidget {
         child: Ink(
           decoration: style.cardDecoration(
             c.surface,
-            18,
-            side: BorderSide(color: c.surfaceBorder, width: 2),
+            0,
+            side: BorderSide(color: c.ink, width: 3),
+            shadow: page.pageShadow,
           ),
           child: FocusRingInk(
             onTap: target == null ? null : () => context.go(target),
-            radius: BorderRadius.circular(18),
             child: GumdropSurface(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
                 child: Row(
                   children: [
                     Container(
-                      width: 48,
-                      height: 48,
+                      width: 44,
+                      height: 44,
                       decoration: BoxDecoration(
                         color: color.face,
-                        // The team badge's corners.
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(11),
+                        border: Border.all(color: c.ink, width: 2.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: page.pageShadow,
+                            offset: const Offset(2, 2),
+                          ),
+                        ],
                       ),
-                      child: Icon(icon, size: 24, color: c.inkOn(color)),
+                      child: Icon(icon, size: 22, color: c.inkOn(color)),
                     ),
                     const SizedBox(width: 12),
                     Expanded(child: words),
-                    if (!stacked) ...[const SizedBox(width: 12), total],
+                    if (!stacked) ...[
+                      const SizedBox(width: 12),
+                      // Smaller rather than past the panel's edge.
+                      ConstrainedBox(
+                        // At most a third of the screen, 170 on the widest.
+                        constraints: BoxConstraints(
+                          maxWidth: math.min(
+                            170,
+                            MediaQuery.sizeOf(context).width / 3,
+                          ),
+                        ),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: AlignmentDirectional.centerEnd,
+                          child: total,
+                        ),
+                      ),
+                    ],
                     const SizedBox(width: 8),
                     // Room kept where there's no list, so the numbers line
                     // up.

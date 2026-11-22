@@ -502,6 +502,17 @@ void main() {
           )
           .first,
     );
+    // Clear of what floats over the list's foot.
+    await tester.drag(
+      find
+          .descendant(
+            of: find.byType(RosterScreen),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+      const Offset(0, -120),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Sam Rivera'));
     await tester.pumpAndSettle();
     // The owner's card for a member has the most rows, more than the
