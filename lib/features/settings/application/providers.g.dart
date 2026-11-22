@@ -187,6 +187,9 @@ String _$appSchemeHash() => r'58fbfcb87838948bfa51b86834867ed94cd09342';
 /// (myTeams), so this provider (kept for the session) keeps no reads of a
 /// team I've left or only viewed: a super admin viewing a team they
 /// aren't on sees it in their default.
+///
+/// Always one of the Boot Camp Mix schemes (#85): a pick or default the app
+/// no longer offers is drawn in its closest ([TeamSchemeLook.look]).
 
 @ProviderFor(teamScheme)
 final teamSchemeProvider = TeamSchemeFamily._();
@@ -197,6 +200,9 @@ final teamSchemeProvider = TeamSchemeFamily._();
 /// (myTeams), so this provider (kept for the session) keeps no reads of a
 /// team I've left or only viewed: a super admin viewing a team they
 /// aren't on sees it in their default.
+///
+/// Always one of the Boot Camp Mix schemes (#85): a pick or default the app
+/// no longer offers is drawn in its closest ([TeamSchemeLook.look]).
 
 final class TeamSchemeProvider
     extends $FunctionalProvider<TeamScheme, TeamScheme, TeamScheme>
@@ -207,6 +213,9 @@ final class TeamSchemeProvider
   /// (myTeams), so this provider (kept for the session) keeps no reads of a
   /// team I've left or only viewed: a super admin viewing a team they
   /// aren't on sees it in their default.
+  ///
+  /// Always one of the Boot Camp Mix schemes (#85): a pick or default the app
+  /// no longer offers is drawn in its closest ([TeamSchemeLook.look]).
   TeamSchemeProvider._({
     required TeamSchemeFamily super.from,
     required GroupId super.argument,
@@ -258,7 +267,7 @@ final class TeamSchemeProvider
   }
 }
 
-String _$teamSchemeHash() => r'87ae080ac75cf8092c71c08c029a8c4589e8af40';
+String _$teamSchemeHash() => r'c3a11fbc49ad1ebcd17cd25ab913d354b1fc792b';
 
 /// The scheme I see [groupId] in ([resolveTeamScheme]): my pick on my
 /// membership, else the team's default, else my default. The team is read
@@ -266,6 +275,9 @@ String _$teamSchemeHash() => r'87ae080ac75cf8092c71c08c029a8c4589e8af40';
 /// (myTeams), so this provider (kept for the session) keeps no reads of a
 /// team I've left or only viewed: a super admin viewing a team they
 /// aren't on sees it in their default.
+///
+/// Always one of the Boot Camp Mix schemes (#85): a pick or default the app
+/// no longer offers is drawn in its closest ([TeamSchemeLook.look]).
 
 final class TeamSchemeFamily extends $Family
     with $FunctionalFamilyOverride<TeamScheme, GroupId> {
@@ -284,6 +296,9 @@ final class TeamSchemeFamily extends $Family
   /// (myTeams), so this provider (kept for the session) keeps no reads of a
   /// team I've left or only viewed: a super admin viewing a team they
   /// aren't on sees it in their default.
+  ///
+  /// Always one of the Boot Camp Mix schemes (#85): a pick or default the app
+  /// no longer offers is drawn in its closest ([TeamSchemeLook.look]).
 
   TeamSchemeProvider call(GroupId groupId) =>
       TeamSchemeProvider._(argument: groupId, from: this);

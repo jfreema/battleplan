@@ -6,6 +6,7 @@ import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
@@ -209,7 +210,7 @@ class _ChatSearchScreenState extends ConsumerState<ChatSearchScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: CampAppBar(
         title: Text(direct ? l10n.searchConversation : l10n.searchChat),
       ),
       body: Center(

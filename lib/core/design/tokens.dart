@@ -25,7 +25,7 @@ abstract final class Space {
   static const double page = 20;
 }
 
-/// Chat messages' text (CHAT-1): Nunito on every platform, as Gumdrop Pop
+/// Chat messages' text (CHAT-1): Comic Neue on every platform, as Gumdrop Pop
 /// sets it, a point bigger (17 px, the owner's request, 2026-10-27) on a
 /// 1.35 line, bold in others' bubbles and extra bold in mine.
 abstract final class ChatText {
@@ -99,7 +99,7 @@ abstract final class Motion {
       reduced(context) ? Duration.zero : d;
 }
 
-/// Type scale (Gumdrop Pop design §2): the headings are Lilita One, which
+/// Type scale (Gumdrop Pop design §2): the headings are the stencil, which
 /// the theme's headline and title styles carry.
 abstract final class TypeScale {
   /// The team's name on its tab screens.

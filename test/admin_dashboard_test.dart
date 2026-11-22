@@ -1,7 +1,7 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
-import 'package:battleplan/core/theme_override.dart';
+import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -118,9 +118,9 @@ void main() {
     );
   });
 
-  testWidgets('reads well: contrast and targets in all five schemes, and '
+  testWidgets('reads well: contrast and targets in all three schemes, and '
       '200% text, the number under its label', (tester) async {
-    for (final scheme in builtInSchemes) {
+    for (final scheme in bootCampSchemes) {
       await open(tester, scheme: scheme, reports: 2);
       final handle = tester.ensureSemantics();
       expect(

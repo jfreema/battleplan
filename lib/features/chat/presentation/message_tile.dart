@@ -559,7 +559,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
         m.type == MessageType.event && m.eventId != null && !deleted;
     final card = isPoll || isEvent;
 
-    // Inside the bubble, at the top (CHAT-1): the name (Fredoka) with the
+    // Inside the bubble, at the top (CHAT-1): the name (stencil) with the
     // players and time beside it in small muted type on a group's first
     // message (mine shows only the time), and "edited" or "Pinned" on any
     // message that is.
@@ -1290,7 +1290,7 @@ class _OpenPlayBadge extends StatelessWidget {
         shape: GumdropShape(
           lip: 3,
           lipColor: c.sticker.lip,
-          side: style.accentSide(c.sticker.lip),
+          side: style.accentSide(c.ink),
         ),
       ),
       child: Padding(

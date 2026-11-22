@@ -7,6 +7,7 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
+import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
@@ -902,7 +903,7 @@ class _FullScreenQr extends StatelessWidget {
     final size = MediaQuery.sizeOf(context).shortestSide * 0.8;
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
+      appBar: CampAppBar(
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         title: Text(teamName),

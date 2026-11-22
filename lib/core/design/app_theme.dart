@@ -112,7 +112,7 @@ abstract final class AppTheme {
       tertiary: tertiary,
       onTertiary: on(tertiary),
       tertiaryContainer: g.grape.face,
-      onTertiaryContainer: g.ink,
+      onTertiaryContainer: g.inkOn(g.grape),
       error: error,
       onError: on(error),
       errorContainer: g.cherry.face,
@@ -180,7 +180,7 @@ abstract final class AppTheme {
         centerTitle: false,
         // Pushed screens' plain app bars: the 28 px chevron in a 48 px tap
         // area by the edge, as on the pushed-screen bar, and the title in
-        // Lilita 25 with the scheme's drop just after it.
+        // stencil 25 outlined just after it.
         leadingWidth: 52,
         titleSpacing: 8,
         titleTextStyle: textTheme.titleLarge?.copyWith(fontSize: 25),
@@ -201,12 +201,13 @@ abstract final class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: inputFill,
-        border: outline(inputBorder, 1.5),
-        enabledBorder: outline(inputBorder, 1.5),
-        disabledBorder: outline(inputBorder.withValues(alpha: 0.5), 1.5),
-        focusedBorder: outline(text, 2),
-        errorBorder: outline(g.cherry.text, 1.5),
-        focusedErrorBorder: outline(g.cherry.text, 2),
+        // Boot Camp Mix (#85): fields outlined in ink, like panels.
+        border: outline(inputBorder, 2.5),
+        enabledBorder: outline(inputBorder, 2.5),
+        disabledBorder: outline(inputBorder.withValues(alpha: 0.5), 2.5),
+        focusedBorder: outline(text, 3),
+        errorBorder: outline(g.cherry.text, 2.5),
+        focusedErrorBorder: outline(g.cherry.text, 3),
         hintStyle: textTheme.bodyLarge?.copyWith(color: muted),
         labelStyle: textTheme.bodyLarge?.copyWith(color: muted),
         floatingLabelStyle: textTheme.bodyMedium?.copyWith(color: muted),
@@ -221,20 +222,20 @@ abstract final class AppTheme {
       ),
       chipTheme: _chipTheme(g, style, label),
       filledButtonTheme: FilledButtonThemeData(
-        // The coral gumdrop: Fredoka 700 16 in ink.
+        // The coral gumdrop: stencil 700 16 in ink.
         style: buttons.accent(
           g.you,
           textStyle: label.copyWith(fontSize: 16, fontWeight: FontWeight.w700),
         ),
       ),
-      // The outlined pill: Fredoka 600 16.
+      // The outlined pill: stencil 600 16.
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: buttons.secondary(textStyle: label.copyWith(fontSize: 16)),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: buttons.secondary(textStyle: label.copyWith(fontSize: 16)),
       ),
-      // Text buttons are plain text: Fredoka 600 15 in the text color.
+      // Text buttons are plain text: stencil 600 15 in the text color.
       textButtonTheme: TextButtonThemeData(
         style: ButtonStyle(
           foregroundColor: WidgetStateProperty.resolveWith(
@@ -290,10 +291,7 @@ abstract final class AppTheme {
         highlightElevation: 0,
         disabledElevation: 0,
         iconSize: 28,
-        shape: GumdropShape(
-          lipColor: g.you.lip,
-          side: style.accentSide(g.you.lip),
-        ),
+        shape: GumdropShape(lipColor: g.you.lip, side: style.accentSide(g.ink)),
         sizeConstraints: const BoxConstraints.tightFor(width: 56, height: 60),
         smallSizeConstraints: const BoxConstraints.tightFor(
           width: 44,
@@ -307,21 +305,26 @@ abstract final class AppTheme {
         extendedSizeConstraints: const BoxConstraints.tightFor(height: 56),
         extendedTextStyle: label.copyWith(fontSize: TypeScale.secondary),
       ),
+      // Boot Camp Mix (#85): the picked choice on a mustard tile in ink.
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: ButtonStyle(
           backgroundColor: WidgetStateProperty.resolveWith(
-            (s) => s.contains(WidgetState.selected) ? g.you.face : g.well,
+            (s) => s.contains(WidgetState.selected) ? g.accentMark : g.well,
           ),
           // Unpicked: the muted text of where the well is, the page's or
-          // the card's (Candy Pop's differ, #72).
+          // the card's.
           foregroundColor: WidgetStateProperty.resolveWith(
-            (s) => s.contains(WidgetState.selected) ? youInk : muted,
+            (s) => s.contains(WidgetState.selected) ? g.ink : muted,
           ),
           iconColor: WidgetStateProperty.resolveWith(
-            (s) => s.contains(WidgetState.selected) ? youInk : muted,
+            (s) => s.contains(WidgetState.selected) ? g.ink : muted,
           ),
           textStyle: WidgetStatePropertyAll(label.copyWith(fontSize: 16)),
-          shape: const WidgetStatePropertyAll(StadiumBorder()),
+          shape: const WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(6)),
+            ),
+          ),
           // The well around the segments and between them: the track the
           // selected pill sits in (design §3.7).
           side: WidgetStateProperty.resolveWith(
@@ -363,10 +366,15 @@ abstract final class AppTheme {
           ),
         ),
       ),
+      // Boot Camp Mix (#85): the current section on a mustard tile.
       navigationRailTheme: NavigationRailThemeData(
         backgroundColor: g.tabBar,
-        indicatorColor: Colors.transparent,
-        selectedIconTheme: IconThemeData(color: g.you.face, size: 24),
+        indicatorColor: g.accentMark,
+        indicatorShape: RoundedRectangleBorder(
+          borderRadius: const BorderRadius.all(Radius.circular(10)),
+          side: BorderSide(color: g.ink, width: 2.5),
+        ),
+        selectedIconTheme: IconThemeData(color: g.ink, size: 24),
         unselectedIconTheme: IconThemeData(color: muted, size: 24),
         selectedLabelTextStyle: label.copyWith(fontSize: 13, color: text),
         unselectedLabelTextStyle: label.copyWith(fontSize: 13, color: muted),
@@ -445,9 +453,10 @@ abstract final class AppTheme {
         selectionHandleColor: g.accentMark,
       ),
       // Unread counts are coral, "you" (SPEC §7.2), not the warning red.
+      // Unread is red in Boot Camp Mix (#85), as unreadBadge draws it.
       badgeTheme: BadgeThemeData(
-        backgroundColor: g.you.face,
-        textColor: youInk,
+        backgroundColor: g.cherry.face,
+        textColor: g.inkOn(g.cherry),
         // Nothing under 12 px (SPEC §7.3).
         textStyle: label.copyWith(fontSize: 12),
       ),
@@ -460,10 +469,8 @@ abstract final class AppTheme {
         showDragHandle: true,
         dragHandleColor: g.textMuted,
         dragHandleSize: const Size(36, 4),
-        shape: RoundedRectangleBorder(
-          side: cardSide,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
-        ),
+        // Square, like every Boot Camp Mix panel (#85).
+        shape: Border(top: cardSide),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: high,
@@ -480,10 +487,7 @@ abstract final class AppTheme {
         color: container,
         surfaceTintColor: Colors.transparent,
         textStyle: textTheme.bodyLarge?.copyWith(fontSize: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: cardSide,
-        ),
+        shape: RoundedRectangleBorder(side: cardSide),
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
@@ -495,13 +499,13 @@ abstract final class AppTheme {
         actionTextColor: onInverseSurface,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(Corners.tile),
+          side: BorderSide(color: g.ink, width: 2.5),
         ),
       ),
       tooltipTheme: TooltipThemeData(
         decoration: BoxDecoration(
           color: inverseSurface,
-          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: g.ink, width: 2),
         ),
         textStyle: textTheme.bodySmall?.copyWith(color: onInverseSurface),
       ),
@@ -509,24 +513,25 @@ abstract final class AppTheme {
     );
   }
 
-  /// Nunito for text, Fredoka for labels, buttons, and names, and Lilita One
-  /// headings with the scheme's hard drop.
+  /// Boot Camp Mix (#85): Comic Neue for reading text, and the stencil,
+  /// always in capitals and a little spaced, for headings, labels, buttons,
+  /// and names.
   static TextTheme _textTheme(GumdropColors g, GumdropStyle style, Color text) {
     TextStyle heading(double size, double height) => TextStyle(
       fontFamily: style.displayFont,
-      fontWeight: FontWeight.w400,
+      fontWeight: FontWeight.w900,
       fontSize: size,
       height: height,
-      letterSpacing: 0,
+      letterSpacing: size * 0.04,
       color: g.headingText,
       shadows: style.headingShadow(g.headingShadow, big: size > 32),
     );
     TextStyle fredoka(double size, {double height = 1.2}) => TextStyle(
       fontFamily: style.labelFont,
-      fontWeight: FontWeight.w600,
+      fontWeight: FontWeight.w900,
       fontSize: size,
       height: height,
-      letterSpacing: 0,
+      letterSpacing: GumdropStyle.stencilSpacing(size),
       color: text,
     );
     TextStyle nunito(double size, {double height = 1.35}) => TextStyle(

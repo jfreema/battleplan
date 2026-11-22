@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
 import 'package:battleplan/features/groups/presentation/join_screen.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -135,7 +136,7 @@ class _ScanScreenState extends State<_ScanScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.scanQrCode)),
+      appBar: CampAppBar(title: Text(l10n.scanQrCode)),
       body: MobileScanner(
         onDetect: (capture) {
           final value = capture.barcodes

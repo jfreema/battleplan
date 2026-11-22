@@ -12,6 +12,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/back_chevron.dart';
+import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
@@ -64,7 +65,7 @@ class EventDetailsScreen extends ConsumerWidget {
     final zone = ref.watch(viewerTimeZoneProvider).value;
     if (event == null || group == null || zone == null) {
       return Scaffold(
-        appBar: AppBar(),
+        appBar: const CampAppBar(),
         body: async.isLoading || group == null || zone == null
             ? const SkeletonList()
             // An event that couldn't be read (#40), not one that's gone.
@@ -132,7 +133,7 @@ class EventDetailsScreen extends ConsumerWidget {
           onPressed: onTap,
         );
     return Scaffold(
-      appBar: AppBar(
+      appBar: CampAppBar(
         // The back row only: the opener's name, or the chevron alone from
         // a notification or a link.
         toolbarHeight: 48,
@@ -432,7 +433,7 @@ class _Details extends ConsumerWidget {
 
 /// The top of the event (SPEC §7.3): the stencil eyebrow (the type, and
 /// Home or Away) with how soon on the right, the opponent's crest and name
-/// in Lilita 36 for a game (else the title in Lilita 32), and when. A long
+/// in stencil 36 for a game (else the title in stencil 32), and when. A long
 /// word steps the size down, so no word ever breaks in two (#74).
 class _Hero extends StatelessWidget {
   const new({required this.event, required this.zone});
@@ -1304,7 +1305,7 @@ Future<void> _restoreRsvp(
 }
 
 /// Going, Maybe, Not going, and No reply, each with its people and
-/// One count on the event screen (SPEC §7.3): the number in Lilita 40 in
+/// One count on the event screen (SPEC §7.3): the number in stencil 40 in
 /// its answer's color, and its label in small capitals under it.
 class _Count extends StatelessWidget {
   const new({required this.count, required this.label, required this.color});

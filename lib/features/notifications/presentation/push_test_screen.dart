@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/features/notifications/application/providers.dart';
 import 'package:battleplan/features/notifications/domain/push_repository.dart';
 import 'package:flutter/services.dart';
@@ -53,7 +54,7 @@ class _PushTestScreenState extends ConsumerState<PushTestScreen> {
   Widget build(BuildContext context) {
     final token = _token;
     return Scaffold(
-      appBar: AppBar(title: const Text('Push test (dev only)')),
+      appBar: const CampAppBar(title: Text('Push test (dev only)')),
       body: ListView(
         padding: const EdgeInsets.all(Space.lg),
         children: [

@@ -29,14 +29,18 @@ Future<void> _scroll(WidgetTester tester, double by) async {
 
 void main() {
   testWidgets("the big title scrolls away with the page, and the page's name "
-      'fades into the back row, with a hairline under it', (tester) async {
+      'fades into the back row, over the camouflage and its ink line', (
+    tester,
+  ) async {
     await pumpTeam(tester, scheme: TeamScheme.army, size: const Size(800, 900));
     await goTo(tester, '/profile');
     await pushTo(tester, '/settings');
     expect(find.widgetWithText(PageTitle, 'Settings'), findsOneWidget);
     expect(_small('Settings'), findsNothing);
     AppBar bar() => tester.widget<AppBar>(find.byType(AppBar).last);
-    expect(bar().shape, isNull);
+    // Boot Camp Mix's header (#85): camouflage, with a 3 px ink line under
+    // it from the start.
+    expect((bar().shape! as Border).bottom.width, 3);
 
     await _scroll(tester, 400);
     // Out of sight, and the back row says where you are instead.

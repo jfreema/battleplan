@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_controller.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_error_text.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -78,7 +79,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
     listenForDisabledAccount(context, ref);
 
     return Scaffold(
-      appBar: AppBar(),
+      appBar: const CampAppBar(),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(

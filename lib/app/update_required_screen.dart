@@ -1,4 +1,5 @@
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:material_ui/material_ui.dart';
@@ -12,7 +13,7 @@ class UpdateRequiredScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.updateRequiredTitle)),
+      appBar: CampAppBar(title: Text(l10n.updateRequiredTitle)),
       body: EmptyState(icon: AppIcons.update, message: l10n.updateRequiredBody),
     );
   }

@@ -1,26 +1,36 @@
+import 'package:battleplan/core/design/color_math.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/features/groups/domain/chat_colors.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// [candy] in the theme [c]: its face and lip in that theme's shade.
-GumdropAccent chatCandyAccent(GumdropColors c, ChatCandy candy) =>
-    switch (candy) {
-      ChatCandy.blueRaspberry => c.blueRaspberry,
-      ChatCandy.bubblegum => c.bubblegum,
-      ChatCandy.grape => c.grape,
-      ChatCandy.mint => c.mint,
-      ChatCandy.lemon => c.lemon,
-      ChatCandy.tangerine => c.tangerine,
-      // The theme's "you" color, coral as it looked when it was picked:
-      // the warning red went deeper in #12 (2026-11-16) and isn't a chat
-      // color. It's what a team that hasn't picked a color sees, so a
-      // theme's own "you" color (#82) changes it too.
-      ChatCandy.cherry => c.you,
-    };
+/// [candy] in the theme [c]: its own face, the same in every scheme as
+/// people's colors are (#85), on the theme's lip, with the theme's ink on
+/// it (every candy face reads it) and its text made to read where it sits.
+GumdropAccent chatCandyAccent(GumdropColors c, ChatCandy candy) {
+  GumdropAccent own(Color face, GumdropAccent theme) => GumdropAccent(
+    face: face,
+    lip: theme.lip,
+    text: ColorMath.readable(face, [if (c.onCard) c.surface else c.page]),
+  );
+  return switch (candy) {
+    ChatCandy.blueRaspberry => own(CandyFaces.blueRaspberry, c.blueRaspberry),
+    ChatCandy.bubblegum => own(CandyFaces.bubblegum, c.bubblegum),
+    ChatCandy.grape => own(CandyFaces.grape, c.grape),
+    ChatCandy.mint => own(CandyFaces.mint, c.mint),
+    ChatCandy.lemon => own(CandyFaces.lemon, c.lemon),
+    ChatCandy.tangerine => own(CandyFaces.tangerine, c.tangerine),
+    // The theme's "you" color, your own balloon's (mustard, or light blue
+    // in Black, #85): what a team that hasn't picked a color sees, and the
+    // stored "Cherry" pick from when it was coral.
+    ChatCandy.cherry => c.you,
+  };
+}
 
-/// A candy's name. Cherry is the theme's "you" color, so with [c], under a
-/// theme whose "you" isn't coral (#82), it's "Theme color" (#83).
+/// A candy's name. Cherry is the theme's "you" color, so with [c], where
+/// "you" isn't coral (every Boot Camp Mix scheme, #85), it's "Theme
+/// color" (#83).
 String chatCandyName(
   AppLocalizations l10n,
   ChatCandy candy, {

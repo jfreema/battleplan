@@ -7,6 +7,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/logging.dart';
+import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
@@ -275,7 +276,7 @@ class _WhoAreYouScreenState extends ConsumerState<WhoAreYouScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: CampAppBar(
         title: Text(l10n.whoAreYouHereFor),
         // Its first step, opened with nothing under it (a link), still
         // has the way up to the team's chat (#14).

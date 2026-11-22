@@ -9,6 +9,7 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/links.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/app_store_badge.dart';
+import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/core/widgets/team_badge.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
@@ -530,7 +531,7 @@ class _JoinScreenState extends ConsumerState<JoinScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(),
+      appBar: const CampAppBar(),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(Space.xl),

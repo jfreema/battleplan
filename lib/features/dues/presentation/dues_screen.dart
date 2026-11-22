@@ -306,7 +306,7 @@ String _summary(AppLocalizations l10n, DueTotals totals) => totals.count == 0
           l10n.duesLeft(formatDues(l10n, totals.owedCents)),
       ].join(' · ');
 
-/// The title in Nunito 800 18 with the amount on the right, or under it
+/// The title in Comic Neue 800 18 with the amount on the right, or under it
 /// when the two don't fit side by side without breaking a word (large
 /// text, SPEC §7.6).
 class _TitleLine extends StatelessWidget {

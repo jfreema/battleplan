@@ -422,8 +422,8 @@ void main() {
       ),
       findsNothing,
     );
-    // The bar's top rule is drawn under the tabs, so the current tab's
-    // coral bar covers it rather than a dark line crossing it.
+    // The bar's 3 px ink top rule is the bar's own border, drawn under the
+    // tabs (#85).
     final bar = tester.widget<Material>(
       find
           .descendant(
@@ -437,7 +437,7 @@ void main() {
   });
 
   // The test font draws every letter 1 em square, so its names are far
-  // wider than Lilita's; the steps are the same.
+  // wider than the stencil's; the steps are the same.
   testWidgets('a long team name takes two lines in the same one-row header, '
       'without the eyebrow (#13)', (tester) async {
     Future<double> rowHeight(String name) async {
@@ -459,9 +459,9 @@ void main() {
 
     final long = await rowHeight('Blue Jays');
     final name = tester.widget<Text>(find.text('Blue Jays'));
-    // Two lines at 19, the first size that holds it on two.
+    // Two lines at 22, the first size that holds it on two (#85).
     expect(name.maxLines, 2);
-    expect(name.style!.fontSize, 19);
+    expect(name.style!.fontSize, 22);
     // It steps aside, and is still read (TeamSwitcherButton's label).
     expect(find.text('TEAM CHAT'), findsNothing);
     expect(headerEyebrow(tester), 'TEAM CHAT');
@@ -573,29 +573,33 @@ void main() {
         200,
         scrollable: find.byType(Scrollable).first,
       );
-      // A new account starts on the default, Dark (owner's request
-      // 2026-11-10).
-      expect(find.text('Dark · when a team has none'), findsOneWidget);
+      // A new account starts on the default, Black (Dark until #85;
+      // owner's request 2026-11-10).
+      expect(find.text('Black · when a team has none'), findsOneWidget);
       await tester.tap(find.text('Default color scheme'));
       await tester.pumpAndSettle();
       expect(page(tester), SchemeRoles.dark.page);
+      // Only the three Boot Camp Mix schemes (#85).
+      for (final gone in ['Navy', 'Sky Blue Pop', 'Scoreboard']) {
+        expect(find.text(gone), findsNothing);
+      }
       // The checked row writes nothing.
-      await tester.tap(find.text('Dark'));
+      await tester.tap(find.text('Black'));
       await tester.pumpAndSettle();
       expect(users.colorScheme, isNull);
-      await tester.tap(find.text('Navy'));
+      await tester.tap(find.text('Army green'));
       await tester.pumpAndSettle();
-      expect(users.colorScheme, TeamScheme.navy);
-      expect(page(tester), SchemeRoles.navy.page);
+      expect(users.colorScheme, TeamScheme.army);
+      expect(page(tester), SchemeRoles.army.page);
       expect(
-        tester.getSemantics(find.bySemanticsLabel(RegExp('^Navy, '))),
+        tester.getSemantics(find.bySemanticsLabel(RegExp('^Army green, '))),
         isSemantics(isSelected: true, isButton: true, hasTapAction: true),
       );
       // Teams follows the new default.
       await tester.tap(find.byTooltip('Back'));
       await tester.pumpAndSettle();
-      expect(page(tester), SchemeRoles.navy.page);
-      expect(find.text('Navy · when a team has none'), findsOneWidget);
+      expect(page(tester), SchemeRoles.army.page);
+      expect(find.text('Army green · when a team has none'), findsOneWidget);
     });
 
     testWidgets('Team settings → Color scheme saves my pick for the team', (
@@ -618,18 +622,18 @@ void main() {
       // No team default: the first row is my own default, checked.
       expect(
         tester.getSemantics(
-          find.bySemanticsLabel(RegExp(r'^Your default \(Dark\), ')),
+          find.bySemanticsLabel(RegExp(r'^Your default \(Black\), ')),
         ),
         isSemantics(isSelected: true, isButton: true, hasTapAction: true),
       );
-      await tester.tap(find.text('Your default (Dark)'));
+      await tester.tap(find.text('Your default (Black)'));
       await tester.pumpAndSettle();
       expect(members.calls.where((c) => c.startsWith('scheme')), isEmpty);
-      await tester.tap(find.text('Sky Blue Pop'));
+      await tester.tap(find.text('Light'));
       await tester.pumpAndSettle();
-      expect(members.calls, contains('scheme a skyblue'));
+      expect(members.calls, contains('scheme a light'));
       // The team's screens re-theme at once.
-      expect(page(tester), SchemeRoles.skyblue.page);
+      expect(page(tester), SchemeRoles.light.page);
     });
 
     testWidgets(
@@ -640,7 +644,7 @@ void main() {
           testMembership('a', 'coach').copyWith(colorScheme: TeamScheme.dark),
         ]);
         final teams = FakeGroupRepository({
-          'a': testGroup('a', 'Thunder').copyWith(colorScheme: TeamScheme.navy),
+          'a': testGroup('a', 'Thunder').copyWith(colorScheme: TeamScheme.army),
         });
         await pumpApp(
           tester,
@@ -654,23 +658,24 @@ void main() {
         await tester.pumpAndSettle();
         // My explicit pick wins over the team's default.
         expect(page(tester), SchemeRoles.dark.page);
-        expect(find.text('Dark'), findsOneWidget);
+        expect(find.text('Black'), findsOneWidget);
         await tester.tap(find.text('Color scheme'));
         await tester.pumpAndSettle();
-        expect(find.text('Team default (Navy)'), findsOneWidget);
+        expect(find.text('Team default (Army green)'), findsOneWidget);
         expect(
-          tester.getSemantics(find.bySemanticsLabel(RegExp('^Dark, '))),
+          tester.getSemantics(find.bySemanticsLabel(RegExp('^Black, '))),
           isSemantics(isSelected: true, isButton: true, hasTapAction: true),
         );
-        // Team default deletes my pick, and the team's Navy reaches me.
-        await tester.tap(find.text('Team default (Navy)'));
+        // Team default deletes my pick, and the team's Army green reaches
+        // me.
+        await tester.tap(find.text('Team default (Army green)'));
         await tester.pumpAndSettle();
         expect(members.calls, contains('scheme a cleared'));
         expect(members.memberships.single.colorScheme, isNull);
-        expect(page(tester), SchemeRoles.navy.page);
+        expect(page(tester), SchemeRoles.army.page);
         expect(
           tester.getSemantics(
-            find.bySemanticsLabel(RegExp(r'^Team default \(Navy\), ')),
+            find.bySemanticsLabel(RegExp(r'^Team default \(Army green\), ')),
           ),
           isSemantics(isSelected: true, isButton: true, hasTapAction: true),
         );
@@ -681,22 +686,22 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('Team default (Light)'), findsOneWidget);
         expect(page(tester), SchemeRoles.light.page);
-        // Picking Navy, even the old default, is a pick of my own: a later
-        // change to the team's default leaves it.
-        await tester.tap(find.text('Navy'));
+        // Picking Army green, even the old default, is a pick of my own: a
+        // later change to the team's default leaves it.
+        await tester.tap(find.text('Army green'));
         await tester.pumpAndSettle();
-        expect(members.calls, contains('scheme a navy'));
+        expect(members.calls, contains('scheme a army'));
         teams.setGroup(
-          teams.groups['a']!.copyWith(colorScheme: TeamScheme.skyblue),
+          teams.groups['a']!.copyWith(colorScheme: TeamScheme.dark),
         );
         await tester.pumpAndSettle();
-        expect(page(tester), SchemeRoles.navy.page);
+        expect(page(tester), SchemeRoles.army.page);
         // Opening the screen or going back never writes one.
         final writes = members.calls.where((c) => c.startsWith('scheme'));
         expect(writes.length, 2);
         await tester.tap(find.byTooltip('Back'));
         await tester.pumpAndSettle();
-        expect(find.text('Navy'), findsOneWidget);
+        expect(find.text('Army green'), findsOneWidget);
         expect(members.calls.where((c) => c.startsWith('scheme')).length, 2);
       },
     );
@@ -717,8 +722,33 @@ void main() {
       GoRouter.of(tester.element(find.byType(Scaffold).first))
           .go('/g/a/scheme');
       await tester.pumpAndSettle();
-      expect(find.text('Group default (Sky Blue Pop)'), findsOneWidget);
-      expect(page(tester), SchemeRoles.skyblue.page);
+      // A stored Sky Blue Pop is drawn, and named, as Light (#85).
+      expect(find.text('Group default (Light)'), findsOneWidget);
+      expect(page(tester), SchemeRoles.light.page);
+    });
+
+    testWidgets('a pick of a scheme that left is drawn and checked as the '
+        'closest of the three, and never rewritten (#85)', (tester) async {
+      final members = FakeMemberRepository([
+        testMembership('a', 'coach').copyWith(colorScheme: TeamScheme.navy),
+      ]);
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {'a': testGroup('a', 'Thunder')},
+        memberRepo: members,
+      );
+      await tester.pumpAndSettle();
+      GoRouter.of(tester.element(find.byType(Scaffold).first))
+          .go('/g/a/scheme');
+      await tester.pumpAndSettle();
+      expect(page(tester), SchemeRoles.dark.page);
+      expect(
+        tester.getSemantics(find.bySemanticsLabel(RegExp('^Black, '))),
+        isSemantics(isSelected: true, isButton: true, hasTapAction: true),
+      );
+      expect(members.calls.where((c) => c.startsWith('scheme')), isEmpty);
+      expect(members.memberships.single.colorScheme, TeamScheme.navy);
     });
 
     testWidgets("Admin settings sets the team's default for everyone", (
@@ -737,7 +767,7 @@ void main() {
           .go('/g/a/settings');
       await tester.pumpAndSettle();
       // Under Look, saying none is set (System default, #73); its page
-      // has the six (#32).
+      // has the three (#32, #85).
       expect(find.text('System default'), findsOneWidget);
       await tester.tap(find.text('Team color scheme'));
       await tester.pumpAndSettle();
@@ -751,21 +781,21 @@ void main() {
         isSemantics(isSelected: true, isButton: true, hasTapAction: true),
       );
       expect(
-        tester.getSemantics(find.bySemanticsLabel(RegExp('^Navy, '))),
+        tester.getSemantics(find.bySemanticsLabel(RegExp('^Army green, '))),
         isSemantics(isSelected: false, isButton: true, hasTapAction: true),
       );
-      await tester.tap(find.text('Navy'));
+      await tester.tap(find.text('Army green'));
       await tester.pumpAndSettle();
-      expect(teams.updates, contains('colorScheme navy'));
-      expect(teams.groups['a']!.colorScheme, TeamScheme.navy);
+      expect(teams.updates, contains('colorScheme army'));
+      expect(teams.groups['a']!.colorScheme, TeamScheme.army);
       expect(
-        tester.getSemantics(find.bySemanticsLabel(RegExp('^Navy, '))),
+        tester.getSemantics(find.bySemanticsLabel(RegExp('^Army green, '))),
         isSemantics(isSelected: true, isButton: true, hasTapAction: true),
       );
       // The owner has no pick of their own, so the team re-themes for them.
-      expect(page(tester), SchemeRoles.navy.page);
+      expect(page(tester), SchemeRoles.army.page);
       // The checked one writes nothing.
-      await tester.tap(find.text('Navy'));
+      await tester.tap(find.text('Army green'));
       await tester.pumpAndSettle();
       expect(teams.updates.where((u) => u.startsWith('colorScheme')).length, 1);
     });
@@ -868,8 +898,8 @@ void main() {
             )
             .first,
       );
-      // The ring is the team's page color, around the coral count.
-      expect(badge.backgroundColor, SchemeRoles.light.page);
+      // The ring is the team's ink, around the red count (#85).
+      expect(badge.backgroundColor, SchemeRoles.light.palette.ink);
       expect(
         schemeOf(tester, find.text('Turn on notifications?')),
         TeamScheme.light,
@@ -1483,34 +1513,40 @@ void main() {
       expect(Motion.fast.inMilliseconds, 150);
     });
 
-    testWidgets("Gumdrop Pop's fonts are bundled, with their licenses", (
+    testWidgets("Boot Camp Mix's fonts are bundled, with their licenses", (
       tester,
     ) async {
       final manifest = await rootBundle.loadString('FontManifest.json');
       for (final file in [
-        'assets/fonts/lilita_one/LilitaOne-Regular.ttf',
-        'assets/fonts/fredoka/Fredoka-SemiBold.ttf',
-        'assets/fonts/nunito/Nunito-Bold.ttf',
-        'assets/fonts/nunito/Nunito-ExtraBold.ttf',
+        'assets/fonts/battleplan_stencil/BattleplanStencil-Black.ttf',
+        'assets/fonts/comic_neue/ComicNeue-Bold.ttf',
       ]) {
         expect(manifest, contains(file));
       }
-      // Inter is gone.
-      expect(manifest, isNot(contains('Inter')));
+      // Open Field's are gone (#85).
+      for (final gone in ['Lilita', 'Fredoka', 'Nunito', 'BlackOps', 'Inter']) {
+        expect(manifest, isNot(contains(gone)));
+      }
+      expect(AppFonts.display, 'Battleplan Stencil');
+      expect(AppFonts.label, AppFonts.display);
+      expect(AppFonts.body, 'Comic Neue');
       registerFontLicenses();
       final entries = await LicenseRegistry.licenses.toList();
-      for (final family in [AppFonts.display, AppFonts.label, AppFonts.body]) {
+      for (final family in fontLicenseAssets.keys) {
+        final entry = entries.where((e) => e.packages.contains(family));
+        expect(entry, hasLength(1), reason: family);
         expect(
-          entries.where((e) => e.packages.contains(family)),
-          hasLength(1),
+          entry.single.paragraphs.map((p) => p.text).join(' '),
+          contains('SIL Open Font License'),
           reason: family,
         );
       }
     });
 
-    test('every eyebrow is in the letters Black Ops One is cut to', () {
-      // tools/cut_fonts.sh keeps A–Z, the space and "·"; any other letter
-      // would draw in another font.
+    test('every eyebrow is in capitals, spaces and "·", which the stencil '
+        'draws', () {
+      // tools/make_fonts.sh draws small letters as capitals; anything
+      // outside Latin letters would draw in another font.
       final l10n = lookupAppLocalizations(const Locale('en'));
       final labels = [
         // The header's, on teams and groups (SPEC §5.4.2).

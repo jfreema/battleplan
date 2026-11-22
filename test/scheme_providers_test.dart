@@ -107,7 +107,7 @@ void main() {
       expect(
         resolveTeamScheme(
           pick: TeamScheme.dark,
-          teamDefault: TeamScheme.navy,
+          teamDefault: TeamScheme.army,
           mine: TeamScheme.light,
         ),
         TeamScheme.dark,
@@ -115,10 +115,10 @@ void main() {
       expect(
         resolveTeamScheme(
           pick: null,
-          teamDefault: TeamScheme.navy,
+          teamDefault: TeamScheme.army,
           mine: TeamScheme.light,
         ),
-        TeamScheme.navy,
+        TeamScheme.army,
       );
       expect(
         resolveTeamScheme(pick: null, teamDefault: null, mine: TeamScheme.army),
@@ -128,13 +128,13 @@ void main() {
   });
 
   group('teamScheme', () {
-    FakeGroupRepository navyThunder() => FakeGroupRepository({
-      'a': testGroup('a', 'Thunder').copyWith(colorScheme: TeamScheme.navy),
+    FakeGroupRepository armyThunder() => FakeGroupRepository({
+      'a': testGroup('a', 'Thunder').copyWith(colorScheme: TeamScheme.army),
       'b': testGroup('b', 'Comets'),
     });
 
     test("is the team's default when I haven't picked, live", () async {
-      final groups = navyThunder();
+      final groups = armyThunder();
       final c = await container(
         users: FakeUserRepository()..colorScheme = TeamScheme.light,
         groups: groups,
@@ -145,19 +145,19 @@ void main() {
       );
       c.listen(teamSchemeProvider(_a), (_, _) {});
       await _settle();
-      expect(c.read(teamSchemeProvider(_a)), TeamScheme.navy);
+      expect(c.read(teamSchemeProvider(_a)), TeamScheme.army);
       // No team default: my own.
       expect(c.read(teamSchemeProvider(_b)), TeamScheme.light);
       // An admin changes it: it reaches me.
       groups.setGroup(
-        groups.groups['a']!.copyWith(colorScheme: TeamScheme.skyblue),
+        groups.groups['a']!.copyWith(colorScheme: TeamScheme.dark),
       );
       await _settle();
-      expect(c.read(teamSchemeProvider(_a)), TeamScheme.skyblue);
+      expect(c.read(teamSchemeProvider(_a)), TeamScheme.dark);
     });
 
     test("my explicit pick wins over the team's default", () async {
-      final groups = navyThunder();
+      final groups = armyThunder();
       final c = await container(
         groups: groups,
         memberships: [
@@ -176,7 +176,7 @@ void main() {
     test("a super admin viewing a team isn't given its default", () async {
       final c = await container(
         user: _boss,
-        groups: navyThunder(),
+        groups: armyThunder(),
         users: FakeUserRepository()..colorScheme = TeamScheme.light,
         memberships: [testMembership('b', 'boss')],
       );
@@ -187,7 +187,7 @@ void main() {
       final prefs = FakeLocalPrefs();
       final c = await container(
         prefs: prefs,
-        groups: navyThunder(),
+        groups: armyThunder(),
         memberships: [
           testMembership('a', 'coach'),
           testMembership('b', 'coach').copyWith(colorScheme: TeamScheme.dark),
@@ -195,7 +195,7 @@ void main() {
       );
       c.listen(teamSchemeCacheProvider, (_, _) {});
       await _settle();
-      expect(prefs.teamSchemes, {'a': TeamScheme.navy, 'b': TeamScheme.dark});
+      expect(prefs.teamSchemes, {'a': TeamScheme.army, 'b': TeamScheme.dark});
     });
 
     test(
@@ -203,11 +203,11 @@ void main() {
       () async {
         // Team c is in my memberships but its own read has nothing yet.
         final prefs = FakeLocalPrefs()
-          ..teamSchemes = {'c': TeamScheme.navy, 'gone': TeamScheme.dark}
+          ..teamSchemes = {'c': TeamScheme.army, 'gone': TeamScheme.dark}
           ..teamSchemesUid = 'coach';
         final c = await container(
           prefs: prefs,
-          groups: navyThunder(),
+          groups: armyThunder(),
           memberships: [
             testMembership('a', 'coach'),
             testMembership('c', 'coach'),
@@ -215,7 +215,7 @@ void main() {
         );
         c.listen(teamSchemeCacheProvider, (_, _) {});
         await _settle();
-        expect(prefs.teamSchemes, {'a': TeamScheme.navy, 'c': TeamScheme.navy});
+        expect(prefs.teamSchemes, {'a': TeamScheme.army, 'c': TeamScheme.army});
       },
     );
 
@@ -223,18 +223,18 @@ void main() {
       final c = await container(
         users: FakeUserRepository()..colorScheme = TeamScheme.light,
         memberships: [
-          testMembership('a', 'coach').copyWith(colorScheme: TeamScheme.navy),
+          testMembership('a', 'coach').copyWith(colorScheme: TeamScheme.army),
           testMembership('b', 'coach'),
         ],
       );
-      expect(c.read(teamSchemeProvider(_a)), TeamScheme.navy);
+      expect(c.read(teamSchemeProvider(_a)), TeamScheme.army);
       expect(c.read(teamSchemeProvider(_b)), TeamScheme.light);
     });
 
     test("with no membership yet, this device's copy, else my default", () {
       // Memberships still loading: the auth stream never says who's in.
       final prefs = FakeLocalPrefs()
-        ..teamSchemes = {'a': TeamScheme.skyblue}
+        ..teamSchemes = {'a': TeamScheme.army}
         ..teamSchemesUid = 'coach'
         ..defaultSchemeValue = TeamScheme.dark;
       final c = ProviderContainer(
@@ -247,18 +247,45 @@ void main() {
         ],
       );
       addTearDown(c.dispose);
-      expect(c.read(teamSchemeProvider(_a)), TeamScheme.skyblue);
+      expect(c.read(teamSchemeProvider(_a)), TeamScheme.army);
       expect(c.read(teamSchemeProvider(_b)), TeamScheme.dark);
     });
 
     test('a super admin viewing a team gets their default', () async {
       final c = await container(
         user: _boss,
-        users: FakeUserRepository()..colorScheme = TeamScheme.navy,
+        users: FakeUserRepository()..colorScheme = TeamScheme.army,
         memberships: [testMembership('b', 'boss')],
       );
       expect(c.read(viewingAsSuperAdminProvider(_a)), isTrue);
-      expect(c.read(teamSchemeProvider(_a)), TeamScheme.navy);
+      expect(c.read(teamSchemeProvider(_a)), TeamScheme.army);
+    });
+
+    test('a pick or team default the app no longer offers reads as the '
+        'closest of the three, and is never rewritten (#85)', () async {
+      final users = FakeUserRepository()..colorScheme = TeamScheme.dark;
+      final c = await container(
+        users: users,
+        groups: FakeGroupRepository({
+          'a': testGroup('a', 'Thunder'),
+          'b': testGroup(
+            'b',
+            'Comets',
+          ).copyWith(colorScheme: TeamScheme.candypop),
+        }),
+        memberships: [
+          testMembership('a', 'coach').copyWith(colorScheme: TeamScheme.navy),
+          testMembership('b', 'coach'),
+        ],
+      );
+      c
+        ..listen(teamSchemeProvider(_a), (_, _) {})
+        ..listen(teamSchemeProvider(_b), (_, _) {});
+      await _settle();
+      expect(c.read(teamSchemeProvider(_a)), TeamScheme.dark);
+      expect(c.read(teamSchemeProvider(_b)), TeamScheme.light);
+      // Nothing is written back.
+      expect(users.colorScheme, TeamScheme.dark);
     });
 
     test("keeps no read of a team I'm not on once nothing shows it", () async {
@@ -318,23 +345,23 @@ void main() {
       final c = await container(
         prefs: prefs,
         memberships: [
-          testMembership('a', 'coach').copyWith(colorScheme: TeamScheme.navy),
+          testMembership('a', 'coach').copyWith(colorScheme: TeamScheme.army),
           testMembership('b', 'coach'),
         ],
       );
       c.listen(teamSchemeCacheProvider, (_, _) {});
       await _settle();
       expect(prefs.teamSchemesUid, 'coach');
-      expect(prefs.teamSchemes, {'a': TeamScheme.navy});
+      expect(prefs.teamSchemes, {'a': TeamScheme.army});
     });
   });
 
   group('appScheme', () {
-    test('is the default, Dark, once auth has loaded with nobody signed in '
+    test('is the default, Black, once auth has loaded with nobody signed in '
         "(owner's request 2026-11-10)", () async {
       final c = await container(
         user: null,
-        prefs: FakeLocalPrefs()..defaultSchemeValue = TeamScheme.navy,
+        prefs: FakeLocalPrefs()..defaultSchemeValue = TeamScheme.army,
       );
       expect(c.read(appSchemeProvider), TeamScheme.dark);
     });
@@ -345,12 +372,12 @@ void main() {
           authRepositoryProvider.overrideWithValue(FakeAuthRepository()),
           userRepositoryProvider.overrideWithValue(FakeUserRepository()),
           localPrefsRepositoryProvider.overrideWithValue(
-            FakeLocalPrefs()..defaultSchemeValue = TeamScheme.skyblue,
+            FakeLocalPrefs()..defaultSchemeValue = TeamScheme.light,
           ),
         ],
       );
       addTearDown(c.dispose);
-      expect(c.read(appSchemeProvider), TeamScheme.skyblue);
+      expect(c.read(appSchemeProvider), TeamScheme.light);
     });
   });
 
@@ -369,10 +396,10 @@ void main() {
 
     test('counts a profile that loaded before it was first read', () async {
       final c = await container(
-        users: FakeUserRepository()..colorScheme = TeamScheme.navy,
+        users: FakeUserRepository()..colorScheme = TeamScheme.army,
       );
       // myProfile is already loaded (container listens to it).
-      expect(c.read(defaultSchemeControllerProvider), TeamScheme.navy);
+      expect(c.read(defaultSchemeControllerProvider), TeamScheme.army);
     });
 
     test('set applies at once, saves on the device and the account', () async {
@@ -380,17 +407,17 @@ void main() {
       final prefs = FakeLocalPrefs();
       final c = await container(users: users, prefs: prefs);
       c.listen(defaultSchemeControllerProvider, (_, _) {});
-      // An account that never picked one starts on the default, Dark.
+      // An account that never picked one starts on the default, Black.
       expect(c.read(defaultSchemeControllerProvider), TeamScheme.dark);
       final saving = c
           .read(defaultSchemeControllerProvider.notifier)
-          .set(TeamScheme.skyblue);
-      expect(c.read(defaultSchemeControllerProvider), TeamScheme.skyblue);
+          .set(TeamScheme.army);
+      expect(c.read(defaultSchemeControllerProvider), TeamScheme.army);
       await saving;
       await _settle();
-      expect(users.colorScheme, TeamScheme.skyblue);
-      expect(prefs.defaultSchemeValue, TeamScheme.skyblue);
-      expect(c.read(defaultSchemeControllerProvider), TeamScheme.skyblue);
+      expect(users.colorScheme, TeamScheme.army);
+      expect(prefs.defaultSchemeValue, TeamScheme.army);
+      expect(c.read(defaultSchemeControllerProvider), TeamScheme.army);
     });
   });
 }

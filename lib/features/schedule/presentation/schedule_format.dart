@@ -98,7 +98,8 @@ GumdropAccent statusAccent(BuildContext context, RsvpStatus s) {
   return switch (s) {
     RsvpStatus.going => g.mint,
     RsvpStatus.maybe => g.lemon,
-    RsvpStatus.notGoing => g.cherry,
+    // Can't go is its own salmon in Boot Camp Mix (#85), not the red.
+    RsvpStatus.notGoing => g.cantGo,
   };
 }
 

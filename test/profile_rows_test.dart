@@ -54,11 +54,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(path(tester), '/profile');
 
-    // The row says which scheme new teams get: the test app's is Dark.
+    // The row says which scheme new teams get: the test app's is Black.
     final row = find.widgetWithText(PageRow, 'Color scheme');
     expect(row, findsOneWidget);
     expect(
-      find.descendant(of: row, matching: find.text('Dark')),
+      find.descendant(of: row, matching: find.text('Black')),
       findsOneWidget,
     );
     await tester.tap(row);

@@ -11,6 +11,8 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/open_sheets.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/back_chevron.dart';
+import 'package:battleplan/core/widgets/camo.dart';
+import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/core/widgets/chat_icon.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/gumdrop_icon_button.dart';
@@ -157,7 +159,7 @@ class _TeamShellState extends ConsumerState<TeamShell> {
     final viewing = ref.watch(viewingAsSuperAdminProvider(groupId));
     if (!isMember && !viewing) {
       return Scaffold(
-        appBar: AppBar(),
+        appBar: const CampAppBar(),
         body: EmptyState(
           icon: AppIcons.group,
           message: l10n.notAMember,
@@ -180,7 +182,7 @@ class _TeamShellState extends ConsumerState<TeamShell> {
       // Sign out), and the person's other teams, to switch, join, or
       // create one.
       return Scaffold(
-        appBar: AppBar(
+        appBar: CampAppBar(
           automaticallyImplyLeading: false,
           leading: Center(
             child: BackChevron(onPressed: () => context.go('/teams')),
@@ -386,10 +388,12 @@ class _TeamShellState extends ConsumerState<TeamShell> {
                     ),
                 ],
               ),
-              // Below the status bar on an iPad, as the narrow layout is;
-              // the rail keeps the left edge, and screens their own bottom.
+              // The header on the camouflage, up under the status bar on
+              // an iPad (#85); the rail keeps the left edge, and screens
+              // their own bottom.
               Expanded(
                 child: SafeArea(
+                  top: false,
                   left: false,
                   bottom: false,
                   child: Column(
@@ -398,12 +402,14 @@ class _TeamShellState extends ConsumerState<TeamShell> {
                       // over the messages and its icons at the column's
                       // right, rather than the window's far edges (#29,
                       // 2026-11-20). Everything in it stays.
-                      Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(
-                            maxWidth: Breakpoints.contentMax,
+                      CampHeader(
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(
+                              maxWidth: Breakpoints.contentMax,
+                            ),
+                            child: header,
                           ),
-                          child: header,
                         ),
                       ),
                       banner,
@@ -430,10 +436,13 @@ class _TeamShellState extends ConsumerState<TeamShell> {
         bindings: shortcuts,
         child: Scaffold(
           body: SafeArea(
+            top: false,
             bottom: false,
             child: Column(
               children: [
-                header,
+                // The header on the camouflage, up under the status bar
+                // (#85).
+                CampHeader(child: header),
                 banner,
                 Expanded(child: body),
               ],

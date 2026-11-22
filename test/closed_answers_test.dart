@@ -1,9 +1,9 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/time_zones.dart';
-import 'package:battleplan/core/theme_override.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/players/domain/player.dart';
@@ -357,10 +357,10 @@ void main() {
       handle.dispose();
     });
 
-    testWidgets('reads well: contrast in all five schemes, and 200% text', (
+    testWidgets('reads well: contrast in all three schemes, and 200% text', (
       tester,
     ) async {
-      for (final scheme in builtInSchemes) {
+      for (final scheme in bootCampSchemes) {
         await openEvent(tester, scheme: scheme);
         final handle = tester.ensureSemantics();
         await expectLater(tester, meetsGuideline(textContrastGuideline));

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
@@ -86,7 +87,7 @@ class _PhotoViewerState extends ConsumerState<PhotoViewer> {
     final count = widget.photos.length;
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
+      appBar: CampAppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         title: count > 1 ? Text(l10n.photoCount(_index + 1, count)) : null,

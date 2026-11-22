@@ -7,6 +7,9 @@ import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/team_color_names.dart';
 import 'package:battleplan/core/widgets/back_chevron.dart';
+import 'package:battleplan/core/widgets/camo.dart';
+import 'package:battleplan/core/widgets/camp_app_bar.dart';
+import 'package:battleplan/core/widgets/camp_lettering.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter/foundation.dart' show SynchronousFuture;
@@ -26,7 +29,7 @@ export 'package:battleplan/core/team_color_names.dart' show teamColorName;
 ///
 /// A 48 px back row, pinned: the chevron and [backLabel] (the screen it
 /// goes back to), and [actions] on its right as 48 px icon buttons. Then
-/// the [title] in Lilita 32 with the scheme's drop, 20 px from the left,
+/// the [title] in stencil 32 outlined, 20 px from the left,
 /// which scrolls away with the page's own list, giving back its room
 /// (owner's request 2026-11-05: headers that take less room). Once it's
 /// out of sight the page's name fades into the back row's middle, small,
@@ -113,7 +116,7 @@ class _GumdropScaffoldState extends State<GumdropScaffold> {
     return Scaffold(
       appBar: _ColumnBar(
         maxWidth: widget.maxWidth,
-        bar: AppBar(
+        bar: CampAppBar(
           toolbarHeight: 48,
           automaticallyImplyLeading: false,
           // The back row isn't the heading; the title is, and names the
@@ -201,7 +204,7 @@ class _GumdropScaffoldState extends State<GumdropScaffold> {
 class _ColumnBar extends StatelessWidget implements PreferredSizeWidget {
   const new({required this.bar, this.maxWidth});
 
-  final AppBar bar;
+  final PreferredSizeWidget bar;
   final double? maxWidth;
 
   @override
@@ -273,7 +276,7 @@ class PageList extends StatelessWidget {
   );
 }
 
-/// A page's big title (SPEC §7.3): Lilita 32 with the scheme's drop, 20 px
+/// A page's big title (SPEC §7.3): stencil 32 outlined, 20 px
 /// from the left, on up to two lines ("Notifications for this team"), as it
 /// scrolls away rather than holding the top. The route's heading for screen
 /// readers.
@@ -351,7 +354,7 @@ class PageTitle extends StatelessWidget {
 }
 
 /// The page's name in the back row once its big title has scrolled away:
-/// Lilita 19, centered on the row, and only where it fits between what's
+/// stencil 19, centered on the row, and only where it fits between what's
 /// [left] and [right] of the middle. The back label matters more.
 class _SmallTitle extends StatelessWidget {
   const new({
@@ -494,7 +497,7 @@ String? backLabelFrom(BuildContext context, String usual) {
 }
 
 /// The top bar of Teams and Profile (SPEC §7.3): 52 px, the [title] in
-/// Lilita 27 with the scheme's drop, 20 px from the left, and [actions]
+/// stencil 27 outlined, 20 px from the left, and [actions]
 /// (48 px icon buttons) on the right.
 class TopLevelBar extends StatelessWidget {
   const new({
@@ -513,36 +516,46 @@ class TopLevelBar extends StatelessWidget {
   /// window's far edges (#29, 2026-11-20). Null for the whole width.
   final double? maxWidth;
 
+  // Boot Camp Mix (#85): on the camouflage, up under the status bar, the
+  // name outlined in white.
   @override
-  Widget build(BuildContext context) => Center(
-    child: ConstrainedBox(
-      constraints: BoxConstraints(
-        minHeight: 52,
-        maxWidth: maxWidth ?? double.infinity,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.only(left: 20, right: 8),
-        child: Row(
-          children: [
-            Expanded(
-              child: Semantics(
-                header: true,
-                child: Padding(
-                  // Level with the icons' center.
-                  padding: const EdgeInsets.only(top: 3),
-                  child: Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    // From the 32 px style, for its 2 px drop.
-                    style: Theme.of(context).textTheme.headlineMedium
-                        ?.copyWith(fontSize: 27, height: 30 / 27),
+  Widget build(BuildContext context) => CampHeader(
+    child: Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minHeight: 56,
+          maxWidth: maxWidth ?? double.infinity,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.only(left: 18, right: 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: Semantics(
+                  header: true,
+                  child: Padding(
+                    // Level with the icons' center.
+                    padding: const EdgeInsets.only(top: 3),
+                    child: Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: OutlinedText(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.headlineMedium!
+                            .copyWith(
+                              fontSize: 32.5,
+                              height: 37 / 32.5,
+                              letterSpacing: 32.5 * 0.04,
+                            ),
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-            ...actions,
-          ],
+              ...actions,
+            ],
+          ),
         ),
       ),
     ),
@@ -592,8 +605,8 @@ class PageListRow extends StatelessWidget {
 }
 
 /// A row on the page (SPEC §7.3): at least 50 tall, a 22 px [icon] (or
-/// [leading]) in the text color, the title in Nunito 700 16/21, the
-/// subtitle in Nunito 600 14/19 muted, and a 20 px chevron when it opens
+/// [leading]) in the text color, the title in Comic Neue 700 16/21, the
+/// subtitle in Comic Neue 600 14/19 muted, and a 20 px chevron when it opens
 /// something. [destructive] puts the icon and title in the accent text.
 /// Screen readers hear the row as one item, or as [semanticsLabel] when
 /// it's given (a sentence: "Luke #7, Uniforms, $25 left of $45"); with
@@ -771,7 +784,7 @@ class _Spoken extends StatelessWidget {
         );
 }
 
-/// A section label on the page (SPEC §7.3): Fredoka 600 13/16, spaced
+/// A section label on the page (SPEC §7.3): stencil 600 13/16, spaced
 /// 0.12 em, capitals, muted. Screen readers hear it in plain case.
 class SectionLabel extends StatelessWidget {
   const new(this.text, {super.key});
@@ -865,7 +878,7 @@ class SettingsCard extends StatelessWidget {
 }
 
 /// A settings row (SPEC §7.3): at least 50 tall, a 22 px icon in the text
-/// color, the title in Nunito 700 16/21, the subtitle muted, and a chevron
+/// color, the title in Comic Neue 700 16/21, the subtitle muted, and a chevron
 /// when it opens something. [highlighted] sets the title bold; a cherry
 /// [accent] (Delete) puts the icon and title in the accent text. A
 /// [ListTile]'s semantics, through [PageRow].
@@ -923,7 +936,7 @@ class SettingsRow extends StatelessWidget {
   }
 }
 
-/// A permission row's text style (design §3.8, §3.11): Nunito 800 15, in
+/// A permission row's text style (design §3.8, §3.11): Comic Neue 800 15, in
 /// the card's text color (a switch row sits on a card).
 TextStyle? switchRowTitle(BuildContext context) =>
     Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -934,7 +947,7 @@ TextStyle? switchRowTitle(BuildContext context) =>
       color: GumdropColors.of(context).textPrimary,
     );
 
-/// A heading inside a card (SPEC §7.3): Lilita One 20 in the text color,
+/// A heading inside a card (SPEC §7.3): the stencil 20 in the text color,
 /// with no drop.
 class CardHeading extends StatelessWidget {
   const new(this.text, {super.key});
@@ -960,7 +973,7 @@ class CardHeading extends StatelessWidget {
   }
 }
 
-/// A section heading on the page (SPEC §7.3): Lilita One 25/30 with the
+/// A section heading on the page (SPEC §7.3): the stencil 25/30 with the
 /// scheme's drop.
 class PageHeading extends StatelessWidget {
   const new(this.text, {super.key});
@@ -979,7 +992,7 @@ class PageHeading extends StatelessWidget {
   );
 }
 
-/// A field with its caps label above it (design §3.13): Fredoka 600 12,
+/// A field with its caps label above it (design §3.13): stencil 600 12,
 /// spaced out, muted, 4 px over the field. The label also names the field
 /// for screen readers.
 class LabeledField extends StatelessWidget {
@@ -1014,7 +1027,7 @@ class LabeledField extends StatelessWidget {
   }
 }
 
-/// The settings field look (design §3.13): 44 tall, 14 px corners, Nunito
+/// The settings field look (design §3.13): 44 tall, 14 px corners, Comic Neue
 /// 800 16. The fill and outline come from the theme.
 InputDecoration gumdropField({String? hint, Widget? suffixIcon}) =>
     InputDecoration(
@@ -1025,7 +1038,7 @@ InputDecoration gumdropField({String? hint, Widget? suffixIcon}) =>
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
     );
 
-/// The settings field text: Nunito 800 16.
+/// The settings field text: Comic Neue 800 16.
 TextStyle? gumdropFieldText(BuildContext context) =>
     Theme.of(context).textTheme.bodyLarge
         ?.copyWith(fontWeight: FontWeight.w800, height: 1.2);

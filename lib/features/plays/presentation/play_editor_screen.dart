@@ -7,6 +7,7 @@ import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/plays_icon.dart';
@@ -565,7 +566,7 @@ class _PlayEditorState extends ConsumerState<PlayEditorScreen>
                     onDeleteSelected: _deleteSelected,
                     more: more,
                   )
-                : AppBar(
+                : CampAppBar(
                     title: widget.whiteboard
                         ? Text(l10n.tabPlays)
                         : InkWell(
@@ -582,8 +583,14 @@ class _PlayEditorState extends ConsumerState<PlayEditorScreen>
                           icon: const PlaysIcon(),
                           onPressed: () => unawaited(_newBoard()),
                         ),
-                        // Named, not just an icon, so it's found.
+                        // Named, not just an icon, so it's found; snug, so
+                        // the bar fits half an iPad with the stencil (#85).
                         TextButton.icon(
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: Space.sm,
+                            ),
+                          ),
                           onPressed: _openSaved,
                           icon: const Icon(AppIcons.savedPlays),
                           label: Text(l10n.playsSaved),
@@ -600,8 +607,10 @@ class _PlayEditorState extends ConsumerState<PlayEditorScreen>
                         onPressed: redo,
                       ),
                       _MoreButton(actions: more),
+                      // A little in from the edge: the push button's own
+                      // shadow takes a few pixels at its right (#85).
                       Padding(
-                        padding: const EdgeInsets.only(right: Space.md),
+                        padding: const EdgeInsets.only(right: Space.sm),
                         child: FilledButton(
                           onPressed: _saving ? null : () => unawaited(_save()),
                           child: Text(saveLabel),

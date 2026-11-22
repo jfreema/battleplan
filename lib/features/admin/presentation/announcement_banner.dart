@@ -48,7 +48,11 @@ class AnnouncementBanner extends ConsumerWidget {
     final (background, foreground, icon) = switch (banner.severity) {
       // Blue raspberry, so a routine notice never looks like the coral
       // critical one.
-      BannerSeverity.info => (c.blueRaspberry.face, c.ink, AppIcons.info),
+      BannerSeverity.info => (
+        c.blueRaspberry.face,
+        c.inkOn(c.blueRaspberry),
+        AppIcons.info,
+      ),
       // The amber semantic color, as the storage warning uses it.
       BannerSeverity.warning => (
         Color.alphaBlend(

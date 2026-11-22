@@ -4,6 +4,7 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
@@ -57,15 +58,15 @@ class DocumentScreen extends ConsumerWidget {
     final me = ref.watch(myMembershipProvider(groupId));
     final d = doc.value;
     if (doc.isLoading && d == null) {
-      return Scaffold(
-        appBar: AppBar(),
-        body: const Center(child: CircularProgressIndicator()),
+      return const Scaffold(
+        appBar: CampAppBar(),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
     // Gone, or from another team than the route names.
     if (d == null || d.groupId != groupId || group == null) {
       return Scaffold(
-        appBar: AppBar(),
+        appBar: const CampAppBar(),
         // A document that couldn't be read says so with Try again (#40).
         body: doc.hasError
             ? LoadError(onRetry: () => ref.invalidate(documentProvider(docId)))
@@ -84,7 +85,7 @@ class DocumentScreen extends ConsumerWidget {
     final titleStyle = Theme.of(context).appBarTheme.titleTextStyle;
     return Scaffold(
       backgroundColor: photo ? Colors.black : null,
-      appBar: AppBar(
+      appBar: CampAppBar(
         backgroundColor: photo ? Colors.black : null,
         foregroundColor: photo ? onBlack : null,
         iconTheme: photo ? const IconThemeData(color: onBlack) : null,

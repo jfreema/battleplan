@@ -27,9 +27,9 @@ class TeamBadge extends StatelessWidget {
     // A rounded square: corner 14 on the 48 px badge.
     final radius = BorderRadius.circular(size * 14 / 48);
     final c = GumdropColors.of(context);
-    // The scheme's thin inset ring (Light blue's), or, for a team color
-    // close to what the badge sits on (a navy team on Navy's cards, a
-    // black one on Dark's), an outline, so the badge keeps its shape.
+    // The scheme's inset ring (Boot Camp Mix's ink, #85, around every
+    // badge), or, in a scheme with none, an outline for a team color close
+    // to what the badge sits on, so the badge keeps its shape.
     final fill = color ?? AppTokens.brand;
     final ring = c.avatarRing.a != 0
         ? c.avatarRing

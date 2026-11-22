@@ -7,9 +7,14 @@ import 'package:material_ui/material_ui.dart';
 /// the shape of buttons, chips, the FAB, and the tab indicator, so Material
 /// paints the face in the widget's own color and this paints the rest.
 ///
+/// Boot Camp Mix (#85) [slant]s the lip: a hard shadow [lip] px down and to
+/// the right, as the design's push buttons cast, and no highlight; a
+/// pressed (or picked) button sits on its shadow, moved down and right.
+///
 /// The lip is inside the shape's box: the face fills the box less [lip] at
-/// the bottom, and the lip shows below it. [pressed] (0 to 1) moves the face
-/// down onto the lip, as a pressed gumdrop sinks; Material animates it.
+/// the bottom (and the right, slanted), and the lip shows past it.
+/// [pressed] (0 to 1) moves the face onto the lip, as a pressed gumdrop
+/// sinks; Material animates it.
 ///
 /// [radius] null makes a pill (or a circle, when the box is square).
 /// [side] is the optional outline (the candy outline in its lip color, and
@@ -19,10 +24,11 @@ class GumdropShape extends OutlinedBorder {
   const new({
     this.lip = 4,
     this.lipColor = const Color(0x00000000),
-    this.highlight = 2,
+    this.highlight = 0,
     this.highlightColor = const Color(0x59FFFFFF),
     this.radius,
     this.pressed = 0,
+    this.slant = true,
     super.side,
   });
 
@@ -40,15 +46,28 @@ class GumdropShape extends OutlinedBorder {
   /// 0 at rest; 1 fully pressed (the face on the lip, no lip showing).
   final double pressed;
 
-  /// The lip for a gumdrop whose face is [height] px tall (design §3.1).
-  static double lipFor(double height) => height <= 38 ? 3 : 4;
+  /// Whether the lip is a shadow down and to the right (Boot Camp Mix,
+  /// #85), not straight down.
+  final bool slant;
+
+  /// The lip for a gumdrop whose face is [height] px tall: Boot Camp Mix's
+  /// shadows, 2 px under round icon buttons up to 38 px, 3 under push
+  /// buttons, 4 under anything bigger (#85).
+  static double lipFor(double height) => height <= 38
+      ? 2
+      : height <= 56
+      ? 3
+      : 4;
+
+  double get _dx => slant ? lip : 0;
 
   Rect _face(Rect rect) {
     final drop = lip * pressed.clamp(0, 1);
+    final shift = _dx * pressed.clamp(0, 1);
     return Rect.fromLTRB(
-      rect.left,
+      rect.left + shift,
       rect.top + drop,
-      rect.right,
+      rect.right - _dx + shift,
       rect.bottom - lip + drop,
     );
   }
@@ -66,7 +85,7 @@ class GumdropShape extends OutlinedBorder {
   /// doesn't cover it.
   RRect _lipRRect(Rect rect) {
     return _rrect(
-      Rect.fromLTRB(rect.left, rect.top + lip, rect.right, rect.bottom),
+      Rect.fromLTRB(rect.left + _dx, rect.top + lip, rect.right, rect.bottom),
     );
   }
 
@@ -123,6 +142,7 @@ class GumdropShape extends OutlinedBorder {
     Color? highlightColor,
     BorderRadius? radius,
     double? pressed,
+    bool? slant,
   }) => GumdropShape(
     side: side ?? this.side,
     lip: lip ?? this.lip,
@@ -131,6 +151,7 @@ class GumdropShape extends OutlinedBorder {
     highlightColor: highlightColor ?? this.highlightColor,
     radius: radius ?? this.radius,
     pressed: pressed ?? this.pressed,
+    slant: slant ?? this.slant,
   );
 
   @override
@@ -151,6 +172,7 @@ class GumdropShape extends OutlinedBorder {
         ? null
         : BorderRadius.lerp(radius, other.radius, t),
     pressed: ui.lerpDouble(pressed, other.pressed, t)!,
+    slant: t < 0.5 ? slant : other.slant,
   );
 
   @override
@@ -170,7 +192,8 @@ class GumdropShape extends OutlinedBorder {
       other.highlight == highlight &&
       other.highlightColor == highlightColor &&
       other.radius == radius &&
-      other.pressed == pressed;
+      other.pressed == pressed &&
+      other.slant == slant;
 
   @override
   int get hashCode => Object.hash(
@@ -181,6 +204,7 @@ class GumdropShape extends OutlinedBorder {
     highlightColor,
     radius,
     pressed,
+    slant,
   );
 
   @override

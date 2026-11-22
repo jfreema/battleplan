@@ -8,6 +8,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
@@ -76,7 +77,7 @@ class PlayerCardScreen extends ConsumerWidget {
           !ref.watch(playersProvider(groupId)).hasValue ||
           ref.watch(playersProvider(groupId)).isLoading;
       return Scaffold(
-        appBar: AppBar(),
+        appBar: const CampAppBar(),
         body: loading
             ? const Center(child: CircularProgressIndicator())
             : EmptyState(

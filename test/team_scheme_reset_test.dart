@@ -81,7 +81,7 @@ void main() {
 
   testWidgets('System default takes the team default away, and is checked '
       'while none is set', (tester) async {
-    final groups = thunder(teamDefault: TeamScheme.navy);
+    final groups = thunder(teamDefault: TeamScheme.dark);
     await open(
       tester,
       groups: groups,
@@ -89,18 +89,18 @@ void main() {
         testMembership('a', 'coach', role: MemberRole.owner),
       ]),
     );
-    expectPicked(tester, 'Navy', picked: true);
+    expectPicked(tester, 'Black', picked: true);
     expectPicked(tester, 'System default', picked: false);
     expect(find.text('Everyone sees their own default'), findsOneWidget);
     // With no pick of mine, I see the team's default.
-    expect(drawnIn(tester), TeamScheme.navy);
+    expect(drawnIn(tester), TeamScheme.dark);
 
     await tester.tap(find.text('System default'));
     await tester.pumpAndSettle();
     expect(groups.updates, contains('colorScheme none'));
     expect(groups.groups['a']!.colorScheme, isNull);
     expectPicked(tester, 'System default', picked: true);
-    expectPicked(tester, 'Navy', picked: false);
+    expectPicked(tester, 'Black', picked: false);
     // Now my own default.
     expect(drawnIn(tester), TeamScheme.light);
 
@@ -122,12 +122,13 @@ void main() {
       ).copyWith(colorScheme: TeamScheme.army),
       testMembership('a', 'sam').copyWith(colorScheme: TeamScheme.dark),
       testMembership('a', 'jo'),
-      // Another team's pick stays.
+      // Another team's pick stays, even of a scheme the app no longer
+      // offers (#85).
       testMembership('b', 'coach').copyWith(colorScheme: TeamScheme.skyblue),
     ]);
     await open(
       tester,
-      groups: thunder(teamDefault: TeamScheme.navy),
+      groups: thunder(teamDefault: TeamScheme.dark),
       members: members,
     );
     expect(drawnIn(tester), TeamScheme.army);
@@ -144,7 +145,7 @@ void main() {
     expect(find.text("Reset everyone's color scheme?"), findsOneWidget);
     expect(
       find.text(
-        'Everyone will see Thunder in Navy. They can still pick their own '
+        'Everyone will see Thunder in Black. They can still pick their own '
         'afterward.',
       ),
       findsOneWidget,
@@ -167,7 +168,7 @@ void main() {
       ['a coach null', 'a sam null', 'a jo null', 'b coach skyblue'],
     );
     // I see the team's default now, and can still pick my own.
-    expect(drawnIn(tester), TeamScheme.navy);
+    expect(drawnIn(tester), TeamScheme.dark);
   });
 
   testWidgets('with System default, everyone goes back to their own '
@@ -227,7 +228,7 @@ void main() {
       tester,
       user: boss,
       admin: admin,
-      groups: thunder(teamDefault: TeamScheme.navy),
+      groups: thunder(teamDefault: TeamScheme.dark),
       members: members,
     );
     await tester.tap(find.text('System default'));

@@ -110,7 +110,7 @@ String shareSpoken(AppLocalizations l10n, DueCharge c) {
   };
 }
 
-/// Muted text on a card or the page: Nunito 600 15/19.
+/// Muted text on a card or the page: Comic Neue 600 15/19.
 TextStyle duesMuted(GumdropColors c) => TextStyle(
   fontFamily: AppFonts.body,
   fontWeight: FontWeight.w600,

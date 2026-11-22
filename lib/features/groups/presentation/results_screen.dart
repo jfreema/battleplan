@@ -1,5 +1,6 @@
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -51,7 +52,7 @@ class AddResultsScreen extends StatelessWidget {
     final shown = sections.where((s) => s.lines.isNotEmpty).toList();
     return Scaffold(
       // No back: the title on the page's gutter.
-      appBar: AppBar(
+      appBar: CampAppBar(
         title: Text(title),
         automaticallyImplyLeading: false,
         titleSpacing: Space.page,

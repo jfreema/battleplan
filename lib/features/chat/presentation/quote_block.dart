@@ -18,7 +18,7 @@ String quoteText(AppLocalizations l10n, MessageType type, String text) {
 }
 
 /// A quoted message (CHAT-13): a recessed block with a mint bar on its
-/// left, the author in Fredoka, and one muted line (Gumdrop Pop §3.14). On
+/// left, the author in stencil, and one muted line (Gumdrop Pop §3.14). On
 /// the page (others' replies, and above the composer) it's a `field` well
 /// in the page's text colors. In a bubble ([bubble], with its text color
 /// [bubbleText]: my own, or an announcement) it's the bubble's color mixed

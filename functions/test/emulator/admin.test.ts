@@ -1183,7 +1183,8 @@ describe('the theme editor (#82)', () => {
       [{ scheme: 'candypop', cardText: '#FFFFFF' }, 'text on cards'],
       [{ scheme: 'army', page: '#FFFFFF', text: '#3D4124' }, 'text on tab bar'],
       [{ scheme: 'light', accent: '#FBF5E6' }, 'buttons on page'],
-      [{ scheme: 'wildcat', accent: '#701C30' }, 'buttons on page'],
+      // Central Wildcat is drawn as Black since #85: a near-black page.
+      [{ scheme: 'wildcat', accent: '#141413' }, 'buttons on page'],
       [{ name: 'Snow', base: 'light', accent: '#FFFFFF' }, 'buttons on cards'],
     ] as [object, string][]) {
       await expect(asRoot(admin.adminSaveTheme, bad)).rejects.toMatchObject({

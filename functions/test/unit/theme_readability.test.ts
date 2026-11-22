@@ -1,8 +1,9 @@
 // The theme editor's server check (#83, owner's requests 2026-11-21: "put a
 // protection in there that prevents text and background from being the
 // same color", then "I only want to block colors that are nearly
-// identical"): which colors over each built-in scheme sit on one that
-// looks nearly the same. No emulators needed.
+// identical"): which colors over each stored scheme sit on one that looks
+// nearly the same, as the app draws it (since Boot Camp Mix, #85, the
+// closest of Army green, Black and Light). No emulators needed.
 import { describe, expect, it } from 'vitest';
 import {
   builtInSchemeValues,
@@ -49,9 +50,10 @@ describe('unreadableParts', () => {
       expect.arrayContaining(['text on cards', 'text on pop-ups']),
     );
     expect(unreadableParts('candypop', theme({ cardText: '#FFFFFF' }))).toContain('text on cards');
-    expect(unreadableParts('navy', theme({ page: '#FFFFFF' }))).toContain('text on page');
-    // Amber text on a gold page.
-    expect(unreadableParts('scoreboard', theme({ page: '#FDD023' }))).toContain('text on page');
+    // Navy is drawn as Black: cream text.
+    expect(unreadableParts('navy', theme({ page: '#F4EAD0' }))).toContain('text on page');
+    // Scoreboard too: cream text on a page nearly cream.
+    expect(unreadableParts('scoreboard', theme({ page: '#EFE6CC' }))).toContain('text on page');
   });
 
   it('lets anything else through, however it reads: a yellow background included', () => {
@@ -69,7 +71,8 @@ describe('unreadableParts', () => {
   });
 
   it('refuses a "you" color nearly the same as the page, cards or tab bar', () => {
-    expect(unreadableParts('wildcat', theme({ accent: '#701C30' }))).toEqual(
+    // Central Wildcat is drawn as Black: a near-black page and charcoal cards.
+    expect(unreadableParts('wildcat', theme({ accent: '#141413' }))).toEqual(
       expect.arrayContaining(['buttons on page', 'buttons on cards']),
     );
     expect(unreadableParts('army', theme({ accent: '#3D4124' }))).toContain('picked tab on tab bar');
@@ -77,7 +80,7 @@ describe('unreadableParts', () => {
 
   it('refuses text the color of the tab bar or text boxes, which keep the base colors', () => {
     expect(unreadableParts('army', theme({ text: '#3D4124', page: '#FFFFFF' }))).toContain('text on tab bar');
-    expect(unreadableParts('light', theme({ text: '#EFE6CC', page: '#1A1A18' }))).toContain('text in text boxes');
+    expect(unreadableParts('light', theme({ text: '#FAF5EA', page: '#1A1A18' }))).toContain('text in text boxes');
   });
 
   it('refuses an unknown base', () => {

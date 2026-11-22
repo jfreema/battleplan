@@ -8,7 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// The stencil eyebrow over the team name (SPEC §7.3): what the tab is
-/// ("Team chat", "Fall schedule"), in Black Ops One capitals. Screen
+/// ("Team chat", "Fall schedule"), in the stencil capitals. Screen
 /// readers hear it in plain case.
 abstract final class HeaderEyebrow {
   /// The eyebrow for tab [index] (Chat, Schedule, Documents, Plays, Team)
@@ -34,7 +34,7 @@ abstract final class HeaderEyebrow {
     _ => group ? l10n.stickerGroupPeople : l10n.stickerTeam,
   };
 
-  /// The eyebrow's text style: Black Ops One 12/14, spaced 0.18 em, in the
+  /// The eyebrow's text style: the stencil 12/14, spaced 0.18 em, in the
   /// page's muted text, the switcher's. It was coral until #12
   /// (2026-11-16): a label, not "you" or a warning.
   static TextStyle style(GumdropColors c) => TeamSwitcherButton.eyebrowStyle(c);
@@ -121,9 +121,10 @@ class OpenFieldTabBar extends StatelessWidget {
       explicitChildNodes: true,
       // A Material, so the tabs' ink draws over the fill. The rule goes
       // under the tabs, so the current tab's coral bar covers it.
+      // Boot Camp Mix (#85): a 3 px ink line on top.
       child: Material(
         color: c.tabBar,
-        shape: Border(top: BorderSide(color: c.tabBarLine)),
+        shape: Border(top: BorderSide(color: c.tabBarLine, width: 3)),
         borderOnForeground: false,
         child: Padding(
           padding: EdgeInsets.fromLTRB(6, 0, 6, bottom),
@@ -300,13 +301,15 @@ class _Tab extends StatelessWidget {
   /// A label's size before the text size scales it.
   static const double labelSize = 13;
 
-  /// A label's style, before the text size scales it.
+  /// A label's style, before the text size scales it: stencil, spaced
+  /// 0.07 em (#85).
   static TextStyle labelStyle(BuildContext context, {Color? color}) =>
       GumdropStyle.of(context).label(
         TextStyle(
           fontSize: labelSize,
           height: 1.1,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w900,
+          letterSpacing: labelSize * 0.07,
           color: color,
         ),
       );
@@ -337,7 +340,7 @@ class _Tab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
-    final color = selected ? c.textOnPage : c.textMutedOnPage;
+    final color = c.textOnPage;
     final top = marker == Alignment.topCenter;
     // As a NavigationBar destination reads: the label, its count, and
     // "Tab 1 of 4". A rail link is a plain button: no place among the
@@ -373,13 +376,23 @@ class _Tab extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    IconTheme.merge(
-                      data: IconThemeData(
-                        size: 24,
-                        color: selected ? c.you.face : c.textMutedOnPage,
+                    // The current tab's icon on a mustard tile, turned a
+                    // little, on its hard shadow (#85).
+                    if (selected)
+                      _TabTile(
+                        child: IconTheme.merge(
+                          data: IconThemeData(size: 24, color: c.ink),
+                          child: tab.selectedIcon,
+                        ),
+                      )
+                    else
+                      SizedBox(
+                        height: 32,
+                        child: IconTheme.merge(
+                          data: IconThemeData(size: 24, color: c.textOnPage),
+                          child: tab.icon,
+                        ),
                       ),
-                      child: selected ? tab.selectedIcon : tab.icon,
-                    ),
                     const SizedBox(height: 4),
                     // Whole, never cut off ("Docume…"), and at the bar's or
                     // rail's one size, apart from its neighbors (#64).
@@ -417,28 +430,38 @@ class _Tab extends StatelessWidget {
                 ),
               ),
             ),
-            if (selected)
-              Positioned.fill(
-                child: Align(
-                  alignment: marker,
-                  child: Container(
-                    width: top ? 40 : 3,
-                    height: top ? 3 : 40,
-                    decoration: BoxDecoration(
-                      color: c.you.face,
-                      borderRadius: top
-                          ? const BorderRadius.vertical(
-                              bottom: Radius.circular(3),
-                            )
-                          : const BorderRadius.horizontal(
-                              right: Radius.circular(3),
-                            ),
-                    ),
-                  ),
-                ),
-              ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// The current tab's mustard tile (#85): 48 by 32, corners of 10, a
+/// 2.5 px ink outline on a 2 px hard shadow, turned 3 degrees left.
+class _TabTile extends StatelessWidget {
+  const new({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = GumdropColors.of(context);
+    return Transform.rotate(
+      angle: -3 * 3.141592653589793 / 180,
+      child: Container(
+        width: 48,
+        height: 32,
+        decoration: BoxDecoration(
+          color: c.accentMark,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: c.ink, width: 2.5),
+          boxShadow: [
+            BoxShadow(color: c.pageShadow, offset: const Offset(2, 2)),
+          ],
+        ),
+        alignment: Alignment.center,
+        child: child,
       ),
     );
   }

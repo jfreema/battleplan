@@ -476,7 +476,7 @@ class _LockedAnswer extends StatelessWidget {
 }
 
 /// One RSVP button on the event's page (SPEC §7.3): 46 tall, corner 23,
-/// a 2 px border, Fredoka 600 16. Picked: the candy face on a 4 px lip in
+/// a 2 px border, stencil 600 16. Picked: the candy face on a 4 px lip in
 /// its lip color, the label at 700 17 in ink. Unpicked: a 2 px outline,
 /// the label in the text color and the icon in its answer's color. Every
 /// button sits 4 px up, so they line up.

@@ -1,5 +1,6 @@
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/plays_icon.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
@@ -64,7 +65,7 @@ class EditPlayRoute extends ConsumerWidget {
     final play = async.value;
     if (play == null) {
       return Scaffold(
-        appBar: AppBar(),
+        appBar: const CampAppBar(),
         body: async.isLoading
             ? const Center(child: CircularProgressIndicator())
             : EmptyState(

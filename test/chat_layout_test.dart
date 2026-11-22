@@ -4,8 +4,8 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/color_math.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/ids.dart';
-import 'package:battleplan/core/theme_override.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/presentation/chat_screen.dart';
@@ -411,7 +411,7 @@ void main() {
   group('the Chat look (CHAT-18)', () {
     test('the sprinkles and the photo are scrimmed enough for AA text in '
         'every scheme', () {
-      for (final scheme in builtInSchemes) {
+      for (final scheme in bootCampSchemes) {
         final c = GumdropColors.forScheme(scheme);
         for (final photo in [true, false]) {
           final scrim = chatBackdropScrim(c, photo: photo);

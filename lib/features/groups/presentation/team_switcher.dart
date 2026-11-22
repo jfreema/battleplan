@@ -221,7 +221,7 @@ class _TeamRow extends ConsumerWidget {
                                   group.name,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  // Fredoka, as names are; bold for the
+                                  // stencil, as names are; bold for the
                                   // one I'm on.
                                   style: style.label(
                                     TextStyle(

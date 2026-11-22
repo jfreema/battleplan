@@ -14,7 +14,7 @@ Team chat and scheduling for sports teams, free for every team and with no ads. 
 - **Groups:** besides teams, plain groups for anything else, as simple as they can be: the same chat, schedule, RSVPs, and documents, but no players or Plays, and everyone answers for themselves. A group's owner can make it a team later.
 - **New seasons:** a team's owner starts the next season as a new team, bringing the players, parents, coaches, and anyone else they choose, who are on it at once with nothing to accept; the old season is archived with its chat, photos, and schedule.
 - **Sign-in:** Continue with Google or Apple; an email and password, or an emailed link, for whoever needs one.
-- **Color schemes:** one look, Open Field, in eleven schemes: Dark (the default), Army green, Forest green, Light, Navy, Sky Blue, Sky Blue Pop, Candy Pop, Central Wildcat, Geaux Tigahs, and Scoreboard. A team's admins set its default, or System default, and can reset everyone to it; each person can pick their own for a team or group, and a default for the rest. Super admins can change any scheme's button color, background, cards, and text in the Super Admin Panel's theme editor, and save new themes that show up in everyone's pickers; a color nearly the same as what it sits on, like text the color of its background, is refused.
+- **Color schemes:** one look, Boot Camp Mix (stencil lettering, ink outlines, push buttons, camouflage headers), in three schemes: Black (the default), Army green, and Light. A team's admins set its default, or System default, and can reset everyone to it; each person can pick their own for a team or group, and a default for the rest. Picks of the older schemes show in the closest of the three.
 - **Import:** bring a team over from GroupMe (messages, photos, files, and events) or TeamSnap (schedule, players, and files), and schedules from TeamReach, GameChanger, or Google Calendar.
 
 ## Sites
@@ -28,7 +28,7 @@ Every push to `main` deploys everything to dev once CI passes, server functions 
 
 ## Built with
 
-Flutter (web, iOS, and Android from one codebase) and Firebase: Authentication, Firestore, Cloud Functions in TypeScript, Storage, and Hosting. The website in `website/` is plain HTML and CSS in the app's Open Field look; its color scheme picker is pure CSS, with one optional line of script. The app and the website use the same fonts, Lilita One, Fredoka, and Nunito, with Black Ops One on the app's header eyebrows and the site's, bundled with the app and served from the site, as are the web app's fonts for emoji and other scripts: never from Google Fonts.
+Flutter (web, iOS, and Android from one codebase) and Firebase: Authentication, Firestore, Cloud Functions in TypeScript, Storage, and Hosting. The website in `website/` is plain HTML and CSS in Open Field, the app's look before Boot Camp Mix; its color scheme picker is pure CSS, with one optional line of script. The app bundles its fonts, Big Shoulders Stencil and Comic Neue, and the website serves its own (Lilita One, Fredoka, Nunito, and Black Ops One), as the web app serves its fonts for emoji and other scripts: never from Google Fonts.
 
 ## Docs
 

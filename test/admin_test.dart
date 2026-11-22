@@ -7,8 +7,8 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/color_math.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/ids.dart';
-import 'package:battleplan/core/theme_override.dart';
 import 'package:battleplan/core/widgets/back_chevron.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
@@ -705,7 +705,7 @@ void main() {
       GoRouter.of(tester.element(find.byType(Scaffold).first))
           .go('/g/t1/scheme');
       await tester.pumpAndSettle();
-      expect(find.text('Sky Blue Pop'), findsNothing);
+      expect(find.text('Army green'), findsNothing);
     });
 
     testWidgets('Roster and Member card: owner powers', (tester) async {
@@ -897,12 +897,12 @@ void main() {
       await tester.ensureVisible(find.text('Team color scheme'));
       await tester.tap(find.text('Team color scheme'));
       await tester.pumpAndSettle();
-      final navy = find.text('Navy');
-      await tester.ensureVisible(navy);
-      await tester.tap(navy);
+      final army = find.text('Army green');
+      await tester.ensureVisible(army);
+      await tester.tap(army);
       await tester.pumpAndSettle();
-      expect(admin.calls.last, 'team t1 colorScheme=navy');
-      Navigator.of(tester.element(navy)).pop();
+      expect(admin.calls.last, 'team t1 colorScheme=army');
+      Navigator.of(tester.element(army)).pop();
       await tester.pumpAndSettle();
 
       // Where new members' notifications start (TEAM-5, NOTIF-3).
@@ -1512,10 +1512,10 @@ void main() {
       );
       expect(info.color, c.blueRaspberry.face);
       expect(info.color, isNot(scheme.errorContainer));
-      for (final s in builtInSchemes) {
+      for (final s in bootCampSchemes) {
         final g = GumdropColors.forScheme(s);
         expect(
-          ColorMath.contrast(g.ink, g.blueRaspberry.face),
+          ColorMath.contrast(g.inkOn(g.blueRaspberry), g.blueRaspberry.face),
           greaterThanOrEqualTo(4.5),
           reason: s.name,
         );

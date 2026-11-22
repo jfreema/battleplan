@@ -1,6 +1,6 @@
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/failure.dart';
-import 'package:battleplan/core/theme_override.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -311,9 +311,9 @@ void main() {
     handle.dispose();
   });
 
-  testWidgets('reads well: 48 px targets and contrast in all five schemes, '
+  testWidgets('reads well: 48 px targets and contrast in all three schemes, '
       'and 200% text at 320', (tester) async {
-    for (final scheme in builtInSchemes) {
+    for (final scheme in bootCampSchemes) {
       await open(tester, FakeAuthRepository(user: pat), scheme: scheme);
       await openCreate(tester);
       await tapCreate(tester);

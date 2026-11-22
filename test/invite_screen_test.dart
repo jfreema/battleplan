@@ -1,7 +1,7 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
-import 'package:battleplan/core/theme_override.dart';
+import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/invite.dart';
@@ -478,7 +478,7 @@ void main() {
 
   testWidgets('reads well: a heading, 48 px targets, contrast in all five '
       'schemes, and 200% text', (tester) async {
-    for (final scheme in builtInSchemes) {
+    for (final scheme in bootCampSchemes) {
       await scenes.pumpTeam(tester, scheme: scheme);
       router(tester).go('/g/a/invite', extra: const InviteAfterCreate());
       await tester.pumpAndSettle();

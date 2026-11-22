@@ -2,9 +2,9 @@ import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The unread count on a button or tab (SPEC §7.3): a coral pill at least
-/// 19 px across with an ink number in Fredoka 700 12, cut out of what's
-/// under it by a 2 px ring in the page color. [child] is the icon it's on;
+/// The unread count on a button or tab (SPEC §7.3): Boot Camp Mix's red
+/// (#85), a pill at least 19 px across with a black stencil number, in a
+/// 2.5 px ink outline. [child] is the icon it's on;
 /// [offset] places the pill from the icon's top-right corner (Material
 /// [Badge.offset]). A Material [Badge], so tests and screen readers find it
 /// as before.
@@ -23,18 +23,19 @@ Widget unreadBadge(
       .clamp(maxScaleFactor: maxBadgeTextScale);
   return Badge(
     isLabelVisible: visible,
-    backgroundColor: c.badgeRing,
+    // The ink outline.
+    backgroundColor: c.ink,
     // At least; it grows with the pill.
-    largeSize: 23,
-    padding: const EdgeInsets.all(2),
+    largeSize: 24,
+    padding: const EdgeInsets.all(2.5),
     offset: offset,
     label: Container(
       constraints: const BoxConstraints(minWidth: 19, minHeight: 19),
       padding: const EdgeInsets.symmetric(horizontal: 5),
       alignment: Alignment.center,
-      // Unread is coral, "you" (SPEC §7.2).
+      // Unread is red in Boot Camp Mix (#85), as the bell's dot is.
       decoration: ShapeDecoration(
-        color: c.you.face,
+        color: c.cherry.face,
         shape: const StadiumBorder(),
       ),
       child: Text(
@@ -44,8 +45,8 @@ Widget unreadBadge(
           TextStyle(
             fontSize: 12,
             height: 19 / 12,
-            fontWeight: FontWeight.w700,
-            color: c.inkOn(c.you),
+            fontWeight: FontWeight.w900,
+            color: c.inkOn(c.cherry),
           ),
         ),
       ),
@@ -57,8 +58,10 @@ Widget unreadBadge(
 /// How far an unread count's text grows with the system text size.
 const double maxBadgeTextScale = 1.6;
 
-/// A header icon button (SPEC §7.3): a 24 px icon in the text color in a
-/// 48 × 48 tap area, with an optional unread count at its top right.
+/// A header icon button (SPEC §7.3): Boot Camp Mix's round icon button
+/// (#85), a 36 px circle in the panel color with a 2.5 px ink outline on a
+/// 2 px hard shadow, its 20 px icon in the text color, in a 48 × 48 tap
+/// area, with an optional unread count at its top right.
 class GumdropIconButton extends StatelessWidget {
   const new({
     required this.icon,
@@ -77,10 +80,22 @@ class GumdropIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final glyph = Icon(icon, size: 24);
+    final c = GumdropColors.of(context);
+    final glyph = Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        color: c.surface,
+        shape: BoxShape.circle,
+        border: Border.all(color: c.ink, width: 2.5),
+        boxShadow: [BoxShadow(color: c.pageShadow, offset: const Offset(2, 2))],
+      ),
+      alignment: Alignment.center,
+      child: Icon(icon, size: 20, color: c.textOnPage),
+    );
     return IconButton(
       tooltip: tooltip,
-      color: GumdropColors.of(context).textOnPage,
+      color: c.textOnPage,
       constraints: const BoxConstraints.tightFor(width: 48, height: 48),
       padding: EdgeInsets.zero,
       onPressed: onPressed,

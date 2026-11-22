@@ -262,17 +262,17 @@ export type NotifyChannel = (typeof notifyChannelValues)[number];
 
 /** Each built-in scheme's text, and what it sits on, as '#RRGGBB' (#83): the theme editor's server check. */
 export const SCHEME_INK: Readonly<Record<string, SchemeInk>> = {
-  army: { page: '#474C2B', text: '#F4EAD0', tabbar: '#3D4124', field: '#2B2F18', card: '#575A3A', cardText: '#F4EAD0', cardField: '#2B2F18', popup: '#575A3A', candyInk: '#1A1A18' },
-  darkarmy: { page: '#242713', text: '#F4EAD0', tabbar: '#1D200F', field: '#14160A', card: '#33361F', cardText: '#F4EAD0', cardField: '#14160A', popup: '#33361F', candyInk: '#1A1A18' },
-  light: { page: '#FBF5E6', text: '#1A1A18', tabbar: '#FFFFFF', field: '#EFE6CC', card: '#FFFFFF', cardText: '#1A1A18', cardField: '#EFE6CC', popup: '#FFFFFF', candyInk: '#1A1A18' },
-  dark: { page: '#0E0E0D', text: '#F4EAD0', tabbar: '#161615', field: '#1F1F1C', card: '#1B1B19', cardText: '#F4EAD0', cardField: '#1F1F1C', popup: '#1B1B19', candyInk: '#1A1A18' },
-  navy: { page: '#0B1531', text: '#F2F6FF', tabbar: '#07102A', field: '#07102A', card: '#18284C', cardText: '#F2F6FF', cardField: '#07102A', popup: '#18284C', candyInk: '#050C1F' },
-  sky: { page: '#BCD9F5', text: '#0B1531', tabbar: '#AFD0F1', field: '#A9CCEE', card: '#D3E6F9', cardText: '#0B1531', cardField: '#BCD9F5', popup: '#D3E6F9', candyInk: '#0B1531' },
-  skyblue: { page: '#BCD9F5', text: '#0B1531', tabbar: '#FFFFFF', field: '#E3EEFA', card: '#FFFFFF', cardText: '#0B1531', cardField: '#E3EEFA', popup: '#FFFFFF', candyInk: '#0B1531' },
-  candypop: { page: '#1748D4', text: '#FFFFFF', tabbar: '#0B1640', field: '#1238A8', card: '#FFFFFF', cardText: '#0B1640', cardField: '#DDE8FF', popup: '#1238A8', candyInk: '#0B1640' },
-  wildcat: { page: '#5E1224', text: '#FFFFFF', tabbar: '#0B0B0B', field: '#470C1A', card: '#701C30', cardText: '#FFFFFF', cardField: '#470C1A', popup: '#701C30', candyInk: '#0B0B0B' },
-  purplegold: { page: '#461D7C', text: '#FFFFFF', tabbar: '#2E1157', field: '#34125F', card: '#55278F', cardText: '#FFFFFF', cardField: '#34125F', popup: '#55278F', candyInk: '#1E0A3C' },
-  scoreboard: { page: '#0B0B0A', text: '#FFC83D', tabbar: '#050505', field: '#1D1912', card: '#16130E', cardText: '#FFC83D', cardField: '#1D1912', popup: '#16130E', candyInk: '#0B0B0A' },
+  army: { page: '#474C2B', text: '#F4EAD0', tabbar: '#3D4124', field: '#575A3A', card: '#575A3A', cardText: '#F4EAD0', cardField: '#575A3A', popup: '#575A3A', candyInk: '#1A1A18' },
+  darkarmy: { page: '#474C2B', text: '#F4EAD0', tabbar: '#3D4124', field: '#575A3A', card: '#575A3A', cardText: '#F4EAD0', cardField: '#575A3A', popup: '#575A3A', candyInk: '#1A1A18' },
+  light: { page: '#F2EBE0', text: '#1A1A18', tabbar: '#FFFFFF', field: '#FFFFFF', card: '#FFFFFF', cardText: '#1A1A18', cardField: '#FFFFFF', popup: '#FFFFFF', candyInk: '#1A1A18' },
+  dark: { page: '#0D0D0C', text: '#F4EAD0', tabbar: '#070707', field: '#252522', card: '#252522', cardText: '#F4EAD0', cardField: '#252522', popup: '#252522', candyInk: '#000000' },
+  navy: { page: '#0D0D0C', text: '#F4EAD0', tabbar: '#070707', field: '#252522', card: '#252522', cardText: '#F4EAD0', cardField: '#252522', popup: '#252522', candyInk: '#000000' },
+  sky: { page: '#F2EBE0', text: '#1A1A18', tabbar: '#FFFFFF', field: '#FFFFFF', card: '#FFFFFF', cardText: '#1A1A18', cardField: '#FFFFFF', popup: '#FFFFFF', candyInk: '#1A1A18' },
+  skyblue: { page: '#F2EBE0', text: '#1A1A18', tabbar: '#FFFFFF', field: '#FFFFFF', card: '#FFFFFF', cardText: '#1A1A18', cardField: '#FFFFFF', popup: '#FFFFFF', candyInk: '#1A1A18' },
+  candypop: { page: '#F2EBE0', text: '#1A1A18', tabbar: '#FFFFFF', field: '#FFFFFF', card: '#FFFFFF', cardText: '#1A1A18', cardField: '#FFFFFF', popup: '#FFFFFF', candyInk: '#1A1A18' },
+  wildcat: { page: '#0D0D0C', text: '#F4EAD0', tabbar: '#070707', field: '#252522', card: '#252522', cardText: '#F4EAD0', cardField: '#252522', popup: '#252522', candyInk: '#000000' },
+  purplegold: { page: '#0D0D0C', text: '#F4EAD0', tabbar: '#070707', field: '#252522', card: '#252522', cardText: '#F4EAD0', cardField: '#252522', popup: '#252522', candyInk: '#000000' },
+  scoreboard: { page: '#0D0D0C', text: '#F4EAD0', tabbar: '#070707', field: '#252522', card: '#252522', cardText: '#F4EAD0', cardField: '#252522', popup: '#252522', candyInk: '#000000' },
 };
 
 export type SchemeInk = { page: string; text: string; tabbar: string; field: string; card: string; cardText: string; cardField: string; popup: string; candyInk: string };

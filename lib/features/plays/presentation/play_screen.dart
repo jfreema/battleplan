@@ -5,6 +5,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/plays_icon.dart';
@@ -249,7 +250,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
     final canPost = group != null && me != null && !group.isArchived;
     if (play == null) {
       return Scaffold(
-        appBar: AppBar(),
+        appBar: const CampAppBar(),
         body: async.isLoading
             ? const Center(child: CircularProgressIndicator())
             : EmptyState(
@@ -260,7 +261,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
     }
     final step = _step.clamp(0, play.steps.length - 1);
     return Scaffold(
-      appBar: AppBar(
+      appBar: CampAppBar(
         title: Text(play.title, overflow: TextOverflow.ellipsis),
         actions: [
           if (canEdit) ...[

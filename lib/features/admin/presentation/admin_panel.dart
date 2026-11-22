@@ -9,7 +9,5 @@ export 'dashboard_screen.dart' show AdminDashboardScreen;
 export 'platform_settings_screen.dart' show PlatformSettingsScreen;
 export 'team_detail_screen.dart' show AdminTeamScreen;
 export 'teams_screen.dart' show AdminTeamsScreen;
-export 'theme_editor_screen.dart' show AdminThemeEditorScreen;
-export 'themes_screen.dart' show AdminThemesScreen;
 export 'user_detail_screen.dart' show AdminUserScreen;
 export 'users_screen.dart' show AdminUsersScreen;

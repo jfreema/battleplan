@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/schemes.dart' show TeamSchemeLook;
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/logging.dart';
 import 'package:battleplan/core/scheme_defaults.dart';
@@ -79,14 +80,16 @@ TeamScheme appScheme(Ref ref) {
   return auth.hasValue && auth.value == null ? defaultTeamScheme : mine;
 }
 
-/// My default ([DefaultSchemeController]), or Dark while it's a saved
-/// theme that isn't there (deleted, or not loaded yet, #82).
+/// My default ([DefaultSchemeController]), or Black while it's a saved
+/// theme that isn't there (deleted, or not loaded yet, #82), as the Boot
+/// Camp Mix scheme it's drawn in (#85: [TeamSchemeLook.look]).
 TeamScheme usableDefault(Ref ref) =>
-    usableScheme(
-      ref.watch(defaultSchemeControllerProvider),
-      ref.watch(themeOverridesProvider),
-    ) ??
-    defaultTeamScheme;
+    (usableScheme(
+              ref.watch(defaultSchemeControllerProvider),
+              ref.watch(themeOverridesProvider),
+            ) ??
+            defaultTeamScheme)
+        .look;
 
 /// The scheme a member sees a team in (SET-2, owner's request 2026-11-08):
 /// their own explicit [pick], else the team's [teamDefault] its admins set,
@@ -103,8 +106,14 @@ TeamScheme resolveTeamScheme({
 /// (myTeams), so this provider (kept for the session) keeps no reads of a
 /// team I've left or only viewed: a super admin viewing a team they
 /// aren't on sees it in their default.
+///
+/// Always one of the Boot Camp Mix schemes (#85): a pick or default the app
+/// no longer offers is drawn in its closest ([TeamSchemeLook.look]).
 @Riverpod(keepAlive: true)
-TeamScheme teamScheme(Ref ref, GroupId groupId) {
+TeamScheme teamScheme(Ref ref, GroupId groupId) =>
+    _teamScheme(ref, groupId).look;
+
+TeamScheme _teamScheme(Ref ref, GroupId groupId) {
   final (loaded, member, pick) = ref.watch(
     myMembershipsProvider.select((a) {
       final list = a.value;

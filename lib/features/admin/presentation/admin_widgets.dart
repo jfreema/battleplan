@@ -9,6 +9,7 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/theme_override.dart';
 import 'package:battleplan/core/widgets/back_chevron.dart';
+import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/info_tag.dart';
@@ -27,8 +28,7 @@ enum AdminSection {
   users('/admin/users'),
   reports('/admin/reports'),
   audit('/admin/audit'),
-  settings('/admin/settings'),
-  themes('/admin/themes');
+  settings('/admin/settings');
 
   new(this.path);
 
@@ -65,7 +65,6 @@ class AdminScaffold extends StatelessWidget {
     AdminSection.reports => AppIcons.report,
     AdminSection.audit => AppIcons.history,
     AdminSection.settings => AppIcons.tune,
-    AdminSection.themes => AppIcons.colorScheme,
   };
 
   @override
@@ -77,7 +76,7 @@ class AdminScaffold extends StatelessWidget {
       if (s != section || canPop) context.go(s.path);
     }
 
-    final appBar = AppBar(
+    final appBar = CampAppBar(
       // Back to the page before; with none, out of the panel, to the team
       // and tab last open, or Teams (#68).
       leading: BackChevron(
@@ -175,7 +174,6 @@ String adminSectionLabel(AppLocalizations l10n, AdminSection s) => switch (s) {
   AdminSection.reports => l10n.reportsTitle,
   AdminSection.audit => l10n.adminAuditLog,
   AdminSection.settings => l10n.adminSettings,
-  AdminSection.themes => l10n.adminThemes,
 };
 
 /// True at 840 px and up, where lists become tables (ADMIN).

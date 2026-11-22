@@ -8,7 +8,7 @@ import 'package:material_ui/material_ui.dart';
 
 /// The Open Field back button (SPEC §7.3): a 28 px chevron in the text
 /// color and, when given, the screen it goes back to ([label], "Team
-/// info") in Fredoka 600 17, in one tap area at least 48 tall, with the
+/// info") in stencil 600 17, in one tap area at least 48 tall, with the
 /// 3 px focus ring for the keyboard. It keeps Material's "Back" tooltip,
 /// and is a "Back" button node of its own for screen readers.
 class BackChevron extends StatelessWidget {
@@ -45,7 +45,7 @@ class BackChevron extends StatelessWidget {
   static Widget iconBuilder(BuildContext context) =>
       const Icon(AppIcons.chevronLeft, size: 28, weight: 700);
 
-  /// The back label's text style: Fredoka 600 17.
+  /// The back label's text style: stencil 600 17.
   static TextStyle labelStyle(BuildContext context) =>
       GumdropStyle.of(context).label(
         TextStyle(

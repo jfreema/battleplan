@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/ids.dart';
-import 'package:battleplan/core/theme_override.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
@@ -242,9 +242,9 @@ void main() {
     });
   });
 
-  testWidgets('reads well: answers keep their contrast in all five schemes, '
+  testWidgets('reads well: answers keep their contrast in all three schemes, '
       'and 200% text', (tester) async {
-    for (final scheme in builtInSchemes) {
+    for (final scheme in bootCampSchemes) {
       await scenes.pumpTeam(
         tester,
         scheme: scheme,

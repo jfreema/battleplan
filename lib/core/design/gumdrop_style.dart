@@ -1,24 +1,33 @@
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The parts of the Open Field theme that aren't colors (SPEC §7.4): the
-/// heading and label fonts, the hard drop under titles, the 2 px outline on
-/// candy gumdrops, and the cards' shape. Every color scheme shares it.
+/// The parts of the look that aren't colors (SPEC §7.4): the heading and
+/// label fonts, the outline on candy buttons, and the panels' shape. Every
+/// color scheme shares it.
+///
+/// Boot Camp Mix (#85, owner's pick 2026-11-22): stencil titles and labels,
+/// a 3 px ink outline on every panel and push button, square panels on a
+/// hard shadow down and to the right, and no drop under plain headings
+/// (the big titles are outlined instead, `OutlinedText`).
 @immutable
 class GumdropStyle extends ThemeExtension<GumdropStyle> {
   const new({
     this.displayFont = AppFonts.display,
     this.labelFont = AppFonts.label,
     this.accentOutline = 0,
+    this.panelRadius = 0,
   });
 
-  /// Open Field: Lilita One titles with a hard drop, Fredoka labels, pill
-  /// gumdrops outlined in their lip color, and rounded cards with a lip.
-  static const openField = GumdropStyle(accentOutline: 2);
+  /// Boot Camp Mix (#85): stencil titles and labels, 3 px ink outlines,
+  /// square panels.
+  static const bootCamp = GumdropStyle(accentOutline: 3);
 
-  /// The style in effect at [context]: the theme's, or Open Field.
+  /// The name the look had before Boot Camp Mix; the same as [bootCamp].
+  static const GumdropStyle openField = bootCamp;
+
+  /// The style in effect at [context]: the theme's, or Boot Camp Mix.
   static GumdropStyle of(BuildContext context) =>
-      Theme.of(context).extension<GumdropStyle>() ?? openField;
+      Theme.of(context).extension<GumdropStyle>() ?? bootCamp;
 
   /// Headings: screen titles, the team name, section headings.
   final String displayFont;
@@ -26,49 +35,63 @@ class GumdropStyle extends ThemeExtension<GumdropStyle> {
   /// Buttons, labels, tabs, chips, and people's names.
   final String labelFont;
 
-  /// How thick an outline candy gumdrops have, in their lip color.
+  /// How thick an outline candy buttons have, in ink.
   final double accentOutline;
 
-  /// The outline of a candy gumdrop whose lip is [lip].
-  BorderSide accentSide(Color lip) => accentOutline == 0
-      ? BorderSide.none
-      : BorderSide(color: lip, width: accentOutline);
+  /// A panel's corners: square (#85).
+  final double panelRadius;
 
-  /// [style] in [labelFont], for a label styled by hand.
-  TextStyle label(TextStyle style) => style.copyWith(fontFamily: labelFont);
+  /// The outline of a candy button: [ink], [accentOutline] px.
+  BorderSide accentSide(Color ink) => accentOutline == 0
+      ? BorderSide.none
+      : BorderSide(color: ink, width: accentOutline);
+
+  /// [style] in [labelFont], for a label styled by hand: stencil, a little
+  /// spaced, as the design sets its labels.
+  TextStyle label(TextStyle style) => style.copyWith(
+    fontFamily: labelFont,
+    letterSpacing: style.letterSpacing ?? stencilSpacing(style.fontSize),
+  );
 
   /// [style] in [displayFont], for a heading styled by hand.
-  TextStyle display(TextStyle style) => style.copyWith(fontFamily: displayFont);
+  TextStyle display(TextStyle style) => style.copyWith(
+    fontFamily: displayFont,
+    letterSpacing: style.letterSpacing ?? stencilSpacing(style.fontSize),
+  );
 
-  /// The hard drop under a title in [color]: one copy 2 px straight down,
-  /// or 3 px under a [big] (48 px) one, and none when [color] is
-  /// transparent (Light and Dark have no drop).
-  List<Shadow> headingShadow(Color color, {bool big = false}) => [
-    if (color.a > 0) Shadow(color: color, offset: Offset(0, big ? 3 : 2)),
-  ];
+  /// The stencil's letter spacing at [size]: 0.05 em, as the design's
+  /// buttons and labels have it.
+  static double stencilSpacing(double? size) => (size ?? 14) * 0.05;
 
-  /// A card's outline: rounded, with [side] as its rim.
+  /// The hard drop under a title in [color]: none in Boot Camp Mix, whose
+  /// plain headings have no drop (#85).
+  List<Shadow> headingShadow(Color color, {bool big = false}) => const [];
+
+  /// A panel's outline: square, with [side] as its rim.
   ShapeBorder cardShape(double radius, {BorderSide side = BorderSide.none}) =>
       RoundedRectangleBorder(
         side: side,
-        borderRadius: BorderRadius.circular(radius),
+        borderRadius: BorderRadius.circular(panelRadius),
       );
 
-  /// [cardShape] filled with [color], as a decoration: with a rim ([side]),
-  /// it sits on a hard lip of the rim's color, [lip] px deep.
+  /// A panel filled with [color], as a decoration: square, with a rim
+  /// ([side]), on a hard shadow [lip] px down and to the right in [shadow]
+  /// (the rim's color unless given). [radius] is the corner the panel had
+  /// before Boot Camp Mix, which squares it (#85).
   Decoration cardDecoration(
     Color color,
     double radius, {
     BorderSide side = BorderSide.none,
     double lip = 4,
+    Color? shadow,
   }) {
     final rimmed = side.style != BorderStyle.none && side.width > 0;
     return BoxDecoration(
       color: color,
-      borderRadius: BorderRadius.circular(radius),
+      borderRadius: BorderRadius.circular(panelRadius),
       border: rimmed ? Border.fromBorderSide(side) : null,
       boxShadow: rimmed && lip > 0
-          ? [BoxShadow(color: side.color, offset: Offset(0, lip))]
+          ? [BoxShadow(color: shadow ?? side.color, offset: Offset(lip, lip))]
           : null,
     );
   }
@@ -78,10 +101,12 @@ class GumdropStyle extends ThemeExtension<GumdropStyle> {
     String? displayFont,
     String? labelFont,
     double? accentOutline,
+    double? panelRadius,
   }) => GumdropStyle(
     displayFont: displayFont ?? this.displayFont,
     labelFont: labelFont ?? this.labelFont,
     accentOutline: accentOutline ?? this.accentOutline,
+    panelRadius: panelRadius ?? this.panelRadius,
   );
 
   @override

@@ -284,7 +284,7 @@ class _FilterSheet extends ConsumerWidget {
   }
 }
 
-/// Upcoming, Past and Calendar (SPEC §7.3): Fredoka 600 17, left-aligned,
+/// Upcoming, Past and Calendar (SPEC §7.3): stencil 600 17, left-aligned,
 /// 24 px apart, the current one in the text color over a 4 px coral bar.
 /// Each is at least 48 × 48 to tap, and the space between them is tappable
 /// too. Labels shrink rather than run under the filter at large text sizes.

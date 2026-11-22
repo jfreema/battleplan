@@ -4,12 +4,13 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/widgets/camp_lettering.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// The team switcher in the header (SPEC §5.2, §7.3): the tab's stencil
-/// [eyebrow] over the team's [name] in Lilita One with the scheme's drop,
+/// [eyebrow] over the team's [name] in the stencil outlined,
 /// and a small chevron. One button, at least 48 tall, with the 3 px focus
 /// ring for the keyboard. Screen readers hear the eyebrow in plain case,
 /// then "Switch team: {name}". News in other teams is the back arrow's one
@@ -28,7 +29,7 @@ class TeamSwitcherButton extends StatelessWidget {
   final String? eyebrow;
   final VoidCallback onPressed;
 
-  /// The stencil eyebrow's style: Black Ops One 12/14, spaced 0.18 em, in
+  /// The stencil eyebrow's style: the stencil 12/14, spaced 0.18 em, in
   /// the page's muted text (#12).
   static TextStyle eyebrowStyle(GumdropColors c) => TextStyle(
     fontFamily: AppFonts.sticker,
@@ -128,8 +129,9 @@ class TeamTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
+      // Less the outlined name's 6 px for its stroke and shadow.
       final room =
-          constraints.maxWidth - (trailing == null ? 0 : trailingWidth);
+          constraints.maxWidth - (trailing == null ? 0 : trailingWidth) - 6;
       final fit = TeamName.fitIn(context, name, math.max(0, room));
       final above = eyebrow;
       // Over a two-line name the eyebrow would stack three lines into the
@@ -141,14 +143,12 @@ class TeamTitle extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Boot Camp Mix (#85): the eyebrow on a mustard tag, tucked
+          // just over the name.
           if (showEyebrow)
-            Text(
-              above.toUpperCase(),
-              semanticsLabel: above,
-              maxLines: 1,
-              overflow: TextOverflow.fade,
-              softWrap: false,
-              style: eyebrowStyle,
+            Padding(
+              padding: const EdgeInsets.only(left: 2, bottom: 1),
+              child: CampTag(above, semanticsLabel: above),
             )
           else if (above != null)
             // Stepped aside for a two-line name, but still read.
@@ -166,7 +166,7 @@ class TeamTitle extends StatelessWidget {
   );
 }
 
-/// A team's name in Lilita One with the scheme's drop (SPEC §7.3).
+/// A team's name in the stencil outlined (SPEC §7.3).
 ///
 /// On one line at 27, stepping down to 23, 21 and 19 to fit. A name that
 /// doesn't fit even at 19 wraps onto two lines at 19, or at 17, breaking
@@ -182,24 +182,28 @@ class TeamName extends StatelessWidget {
   /// otherwise.
   final TeamNameFit? fit;
 
-  /// The sizes tried on one line, largest first.
-  static const List<double> sizes = [27, 23, 21, 19];
+  /// The sizes tried on one line, largest first: the stencil is narrow,
+  /// so they're bigger than Open Field's were (#85).
+  static const List<double> sizes = [32, 28, 25, 22];
 
   /// The sizes tried on two lines, largest first.
-  static const List<double> wrapSizes = [19, 17];
+  static const List<double> wrapSizes = [22, 19];
 
-  /// Two lines' height: 21 px lines at 19, a little tighter than one
-  /// line's, so they read as one name.
-  static const double wrapHeight = 21 / 19;
+  /// Two lines' height: set solid, so they read as one name and two lines
+  /// at 22 with the shadow's room fit the one-row header (#85).
+  static const double wrapHeight = 1;
 
   /// The tallest two lines may make the header, in pixels, at large text
   /// sizes; above it the name stays on one line and ends in "…".
   static const double tallestWrap = 96;
 
   static TextStyle _heading(BuildContext context, double size) =>
-      // From the 32 px style, for its 2 px drop.
-      Theme.of(context).textTheme.headlineMedium!
-          .copyWith(fontSize: size, height: 30 / 27, letterSpacing: 27 * 0.005);
+      Theme.of(context).textTheme.headlineMedium!.copyWith(
+        fontSize: size,
+        height: 37 / 32.5,
+        letterSpacing: size * 0.04,
+        shadows: const [],
+      );
 
   /// How [name] fits [maxWidth]: the first one-line size that holds it,
   /// else two lines, else two lines ending in "…" (one line where a single
@@ -282,7 +286,9 @@ class TeamName extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget text(TeamNameFit fit) {
-      Widget name = Text(
+      // Boot Camp Mix (#85): white stencil on an ink stroke, with a hard
+      // shadow.
+      Widget name = OutlinedText(
         this.name,
         maxLines: fit.lines,
         overflow: TextOverflow.ellipsis,
@@ -298,8 +304,11 @@ class TeamName extends StatelessWidget {
           child: name,
         );
       }
-      // Room for the 2 px drop.
-      return Padding(padding: const EdgeInsets.only(bottom: 2), child: name);
+      // Room for the stroke and the shadow.
+      return Padding(
+        padding: const EdgeInsets.only(left: 2, right: 4, bottom: 3),
+        child: name,
+      );
     }
 
     final given = fit;

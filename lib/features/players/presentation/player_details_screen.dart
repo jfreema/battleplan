@@ -5,6 +5,7 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
@@ -43,12 +44,12 @@ class PlayerDetailsRoute extends ConsumerWidget {
         !players.hasValue ||
         !links.hasValue ||
         !memberships.hasValue) {
-      return Scaffold(appBar: AppBar(), body: const SkeletonList());
+      return const Scaffold(appBar: CampAppBar(), body: SkeletonList());
     }
     final player = players.value!.where((p) => p.id == playerId).firstOrNull;
     if (player == null) {
       return Scaffold(
-        appBar: AppBar(),
+        appBar: const CampAppBar(),
         body: EmptyState(icon: AppIcons.roster, message: l10n.playerNotFound),
       );
     }
@@ -64,14 +65,14 @@ class PlayerDetailsRoute extends ConsumerWidget {
         );
     if (!allowed) {
       return Scaffold(
-        appBar: AppBar(),
+        appBar: const CampAppBar(),
         body: EmptyState(icon: AppIcons.block, message: l10n.notAllowed),
       );
     }
     final details = ref.watch(playerDetailsProvider(playerId));
     if (!details.hasValue) {
       return Scaffold(
-        appBar: AppBar(),
+        appBar: const CampAppBar(),
         body: details.hasError
             ? LoadError(
                 onRetry: () => ref.invalidate(playerDetailsProvider(playerId)),
@@ -275,7 +276,7 @@ class _PlayerDetailsScreenState extends ConsumerState<PlayerDetailsScreen> {
     );
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: CampAppBar(
         leading: IconButton(
           tooltip: l10n.cancel,
           icon: const Icon(AppIcons.close),

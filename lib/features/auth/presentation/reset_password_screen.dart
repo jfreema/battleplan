@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
+import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -67,7 +68,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     final theme = Theme.of(context);
     final error = _error;
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.resetPasswordTitle)),
+      appBar: CampAppBar(title: Text(l10n.resetPasswordTitle)),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(

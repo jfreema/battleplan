@@ -141,6 +141,7 @@ class TeamsScreen extends ConsumerWidget {
 
     return Scaffold(
       body: SafeArea(
+        top: false,
         bottom: false,
         child: Column(
           children: [

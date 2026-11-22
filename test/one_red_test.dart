@@ -1,8 +1,9 @@
-// One meaning per red (the usability review's #12, owner's go 2026-11-16):
-// coral is "you" (your messages, the main button, the current tab, and
-// unread), and a deeper warning red is only for Not going, Canceled, what's
-// owed, errors, and Delete. Until then they were one color, so a normal
-// week read like a list of problems (SPEC §7.2).
+// One meaning per color (the usability review's #12, owner's go
+// 2026-11-16, as Boot Camp Mix has it since #85, SPEC §7.2): your own color
+// (mustard, or light blue in Black) is "you"; the scheme's red is games,
+// warnings (Canceled, what's owed, errors, Delete), unread, and the send
+// and + buttons; and Can't go is its own salmon, never the red. Labels and
+// decorations are never red.
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
@@ -17,7 +18,6 @@ import 'package:battleplan/features/dues/domain/due.dart';
 import 'package:battleplan/features/dues/presentation/dues_widgets.dart';
 import 'package:battleplan/features/groups/domain/chat_colors.dart';
 import 'package:battleplan/features/groups/presentation/chat_bubble_colors.dart';
-import 'package:battleplan/features/groups/presentation/shell_parts.dart';
 import 'package:battleplan/features/schedule/presentation/event_row.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_widgets.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -62,10 +62,10 @@ Iterable<BoxDecoration> _filled(Finder of, Color color, WidgetTester tester) =>
         .where((d) => d.color == color);
 
 void main() {
-  group('the warning red is only for warnings', () {
-    for (final scheme in builtInSchemes) {
-      testWidgets('${scheme.value}: Not going, Canceled, and Owes take it, '
-          'with white text', (tester) async {
+  group("the red is for warnings, and Can't go is its own", () {
+    for (final scheme in bootCampSchemes) {
+      testWidgets("${scheme.value}: Canceled and Owes take the red, Can't "
+          'go the salmon, each lettered to read', (tester) async {
         final c = GumdropColors.forScheme(scheme);
         await _pumpThemed(
           tester,
@@ -85,21 +85,22 @@ void main() {
           ),
           scheme: scheme,
         );
-        expect(c.cherry.face, CandyFaces.cherry);
-        expect(_textColor(tester, 'Not going'), Colors.white);
-        expect(_textColor(tester, 'Canceled'), Colors.white);
-        expect(_textColor(tester, 'Owes'), Colors.white);
+        expect(c.cherry.face, c.roles.palette.red);
+        expect(c.cantGo.face, CampPalette.cantGo);
+        expect(_textColor(tester, 'Not going'), c.inkOn(c.cantGo));
+        expect(_textColor(tester, 'Canceled'), c.inkOn(c.cherry));
+        expect(_textColor(tester, 'Owes'), c.inkOn(c.cherry));
         // Other candies keep the ink.
         expect(_textColor(tester, 'Paid'), c.ink);
         expect(
-          _filled(find.byType(CanceledBadge), CandyFaces.cherry, tester),
+          _filled(find.byType(CanceledBadge), c.cherry.face, tester),
           isNotEmpty,
         );
       });
     }
   });
 
-  group('unread is coral', () {
+  group('unread is red', () {
     testWidgets('the count on the bell and the tabs', (tester) async {
       await _pumpThemed(
         tester,
@@ -118,43 +119,44 @@ void main() {
           .map((c) => c.decoration)
           .whereType<ShapeDecoration>()
           .first;
-      expect(pill.color, CandyFaces.coral);
+      expect(pill.color, GumdropColors.forScheme(TeamScheme.dark).cherry.face);
     });
 
     testWidgets("Material's badges, the theme's", (tester) async {
-      for (final scheme in builtInSchemes) {
-        expect(
-          AppTheme.of(scheme).badgeTheme.backgroundColor,
-          CandyFaces.coral,
-        );
+      for (final scheme in bootCampSchemes) {
+        final c = GumdropColors.forScheme(scheme);
+        expect(AppTheme.of(scheme).badgeTheme.backgroundColor, c.cherry.face);
       }
     });
   });
 
   group('colors people picked keep their look', () {
-    test('a "Cherry" icon color is coral, as it was', () {
-      for (final scheme in builtInSchemes) {
+    test('icon colors are the same in every scheme; "Cherry" is coral', () {
+      for (final scheme in bootCampSchemes) {
         final c = GumdropColors.forScheme(scheme);
         expect(Avatar.faceOf(c, AvatarColor.cherry), CandyFaces.coral);
+        expect(Avatar.faceOf(c, AvatarColor.grape), CandyFaces.grape);
+        expect(Avatar.faceOf(c, AvatarColor.lemon), CandyFaces.lemon);
         // Nobody's hashed color turns the warning red either.
         for (var i = 0; i < 200; i++) {
-          expect(Avatar.colorFor(c, 'person$i'), isNot(CandyFaces.cherry));
+          expect(Avatar.colorFor(c, 'person$i'), isNot(c.roles.palette.red));
         }
       }
     });
 
-    test('a "Cherry" chat color is coral, as it was', () {
-      for (final scheme in builtInSchemes) {
+    test('a "Cherry" chat color is your own color; the others are their '
+        'own', () {
+      for (final scheme in bootCampSchemes) {
         final c = GumdropColors.forScheme(scheme);
         expect(chatCandyAccent(c, ChatCandy.cherry), c.you);
+        expect(chatCandyAccent(c, ChatCandy.grape).face, CandyFaces.grape);
       }
     });
   });
 
   group('in the app', () {
-    testWidgets('the stencil eyebrow over the team name is muted', (
-      tester,
-    ) async {
+    testWidgets('the eyebrow over the team name is a mustard tag in ink, '
+        'never red (#85)', (tester) async {
       // A name short enough for one line in the test font's wide letters,
       // so the eyebrow shows (#13).
       await pumpApp(
@@ -166,8 +168,16 @@ void main() {
         memberships: [testMembership('a', 'coach')],
       );
       final c = GumdropColors.forScheme(TeamScheme.dark);
-      expect(HeaderEyebrow.style(c).color, c.textMutedOnPage);
-      expect(_textColor(tester, 'TEAM CHAT'), c.textMutedOnPage);
+      expect(_textColor(tester, 'TEAM CHAT'), c.ink);
+      final tag = tester.widget<DecoratedBox>(
+        find
+            .ancestor(
+              of: find.text('TEAM CHAT'),
+              matching: find.byType(DecoratedBox),
+            )
+            .first,
+      );
+      expect((tag.decoration as BoxDecoration).color, c.roles.palette.mustard);
     });
 
     testWidgets('the pin in the chat is lemon', (tester) async {
@@ -218,7 +228,7 @@ void main() {
       expect(_textColor(tester, '7'), c.textOnPage);
     });
 
-    testWidgets('an unanswered card has one mark: a coral dot by the name, '
+    testWidgets('an unanswered card has one mark: a dot by the name, '
         "and the count's own gray for who hasn't answered", (tester) async {
       await pumpSchedule(tester, scheme: TeamScheme.dark);
       final c = GumdropColors.forScheme(TeamScheme.dark).card;
@@ -240,7 +250,7 @@ void main() {
       noColor(span);
       expect(span.style?.color, c.textMuted);
       // The dot by Noah's name where he hasn't answered (not on the game,
-      // where he has), coral; and nothing in the warning red.
+      // where he has), in your own color; and nothing in the warning red.
       final dots = [
         for (final e in find.text('Noah').evaluate())
           ..._filled(
@@ -250,14 +260,14 @@ void main() {
                   matching: find.byType(Stack),
                 )
                 .first,
-            CandyFaces.coral,
+            GumdropColors.forScheme(TeamScheme.dark).you.face,
             tester,
           ),
       ];
       expect(dots, isNotEmpty);
       expect(dots.map((d) => d.shape), everyElement(BoxShape.circle));
       final schedule = find.byType(Scaffold).first;
-      expect(_filled(schedule, CandyFaces.cherry, tester), isEmpty);
+      expect(_filled(schedule, c.cherry.face, tester), isEmpty);
     });
   });
 }

@@ -4,6 +4,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/services/time_zones.dart';
+import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/polls/domain/poll.dart';
@@ -136,7 +137,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
         if (!didPop) unawaited(_leave());
       },
       child: Scaffold(
-        appBar: AppBar(
+        appBar: CampAppBar(
           leading: IconButton(
             tooltip: l10n.cancel,
             icon: const Icon(AppIcons.close),

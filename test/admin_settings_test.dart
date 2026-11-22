@@ -1,5 +1,5 @@
 import 'package:battleplan/core/constants.g.dart';
-import 'package:battleplan/core/theme_override.dart';
+import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/groups.dart';
@@ -281,7 +281,8 @@ void main() {
     testWidgets('Chat look opens its page, going back to Admin settings, '
         'and a pick there saves', (tester) async {
       final groups = await open(tester);
-      expect(find.text('Cherry, plain background'), findsOneWidget);
+      // The first color is your own balloon's, the theme's (#85).
+      expect(find.text('Theme color, plain background'), findsOneWidget);
       final handle = tester.ensureSemantics();
       await tester.tap(find.text('Chat look'));
       await tester.pumpAndSettle();
@@ -307,15 +308,15 @@ void main() {
       await tester.tap(find.text('Team color scheme'));
       await tester.pumpAndSettle();
       expect(path(tester), '/g/a/settings/color-scheme');
-      await tester.tap(find.text('Navy'));
+      await tester.tap(find.text('Army green'));
       await tester.pumpAndSettle();
-      expect(groups.updates, contains('colorScheme navy'));
-      Navigator.of(tester.element(find.text('Navy'))).pop();
+      expect(groups.updates, contains('colorScheme army'));
+      Navigator.of(tester.element(find.text('Army green'))).pop();
       await tester.pumpAndSettle();
       expect(
         find.descendant(
           of: find.widgetWithText(SettingsRow, 'Team color scheme'),
-          matching: find.text('Navy'),
+          matching: find.text('Army green'),
         ),
         findsOneWidget,
       );
@@ -348,9 +349,9 @@ void main() {
     });
   });
 
-  testWidgets('reads well: 48 px targets, contrast in all five schemes, and '
+  testWidgets('reads well: 48 px targets, contrast in all three schemes, and '
       '200% text', (tester) async {
-    for (final scheme in builtInSchemes) {
+    for (final scheme in bootCampSchemes) {
       await scenes.pumpTeam(
         tester,
         scheme: scheme,

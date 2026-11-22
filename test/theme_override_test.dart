@@ -1,7 +1,8 @@
-// The theme editor's colors (#82) as the app reads and applies them:
-// config/app.themes parsed, saved slots shown only when a theme is in
-// them, a theme's colors over its base's (with its marks following its
-// "you" color), and the readability check the editor saves by.
+// The theme editor's colors (#82) as the app reads them: config/app.themes
+// parsed, a theme's colors over its base's for the editor's preview, and
+// the readability check the editor saves by. Since Boot Camp Mix (#85) the
+// editor is hidden and no theme is drawn: the three schemes are drawn as
+// they ship, and a pick of a saved theme reads as Light or Black.
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_theme.dart';
 import 'package:battleplan/core/design/color_math.dart';
@@ -100,9 +101,9 @@ void main() {
     });
   });
 
-  group('saved slots', () {
-    test('twelve, after the built-in schemes, and shown only with a theme in '
-        'them', () {
+  group('saved slots (#85: no longer offered)', () {
+    test('twelve, after the built-in schemes, and a pick of one is still a '
+        'stored scheme', () {
       expect(customSchemes, hasLength(12));
       expect(builtInSchemes.any((s) => s.isCustom), isFalse);
       expect(TeamScheme.values, [...builtInSchemes, ...customSchemes]);
@@ -119,28 +120,16 @@ void main() {
       expect(usableScheme(null, themes), isNull);
     });
 
-    test('the pickers offer the built-in schemes, then the saved themes', () {
-      expect(ThemeCatalog.available, builtInSchemes);
-      final before = ThemeCatalog.version;
+    test('the pickers offer the three, whatever is saved', () {
+      expect(ThemeCatalog.available, bootCampSchemes);
       ThemeCatalog.install(const {
         TeamScheme.custom4: ThemeOverride(name: 'D', base: TeamScheme.light),
         TeamScheme.custom1: ThemeOverride(name: 'A', base: TeamScheme.dark),
       });
-      expect(ThemeCatalog.version, before + 1);
-      expect(ThemeCatalog.available, [
-        ...builtInSchemes,
-        TeamScheme.custom1,
-        TeamScheme.custom4,
-      ]);
-      // The same again changes nothing.
-      ThemeCatalog.install(const {
-        TeamScheme.custom4: ThemeOverride(name: 'D', base: TeamScheme.light),
-        TeamScheme.custom1: ThemeOverride(name: 'A', base: TeamScheme.dark),
-      });
-      expect(ThemeCatalog.version, before + 1);
+      expect(ThemeCatalog.available, bootCampSchemes);
     });
 
-    test("a saved theme's name and lightness come from it and its base", () {
+    test('a saved theme reads as Light or Black, by its page', () {
       final l10n = AppLocalizationsEn();
       ThemeCatalog.install(const {
         TeamScheme.custom1: ThemeOverride(
@@ -152,30 +141,49 @@ void main() {
           base: TeamScheme.dark,
           page: 0xFFFFFFFF,
         ),
+        TeamScheme.custom3: ThemeOverride(
+          name: 'Late',
+          base: TeamScheme.skyblue,
+          page: 0xFF101010,
+        ),
       });
-      expect(TeamScheme.custom1.label(l10n), 'Night');
-      expect(TeamScheme.custom1.shortLabel(l10n), 'Based on Light');
+      // Its base's page, when it sets none.
+      expect(TeamScheme.custom1.look, TeamScheme.light);
+      expect(TeamScheme.custom1.label(l10n), 'Light');
       expect(TeamScheme.custom1.isDark, isFalse);
       // A white page reads as light, whatever it started from.
-      expect(TeamScheme.custom2.isDark, isFalse);
-      // A slot with nothing in it.
-      expect(TeamScheme.custom3.label(l10n), 'Saved theme');
+      expect(TeamScheme.custom2.look, TeamScheme.light);
+      // A dark one as Black.
+      expect(TeamScheme.custom3.look, TeamScheme.dark);
+      expect(TeamScheme.custom3.label(l10n), 'Black');
+      // A slot with nothing in it: the default, Black.
+      expect(TeamScheme.custom4.look, TeamScheme.dark);
     });
   });
 
   group("a theme's colors", () {
-    test('over a built-in scheme, change only what they set', () {
+    test('are no longer drawn (#85): the schemes are as they ship', () {
       ThemeCatalog.install(const {
         TeamScheme.army: ThemeOverride(page: 0xFF242713, card: 0xFF33361F),
       });
-      final r = SchemeRoles.of(TeamScheme.army);
+      expect(SchemeRoles.of(TeamScheme.army), same(SchemeRoles.army));
+      expect(
+        AppTheme.of(TeamScheme.army).extension<GumdropColors>()!.page,
+        SchemeRoles.army.page,
+      );
+    });
+
+    test("over a built-in scheme, change only what they set (the editor's "
+        'preview)', () {
+      final r = SchemeRoles.themed(
+        TeamScheme.army,
+        const ThemeOverride(page: 0xFF242713, card: 0xFF33361F),
+      );
       expect(r.page, const Color(0xFF242713));
       expect(r.card, const Color(0xFF33361F));
-      expect(r.you, CandyFaces.coral);
+      expect(r.you, SchemeRoles.army.you);
       expect(r.text, SchemeRoles.army.text);
       expect(r.tabbar, SchemeRoles.army.tabbar);
-      // Untouched schemes stay as they ship.
-      expect(SchemeRoles.of(TeamScheme.navy).page, SchemeRoles.navy.page);
     });
 
     test("a saved theme starts from its base; a pop-up that was the card's "
@@ -188,11 +196,6 @@ void main() {
       expect(themed.card, const Color(0xFF202A44));
       expect(SchemeRoles.dark.popup, SchemeRoles.dark.card);
       expect(themed.popup, const Color(0xFF202A44));
-      // Candy Pop's pop-ups are their own blue, and stay.
-      final candy = SchemeRoles.candypop.withOverrides(
-        card: const Color(0xFFFFF5E0),
-      );
-      expect(candy.popup, SchemeRoles.candypop.popup);
       // An empty slot is the default scheme's.
       expect(
         SchemeRoles.themed(TeamScheme.custom9, null).page,
@@ -200,190 +203,8 @@ void main() {
       );
     });
 
-    test('a new "you" color brings coral marks and lips along, readable, '
-        "and leaves a scheme's own alone", () {
-      const blue = Color(0xFF79BBFF);
-      for (final scheme in builtInSchemes) {
-        final base = SchemeRoles.builtIn(scheme);
-        final r = base.withOverrides(you: blue);
-        expect(r.you, blue);
-        final coralMark =
-            ColorMath.hueDistance(
-                  ColorMath.lch(base.accentMark).h,
-                  ColorMath.lch(CandyFaces.coral).h,
-                ) <
-                20 &&
-            ColorMath.lch(base.accentMark).c > 30;
-        if (coralMark) {
-          expect(r.accentMark, isNot(base.accentMark), reason: '$scheme');
-          expect(
-            ColorMath.contrast(r.accentMark, r.page),
-            greaterThanOrEqualTo(3),
-            reason: '$scheme',
-          );
-        } else {
-          expect(r.accentMark, base.accentMark, reason: '$scheme');
-        }
-        // A dark ink lip stays; a coral one takes a deeper blue. Coral's
-        // own lip, for the "Cherry" people pick, stays as it ships.
-        expect(r.candyLipCoral, base.candyLipCoral, reason: '$scheme');
-        if (ColorMath.luminance(base.candyLipCoral) < 0.03) {
-          expect(r.youLip, base.candyLipCoral, reason: '$scheme');
-        } else {
-          expect(
-            ColorMath.hueDistance(
-              ColorMath.lch(r.youLip).h,
-              ColorMath.lch(blue).h,
-            ),
-            lessThan(25),
-            reason: '$scheme',
-          );
-        }
-        // "You" text reads on the page and on a card.
-        ThemeCatalog.install({scheme: const ThemeOverride(accent: 0xFF79BBFF)});
-        for (final onCard in [false, true]) {
-          final c = GumdropColors.forScheme(scheme, onCard: onCard);
-          expect(c.you.face, blue);
-          expect(
-            ColorMath.contrast(c.you.text, onCard ? r.card : r.page),
-            greaterThanOrEqualTo(4.5),
-            reason: '$scheme on card $onCard',
-          );
-        }
-      }
-    });
-
-    test('the same "you" color as coral changes nothing', () {
-      expect(
-        SchemeRoles.army.withOverrides(you: CandyFaces.coral).accentMark,
-        SchemeRoles.army.accentMark,
-      );
-    });
-
-    test("the app's theme is rebuilt when the themes change", () {
-      final before = AppTheme.of(TeamScheme.army);
-      expect(AppTheme.of(TeamScheme.army), same(before));
-      ThemeCatalog.install(const {
-        TeamScheme.army: ThemeOverride(accent: 0xFF79BBFF),
-      });
-      final after = AppTheme.of(TeamScheme.army);
-      expect(after, isNot(same(before)));
-      expect(
-        after.extension<GumdropColors>()!.you.face,
-        const Color(0xFF79BBFF),
-      );
-    });
-  });
-
-  group('readability (what the editor saves)', () {
-    test('every built-in scheme passes as it ships', () {
-      for (final scheme in builtInSchemes) {
-        final r = SchemeRoles.builtIn(scheme);
-        expect(themeProblems(r, r), isEmpty, reason: '$scheme');
-      }
-    });
-
-    test('flags a background, card or "you" color it can\'t read on', () {
-      const army = SchemeRoles.army;
-      expect(themeProblems(army, army.withOverrides(page: army.text)), {
-        ThemeProblem.textOnPage,
-      });
-      expect(themeProblems(army, army.withOverrides(card: army.cardText)), {
-        ThemeProblem.textOnCard,
-      });
-      // The "you" color nearly the page's.
-      expect(themeProblems(army, army.withOverrides(you: army.page)), {
-        ThemeProblem.accentHidden,
-      });
-      // Only nearly the same is refused (owner's request 2026-11-21: "I only
-      // want to block colors that are nearly identical"): near black buttons
-      // on the olive, mid gray buttons, dark text where the tab bar stays
-      // olive, and a yellow page all go, however they read.
-      for (final themed in [
-        army.withOverrides(you: const Color(0xFF101010)),
-        army.withOverrides(you: const Color(0xFF808080)),
-        army.withOverrides(
-          page: const Color(0xFFFBF5E6),
-          card: const Color(0xFFFFFFFF),
-          text: const Color(0xFF1A1A18),
-        ),
-        army.withOverrides(page: const Color(0xFFFDD023)),
-        SchemeRoles.light.withOverrides(page: const Color(0xFFF8D84A)),
-      ]) {
-        expect(themeProblems(army, themed), isEmpty);
-      }
-      // Text nearly the tab bar's color, which keeps Army green's.
-      expect(
-        themeProblems(
-          army,
-          army.withOverrides(
-            page: const Color(0xFFFFFFFF),
-            text: const Color(0xFF3D4124),
-          ),
-        ),
-        contains(ThemeProblem.textOnBars),
-      );
-      // Text the color of the page: nearly the same everywhere it's written.
-      expect(themeProblems(army, army.withOverrides(text: army.page)), {
-        ThemeProblem.textOnPage,
-        ThemeProblem.textOnBars,
-        ThemeProblem.textOnCard,
-      });
-      expect(
-        themeProblems(
-          army,
-          army.withOverrides(
-            page: const Color(0xFF1B1D10),
-            card: const Color(0xFF2E3120),
-            you: CandyFaces.lemon,
-          ),
-        ),
-        isEmpty,
-      );
-    });
-  });
-
-  group('text colors (#83)', () {
-    test("the card's text follows the text but in Candy Pop, and muted text, "
-        'lines and rings in the text color follow too, readable', () {
-      const white = Color(0xFFFFFFFF);
-      final army = SchemeRoles.army.withOverrides(text: white);
-      expect(army.text, white);
-      expect(army.cardText, white);
-      // Army green's muted text and outlines are its cream at an opacity.
-      expect(
-        army.pageMuted,
-        white.withValues(alpha: SchemeRoles.army.pageMuted.a),
-      );
-      expect(army.outline, white.withValues(alpha: SchemeRoles.army.outline.a));
-      expect(
-        army.cardOutline,
-        white.withValues(alpha: SchemeRoles.army.cardOutline.a),
-      );
-      // Candy Pop's navy on white cards stays.
-      final candy = SchemeRoles.candypop.withOverrides(
-        text: const Color(0xFFFDD023),
-      );
-      expect(candy.cardText, SchemeRoles.candypop.cardText);
-      expect(candy.cardMuted, SchemeRoles.candypop.cardMuted);
-      // Its own card text, set.
-      expect(
-        SchemeRoles.candypop
-            .withOverrides(cardText: const Color(0xFF1238A8))
-            .cardText,
-        const Color(0xFF1238A8),
-      );
-      // Navy's muted text is its own blue-gray, mixed again with gold.
-      final navy = SchemeRoles.navy.withOverrides(
-        text: const Color(0xFFFDD023),
-      );
-      expect(contrastOn(navy.pageMuted, navy.page), greaterThanOrEqualTo(4.5));
-      expect(navy.pageMuted, isNot(SchemeRoles.navy.pageMuted));
-    });
-
     test('colored text and marks on a new page or card are made to read, '
         'their hues kept', () {
-      // A lighter olive than Army green's: its pale pink red would fade.
       const page = Color(0xFF8A9060);
       const card = Color(0xFF9DA374);
       final r = SchemeRoles.army.withOverrides(
@@ -412,7 +233,6 @@ void main() {
       ]) {
         expect(contrastOn(fg, card), greaterThanOrEqualTo(4.5), reason: what);
       }
-      expect(contrastOn(r.accentMark, page), greaterThanOrEqualTo(3));
       expect(contrastOn(r.notGoingIcon, page), greaterThanOrEqualTo(3));
       // The red stays red.
       expect(
@@ -424,47 +244,57 @@ void main() {
       );
     });
 
-    test('maroon "you" takes white writing, everywhere it writes', () {
-      const maroon = Color(0xFF7F1D1D);
-      ThemeCatalog.install(const {
-        TeamScheme.light: ThemeOverride(accent: 0xFF7F1D1D),
-      });
-      final r = SchemeRoles.of(TeamScheme.light);
-      expect(r.youInk, const Color(0xFFFFFFFF));
-      expect(themeProblems(SchemeRoles.light, r), isEmpty);
-      final c = GumdropColors.forScheme(TeamScheme.light);
-      expect(c.you.face, maroon);
-      expect(c.inkOn(c.you), const Color(0xFFFFFFFF));
-      // The rest of the candies keep the ink.
-      expect(c.inkOn(c.mint), c.ink);
-      final theme = AppTheme.of(TeamScheme.light);
-      expect(
-        theme.floatingActionButtonTheme.foregroundColor,
-        const Color(0xFFFFFFFF),
+    test('maroon "you" takes white writing', () {
+      final r = SchemeRoles.themed(
+        TeamScheme.light,
+        const ThemeOverride(accent: 0xFF7F1D1D),
       );
-      expect(theme.badgeTheme.textColor, const Color(0xFFFFFFFF));
-      expect(theme.colorScheme.onPrimaryContainer, const Color(0xFFFFFFFF));
-    });
-
-    test('"Cherry", for an icon, stays coral under a theme\'s own "you"', () {
-      ThemeCatalog.install(const {
-        TeamScheme.army: ThemeOverride(accent: 0xFF79BBFF),
-      });
-      final c = GumdropColors.forScheme(TeamScheme.army);
-      expect(c.you.face, const Color(0xFF79BBFF));
-      expect(c.coral.face, CandyFaces.coral);
-      expect(c.coral.lip, SchemeRoles.army.candyLipCoral);
+      expect(r.you, const Color(0xFF7F1D1D));
+      expect(r.youInk, const Color(0xFFFFFFFF));
     });
   });
 
-  group('hard-to-read themes are never drawn (#83)', () {
+  group('readability (what the editor saves)', () {
+    test('every scheme passes as it ships', () {
+      for (final scheme in TeamScheme.values) {
+        final r = SchemeRoles.builtIn(scheme);
+        expect(themeProblems(r, r), isEmpty, reason: '$scheme');
+      }
+    });
+
+    test('flags only colors nearly the same as what they sit on', () {
+      final army = SchemeRoles.army;
+      expect(themeProblems(army, army.withOverrides(page: army.text)), {
+        ThemeProblem.textOnPage,
+      });
+      expect(themeProblems(army, army.withOverrides(card: army.cardText)), {
+        ThemeProblem.textOnCard,
+      });
+      // The "you" color nearly the page's.
+      expect(themeProblems(army, army.withOverrides(you: army.page)), {
+        ThemeProblem.accentHidden,
+      });
+      // Only nearly the same is refused (owner's request 2026-11-21: "I only
+      // want to block colors that are nearly identical"): pale blue and pink
+      // pages and mid gray buttons go, however they read.
+      for (final themed in [
+        army.withOverrides(you: const Color(0xFF808080)),
+        army.withOverrides(page: const Color(0xFFBCD9F5)),
+        SchemeRoles.light.withOverrides(page: const Color(0xFFFFE4E1)),
+      ]) {
+        expect(themeProblems(army, themed), isEmpty);
+      }
+    });
+  });
+
+  group('hard-to-read themes are left out (#83)', () {
     test('readableThemes drops them; the rest stay', () {
       const bad = ThemeOverride(page: 0xFFF4EAD0);
-      const good = ThemeOverride(accent: 0xFFFDD023);
+      const good = ThemeOverride(accent: 0xFF79BBFF);
       const badSaved = ThemeOverride(
         name: 'Fog',
         base: TeamScheme.light,
-        text: 0xFFFBF5E6,
+        text: 0xFFF2EBE0,
       );
       final shown = readableThemes(const {
         TeamScheme.army: bad,
@@ -474,25 +304,6 @@ void main() {
       expect(shown, {TeamScheme.navy: good});
       expect(themeReads(TeamScheme.army, bad), isFalse);
       expect(themeReads(TeamScheme.custom1, badSaved), isFalse);
-    });
-
-    test("the Super Admin Panel's theme is a scheme as it ships", () {
-      ThemeCatalog.install(const {
-        TeamScheme.army: ThemeOverride(page: 0xFF101010, accent: 0xFF79BBFF),
-      });
-      final shipped = AppTheme.of(TeamScheme.army, shipped: true);
-      final g = shipped.extension<GumdropColors>()!;
-      expect(g.shipped, isTrue);
-      expect(g.page, SchemeRoles.army.page);
-      expect(g.you.face, CandyFaces.coral);
-      // Its card context is too.
-      expect(g.card.shipped, isTrue);
-      expect(g.card.surface, SchemeRoles.army.card);
-      // The app's own takes the theme.
-      expect(
-        AppTheme.of(TeamScheme.army).extension<GumdropColors>()!.page,
-        const Color(0xFF101010),
-      );
     });
   });
 }

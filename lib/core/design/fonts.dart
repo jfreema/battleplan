@@ -2,29 +2,33 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 /// The bundled font families (pubspec `fonts`), by role (SPEC §7.3).
+///
+/// Boot Camp Mix (#85, owner's pick 2026-11-22): the stencil for every
+/// title, label, button, tab and count, and Comic Neue for reading text.
+/// The stencil draws small letters as capitals (tools/make_fonts.sh), so
+/// a label is in capitals however its string is written.
 abstract final class AppFonts {
+  /// The stencil: Big Shoulders Stencil Display, Black.
+  static const String stencil = 'Battleplan Stencil';
+
   /// Headings: screen titles, the team name, section headings.
-  static const String display = 'Lilita One';
+  static const String display = stencil;
 
   /// Buttons, labels, tabs, chips, and people's names.
-  static const String label = 'Fredoka';
+  static const String label = stencil;
 
-  /// Body text, messages, and inputs. Cut without Cyrillic, which draws in
-  /// the fallback fonts (tools/cut_fonts.sh).
-  static const String body = 'Nunito';
+  /// Body text, messages, and inputs: Comic Neue Bold.
+  static const String body = 'Comic Neue';
 
-  /// The stencil eyebrows over the team's name and on the event screen:
-  /// capitals only, never under 12 px. Cut to A–Z, the space and "·"
-  /// (tools/cut_fonts.sh).
-  static const String sticker = 'Black Ops One';
+  /// The eyebrows over the team's name and on the event screen.
+  static const String sticker = stencil;
 }
 
 /// Each bundled family and where its license ships (pubspec `assets`).
 const Map<String, String> fontLicenseAssets = {
-  AppFonts.display: 'assets/fonts/lilita_one/OFL.txt',
-  AppFonts.label: 'assets/fonts/fredoka/OFL.txt',
-  AppFonts.body: 'assets/fonts/nunito/OFL.txt',
-  AppFonts.sticker: 'assets/fonts/black_ops_one/OFL.txt',
+  'Battleplan Stencil (Big Shoulders Stencil)':
+      'assets/fonts/battleplan_stencil/OFL.txt',
+  AppFonts.body: 'assets/fonts/comic_neue/OFL.txt',
 };
 
 /// Lists each bundled font's SIL Open Font License under Settings › About ›

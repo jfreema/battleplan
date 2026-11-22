@@ -11,6 +11,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/links.dart';
 import 'package:battleplan/core/open_sheets.dart';
 import 'package:battleplan/core/version.dart';
+import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/core/widgets/panel_page.dart';
@@ -330,7 +331,7 @@ GoRouter router(Ref ref) {
       return null;
     },
     errorBuilder: (context, state) => Scaffold(
-      appBar: AppBar(),
+      appBar: const CampAppBar(),
       body: EmptyState(
         icon: AppIcons.error,
         message: AppLocalizations.of(context).notFoundTitle,
@@ -619,27 +620,12 @@ GoRouter router(Ref ref) {
             builder: (_, _) =>
                 _AdminPanel(() => admin_panel.PlatformSettingsScreen()),
           ),
-          // The theme editor (#82): the list, then a theme by its scheme's
-          // value, or `new`.
+          // The theme editor's addresses (#82), from before Boot Camp Mix
+          // took it out (#85): to the dashboard.
           GoRoute(
             path: 'themes',
-            builder: (_, _) =>
-                _AdminPanel(() => admin_panel.AdminThemesScreen()),
-            routes: [
-              GoRoute(
-                path: ':scheme',
-                builder: (_, state) {
-                  final id = state.pathParameters['scheme']!;
-                  final scheme = TeamScheme.tryParse(id);
-                  return _AdminPanel(
-                    () => admin_panel.AdminThemeEditorScreen(
-                      scheme: scheme,
-                      missing: scheme == null && id != 'new',
-                    ),
-                  );
-                },
-              ),
-            ],
+            redirect: (_, _) => '/admin',
+            routes: [GoRoute(path: ':scheme', redirect: (_, _) => '/admin')],
           ),
         ],
       ),
@@ -1302,7 +1288,7 @@ class _AdminPanelState extends State<_AdminPanel> {
         if (_AdminPanel._loaded) return widget.page();
         final l10n = AppLocalizations.of(context);
         return Scaffold(
-          appBar: AppBar(title: Text(l10n.adminPanel)),
+          appBar: CampAppBar(title: Text(l10n.adminPanel)),
           body: _error == null
               ? const Center(child: CircularProgressIndicator())
               : LoadError(

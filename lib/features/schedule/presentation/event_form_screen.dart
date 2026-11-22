@@ -9,6 +9,7 @@ import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/services/time_zone_names.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
+import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
@@ -66,11 +67,11 @@ class EventFormRoute extends ConsumerWidget {
         (source == null || source.hasValue) &&
         (series == null || series.hasValue);
     if (!ready) {
-      return Scaffold(appBar: AppBar(), body: const SkeletonList());
+      return const Scaffold(appBar: CampAppBar(), body: SkeletonList());
     }
     if (sourceId != null && source!.value == null) {
       return Scaffold(
-        appBar: AppBar(),
+        appBar: const CampAppBar(),
         body: Center(child: Text(l10n.eventNotFound)),
       );
     }
@@ -526,7 +527,7 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
         if (!didPop) unawaited(_leave());
       },
       child: Scaffold(
-        appBar: AppBar(
+        appBar: CampAppBar(
           leading: IconButton(
             tooltip: l10n.cancel,
             icon: const Icon(AppIcons.close),

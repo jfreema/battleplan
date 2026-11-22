@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
@@ -177,7 +178,7 @@ class _CropPhotoScreenState extends State<CropPhotoScreen> {
     final l10n = AppLocalizations.of(context);
     final image = _image;
     return Scaffold(
-      appBar: AppBar(
+      appBar: CampAppBar(
         title: Text(l10n.cropPhotoTitle),
         actions: [
           TextButton(

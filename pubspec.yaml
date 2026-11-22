@@ -75,48 +75,31 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   generate: true
-  # Open Field's fonts, bundled so text looks the same on every platform and
-  # offline (SPEC §7.3, ARCH §5.5): Lilita One for headings, Fredoka for
-  # buttons, labels, and names, Nunito for body text and messages, and
-  # Black Ops One for the stencil eyebrow. Static instances from Google
-  # Fonts; each is OFL 1.1, whose text
-  # ships with it and shows under Licenses. Black Ops One and Nunito are cut
-  # to the letters the app draws in them (tools/cut_fonts.sh).
+  # Boot Camp Mix's fonts, bundled so text looks the same on every platform
+  # and offline (SPEC §7.3, ARCH §5.5): Battleplan Stencil (Big Shoulders
+  # Stencil Display Black, its small letters drawn as capitals) for titles,
+  # labels, buttons, tabs and counts, and Comic Neue for reading text. From
+  # Google Fonts; each is OFL 1.1, whose text ships with it and shows under
+  # Licenses (tools/make_fonts.sh).
   assets:
-    - assets/fonts/lilita_one/OFL.txt
-    - assets/fonts/fredoka/OFL.txt
-    - assets/fonts/nunito/OFL.txt
-    - assets/fonts/black_ops_one/OFL.txt
+    - assets/fonts/battleplan_stencil/OFL.txt
+    - assets/fonts/comic_neue/OFL.txt
     # Jared's Venmo card, for Buy Jared a coffee (TEAM-5, About).
     - assets/about/venmo.png
     # Apple's App Store badge, for the web app's invite page (INV-7).
     - assets/store/app-store-badge.png
   fonts:
-    - family: Lilita One
+    # Boot Camp Mix (#85; tools/make_fonts.sh builds both): the stencil for
+    # titles, labels, buttons, tabs and counts, always in capitals, and
+    # Comic Neue for reading text.
+    - family: Battleplan Stencil
       fonts:
-        - asset: assets/fonts/lilita_one/LilitaOne-Regular.ttf
-    - family: Fredoka
-      fonts:
-        - asset: assets/fonts/fredoka/Fredoka-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/fredoka/Fredoka-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/fredoka/Fredoka-Bold.ttf
-          weight: 700
-    - family: Nunito
-      fonts:
-        - asset: assets/fonts/nunito/Nunito-Regular.ttf
-        - asset: assets/fonts/nunito/Nunito-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/nunito/Nunito-Bold.ttf
-          weight: 700
-        - asset: assets/fonts/nunito/Nunito-ExtraBold.ttf
-          weight: 800
-        - asset: assets/fonts/nunito/Nunito-Black.ttf
+        - asset: assets/fonts/battleplan_stencil/BattleplanStencil-Black.ttf
           weight: 900
-    - family: Black Ops One
+    - family: Comic Neue
       fonts:
-        - asset: assets/fonts/black_ops_one/BlackOpsOne-Regular.ttf
+        - asset: assets/fonts/comic_neue/ComicNeue-Bold.ttf
+          weight: 700
 
 # App icons and splash screens from the Stencil Crest on Army green (SPEC
 # §7.1). Regenerate with tools/brand_icons.sh.

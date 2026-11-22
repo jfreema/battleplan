@@ -68,20 +68,22 @@ class ColorSchemeScreen extends ConsumerWidget {
     }
     final group = id == null ? null : ref.watch(groupProvider(id)).value;
     final isGroup = group?.isGroup ?? false;
-    // The built-in schemes and the saved themes (#82); a saved theme that
-    // isn't there counts as none.
+    // Each pick as the Boot Camp Mix scheme it's drawn in (#85), so a pick
+    // the app no longer offers checks its closest; a saved theme that isn't
+    // there counts as none.
     final themes = ref.watch(themeOverridesProvider);
     final mine =
-        usableScheme(ref.watch(defaultSchemeControllerProvider), themes) ??
-        defaultTeamScheme;
-    final teamDefault = usableScheme(group?.colorScheme, themes);
+        (usableScheme(ref.watch(defaultSchemeControllerProvider), themes) ??
+                defaultTeamScheme)
+            .look;
+    final teamDefault = usableScheme(group?.colorScheme, themes)?.look;
     // My explicit pick for this team, or null when I follow the default.
     final pick = id == null
         ? mine
         : usableScheme(
             ref.watch(myMembershipProvider(id))?.colorScheme,
             themes,
-          );
+          )?.look;
     final title = id == null ? l10n.defaultColorScheme : l10n.colorScheme;
     final lede = id == null
         ? l10n.defaultColorSchemeLede

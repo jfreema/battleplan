@@ -79,8 +79,9 @@ class TeamSchemeScreen extends ConsumerWidget {
     final group = ref.watch(groupProvider(groupId)).value;
     final themes = ref.watch(themeOverridesProvider);
     final mine =
-        usableScheme(ref.watch(defaultSchemeControllerProvider), themes) ??
-        defaultTeamScheme;
+        (usableScheme(ref.watch(defaultSchemeControllerProvider), themes) ??
+                defaultTeamScheme)
+            .look;
 
     void failed(AppFailure e) {
       if (context.mounted) {
@@ -142,7 +143,7 @@ class TeamSchemeScreen extends ConsumerWidget {
           : _page(
               TeamSchemeSection(
                 group: group.copyWith(
-                  colorScheme: usableScheme(group.colorScheme, themes),
+                  colorScheme: usableScheme(group.colorScheme, themes)?.look,
                 ),
                 mine: mine,
                 schemes: ThemeCatalog.available,

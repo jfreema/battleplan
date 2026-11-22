@@ -6,6 +6,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
@@ -51,7 +52,7 @@ class DirectChatScreen extends ConsumerWidget {
     // One I'm not in, or that's gone, reads as null.
     if (group.hasValue && (g == null || !g.isDirect)) {
       return Scaffold(
-        appBar: AppBar(leading: upButton(context)),
+        appBar: CampAppBar(leading: upButton(context)),
         body: EmptyState(icon: AppIcons.error, message: l10n.notFoundTitle),
       );
     }
@@ -94,7 +95,7 @@ class DirectChatScreen extends ConsumerWidget {
     }
 
     final scaffold = Scaffold(
-      appBar: AppBar(
+      appBar: CampAppBar(
         // Back to Messages, even with nothing under the conversation, so
         // the avatar never sits on the edge.
         leading: upButton(context),

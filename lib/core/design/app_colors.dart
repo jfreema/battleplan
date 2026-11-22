@@ -47,8 +47,8 @@ class AppColors extends ThemeExtension<AppColors> {
       game: text(g.tangerine),
       practice: text(g.grape),
       meeting: text(g.blueRaspberry),
-      social: text(g.mint),
-      otherEvent: text(g.bubblegum),
+      social: text(g.bubblegum),
+      otherEvent: text(g.lemon),
     );
   }
 

@@ -136,27 +136,34 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
       text: onCard ? cardText : pageText,
       ink: ink,
     );
-    // Coral, as the scheme ships it: the "Cherry" a person picks for their
-    // icon or their bubbles, which stays coral under a theme's own "you".
+    final p = r.palette;
+    // The lettering on a colored block (#85: "Lettering on any bright block
+    // is always ink"): the ink, or black where the ink doesn't read 4.5:1
+    // on it (the reds, Light's blue and purple), or white where neither
+    // does. Null keeps the scheme's ink.
+    Color? letteringOn(Color face) =>
+        ColorMath.contrast(r.candyInk, face) >= 4.5
+        ? null
+        : ColorMath.onColor(face, dark: const Color(0xFF000000));
+    // Red, as the scheme ships it: the "Cherry" a person picks for their
+    // icon, which stays red whatever "you" is (#83, #85).
     final coral = candy(
-      CandyFaces.coral,
+      p.red,
       r.candyLipCoral,
       r.accentText,
       r.cardAccentText,
+      ink: letteringOn(p.red),
     );
-    // "You": coral, or the color a theme set for it (#82), whose text is
-    // its own color made to read on the page or card (coral's text shades
-    // are the warning red's too, so they stay), with its own lip, and white
-    // writing on it where the ink doesn't read (#83).
-    final you = r.you == CandyFaces.coral
-        ? coral
-        : candy(
-            r.you,
-            r.youLip,
-            ColorMath.readable(r.you, [r.page]),
-            ColorMath.readable(r.you, [r.card]),
-            ink: r.youInk == r.candyInk ? null : r.youInk,
-          );
+    // "You": your own balloon's color (#85: mustard, or light blue on
+    // Black), its text that color made to read on the page or card, with
+    // ink writing on it (white where the ink doesn't read, #83).
+    final you = candy(
+      r.you,
+      r.youLip,
+      ColorMath.readable(r.you, [r.page]),
+      ColorMath.readable(r.you, [r.card]),
+      ink: r.youInk == r.candyInk ? null : r.youInk,
+    );
     return GumdropColors(
       scheme: scheme,
       roles: r,
@@ -168,17 +175,19 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
       // the deeper blue its white rows read on (#72).
       popup: onCard ? r.card : r.popup,
       surfaceBorder: r.cardRim,
-      surfaceBorderWidth: 2,
-      raisedFace: const Color(0x00000000),
+      // Boot Camp Mix (#85): panels in a 3 px ink outline on a hard shadow,
+      // and push buttons in the panel color, outlined the same.
+      surfaceBorderWidth: 3,
+      raisedFace: r.card,
       raisedBorder: onCard ? r.cardOutline : r.outline,
-      raisedBorderWidth: 2,
+      raisedBorderWidth: 3,
       raisedHighlight: const Color(0x00000000),
-      raisedLip: const Color(0x00000000),
-      well: onCard ? r.cardTrack : r.field,
+      raisedLip: p.shadow,
+      well: r.cardTrack,
       inputFill: onCard ? r.cardField : r.field,
       inputBorder: onCard ? r.cardOutline : r.outline,
-      divider: onCard ? r.cardTrack : r.hairline,
-      switchOffTrack: onCard ? r.cardTrack : r.field,
+      divider: r.hairline,
+      switchOffTrack: r.cardTrack,
       // A card's own text where it isn't the page's (Candy Pop's navy on
       // white, #72).
       textPrimary: onCard ? r.cardText : r.text,
@@ -188,10 +197,12 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
       successOnPage: onCard ? r.cardGoingText : r.goingText,
       ink: r.candyInk,
       headingText: onCard ? r.cardText : r.text,
-      headingShadow: onCard ? const Color(0x00000000) : r.titleDrop,
+      // Headings are plain stencil (#85); the big outlined titles draw
+      // their own stroke and drop (`OutlinedText`).
+      headingShadow: const Color(0x00000000),
       headingTextOnCard: r.cardText,
       headingShadowOnCard: const Color(0x00000000),
-      pageShadow: r.cardRim,
+      pageShadow: p.shadow,
       selectedRingOuter: onCard ? r.cardText : r.text,
       swatchInsetRing: onCard ? r.cardOutline : r.outline,
       badgeRing: onCard ? r.card : r.page,
@@ -206,53 +217,49 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
       notGoingIcon: onCard ? r.cardAccentText : r.notGoingIcon,
       you: you,
       coral: coral,
-      // Its own deeper red, so a warning never reads as "you" (#12). The
-      // text shades are coral's: red text has to be this light to read on
-      // the dark schemes, and coral text is now only the picked scheme's
-      // check.
+      // Warnings: the scheme's red, with black lettering, which reads on
+      // it better than white or the ink.
       cherry: candy(
-        CandyFaces.cherry,
+        p.red,
         r.cherryLip,
         r.accentText,
         r.cardAccentText,
-        ink: CandyFaces.cherryInk,
+        ink: letteringOn(p.red),
       ),
       sticker: you,
-      mint: candy(
-        CandyFaces.mint,
-        r.candyLipMint,
-        r.goingText,
-        r.cardGoingText,
-      ),
-      lemon: candy(
-        CandyFaces.lemon,
-        r.candyLipLemon,
-        r.maybeText,
-        r.cardMaybeText,
-      ),
+      mint: candy(p.green, r.candyLipMint, r.goingText, r.cardGoingText),
+      // Maybe is orange in Boot Camp Mix.
+      lemon: candy(p.orange, r.candyLipLemon, r.maybeText, r.cardMaybeText),
+      // Games are red.
       tangerine: candy(
-        CandyFaces.tangerine,
+        p.red,
         r.candyLipTangerine,
         r.gameText,
         r.typeGame,
+        ink: letteringOn(p.red),
       ),
+      // Practices are blue.
       grape: candy(
-        CandyFaces.grape,
+        p.blue,
         r.grapeLip,
         r.grapePageText,
         r.typePractice,
+        ink: letteringOn(p.blue),
       ),
+      // Social events are purple.
       bubblegum: candy(
-        CandyFaces.bubblegum,
+        p.purple,
         r.bubblegumLip,
         r.bubblegumPageText,
         r.typeOther,
+        ink: letteringOn(p.purple),
       ),
       blueRaspberry: candy(
-        CandyFaces.blueRaspberry,
+        p.blue,
         r.blueRaspberryLip,
         r.blueRaspberryPageText,
         r.blueRaspberryCardText,
+        ink: letteringOn(p.blue),
       ),
     );
   }
@@ -353,13 +360,13 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
   /// Text, icons, and marks on every candy face.
   final Color ink;
 
-  /// Lilita titles.
+  /// stencil titles.
   final Color headingText;
 
-  /// The hard drop under Lilita titles, or transparent for none.
+  /// The hard drop under stencil titles, or transparent for none.
   final Color headingShadow;
 
-  /// Lilita titles inside a card.
+  /// stencil titles inside a card.
   final Color headingTextOnCard;
 
   /// No drop inside a card.
@@ -456,22 +463,32 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
   /// own (white on the warning red).
   Color inkOn(GumdropAccent accent) => accent.ink ?? ink;
 
+  /// Can't go (#85): its picked answer and its count, `CampPalette.cantGo`
+  /// in every scheme, with ink on it, on the warning red's lip; as text,
+  /// the warning red's.
+  GumdropAccent get cantGo => GumdropAccent(
+    face: CampPalette.cantGo,
+    lip: cherry.lip,
+    text: cherry.text,
+  );
+
   /// The card context, as `GumdropSurface` applies it.
   GumdropColors get card =>
       onCard ? this : forScheme(scheme, onCard: true, shipped: shipped);
 
   /// The candy color that marks the event type, by the event type's name
-  /// (game, practice, meeting, social, other): tangerine, grape, blue
-  /// raspberry, mint, and bubblegum.
+  /// (game, practice, meeting, social, other): in Boot Camp Mix (#85) red
+  /// games, blue practices and meetings, purple socials, and orange for
+  /// the rest.
   GumdropAccent eventAccent(String type) => switch (type) {
     'game' => tangerine,
     'practice' => grape,
     'meeting' => blueRaspberry,
-    'social' => mint,
-    _ => bubblegum,
+    'social' => bubblegum,
+    _ => lemon,
   };
 
-  /// The hard text-shadow under a Lilita heading: [steps] copies of [color]
+  /// The hard text-shadow under a stencil heading: [steps] copies of [color]
   /// one pixel further down each, or none when [color] is transparent.
   static List<Shadow> stackedShadow(Color color, int steps) => [
     if (color.a > 0)
