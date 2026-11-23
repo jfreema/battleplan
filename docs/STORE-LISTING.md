@@ -45,12 +45,14 @@ Also new:
 • On a team, RSVPs are for players, each on their own row: parents answer for each of their kids, and adult players answer for themselves
 ```
 
-**What's New in 1.4.5** (ROADMAP task 463; saved on version 1.4.5 in App Store Connect on 2026-11-23, with the description's color schemes line changed to match and its Plays line naming volleyball; waiting for a build). Everything made since the 1.4.4 build (544, `3dfa0dc`): Boot Camp Mix and its thirteen schemes (tasks 454, 455, 458, 459), the Plays board as the mockup draws it and the volleyball court (456), and the iPad's full-width headers (461); the theme editor's changes (453, 457, 460) are for super admins only.
+**What's New in 1.4.5** (ROADMAP task 463; saved on version 1.4.5 in App Store Connect on 2026-11-23, with the description's color schemes line changed to match and its Plays line naming volleyball; waiting for a build). Everything made since the 1.4.4 build (544, `3dfa0dc`): Boot Camp Mix and its thirteen schemes (tasks 454, 455, 458, 459), the Plays board as the mockup draws it and the volleyball court (456), and the iPad's full-width headers (461), then one vote per player (466) and Guardian or Parent (465), which need their callables on prod (Release to prod) before 1.4.5 is released; the theme editor's changes (453, 457, 460) are for super admins only. App Store Connect has the text without those two bullets until it's saved again.
 
 ```
 A whole new look, Boot Camp Mix: camouflage headers, bold stencil lettering, and thirteen color schemes. Black is the default, with Army green, Light, Sky Blue, Navy Steel, Forest, Graphite, Teal Wave, Tropic Blue, Desert Tan, Royal & Gold, Central Wildcats, and Geaux Tigahs. Pick the one you see for each team.
 
 Also new:
+• Polls can be one vote per player: parents and guardians vote for their players, and the results show each player
+• Parents can be listed as Parent instead of Guardian on their player's card
 • Plays: players, the ball, routes, and notes are redrawn to match, and there's a volleyball court, full or half
 • On an iPad, page headers run the full width of the screen
 ```
