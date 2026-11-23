@@ -823,7 +823,7 @@ Players that others answer for never get accounts, and every account belongs to 
 - **POLL-1 · MVP · Create a poll.**
   - From the chat **+** menu, if you're allowed.
   - Question (≤ 200 characters) and 2–10 options (≤ 80 characters each, reorderable).
-  - Settings: Allow multiple answers (off), Anonymous voting (off), Close automatically at a date and time (optional).
+  - Settings: Allow multiple answers (off), Anonymous voting (off), One vote per player (off; only on a team, which has players, POLL-7), Close automatically at a date and time (optional).
   - The poll posts to chat as a card.
 - **POLL-2 · MVP · Poll card.**
   - **Shows:** the question; each option with a live result bar, count, and percentage; checkmarks on your choices; the number of voters; and the status ("Closes Fri 5:00 PM" or "Closed").
@@ -844,6 +844,13 @@ Players that others answer for never get accounts, and every account belongs to 
   - Reminders to people who haven't voted.
   - Members adding options.
   - Hiding results until the poll closes.
+- **POLL-7 · One vote per player** (#96, owner's request 2026-11-23: "add a toggle to poll creation that lets the poll be one vote per player on the roster. When enabled, guardians vote on behalf of players. If one guardian has already voted, another guardian can cast a vote and get prompted that they will be overriding the other guaradian's vote (if it's a different answer than what was already voted for the player). The other guardian should get a notification in the app letting them know another guardian voted on behalf of your player along with info about which guardian it was and what the answer was. If a guardian has multiple players then they vote for all their players. When toggled on, the results shows breakdown by players instead of users.").
+  - **Making one:** a **One vote per player** switch when creating a poll on a team, saying each player on the roster gets one vote, parents and guardians vote for their players, adult players vote for themselves, and the results show each player. A basic group, which has no players, doesn't offer it. The card's head says "One vote per player".
+  - **Who votes:** each player's parents and guardians, and the player themselves when they're a member (PLAYER-3). A tap votes for all of the person's players at once ("Voting for Luke and Alex" under the question): on a one-answer poll it picks that answer for each, or takes their votes back when it's already every one's; with multiple answers it adds that option to each one's, or takes it off when every one has it. Where their players' votes differ, because another guardian voted for one of them, each shows: "Luke: Sunday · Alex: no vote". Someone with no players on the team, such as a coach, sees "Players and their parents or guardians vote." and can't vote. Admins answer for nobody here, unlike RSVPs.
+  - **Replacing another guardian's vote:** when a tap would change a vote another of the player's people cast (a different answer, or taking it back), it asks first: "Replace Pat's vote?", "Pat Kim voted Sunday for Luke.", "They'll get a notification that you changed it.", with **Replace vote** (or **Take back vote**) and Cancel. The same answer changes nothing and asks nothing, and the vote stays theirs.
+  - **The other guardian is told,** in the notification center and as a push (NOTIF-2): "Sam Rivera voted Saturday for Luke on “Which day?”, replacing your vote (Sunday)", or "… took back the vote for Luke on “Which day?” (yours was Sunday)", one notification for siblings changed alike ("for Luke and Alex"), opening the poll.
+  - **Results:** counts are players ("2 of 12 players voted"); See votes, and an option's count, list the players under each option, "Luke #7" with "Voted by Claire Dunphy", then the roster's players who haven't voted. An anonymous one shows only counts, as POLL-3 says, though a player's people still see their own player's vote.
+  - Closing works as POLL-4; whoever cast a player's vote gets "Poll closed". A player taken off the roster loses their votes on open polls; closed polls keep theirs.
 
 ### 6.7 Schedule and RSVPs (SCHED)
 
@@ -1007,7 +1014,8 @@ Players that others answer for never get accounts, and every account belongs to 
   | New message or photo | Everyone except the sender | No | — | MVP |
   | Reply to your message | The person replied to | **Yes** | ✓ | MVP |
   | New poll | Everyone except the creator | No | ✓ | MVP |
-  | Poll closed | Voters | No | ✓ | MVP |
+  | Poll closed | Voters (on one vote per player, whoever cast a player's vote) | No | ✓ | MVP |
+  | Your player's vote replaced by another guardian (POLL-7, #96) | The guardian whose vote it was | **Yes** | ✓ | MVP |
   | New event | Everyone | No | ✓ | MVP |
   | Event changed or canceled | Everyone except Not going\* | **Yes** | ✓ | MVP |
   | Event reminder | Going, Maybe, No response\* | **Yes** | ✓ | MVP |

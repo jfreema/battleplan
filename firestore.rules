@@ -661,7 +661,9 @@ service cloud.firestore {
         && incoming().createdBy == uid()
         && incoming().messageId == pollId
         && pollMessageOk(pollId)
-        && validPoll(incoming());
+        && validPoll(incoming())
+        // One vote per player (#96) needs players: a team, not a basic group.
+        && (incoming().get('perPlayer', false) == false || !isGroupKind(incoming().groupId));
     }
 
     // The poll's message: same team, same author, and its text is the
@@ -679,8 +681,9 @@ service cloud.firestore {
     // close time within a year.
     function validPoll(p) {
       return p.keys().hasOnly(['groupId', 'messageId', 'createdBy', 'question', 'options',
-             'allowMultiple', 'anonymous', 'closesAt', 'closedAt', 'voteCounts', 'voterCount',
-             'createdAt'])
+             'allowMultiple', 'anonymous', 'perPlayer', 'closesAt', 'closedAt', 'voteCounts',
+             'voterCount', 'createdAt'])
+        && p.get('perPlayer', false) is bool
         && p.question is string && p.question.trim().size() > 0 && p.question.size() <= 200
         && p.options is list && p.options.size() >= 2 && p.options.size() <= 10
         && optionOk(p.options, 0) && optionOk(p.options, 1) && optionOk(p.options, 2)
@@ -739,13 +742,15 @@ service cloud.firestore {
     }
 
     // Your choices on an open poll of your team: one, or several on a
-    // multiple-answer poll, each an option of that poll.
+    // multiple-answer poll, each an option of that poll. Not on a
+    // one-vote-per-player poll (#96), whose votes are the players'.
     function voteOk(voteId) {
       let v = incoming();
       let p = get(pollPath(v.pollId)).data;
       return voteId == v.pollId + '_' + uid()
         && v.uid == uid()
         && v.groupId == p.groupId
+        && p.get('perPlayer', false) == false
         && isMember(p.groupId) && active(p.groupId)
         && pollOpen(p)
         && v.keys().hasOnly(['pollId', 'groupId', 'uid', 'optionIds', 'updatedAt'])
@@ -754,6 +759,25 @@ service cloud.firestore {
         && v.optionIds.toSet().size() == v.optionIds.size()
         && v.optionIds.hasOnly(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'][0:p.options.size()])
         && v.updatedAt == request.time;
+    }
+
+    // #96: on a one-vote-per-player poll, each player's vote,
+    // `{pollId}_{playerId}`, with who cast it. Only votePollForPlayers
+    // writes them. The player's own people (a parent, guardian, or the
+    // player) read their player's vote on any poll, anonymous ones too, so
+    // they see what was voted for them; teammates (and super admins viewing
+    // the team) read every player's on a poll that isn't anonymous, as for
+    // pollVotes. A missing vote of my player's reads as not found.
+    match /pollPlayerVotes/{voteId} {
+      allow get: if myPlayersVote(voteId) || openBallot(resource.data.pollId);
+      allow list: if boundedQuery() && openBallot(resource.data.pollId);
+    }
+
+    // The vote is for one of my players: its ID ends in the player's ID,
+    // and I'm linked to that player.
+    function myPlayersVote(voteId) {
+      let parts = voteId.split('_');
+      return signedIn() && parts.size() == 2 && isGuardian(parts[1]);
     }
 
     // ---- Schedule ----------------------------------------------------------

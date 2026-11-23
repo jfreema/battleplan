@@ -14,20 +14,24 @@ import 'package:material_ui/material_ui.dart';
 
 /// Opens the new-poll screen (POLL-1) and returns the poll to post, or null
 /// if it was closed without posting. It covers the whole app, tabs
-/// included.
-Future<NewPoll?> showCreatePoll(BuildContext context) =>
+/// included. [players] offers One vote per player (#96): a team, which has
+/// players, not a basic group.
+Future<NewPoll?> showCreatePoll(BuildContext context, {bool players = false}) =>
     Navigator.of(context, rootNavigator: true).push<NewPoll>(
       MaterialPageRoute(
         fullscreenDialog: true,
-        builder: (_) => const CreatePollScreen(),
+        builder: (_) => CreatePollScreen(players: players),
       ),
     );
 
 /// A question (up to 200 characters), 2 to 10 options (up to 80 each, in
-/// any order), and the settings: multiple answers, anonymous voting, and a
-/// close time.
+/// any order), and the settings: multiple answers, anonymous voting, one
+/// vote per player on a team (#96), and a close time.
 class CreatePollScreen extends StatefulWidget {
-  const new({super.key});
+  const new({this.players = false, super.key});
+
+  /// The team has players, so the poll can be one vote per player (#96).
+  final bool players;
 
   @override
   State<CreatePollScreen> createState() => _CreatePollScreenState();
@@ -43,6 +47,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
   ];
   bool _multiple = false;
   bool _anonymous = false;
+  bool _perPlayer = false;
   DateTime? _closesAt;
 
   @override
@@ -59,6 +64,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
     options: [for (final o in _options) o.text.text],
     allowMultiple: _multiple,
     anonymous: _anonymous,
+    perPlayer: widget.players && _perPlayer,
     closesAt: _closesAt,
   );
 
@@ -259,6 +265,15 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                   value: _anonymous,
                   onChanged: (v) => setState(() => _anonymous = v),
                 ),
+                // Only where there are players (#96).
+                if (widget.players)
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(l10n.pollPerPlayer),
+                    subtitle: Text(l10n.pollPerPlayerHelp),
+                    value: _perPlayer,
+                    onChanged: (v) => setState(() => _perPlayer = v),
+                  ),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: Text(l10n.pollCloseAutomatically),

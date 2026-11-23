@@ -6,8 +6,9 @@
 import { Timestamp } from 'firebase-admin/firestore';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { eraseMessage, notifyNewMessage } from '../../src/chat/service.js';
-import { closePoll } from '../../src/polls/handlers.js';
-import { closeDuePolls, recountPoll } from '../../src/polls/service.js';
+import { closePoll, votePollForPlayers } from '../../src/polls/handlers.js';
+import { closeDuePolls, recountPoll, removePlayerPollVotes } from '../../src/polls/service.js';
+import { removePlayer } from '../../src/players/service.js';
 import { db } from '../../src/shared/admin.js';
 import { Collections } from '../../src/shared/constants.js';
 import { groupMemberId } from '../../src/shared/ids.js';
@@ -183,5 +184,120 @@ describe('creating and deleting (POLL-1, POLL-5)', () => {
     expect(await pollData('p1')).toBeUndefined();
     expect((await db().collection(Collections.pollVotes).doc('p1_sam').get()).exists).toBe(false);
     expect(await centerFor('p1')).toEqual([]);
+  });
+});
+
+describe('one vote per player (#96)', () => {
+  const vote = (uid: string, votes: Record<string, string[]>, pollId = 'pp') =>
+    votePollForPlayers.run(call(uid, { pollId, votes }) as Parameters<typeof votePollForPlayers.run>[0]);
+  const playerVote = async (playerId: string, pollId = 'pp') =>
+    (await db().collection(Collections.pollPlayerVotes).doc(`${pollId}_${playerId}`).get()).data();
+  /** What [uid] was told about replaced votes, newest last. */
+  const toldTo = async (uid: string) =>
+    (await db().collection(Collections.notifications).where('uid', '==', uid).where('type', '==', 'pollVoteReplaced').get()).docs
+      .map((d) => d.get('body') as string)
+      .sort();
+
+  beforeEach(async () => {
+    // Luke and Alex are Sam's; Luke is Lee's too; Pat is the player Pat.
+    for (const [id, name] of [['luke', 'Luke Dunphy'], ['alex', 'Alex Dunphy'], ['pat-p', 'Pat Kim'], ['emma', 'Emma Other']]) {
+      await db().collection(Collections.players).doc(id).set({ groupId: id === 'emma' ? 'teamB' : G, displayName: name, status: 'active' });
+    }
+    const link = (playerId: string, uid: string, relation = 'guardian', groupId = G) =>
+      db().collection(Collections.playerGuardians).doc(`${playerId}_${uid}`).set({ playerId, groupId, uid, relation });
+    await link('luke', 'sam');
+    await link('alex', 'sam');
+    await link('luke', 'lee');
+    await link('pat-p', 'pat', 'self');
+    await link('emma', 'sam', 'guardian', 'teamB');
+    await poll('pp', { perPlayer: true, allowMultiple: false });
+  });
+
+  it("votes for each of a guardian's players, counts players, and takes it back", async () => {
+    expect(await vote('sam', { luke: ['1'], alex: ['1'] })).toEqual({ ok: true, replaced: 0 });
+    expect(await playerVote('luke')).toMatchObject({ pollId: 'pp', groupId: G, playerId: 'luke', optionIds: ['1'], uid: 'sam' });
+    expect(await vote('pat', { 'pat-p': ['0'] })).toEqual({ ok: true, replaced: 0 });
+    expect(await pollData('pp')).toMatchObject({ voteCounts: { 0: 1, 1: 2, 2: 0 }, voterCount: 3 });
+    // Taking Alex's back.
+    await vote('sam', { alex: [] });
+    expect(await playerVote('alex')).toBeUndefined();
+    expect(await pollData('pp')).toMatchObject({ voteCounts: { 0: 1, 1: 1 }, voterCount: 2 });
+    // Nobody's regular vote counts on it.
+    await db().collection(Collections.pollVotes).doc('pp_alex').set({ pollId: 'pp', groupId: G, uid: 'alex', optionIds: ['2'] });
+    await recountPoll('pp');
+    expect(await pollData('pp')).toMatchObject({ voterCount: 2 });
+  });
+
+  it("tells the other guardian when their vote is replaced, naming who and what, once for siblings", async () => {
+    await vote('lee', { luke: ['0'] });
+    // The same answer replaces nothing, and Luke's vote stays Lee's.
+    expect(await vote('sam', { luke: ['0'], alex: ['0'] })).toEqual({ ok: true, replaced: 0 });
+    expect((await playerVote('luke'))?.uid).toBe('lee');
+    expect(await toldTo('lee')).toEqual([]);
+    // A different one does, and Lee hears it.
+    expect(await vote('sam', { luke: ['1'] })).toEqual({ ok: true, replaced: 1 });
+    expect(await playerVote('luke')).toMatchObject({ optionIds: ['1'], uid: 'sam' });
+    expect(await toldTo('lee')).toEqual(['Sam voted Sunday for Luke on “Saturday or Sunday?”, replacing your vote (Saturday)']);
+    const item = (await db().collection(Collections.notifications).where('uid', '==', 'lee').get()).docs[0];
+    expect(item.get('route')).toBe(`/g/${G}/chat/m/pp`);
+    // Changing your own vote tells nobody.
+    await vote('sam', { luke: ['0'] });
+    expect(await toldTo('lee')).toHaveLength(1);
+    // Taking back someone else's vote says so.
+    await vote('lee', { luke: ['1'] });
+    await vote('sam', { luke: [] });
+    expect(await toldTo('lee')).toContain('Sam took back the vote for Luke on “Saturday or Sunday?” (yours was Sunday)');
+  });
+
+  it("refuses players who aren't theirs, other teams', bad choices, and regular polls", async () => {
+    await expect(vote('lee', { alex: ['0'] })).rejects.toMatchObject({ code: 'permission-denied', message: 'not-your-player' });
+    await expect(vote('sam', { emma: ['0'] })).rejects.toMatchObject({ code: 'permission-denied', message: 'not-your-player' });
+    await expect(vote('alex', { luke: ['0'] })).rejects.toMatchObject({ code: 'permission-denied' });
+    await expect(vote('sam', { luke: ['0', '1'] })).rejects.toMatchObject({ code: 'invalid-argument', message: 'one-choice' });
+    await expect(vote('sam', { luke: ['9'] })).rejects.toMatchObject({ code: 'invalid-argument' });
+    await expect(vote('sam', {})).rejects.toMatchObject({ code: 'invalid-argument' });
+    await expect(vote('sam', { 'a_b': ['0'] })).rejects.toMatchObject({ code: 'invalid-argument' });
+    await poll('regular');
+    await expect(vote('sam', { luke: ['0'] }, 'regular')).rejects.toMatchObject({ code: 'failed-precondition', message: 'not-per-player' });
+    await expect(vote('sam', { luke: ['0'] }, 'nope')).rejects.toMatchObject({ code: 'not-found' });
+    expect(await playerVote('luke')).toBeUndefined();
+  });
+
+  it('refuses a closed poll, and an archived or suspended team', async () => {
+    await poll('closed', { perPlayer: true, closedAt: Timestamp.now() });
+    await expect(vote('sam', { luke: ['0'] }, 'closed')).rejects.toMatchObject({ code: 'failed-precondition', message: 'poll-closed' });
+    await poll('past', { perPlayer: true, closesAt: Timestamp.fromMillis(Date.now() - 1000) });
+    await expect(vote('sam', { luke: ['0'] }, 'past')).rejects.toMatchObject({ message: 'poll-closed' });
+    await db().collection(Collections.groups).doc(G).update({ archivedAt: Timestamp.now() });
+    await expect(vote('sam', { luke: ['0'] })).rejects.toMatchObject({ code: 'failed-precondition', message: 'team-archived' });
+    await db().collection(Collections.groups).doc(G).update({ archivedAt: null, suspendedAt: Timestamp.now() });
+    await expect(vote('sam', { luke: ['0'] })).rejects.toMatchObject({ code: 'permission-denied', message: 'team-suspended' });
+  });
+
+  it('tells whoever cast a vote when it closes, once each', async () => {
+    await vote('sam', { luke: ['0'], alex: ['0'] });
+    await vote('pat', { 'pat-p': ['1'] });
+    await closePoll.run(call('alex', { pollId: 'pp' }));
+    expect(await centerFor('pp_closed')).toEqual(['pat', 'sam']);
+  });
+
+  it("drops a removed player's votes on open polls, keeping closed polls' results", async () => {
+    await vote('sam', { luke: ['0'], alex: ['0'] });
+    await poll('old', { perPlayer: true });
+    await vote('sam', { luke: ['1'] }, 'old');
+    await db().collection(Collections.polls).doc('old').update({ closedAt: Timestamp.now() });
+    await removePlayer(G, 'luke');
+    expect(await playerVote('luke')).toBeUndefined();
+    expect(await pollData('pp')).toMatchObject({ voteCounts: { 0: 1 }, voterCount: 1 });
+    expect(await playerVote('luke', 'old')).toMatchObject({ optionIds: ['1'] });
+    await expect(removePlayerPollVotes('nobody')).resolves.toBeUndefined();
+  });
+
+  it('deletes its players\' votes with the poll', async () => {
+    await vote('sam', { luke: ['0'] });
+    const message = { groupId: G, authorId: 'pat', authorName: 'Pat', type: 'poll', text: 'Saturday or Sunday?', pollId: 'pp' };
+    await db().collection(Collections.messages).doc('pp').set({ ...message, attachments: [], reactions: {}, createdAt: Timestamp.now() });
+    await eraseMessage('pp', 'pat', 'author');
+    expect(await playerVote('luke')).toBeUndefined();
   });
 });

@@ -1,9 +1,11 @@
 // Polls in the app (SPEC POLL-1 to POLL-5, CHAT-11).
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
+import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/polls/domain/poll.dart';
 import 'package:battleplan/features/polls/presentation/poll_card.dart';
 import 'package:battleplan/l10n/gen/app_localizations_en.dart';
@@ -510,6 +512,388 @@ void main() {
       );
       await tester.pump(const Duration(seconds: 5));
       await tester.pumpAndSettle();
+    });
+  });
+
+  group('one vote per player (#96)', () {
+    test('a tap votes for all my players at once', () {
+      const luke = PlayerId('luke');
+      const alex = PlayerId('alex');
+      const mine = [alex, luke];
+      // One answer: picks it for both; again takes both back; where
+      // they differ, picks it for both.
+      expect(playerVotesAfterTap({}, mine, '0', allowMultiple: false), {
+        alex: {'0'},
+        luke: {'0'},
+      });
+      expect(
+        playerVotesAfterTap(
+          {
+            alex: {'0'},
+            luke: {'0'},
+          },
+          mine,
+          '0',
+          allowMultiple: false,
+        ),
+        {alex: <String>{}, luke: <String>{}},
+      );
+      expect(
+        playerVotesAfterTap(
+          {
+            luke: {'1'},
+          },
+          mine,
+          '1',
+          allowMultiple: false,
+        ),
+        {
+          alex: {'1'},
+          luke: {'1'},
+        },
+      );
+      // Several answers: adds it to each, keeping the rest; off when
+      // every one has it.
+      expect(
+        playerVotesAfterTap(
+          {
+            luke: {'1'},
+          },
+          mine,
+          '0',
+          allowMultiple: true,
+        ),
+        {
+          alex: {'0'},
+          luke: {'0', '1'},
+        },
+      );
+      expect(
+        playerVotesAfterTap(
+          {
+            alex: {'0'},
+            luke: {'0', '1'},
+          },
+          mine,
+          '0',
+          allowMultiple: true,
+        ),
+        {
+          alex: <String>{},
+          luke: {'1'},
+        },
+      );
+    });
+
+    test("only another guardian's different answer counts as replaced", () {
+      const luke = PlayerId('luke');
+      const alex = PlayerId('alex');
+      const emma = PlayerId('emma');
+      final current = {
+        luke: const PlayerPollVote(
+          playerId: luke,
+          optionIds: {'1'},
+          uid: 'pat',
+        ),
+        alex: const PlayerPollVote(
+          playerId: alex,
+          optionIds: {'0'},
+          uid: 'pat',
+        ),
+        emma: const PlayerPollVote(
+          playerId: emma,
+          optionIds: {'1'},
+          uid: 'coach',
+        ),
+      };
+      final replaced = replacedVotes(current, {
+        luke: {'0'},
+        alex: {'0'},
+        emma: {'0'},
+      }, 'coach');
+      expect(replaced, hasLength(1));
+      expect(replaced.single.playerId, luke);
+      expect(replaced.single.uid, 'pat');
+      expect(replaced.single.before, {'1'});
+      expect(replaced.single.after, {'0'});
+      // Taking it back replaces it too.
+      expect(
+        replacedVotes(current, {alex: <String>{}}, 'coach').single.after,
+        isEmpty,
+      );
+    });
+
+    const luke = Player(
+      id: PlayerId('luke'),
+      groupId: GroupId('a'),
+      displayName: 'Luke Dunphy',
+      jerseyNumber: '7',
+    );
+    const alex = Player(
+      id: PlayerId('alex'),
+      groupId: GroupId('a'),
+      displayName: 'Alex Dunphy',
+      jerseyNumber: '9',
+    );
+    const emma = Player(
+      id: PlayerId('emma'),
+      groupId: GroupId('a'),
+      displayName: 'Emma Rivera',
+      jerseyNumber: '11',
+    );
+    GuardianLink link(String player, String uid) => GuardianLink(
+      playerId: PlayerId(player),
+      groupId: const GroupId('a'),
+      uid: UserId(uid),
+    );
+
+    const perPlayerPoll = Poll(
+      id: PollId('p1'),
+      groupId: GroupId('a'),
+      createdBy: 'sam',
+      question: 'Saturday or Sunday?',
+      options: [
+        PollOption(id: '0', text: 'Saturday'),
+        PollOption(id: '1', text: 'Sunday'),
+      ],
+      perPlayer: true,
+    );
+
+    /// The team's chat as [user]: Luke and Alex are the coach's, Luke is
+    /// Pat's too, and Emma is Sam's; [votes] already cast.
+    Future<FakePollRepository> open(
+      WidgetTester tester, {
+      AuthUser user = coach,
+      Poll? poll,
+      List<PlayerPollVote> votes = const [],
+      Group? group,
+    }) async {
+      final polls = FakePollRepository()
+        ..playerVoter = user.uid
+        ..put(poll ?? perPlayerPoll);
+      if (votes.isNotEmpty) {
+        polls.playerVotes['p1'] = {for (final v in votes) v.playerId: v};
+      }
+      final players = FakePlayerRepository([luke, alex, emma])
+        ..links.addAll([
+          link('luke', 'coach'),
+          link('alex', 'coach'),
+          link('luke', 'pat'),
+          link('emma', 'sam'),
+        ]);
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: user),
+        groups: {
+          'a': group ?? testGroup('a', 'Thunder').copyWith(playerCount: 3),
+        },
+        memberships: [
+          testMembership('a', 'coach', name: 'Coach Lee'),
+          testMembership('a', 'sam', name: 'Sam Rivera'),
+          testMembership('a', 'pat', name: 'Pat Kim'),
+          testMembership('a', 'jo', name: 'Jo Park'),
+        ],
+        messageRepo: FakeMessageRepository([
+          Message(
+            id: 'p1',
+            groupId: const GroupId('a'),
+            authorId: 'sam',
+            authorName: 'Sam Rivera',
+            type: MessageType.poll,
+            text: 'Saturday or Sunday?',
+            pollId: 'p1',
+            createdAt: DateTime.now().subtract(const Duration(minutes: 5)),
+          ),
+        ]),
+        pollRepo: polls,
+        playerRepo: players,
+      );
+      return polls;
+    }
+
+    testWidgets('a team offers it when making a poll, a basic group '
+        "doesn't", (tester) async {
+      final messages = FakeMessageRepository();
+      final polls = FakePollRepository();
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {'a': testGroup('a', 'Thunder')},
+        memberships: [testMembership('a', 'coach')],
+        messageRepo: messages,
+        pollRepo: polls,
+      );
+      await tester.tap(find.byTooltip('Add photos or a poll'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Create poll'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).at(0), 'Which day?');
+      await tester.enterText(find.byType(TextField).at(1), 'Saturday');
+      await tester.enterText(find.byType(TextField).at(2), 'Sunday');
+      expect(find.textContaining('Parents and guardians vote'), findsOne);
+      await tester.tap(find.text('One vote per player'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Post'));
+      await tester.pumpAndSettle();
+      expect(polls.polls.values.single.perPlayer, isTrue);
+      // The card says so, and counts players.
+      expect(find.textContaining('One vote per player'), findsOneWidget);
+
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {
+          'a': testGroup('a', 'Run Club').copyWith(kind: GroupKind.group),
+        },
+        memberships: [testMembership('a', 'coach')],
+        messageRepo: FakeMessageRepository(),
+        pollRepo: FakePollRepository(),
+      );
+      await tester.tap(find.byTooltip('Add photos or a poll'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Create poll'));
+      await tester.pumpAndSettle();
+      expect(find.text('One vote per player'), findsNothing);
+    });
+
+    testWidgets('a guardian votes for all their players at once, and takes '
+        'it back the same way', (tester) async {
+      final polls = await open(tester);
+      expect(find.text('Voting for Luke and Alex'), findsOneWidget);
+      expect(find.text('No votes yet'), findsOneWidget);
+      await tester.tap(find.text('Saturday'));
+      await tester.pumpAndSettle();
+      expect(polls.playerVoteCalls, ['p1 luke=0 alex=0']);
+      expect(find.text('2 votes · 100%'), findsOneWidget);
+      expect(find.text('2 of 3 players voted'), findsOneWidget);
+      expect(chosenOptions(), findsOneWidget);
+      await tester.tap(find.text('Saturday'));
+      await tester.pumpAndSettle();
+      expect(polls.playerVoteCalls.last, 'p1 luke= alex=');
+      expect(find.text('No votes yet'), findsOneWidget);
+    });
+
+    testWidgets("replacing another guardian's vote asks first, and says "
+        "they'll be told", (tester) async {
+      final polls = await open(
+        tester,
+        votes: [
+          const PlayerPollVote(
+            playerId: PlayerId('luke'),
+            optionIds: {'1'},
+            uid: 'pat',
+          ),
+        ],
+      );
+      // My players' votes differ, so each one's shows.
+      expect(find.text('Luke: Sunday · Alex: no vote'), findsOneWidget);
+      await tester.tap(find.text('Saturday'));
+      await tester.pumpAndSettle();
+      expect(find.text("Replace Pat's vote?"), findsOneWidget);
+      expect(
+        find.text(
+          'Pat Kim voted Sunday for Luke.\n'
+          "They'll get a notification that you changed it.",
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(polls.playerVoteCalls, isEmpty);
+
+      await tester.tap(find.text('Saturday'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Replace vote'));
+      await tester.pumpAndSettle();
+      expect(polls.playerVoteCalls, ['p1 luke=0 alex=0']);
+      expect(find.textContaining('Luke: '), findsNothing);
+    });
+
+    testWidgets("the same answer as the other guardian's isn't replacing it", (
+      tester,
+    ) async {
+      final polls = await open(
+        tester,
+        votes: [
+          const PlayerPollVote(
+            playerId: PlayerId('luke'),
+            optionIds: {'0'},
+            uid: 'pat',
+          ),
+        ],
+      );
+      await tester.tap(find.text('Saturday'));
+      await tester.pumpAndSettle();
+      expect(find.text("Replace Pat's vote?"), findsNothing);
+      // Only Alex's changes; Luke's stays Pat's.
+      expect(polls.playerVoteCalls, ['p1 alex=0']);
+      expect(polls.playerVotes['p1']![const PlayerId('luke')]!.uid, 'pat');
+    });
+
+    testWidgets("someone with no players sees who votes, and can't", (
+      tester,
+    ) async {
+      final polls = await open(
+        tester,
+        user: const AuthUser(
+          uid: 'jo',
+          email: 'jo@example.com',
+          emailVerified: true,
+        ),
+      );
+      expect(
+        find.text('Players and their parents or guardians vote.'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Saturday'));
+      await tester.pumpAndSettle();
+      expect(polls.playerVoteCalls, isEmpty);
+    });
+
+    testWidgets('results are by player, with who voted for each', (
+      tester,
+    ) async {
+      await open(
+        tester,
+        votes: [
+          const PlayerPollVote(
+            playerId: PlayerId('luke'),
+            optionIds: {'0'},
+            uid: 'pat',
+          ),
+          const PlayerPollVote(
+            playerId: PlayerId('emma'),
+            optionIds: {'1'},
+            uid: 'sam',
+          ),
+        ],
+      );
+      await tester.tap(find.text('See votes'));
+      await tester.pumpAndSettle();
+      expect(find.text('Saturday · 1 vote'), findsOneWidget);
+      expect(find.text('Luke #7'), findsOneWidget);
+      expect(find.text('Voted by Pat Kim'), findsOneWidget);
+      expect(find.text('Sunday · 1 vote'), findsOneWidget);
+      expect(find.text('Emma #11'), findsOneWidget);
+      expect(find.text('Voted by Sam Rivera'), findsOneWidget);
+      expect(find.text("Hasn't voted · 1"), findsOneWidget);
+      expect(find.text('Alex #9'), findsOneWidget);
+    });
+
+    testWidgets("a vote that doesn't go through says so, and the check goes "
+        'back', (tester) async {
+      final polls = await open(tester)
+        ..playerVoteFailure = const Offline('down');
+      await tester.tap(find.text('Saturday'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          "Couldn't save your vote. Check your connection and try again.",
+        ),
+        findsOneWidget,
+      );
+      expect(chosenOptions(), findsNothing);
+      expect(polls.playerVotes['p1'], anyOf(isNull, isEmpty));
     });
   });
 

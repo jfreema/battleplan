@@ -1109,7 +1109,12 @@ extension on _ChatScreenState {
   }
 
   Future<void> _createPoll(ChatMessages controller) async {
-    final poll = await showCreatePoll(context);
+    // One vote per player is offered only where there are players (#96).
+    final poll = await showCreatePoll(
+      context,
+      players:
+          ref.read(groupProvider(widget.groupId)).value?.hasPlayers ?? false,
+    );
     if (poll == null || !mounted) return;
     final l10n = AppLocalizations.of(context);
     await controller.sendPoll(poll).catchError((Object _) {

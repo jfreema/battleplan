@@ -46,6 +46,7 @@ const DOCS: [collection: string, id: string, field: string, value: string][] = [
   ['messages', 'm1', 'groupId', 'teamA'],
   ['polls', 'p1', 'groupId', 'teamA'],
   ['pollVotes', 'p1_alice', 'pollId', 'p1'],
+  ['pollPlayerVotes', 'p1_emma', 'pollId', 'p1'],
   ['eventSeries', 's1', 'groupId', 'teamA'],
   ['events', 'e1', 'groupId', 'teamA'],
   ['rsvps', 'e1_alice', 'groupId', 'teamA'],
@@ -115,6 +116,7 @@ async function seed(group: object = {}) {
       options: [{ id: '0', text: 'Sat' }, { id: '1', text: 'Sun' }], closesAt: null, closedAt: null, voteCounts: {}, voterCount: 0,
     });
     await db.doc('pollVotes/p1_alice').set({ pollId: 'p1', groupId: 'teamA', uid: 'alice', optionIds: ['0'] });
+    await db.doc('pollPlayerVotes/p1_emma').set({ pollId: 'p1', groupId: 'teamA', playerId: 'emma', uid: 'dan', optionIds: ['0'] });
     await db.doc('eventSeries/s1').set({ groupId: 'teamA', createdBy: 'alice' });
     await db.doc('events/e1').set({
       groupId: 'teamA', type: 'practice', title: 'Practice', description: '', location: null, allDay: false,

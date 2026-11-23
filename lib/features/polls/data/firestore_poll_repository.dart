@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
@@ -106,15 +108,129 @@ class FirestorePollRepository implements PollRepository {
         'pollId': pollId.value,
       });
     } on FirebaseFunctionsException catch (e) {
-      final message = serverMessage(e.message);
-      throw switch (e.code) {
-        'permission-denied' => PermissionDenied(message),
-        'unavailable' || 'deadline-exceeded' => Offline(message),
-        _ => UnknownFailure('${e.code}: $message'),
-      };
+      throw _failure(e);
     }
   }
+
+  DocumentReference<Map<String, dynamic>> _playerVote(
+    PollId pollId,
+    PlayerId playerId,
+  ) => _db
+      .collection(Collections.pollPlayerVotes)
+      .doc('${pollId.value}_${playerId.value}');
+
+  @override
+  Stream<Map<PlayerId, PlayerPollVote>> watchPlayerVotes(
+    PollId pollId,
+    List<PlayerId> playerIds,
+  ) {
+    if (playerIds.isEmpty) return Stream.value(const {});
+    // One listener per player (a guardian has a few), each a get the rules
+    // allow for my own players, anonymous polls included; together, one
+    // map of whichever have a vote, sent once each has been read.
+    late final StreamController<Map<PlayerId, PlayerPollVote>> out;
+    final seen = <PlayerId, PlayerPollVote?>{};
+    final subs = <StreamSubscription<Object?>>[];
+    out = StreamController<Map<PlayerId, PlayerPollVote>>(
+      onListen: () {
+        for (final player in playerIds) {
+          subs.add(
+            _playerVote(pollId, player).snapshots().listen((d) {
+              seen[player] = d.exists
+                  ? playerPollVoteFromFirestore(d.data()!)
+                  : null;
+              if (seen.length == playerIds.length) {
+                out.add({
+                  for (final MapEntry(:key, :value) in seen.entries)
+                    key: ?value,
+                });
+              }
+            }, onError: out.addError),
+          );
+        }
+      },
+      onCancel: () async {
+        for (final sub in subs) {
+          await sub.cancel();
+        }
+      },
+    );
+    return out.stream;
+  }
+
+  @override
+  Future<List<PlayerPollVote>> loadPlayerVotes(PollId pollId) async {
+    // A team has at most 200 players; queries are capped at 100 (ARCH
+    // §10.2), so read a page at a time.
+    final votes = <PlayerPollVote>[];
+    DocumentSnapshot<Object?>? last;
+    for (;;) {
+      var q = _db
+          .collection(Collections.pollPlayerVotes)
+          .where('pollId', isEqualTo: pollId.value)
+          .orderBy(FieldPath.documentId)
+          .limit(Limits.queryLimitMax);
+      if (last != null) q = q.startAfterDocument(last);
+      final page = await q.get();
+      votes.addAll([
+        for (final d in page.docs) playerPollVoteFromFirestore(d.data()),
+      ]);
+      if (page.docs.length < Limits.queryLimitMax) return votes;
+      last = page.docs.last;
+    }
+  }
+
+  @override
+  Future<int> setPlayerVotes(
+    Poll poll,
+    Map<PlayerId, Set<String>> votes,
+  ) async {
+    try {
+      final result = await _functions
+          .httpsCallable('votePollForPlayers')
+          .call<Object?>({
+            'pollId': poll.id.value,
+            'votes': {
+              for (final MapEntry(:key, :value) in votes.entries)
+                key.value: [
+                  // In the poll's order, as the server keeps them.
+                  for (final o in poll.options)
+                    if (value.contains(o.id)) o.id,
+                ],
+            },
+          });
+      final data = result.data;
+      return data is Map ? (data['replaced'] as num?)?.toInt() ?? 0 : 0;
+    } on FirebaseFunctionsException catch (e) {
+      throw _failure(e);
+    }
+  }
+
+  /// A callable's error as the app's failures; a vote on a poll that closed
+  /// meanwhile is refused as the rules refuse a direct vote.
+  AppFailure _failure(FirebaseFunctionsException e) {
+    final message = serverMessage(e.message);
+    return switch (e.code) {
+      'permission-denied' => PermissionDenied(message),
+      'failed-precondition' when message == 'poll-closed' => PermissionDenied(
+        message,
+      ),
+      'unavailable' || 'deadline-exceeded' => Offline(message),
+      _ => UnknownFailure('${e.code}: $message'),
+    };
+  }
 }
+
+/// Reads a `pollPlayerVotes` document (#96).
+PlayerPollVote playerPollVoteFromFirestore(Map<String, dynamic> x) =>
+    PlayerPollVote(
+      playerId: PlayerId(x['playerId'] as String? ?? ''),
+      optionIds: {
+        for (final id in (x['optionIds'] as List?) ?? const [])
+          if (id is String) id,
+      },
+      uid: x['uid'] as String? ?? '',
+    );
 
 /// Reads a `polls` document (ARCH §6.2).
 Poll pollFromFirestore(String id, Map<String, dynamic> x) => Poll(
@@ -129,6 +245,7 @@ Poll pollFromFirestore(String id, Map<String, dynamic> x) => Poll(
   ],
   allowMultiple: x['allowMultiple'] == true,
   anonymous: x['anonymous'] == true,
+  perPlayer: x['perPlayer'] == true,
   closesAt: (x['closesAt'] as Timestamp?)?.toDate(),
   closedAt: (x['closedAt'] as Timestamp?)?.toDate(),
   voteCounts: {

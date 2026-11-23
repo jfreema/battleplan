@@ -426,6 +426,8 @@ class FirestoreMessageRepository implements MessageRepository {
             ],
             'allowMultiple': p.allowMultiple,
             'anonymous': p.anonymous,
+            // Only when on, so older rules and builds read it as off (#96).
+            if (p.perPlayer) 'perPlayer': true,
             'closesAt': p.closesAt == null
                 ? null
                 : Timestamp.fromDate(p.closesAt!),

@@ -20,6 +20,7 @@ abstract final class Collections {
   static const String messages = 'messages';
   static const String polls = 'polls';
   static const String pollVotes = 'pollVotes';
+  static const String pollPlayerVotes = 'pollPlayerVotes';
   static const String eventSeries = 'eventSeries';
   static const String events = 'events';
   static const String rsvps = 'rsvps';
@@ -762,6 +763,7 @@ enum NotifyKind {
   storageWarning('storageWarning'),
   pollCreated('pollCreated'),
   pollClosed('pollClosed'),
+  pollVoteReplaced('pollVoteReplaced'),
   eventCreated('eventCreated'),
   eventChanged('eventChanged'),
   eventReminder('eventReminder'),
@@ -911,6 +913,12 @@ const Map<NotifyKind, NotifyKindInfo> notifyKindInfo = {
   ),
   NotifyKind.pollClosed: NotifyKindInfo(
     important: false,
+    pref: NotificationPref.polls,
+    center: true,
+    channel: NotifyChannel.polls,
+  ),
+  NotifyKind.pollVoteReplaced: NotifyKindInfo(
+    important: true,
     pref: NotificationPref.polls,
     center: true,
     channel: NotifyChannel.polls,

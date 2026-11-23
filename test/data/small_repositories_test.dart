@@ -716,6 +716,114 @@ void main() {
       expect(p.question, '');
       expect(p.options, isEmpty);
       expect(p.voterCount, 0);
+      expect(p.perPlayer, isFalse);
+      expect(
+        pollFromFirestore('p', const {'perPlayer': true}).perPlayer,
+        isTrue,
+      );
+    });
+
+    group('one vote per player (#96)', () {
+      const luke = PlayerId('luke');
+      const alex = PlayerId('alex');
+
+      test("watches my players' votes, live, a missing one left out", () async {
+        await db.doc('pollPlayerVotes/p1_luke').set({
+          'pollId': 'p1',
+          'playerId': 'luke',
+          'optionIds': ['1', 7],
+          'uid': 'pat',
+        });
+        final repo = FirestorePollRepository(db, functions);
+        expect(await repo.watchPlayerVotes(pollId, const []).first, isEmpty);
+        final seen = <Map<PlayerId, PlayerPollVote>>[];
+        final sub = repo
+            .watchPlayerVotes(pollId, const [luke, alex])
+            .listen(seen.add);
+        await pumpEventQueue();
+        // Once both are read: Luke's, and none for Alex.
+        expect(seen.single.keys, [luke]);
+        expect(seen.single[luke]!.optionIds, {'1'});
+        expect(seen.single[luke]!.uid, 'pat');
+        // A vote for Alex comes in.
+        await db.doc('pollPlayerVotes/p1_alex').set({
+          'pollId': 'p1',
+          'playerId': 'alex',
+          'optionIds': ['0'],
+          'uid': 'u1',
+        });
+        await pumpEventQueue();
+        expect(seen.last.keys.toSet(), {luke, alex});
+        await sub.cancel();
+      });
+
+      test("loads every player's vote", () async {
+        for (var i = 0; i < 30; i++) {
+          await db
+              .doc('pollPlayerVotes/p1_x${i.toString().padLeft(3, '0')}')
+              .set({
+                'pollId': 'p1',
+                'playerId': 'x$i',
+                'optionIds': ['0'],
+                'uid': 'u1',
+              });
+        }
+        await db.doc('pollPlayerVotes/p2_luke').set({
+          'pollId': 'p2',
+          'playerId': 'luke',
+          'optionIds': ['1'],
+          'uid': 'u1',
+        });
+        final votes = await FirestorePollRepository(
+          db,
+          functions,
+        ).loadPlayerVotes(pollId);
+        expect(votes.length, 30);
+        expect(playerPollVoteFromFirestore(const {}).optionIds, isEmpty);
+      });
+
+      test('votes through votePollForPlayers, in option order', () async {
+        functions.handlers['votePollForPlayers'] = (_) => {
+          'ok': true,
+          'replaced': 1,
+        };
+        final repo = FirestorePollRepository(db, functions);
+        expect(
+          await repo.setPlayerVotes(poll(), {
+            luke: {'1', '0'},
+            alex: <String>{},
+          }),
+          1,
+        );
+        expect(functions.lastData('votePollForPlayers'), {
+          'pollId': 'p1',
+          'votes': {
+            'luke': ['0', '1'],
+            'alex': <String>[],
+          },
+        });
+        functions.handlers['votePollForPlayers'] = (_) => null;
+        expect(
+          await repo.setPlayerVotes(poll(), {
+            luke: {'0'},
+          }),
+          0,
+        );
+        for (final (code, message, type) in [
+          ('failed-precondition', 'poll-closed', isA<PermissionDenied>()),
+          ('permission-denied', 'not-your-player', isA<PermissionDenied>()),
+          ('unavailable', 'down', isA<Offline>()),
+          ('failed-precondition', 'not-per-player', isA<UnknownFailure>()),
+        ]) {
+          functions.fail('votePollForPlayers', code, message);
+          await expectLater(
+            repo.setPlayerVotes(poll(), {
+              luke: {'0'},
+            }),
+            throwsA(type),
+          );
+        }
+      });
     });
   });
 

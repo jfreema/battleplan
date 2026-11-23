@@ -23,6 +23,7 @@ import {
   type Title,
 } from './roster.js';
 import { memberSnapshotOf, newMemberLevelOf } from '../teams/service.js';
+import { removePlayerPollVotes } from '../polls/service.js';
 
 /** A player's details (PLAYER-12): same ID as the player. */
 const detailsRef = (playerId: string) => db().collection(Collections.playerDetails).doc(playerId);
@@ -496,6 +497,8 @@ export async function removePlayer(groupId: string, playerId: string): Promise<v
   }
   await deletePlayerDoc(playerId);
   await removeUpcomingRsvps(playerId);
+  // Their votes on open one-vote-per-player polls go too (#96).
+  await removePlayerPollVotes(playerId);
   for (const uid of guardians) await refreshPlayerSummary(groupId, uid);
   await refreshPlayerCount(groupId);
 }

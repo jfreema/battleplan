@@ -518,6 +518,8 @@ const TEAM_COLLECTIONS = [
   Collections.messages,
   Collections.polls,
   Collections.pollVotes,
+  // One vote per player (#96).
+  Collections.pollPlayerVotes,
   Collections.rsvps,
   Collections.assignments,
   // Dues and who paid them (DUES-1 to DUES-3).

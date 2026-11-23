@@ -10,6 +10,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/time_zones.dart';
+import 'package:battleplan/core/text_lists.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
@@ -17,6 +18,7 @@ import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/polls/application/providers.dart';
 import 'package:battleplan/features/polls/domain/poll.dart';
 import 'package:battleplan/features/polls/presentation/poll_voters_sheet.dart';
@@ -74,9 +76,15 @@ class _PollCardState extends ConsumerState<PollCard> {
   /// Set when the timer for [_timerFor] fires.
   bool _reachedClose = false;
 
+  /// On a one-vote-per-player poll (#96), my players' votes as I just cast
+  /// them, shown until the server's come back, so a tap answers at once.
+  Map<PlayerId, Set<String>>? _pending;
+  Timer? _pendingTimer;
+
   @override
   void dispose() {
     _closeTimer?.cancel();
+    _pendingTimer?.cancel();
     super.dispose();
   }
 
@@ -163,7 +171,39 @@ class _PollCardState extends ConsumerState<PollCard> {
         ),
       );
     }
-    final mine = ref.watch(myPollVoteProvider(pollId)).value ?? const {};
+    // One vote per player (#96): I vote for my players, and my choices
+    // are theirs; on other polls, my own vote.
+    final perPlayer = value.perPlayer;
+    final myPlayers = perPlayer
+        ? ref.watch(myVotingPlayersProvider(groupId))
+        : const <Player>[];
+    final playerVotes = perPlayer
+        ? ref.watch(myPlayersPollVotesProvider(pollId, groupId)).value ??
+              const <PlayerId, PlayerPollVote>{}
+        : const <PlayerId, PlayerPollVote>{};
+    // Whose votes mine would replace are named from the roster (#96), so
+    // it's kept loaded while the card shows.
+    if (perPlayer && myPlayers.isNotEmpty) ref.watch(rosterProvider(groupId));
+    final pending = _pending;
+    if (pending != null &&
+        pending.entries.every(
+          (e) => _same(e.value, playerVotes[e.key]?.optionIds ?? const {}),
+        )) {
+      // The server has them: show its votes from here on.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && identical(_pending, pending)) {
+          setState(() => _pending = null);
+        }
+      });
+    }
+    final players = {
+      for (final p in myPlayers)
+        p.id:
+            pending?[p.id] ?? playerVotes[p.id]?.optionIds ?? const <String>{},
+    };
+    final mine = perPlayer
+        ? {for (final v in players.values) ...v}
+        : ref.watch(myPollVoteProvider(pollId)).value ?? const <String>{};
     final me = ref.watch(authUserProvider).value?.uid;
     final isAdmin =
         (ref.watch(myMembershipProvider(groupId))?.isAdmin ?? false) ||
@@ -180,9 +220,44 @@ class _PollCardState extends ConsumerState<PollCard> {
 
     final tags = [
       ?widget.asked,
+      if (perPlayer) l10n.pollPerPlayer,
       if (value.anonymous) l10n.pollAnonymous,
       if (value.allowMultiple) l10n.pollChooseAny,
     ];
+    // Who votes on a one-vote-per-player poll (#96): my players, or, for
+    // someone with none, who does.
+    String answerOf(Set<String> ids) => ids.isEmpty
+        ? l10n.pollPlayerNoVote
+        : joinAnd(l10n, [
+            for (final o in value.options)
+              if (ids.contains(o.id)) o.text,
+          ]);
+    final voting = !perPlayer
+        ? null
+        : myPlayers.isEmpty
+        ? l10n.pollPerPlayerWhoVotes
+        : l10n.pollVotingFor(
+            joinAnd(l10n, [for (final p in myPlayers) p.firstName]),
+          );
+    // Each one's vote, where my players' votes differ (another guardian
+    // voted for one of them): "Luke: Saturday · Alex: Sunday".
+    final differ =
+        myPlayers.length > 1 &&
+        players.values.any((v) => !_same(v, players.values.first));
+    final each = differ
+        ? [
+            for (final p in myPlayers)
+              l10n.pollPlayerChoice(p.firstName, answerOf(players[p.id]!)),
+          ].join(' · ')
+        : null;
+    final playerCount =
+        ref.watch(groupProvider(groupId)).value?.playerCount ?? 0;
+    final voted = perPlayer
+        ? l10n.pollPlayersVoted(
+            value.voterCount,
+            playerCount > value.voterCount ? playerCount : value.voterCount,
+          )
+        : l10n.pollVoters(value.voterCount);
     final status = closed
         ? l10n.pollClosed
         : value.closesAt == null
@@ -283,6 +358,11 @@ class _PollCardState extends ConsumerState<PollCard> {
                   color: ink,
                 ),
               ),
+              if (voting != null) ...[
+                const SizedBox(height: 4),
+                Text(voting, style: small),
+              ],
+              if (each != null) Text(each, style: small),
               const SizedBox(height: 4),
               for (final option in value.options)
                 _OptionRow(
@@ -295,8 +375,25 @@ class _PollCardState extends ConsumerState<PollCard> {
                   onCoral: widget.mine,
                   bubbleInk: widget.mine ? ink : null,
                   bubbleFill: widget.bubbleColor,
-                  onTap: closed || archived || viewing
+                  // Someone with no players can't vote on a
+                  // one-vote-per-player poll (#96).
+                  onTap:
+                      closed ||
+                          archived ||
+                          viewing ||
+                          (perPlayer && myPlayers.isEmpty)
                       ? null
+                      : perPlayer
+                      ? () => unawaited(
+                          _votePlayers(
+                            context,
+                            value,
+                            myPlayers,
+                            players,
+                            playerVotes,
+                            option.id,
+                          ),
+                        )
                       : () => unawaited(
                           _vote(context, ref, value, mine, option.id),
                         ),
@@ -319,10 +416,7 @@ class _PollCardState extends ConsumerState<PollCard> {
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       child: Text(
-                        [
-                          l10n.pollVoters(value.voterCount),
-                          ?status,
-                        ].join(' · '),
+                        [voted, ?status].join(' · '),
                         style: small.copyWith(fontSize: 14),
                       ),
                     ),
@@ -390,6 +484,108 @@ class _PollCardState extends ConsumerState<PollCard> {
     }
   }
 
+  /// Votes for all of [players], my players, on a one-vote-per-player poll
+  /// (#96): what tapping [optionId] does to their votes ([current], as
+  /// shown), sent for the ones it changes. Where it would change a vote
+  /// another guardian cast ([votes] are the server's, with who cast them),
+  /// it asks first, saying whose and what, and that they'll be told.
+  Future<void> _votePlayers(
+    BuildContext context,
+    Poll poll,
+    List<Player> players,
+    Map<PlayerId, Set<String>> current,
+    Map<PlayerId, PlayerPollVote> votes,
+    String optionId,
+  ) async {
+    final uid = ref.read(authUserProvider).value?.uid;
+    if (uid == null) return;
+    final l10n = AppLocalizations.of(context);
+    final next = playerVotesAfterTap(
+      current,
+      [for (final p in players) p.id],
+      optionId,
+      allowMultiple: poll.allowMultiple,
+    );
+    final changes = {
+      for (final MapEntry(:key, :value) in next.entries)
+        if (!_same(value, current[key] ?? const {})) key: value,
+    };
+    if (changes.isEmpty) return;
+    final replaced = replacedVotes(votes, changes, uid);
+    if (replaced.isNotEmpty &&
+        !await _confirmReplace(context, poll, players, replaced)) {
+      return;
+    }
+    if (!mounted) return;
+    _pendingTimer?.cancel();
+    setState(() => _pending = {...current, ...changes});
+    try {
+      await ref.read(pollRepositoryProvider).setPlayerVotes(poll, changes);
+      // Should the server's votes come back otherwise (someone voted at
+      // the same moment), they show anyway, a moment later.
+      _pendingTimer = Timer(const Duration(seconds: 3), () {
+        if (mounted) setState(() => _pending = null);
+      });
+    } on AppFailure catch (e) {
+      if (!mounted) return;
+      setState(() => _pending = null);
+      if (!context.mounted) return;
+      // Refused: it closed while this screen showed it open.
+      showAppSnackBar(
+        context,
+        e is PermissionDenied ? l10n.pollVoteClosed : l10n.pollVoteFailed,
+      );
+    }
+  }
+
+  /// "Replace Phil's vote?" (#96): whose votes for which players my vote
+  /// changes, and that they'll be told. True to go ahead.
+  Future<bool> _confirmReplace(
+    BuildContext context,
+    Poll poll,
+    List<Player> players,
+    List<ReplacedVote> replaced,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    final roster = ref.read(rosterProvider(groupId)).value ?? const [];
+    String nameOf(String uid) =>
+        roster.where((m) => m.uid.value == uid).firstOrNull?.displayName ??
+        l10n.formerMember;
+    String first(String name) => name.trim().split(RegExp(r'\s+')).first;
+    String answerOf(Set<String> ids) => joinAnd(l10n, [
+      for (final o in poll.options)
+        if (ids.contains(o.id)) o.text,
+    ]);
+    String playerOf(PlayerId id) =>
+        players.where((p) => p.id == id).firstOrNull?.firstName ??
+        l10n.pollFormerPlayer;
+    final voters = {for (final r in replaced) r.uid};
+    final takingBack = replaced.every((r) => r.after.isEmpty);
+    final who = first(nameOf(voters.first));
+    return showConfirmDialog(
+      context,
+      title: switch ((voters.length == 1, takingBack)) {
+        (true, false) => l10n.pollReplaceTitle(who),
+        (true, true) => l10n.pollTakeBackTitle(who),
+        (false, false) => l10n.pollReplaceTitleMany,
+        (false, true) => l10n.pollTakeBackTitleMany,
+      },
+      message: [
+        for (final r in replaced)
+          l10n.pollReplaceLine(
+            nameOf(r.uid),
+            answerOf(r.before),
+            playerOf(r.playerId),
+          ),
+        l10n.pollReplaceNotice,
+      ].join('\n'),
+      confirmLabel: takingBack
+          ? l10n.pollTakeBackAction
+          : l10n.pollReplaceAction,
+      cancelLabel: l10n.cancel,
+    );
+  }
+
   Future<void> _showVoters(
     BuildContext context,
     Poll poll, {
@@ -416,6 +612,10 @@ class _PollCardState extends ConsumerState<PollCard> {
     }
   }
 }
+
+/// Whether [a] and [b] are the same choices.
+bool _same(Set<String> a, Set<String> b) =>
+    a.length == b.length && a.containsAll(b);
 
 /// When a poll closes, short: "5:00 PM" today, "Fri 5:00 PM" this week,
 /// "Fri, Oct 23 5:00 PM" further out; in the viewer's [zone] (SET-7).

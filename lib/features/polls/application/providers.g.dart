@@ -304,3 +304,301 @@ final class PollVotesFamily extends $Family
   @override
   String toString() => r'pollVotesProvider';
 }
+
+/// The players I vote for on a team's one-vote-per-player polls (#96):
+/// those I'm linked to, as a parent, guardian, or the player, in roster
+/// order. Empty while the roster loads, and for anyone linked to nobody,
+/// such as a coach.
+
+@ProviderFor(myVotingPlayers)
+final myVotingPlayersProvider = MyVotingPlayersFamily._();
+
+/// The players I vote for on a team's one-vote-per-player polls (#96):
+/// those I'm linked to, as a parent, guardian, or the player, in roster
+/// order. Empty while the roster loads, and for anyone linked to nobody,
+/// such as a coach.
+
+final class MyVotingPlayersProvider
+    extends $FunctionalProvider<List<Player>, List<Player>, List<Player>>
+    with $Provider<List<Player>> {
+  /// The players I vote for on a team's one-vote-per-player polls (#96):
+  /// those I'm linked to, as a parent, guardian, or the player, in roster
+  /// order. Empty while the roster loads, and for anyone linked to nobody,
+  /// such as a coach.
+  MyVotingPlayersProvider._({
+    required MyVotingPlayersFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'myVotingPlayersProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$myVotingPlayersHash();
+
+  @override
+  String toString() {
+    return r'myVotingPlayersProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<List<Player>> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  List<Player> create(Ref ref) {
+    final argument = this.argument as GroupId;
+    return myVotingPlayers(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<Player> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<Player>>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MyVotingPlayersProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$myVotingPlayersHash() => r'c2fde2f71733e6c1625240e692af885972f9c467';
+
+/// The players I vote for on a team's one-vote-per-player polls (#96):
+/// those I'm linked to, as a parent, guardian, or the player, in roster
+/// order. Empty while the roster loads, and for anyone linked to nobody,
+/// such as a coach.
+
+final class MyVotingPlayersFamily extends $Family
+    with $FunctionalFamilyOverride<List<Player>, GroupId> {
+  MyVotingPlayersFamily._()
+    : super(
+        retry: null,
+        name: r'myVotingPlayersProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The players I vote for on a team's one-vote-per-player polls (#96):
+  /// those I'm linked to, as a parent, guardian, or the player, in roster
+  /// order. Empty while the roster loads, and for anyone linked to nobody,
+  /// such as a coach.
+
+  MyVotingPlayersProvider call(GroupId groupId) =>
+      MyVotingPlayersProvider._(argument: groupId, from: this);
+
+  @override
+  String toString() => r'myVotingPlayersProvider';
+}
+
+/// My players' votes on a one-vote-per-player poll (#96), live, by player;
+/// a player with no vote is missing. Listens again only when my players
+/// change, not on every roster update.
+
+@ProviderFor(myPlayersPollVotes)
+final myPlayersPollVotesProvider = MyPlayersPollVotesFamily._();
+
+/// My players' votes on a one-vote-per-player poll (#96), live, by player;
+/// a player with no vote is missing. Listens again only when my players
+/// change, not on every roster update.
+
+final class MyPlayersPollVotesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Map<PlayerId, PlayerPollVote>>,
+          Map<PlayerId, PlayerPollVote>,
+          Stream<Map<PlayerId, PlayerPollVote>>
+        >
+    with
+        $FutureModifier<Map<PlayerId, PlayerPollVote>>,
+        $StreamProvider<Map<PlayerId, PlayerPollVote>> {
+  /// My players' votes on a one-vote-per-player poll (#96), live, by player;
+  /// a player with no vote is missing. Listens again only when my players
+  /// change, not on every roster update.
+  MyPlayersPollVotesProvider._({
+    required MyPlayersPollVotesFamily super.from,
+    required (PollId, GroupId) super.argument,
+  }) : super(
+         retry: null,
+         name: r'myPlayersPollVotesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$myPlayersPollVotesHash();
+
+  @override
+  String toString() {
+    return r'myPlayersPollVotesProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<Map<PlayerId, PlayerPollVote>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<Map<PlayerId, PlayerPollVote>> create(Ref ref) {
+    final argument = this.argument as (PollId, GroupId);
+    return myPlayersPollVotes(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MyPlayersPollVotesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$myPlayersPollVotesHash() =>
+    r'3ba49fbd50caa6dbca611a31d8edb06edb26a581';
+
+/// My players' votes on a one-vote-per-player poll (#96), live, by player;
+/// a player with no vote is missing. Listens again only when my players
+/// change, not on every roster update.
+
+final class MyPlayersPollVotesFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          Stream<Map<PlayerId, PlayerPollVote>>,
+          (PollId, GroupId)
+        > {
+  MyPlayersPollVotesFamily._()
+    : super(
+        retry: null,
+        name: r'myPlayersPollVotesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// My players' votes on a one-vote-per-player poll (#96), live, by player;
+  /// a player with no vote is missing. Listens again only when my players
+  /// change, not on every roster update.
+
+  MyPlayersPollVotesProvider call(PollId pollId, GroupId groupId) =>
+      MyPlayersPollVotesProvider._(argument: (pollId, groupId), from: this);
+
+  @override
+  String toString() => r'myPlayersPollVotesProvider';
+}
+
+/// Every player's vote on a one-vote-per-player poll that isn't anonymous
+/// (#96), for the results by player. Read when the sheet opens, not kept
+/// live.
+
+@ProviderFor(pollPlayerVotes)
+final pollPlayerVotesProvider = PollPlayerVotesFamily._();
+
+/// Every player's vote on a one-vote-per-player poll that isn't anonymous
+/// (#96), for the results by player. Read when the sheet opens, not kept
+/// live.
+
+final class PollPlayerVotesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<PlayerPollVote>>,
+          List<PlayerPollVote>,
+          FutureOr<List<PlayerPollVote>>
+        >
+    with
+        $FutureModifier<List<PlayerPollVote>>,
+        $FutureProvider<List<PlayerPollVote>> {
+  /// Every player's vote on a one-vote-per-player poll that isn't anonymous
+  /// (#96), for the results by player. Read when the sheet opens, not kept
+  /// live.
+  PollPlayerVotesProvider._({
+    required PollPlayerVotesFamily super.from,
+    required PollId super.argument,
+  }) : super(
+         retry: null,
+         name: r'pollPlayerVotesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$pollPlayerVotesHash();
+
+  @override
+  String toString() {
+    return r'pollPlayerVotesProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<PlayerPollVote>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<PlayerPollVote>> create(Ref ref) {
+    final argument = this.argument as PollId;
+    return pollPlayerVotes(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PollPlayerVotesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$pollPlayerVotesHash() => r'75e551158a5bd85d8cc2a07c83a4011ba5f8bb69';
+
+/// Every player's vote on a one-vote-per-player poll that isn't anonymous
+/// (#96), for the results by player. Read when the sheet opens, not kept
+/// live.
+
+final class PollPlayerVotesFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<PlayerPollVote>>, PollId> {
+  PollPlayerVotesFamily._()
+    : super(
+        retry: null,
+        name: r'pollPlayerVotesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Every player's vote on a one-vote-per-player poll that isn't anonymous
+  /// (#96), for the results by player. Read when the sheet opens, not kept
+  /// live.
+
+  PollPlayerVotesProvider call(PollId pollId) =>
+      PollPlayerVotesProvider._(argument: pollId, from: this);
+
+  @override
+  String toString() => r'pollPlayerVotesProvider';
+}

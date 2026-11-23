@@ -20,6 +20,10 @@ abstract class Poll with _$Poll {
     /// Only counts are shown; nobody in the app sees who chose what (POLL-3).
     @Default(false) bool anonymous,
 
+    /// One vote per player on the roster (#96): parents, guardians, and
+    /// adult players vote for their players, and the counts are players.
+    @Default(false) bool perPlayer,
+
     /// When it closes by itself (POLL-4), if set.
     DateTime? closesAt,
 
@@ -29,7 +33,8 @@ abstract class Poll with _$Poll {
     /// Votes per option ID.
     @Default(<String, int>{}) Map<String, int> voteCounts,
 
-    /// How many people voted.
+    /// How many people voted; on a one-vote-per-player poll, how many
+    /// players have a vote.
     @Default(0) int voterCount,
   }) = _Poll;
 
@@ -74,6 +79,27 @@ abstract class PollVote with _$PollVote {
       _PollVote;
 }
 
+/// A player's vote on a one-vote-per-player poll (#96,
+/// `pollPlayerVotes/{pollId}_{playerId}`), and who cast it: a parent,
+/// guardian, or the player themselves.
+@freezed
+abstract class PlayerPollVote with _$PlayerPollVote {
+  const factory({
+    required PlayerId playerId,
+    required Set<String> optionIds,
+    required String uid,
+  }) = _PlayerPollVote;
+}
+
+/// A player's vote another guardian cast that mine would change (#96):
+/// asked about before voting, and that guardian is told.
+typedef ReplacedVote = ({
+  PlayerId playerId,
+  String uid,
+  Set<String> before,
+  Set<String> after,
+});
+
 /// A poll about to be posted (POLL-1).
 @freezed
 abstract class NewPoll with _$NewPoll {
@@ -82,6 +108,9 @@ abstract class NewPoll with _$NewPoll {
     required List<String> options,
     @Default(false) bool allowMultiple,
     @Default(false) bool anonymous,
+
+    /// One vote per player on the roster (#96); only on a team.
+    @Default(false) bool perPlayer,
     DateTime? closesAt,
   }) = _NewPoll;
 
@@ -129,3 +158,51 @@ Set<String> toggledVote(
   }
   return mine.contains(optionId) ? const {} : {optionId};
 }
+
+/// What tapping [optionId] does to the votes of [mine], my players, on a
+/// one-vote-per-player poll (#96): I vote for all of them at once. On a
+/// one-answer poll it picks that option for each, or takes their votes
+/// back when it's already every one's; on a multiple-answer poll it adds
+/// that option to each one's, or takes it off when every one has it.
+/// [current] holds their votes now, missing for a player with none. An
+/// empty set takes a player's vote back.
+Map<PlayerId, Set<String>> playerVotesAfterTap(
+  Map<PlayerId, Set<String>> current,
+  List<PlayerId> mine,
+  String optionId, {
+  required bool allowMultiple,
+}) {
+  Set<String> now(PlayerId p) => current[p] ?? const {};
+  if (allowMultiple) {
+    final everyone = mine.every((p) => now(p).contains(optionId));
+    return {
+      for (final p in mine)
+        p: everyone ? ({...now(p)}..remove(optionId)) : {...now(p), optionId},
+    };
+  }
+  final everyone = mine.every(
+    (p) => now(p).length == 1 && now(p).contains(optionId),
+  );
+  return {
+    for (final p in mine) p: everyone ? const <String>{} : {optionId},
+  };
+}
+
+/// The votes [next] would change that someone else cast (#96): the
+/// players' votes in [current] that aren't [me]'s, with an answer, and
+/// different from what I'd vote. Asked about before voting.
+List<ReplacedVote> replacedVotes(
+  Map<PlayerId, PlayerPollVote> current,
+  Map<PlayerId, Set<String>> next,
+  String me,
+) => [
+  for (final MapEntry(key: player, value: after) in next.entries)
+    if (current[player] case final vote?
+        when vote.uid != me &&
+            vote.optionIds.isNotEmpty &&
+            !_sameChoices(vote.optionIds, after))
+      (playerId: player, uid: vote.uid, before: vote.optionIds, after: after),
+];
+
+bool _sameChoices(Set<String> a, Set<String> b) =>
+    a.length == b.length && a.containsAll(b);

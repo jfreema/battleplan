@@ -88,7 +88,7 @@ export {
 export { retryNotifications } from './notify/jobs.js';
 export { logClientError } from './ops/handlers.js';
 export { tick } from './ops/jobs.js';
-export { closePoll } from './polls/handlers.js';
+export { closePoll, votePollForPlayers } from './polls/handlers.js';
 export { onPollVoteWritten } from './polls/triggers.js';
 export { repostEvent, saveEventSeries } from './schedule/handlers.js';
 export { onEventWritten, onRsvpWritten } from './schedule/triggers.js';

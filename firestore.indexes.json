@@ -785,6 +785,20 @@
       ]
     },
     {
+      "collectionGroup": "pollPlayerVotes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "pollId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "optionIds",
+          "arrayConfig": "CONTAINS"
+        }
+      ]
+    },
+    {
       "collectionGroup": "dues",
       "queryScope": "COLLECTION",
       "fields": [

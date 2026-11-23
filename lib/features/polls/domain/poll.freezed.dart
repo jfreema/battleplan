@@ -16,10 +16,13 @@ T _$identity<T>(T value) => value;
 mixin _$Poll {
 
  PollId get id; GroupId get groupId; String get createdBy; String get question; List<PollOption> get options; bool get allowMultiple;/// Only counts are shown; nobody in the app sees who chose what (POLL-3).
- bool get anonymous;/// When it closes by itself (POLL-4), if set.
+ bool get anonymous;/// One vote per player on the roster (#96): parents, guardians, and
+/// adult players vote for their players, and the counts are players.
+ bool get perPlayer;/// When it closes by itself (POLL-4), if set.
  DateTime? get closesAt;/// When it closed, early or on time. Closed polls never reopen.
  DateTime? get closedAt;/// Votes per option ID.
- Map<String, int> get voteCounts;/// How many people voted.
+ Map<String, int> get voteCounts;/// How many people voted; on a one-vote-per-player poll, how many
+/// players have a vote.
  int get voterCount;
 /// Create a copy of Poll
 /// with the given fields replaced by the non-null parameter values.
@@ -32,20 +35,20 @@ $PollCopyWith<Poll> get copyWith => _$PollCopyWithImpl<Poll>(this as Poll, _$ide
 @override
 bool operator ==(Object other) {
   final _this = this as Poll;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Poll&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.createdBy, _this.createdBy) || other.createdBy == _this.createdBy)&&(identical(other.question, _this.question) || other.question == _this.question)&&const DeepCollectionEquality().equals(other.options, _this.options)&&(identical(other.allowMultiple, _this.allowMultiple) || other.allowMultiple == _this.allowMultiple)&&(identical(other.anonymous, _this.anonymous) || other.anonymous == _this.anonymous)&&(identical(other.closesAt, _this.closesAt) || other.closesAt == _this.closesAt)&&(identical(other.closedAt, _this.closedAt) || other.closedAt == _this.closedAt)&&const DeepCollectionEquality().equals(other.voteCounts, _this.voteCounts)&&(identical(other.voterCount, _this.voterCount) || other.voterCount == _this.voterCount));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Poll&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.createdBy, _this.createdBy) || other.createdBy == _this.createdBy)&&(identical(other.question, _this.question) || other.question == _this.question)&&const DeepCollectionEquality().equals(other.options, _this.options)&&(identical(other.allowMultiple, _this.allowMultiple) || other.allowMultiple == _this.allowMultiple)&&(identical(other.anonymous, _this.anonymous) || other.anonymous == _this.anonymous)&&(identical(other.perPlayer, _this.perPlayer) || other.perPlayer == _this.perPlayer)&&(identical(other.closesAt, _this.closesAt) || other.closesAt == _this.closesAt)&&(identical(other.closedAt, _this.closedAt) || other.closedAt == _this.closedAt)&&const DeepCollectionEquality().equals(other.voteCounts, _this.voteCounts)&&(identical(other.voterCount, _this.voterCount) || other.voterCount == _this.voterCount));
 }
 
 
 @override
 int get hashCode {
   final _this = this as Poll;
-  return Object.hash(runtimeType,_this.id,_this.groupId,_this.createdBy,_this.question,const DeepCollectionEquality().hash(_this.options),_this.allowMultiple,_this.anonymous,_this.closesAt,_this.closedAt,const DeepCollectionEquality().hash(_this.voteCounts),_this.voterCount);
+  return Object.hash(runtimeType,_this.id,_this.groupId,_this.createdBy,_this.question,const DeepCollectionEquality().hash(_this.options),_this.allowMultiple,_this.anonymous,_this.perPlayer,_this.closesAt,_this.closedAt,const DeepCollectionEquality().hash(_this.voteCounts),_this.voterCount);
 }
 
 @override
 String toString() {
   final _this = this as Poll;
-  return 'Poll(id: ${_this.id}, groupId: ${_this.groupId}, createdBy: ${_this.createdBy}, question: ${_this.question}, options: ${_this.options}, allowMultiple: ${_this.allowMultiple}, anonymous: ${_this.anonymous}, closesAt: ${_this.closesAt}, closedAt: ${_this.closedAt}, voteCounts: ${_this.voteCounts}, voterCount: ${_this.voterCount})';
+  return 'Poll(id: ${_this.id}, groupId: ${_this.groupId}, createdBy: ${_this.createdBy}, question: ${_this.question}, options: ${_this.options}, allowMultiple: ${_this.allowMultiple}, anonymous: ${_this.anonymous}, perPlayer: ${_this.perPlayer}, closesAt: ${_this.closesAt}, closedAt: ${_this.closedAt}, voteCounts: ${_this.voteCounts}, voterCount: ${_this.voterCount})';
 }
 
 
@@ -56,7 +59,7 @@ abstract mixin class $PollCopyWith<$Res>  {
   factory $PollCopyWith(Poll value, $Res Function(Poll) _then) = _$PollCopyWithImpl;
 @useResult
 $Res call({
- PollId id, GroupId groupId, String createdBy, String question, List<PollOption> options, bool allowMultiple, bool anonymous, DateTime? closesAt, DateTime? closedAt, Map<String, int> voteCounts, int voterCount
+ PollId id, GroupId groupId, String createdBy, String question, List<PollOption> options, bool allowMultiple, bool anonymous, bool perPlayer, DateTime? closesAt, DateTime? closedAt, Map<String, int> voteCounts, int voterCount
 });
 
 
@@ -73,7 +76,7 @@ class _$PollCopyWithImpl<$Res>
 
 /// Create a copy of Poll
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? groupId = null,Object? createdBy = null,Object? question = null,Object? options = null,Object? allowMultiple = null,Object? anonymous = null,Object? closesAt = freezed,Object? closedAt = freezed,Object? voteCounts = null,Object? voterCount = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? groupId = null,Object? createdBy = null,Object? question = null,Object? options = null,Object? allowMultiple = null,Object? anonymous = null,Object? perPlayer = null,Object? closesAt = freezed,Object? closedAt = freezed,Object? voteCounts = null,Object? voterCount = null,}) {
   return _then(Poll(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as PollId,groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
@@ -82,6 +85,7 @@ as String,question: null == question ? _self.question : question // ignore: cast
 as String,options: null == options ? _self.options : options // ignore: cast_nullable_to_non_nullable
 as List<PollOption>,allowMultiple: null == allowMultiple ? _self.allowMultiple : allowMultiple // ignore: cast_nullable_to_non_nullable
 as bool,anonymous: null == anonymous ? _self.anonymous : anonymous // ignore: cast_nullable_to_non_nullable
+as bool,perPlayer: null == perPlayer ? _self.perPlayer : perPlayer // ignore: cast_nullable_to_non_nullable
 as bool,closesAt: freezed == closesAt ? _self.closesAt : closesAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,closedAt: freezed == closedAt ? _self.closedAt : closedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,voteCounts: null == voteCounts ? _self.voteCounts : voteCounts // ignore: cast_nullable_to_non_nullable
@@ -171,10 +175,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( PollId id,  GroupId groupId,  String createdBy,  String question,  List<PollOption> options,  bool allowMultiple,  bool anonymous,  DateTime? closesAt,  DateTime? closedAt,  Map<String, int> voteCounts,  int voterCount)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( PollId id,  GroupId groupId,  String createdBy,  String question,  List<PollOption> options,  bool allowMultiple,  bool anonymous,  bool perPlayer,  DateTime? closesAt,  DateTime? closedAt,  Map<String, int> voteCounts,  int voterCount)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Poll() when $default != null:
-return $default(_that.id,_that.groupId,_that.createdBy,_that.question,_that.options,_that.allowMultiple,_that.anonymous,_that.closesAt,_that.closedAt,_that.voteCounts,_that.voterCount);case _:
+return $default(_that.id,_that.groupId,_that.createdBy,_that.question,_that.options,_that.allowMultiple,_that.anonymous,_that.perPlayer,_that.closesAt,_that.closedAt,_that.voteCounts,_that.voterCount);case _:
   return orElse();
 
 }
@@ -192,10 +196,10 @@ return $default(_that.id,_that.groupId,_that.createdBy,_that.question,_that.opti
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( PollId id,  GroupId groupId,  String createdBy,  String question,  List<PollOption> options,  bool allowMultiple,  bool anonymous,  DateTime? closesAt,  DateTime? closedAt,  Map<String, int> voteCounts,  int voterCount)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( PollId id,  GroupId groupId,  String createdBy,  String question,  List<PollOption> options,  bool allowMultiple,  bool anonymous,  bool perPlayer,  DateTime? closesAt,  DateTime? closedAt,  Map<String, int> voteCounts,  int voterCount)  $default,) {final _that = this;
 switch (_that) {
 case _Poll():
-return $default(_that.id,_that.groupId,_that.createdBy,_that.question,_that.options,_that.allowMultiple,_that.anonymous,_that.closesAt,_that.closedAt,_that.voteCounts,_that.voterCount);case _:
+return $default(_that.id,_that.groupId,_that.createdBy,_that.question,_that.options,_that.allowMultiple,_that.anonymous,_that.perPlayer,_that.closesAt,_that.closedAt,_that.voteCounts,_that.voterCount);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -212,10 +216,10 @@ return $default(_that.id,_that.groupId,_that.createdBy,_that.question,_that.opti
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( PollId id,  GroupId groupId,  String createdBy,  String question,  List<PollOption> options,  bool allowMultiple,  bool anonymous,  DateTime? closesAt,  DateTime? closedAt,  Map<String, int> voteCounts,  int voterCount)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( PollId id,  GroupId groupId,  String createdBy,  String question,  List<PollOption> options,  bool allowMultiple,  bool anonymous,  bool perPlayer,  DateTime? closesAt,  DateTime? closedAt,  Map<String, int> voteCounts,  int voterCount)?  $default,) {final _that = this;
 switch (_that) {
 case _Poll() when $default != null:
-return $default(_that.id,_that.groupId,_that.createdBy,_that.question,_that.options,_that.allowMultiple,_that.anonymous,_that.closesAt,_that.closedAt,_that.voteCounts,_that.voterCount);case _:
+return $default(_that.id,_that.groupId,_that.createdBy,_that.question,_that.options,_that.allowMultiple,_that.anonymous,_that.perPlayer,_that.closesAt,_that.closedAt,_that.voteCounts,_that.voterCount);case _:
   return null;
 
 }
@@ -227,7 +231,7 @@ return $default(_that.id,_that.groupId,_that.createdBy,_that.question,_that.opti
 
 
 class _Poll extends Poll {
-  const _Poll({required this.id, required this.groupId, required this.createdBy, required this.question, required  List<PollOption> options, this.allowMultiple = false, this.anonymous = false, this.closesAt, this.closedAt,  Map<String, int> voteCounts = const <String, int>{}, this.voterCount = 0}): _options = options,_voteCounts = voteCounts,super._();
+  const _Poll({required this.id, required this.groupId, required this.createdBy, required this.question, required  List<PollOption> options, this.allowMultiple = false, this.anonymous = false, this.perPlayer = false, this.closesAt, this.closedAt,  Map<String, int> voteCounts = const <String, int>{}, this.voterCount = 0}): _options = options,_voteCounts = voteCounts,super._();
   
 
 @override final  PollId id;
@@ -244,6 +248,9 @@ class _Poll extends Poll {
 @override@JsonKey() final  bool allowMultiple;
 /// Only counts are shown; nobody in the app sees who chose what (POLL-3).
 @override@JsonKey() final  bool anonymous;
+/// One vote per player on the roster (#96): parents, guardians, and
+/// adult players vote for their players, and the counts are players.
+@override@JsonKey() final  bool perPlayer;
 /// When it closes by itself (POLL-4), if set.
 @override final  DateTime? closesAt;
 /// When it closed, early or on time. Closed polls never reopen.
@@ -257,7 +264,8 @@ class _Poll extends Poll {
   return EqualUnmodifiableMapView(_voteCounts);
 }
 
-/// How many people voted.
+/// How many people voted; on a one-vote-per-player poll, how many
+/// players have a vote.
 @override@JsonKey() final  int voterCount;
 
 /// Create a copy of Poll
@@ -270,18 +278,18 @@ _$PollCopyWith<_Poll> get copyWith => __$PollCopyWithImpl<_Poll>(this, _$identit
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Poll&&(identical(other.id, id) || other.id == id)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.createdBy, createdBy) || other.createdBy == createdBy)&&(identical(other.question, question) || other.question == question)&&const DeepCollectionEquality().equals(other.options, _options)&&(identical(other.allowMultiple, allowMultiple) || other.allowMultiple == allowMultiple)&&(identical(other.anonymous, anonymous) || other.anonymous == anonymous)&&(identical(other.closesAt, closesAt) || other.closesAt == closesAt)&&(identical(other.closedAt, closedAt) || other.closedAt == closedAt)&&const DeepCollectionEquality().equals(other.voteCounts, _voteCounts)&&(identical(other.voterCount, voterCount) || other.voterCount == voterCount));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Poll&&(identical(other.id, id) || other.id == id)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.createdBy, createdBy) || other.createdBy == createdBy)&&(identical(other.question, question) || other.question == question)&&const DeepCollectionEquality().equals(other.options, _options)&&(identical(other.allowMultiple, allowMultiple) || other.allowMultiple == allowMultiple)&&(identical(other.anonymous, anonymous) || other.anonymous == anonymous)&&(identical(other.perPlayer, perPlayer) || other.perPlayer == perPlayer)&&(identical(other.closesAt, closesAt) || other.closesAt == closesAt)&&(identical(other.closedAt, closedAt) || other.closedAt == closedAt)&&const DeepCollectionEquality().equals(other.voteCounts, _voteCounts)&&(identical(other.voterCount, voterCount) || other.voterCount == voterCount));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,groupId,createdBy,question,const DeepCollectionEquality().hash(_options),allowMultiple,anonymous,closesAt,closedAt,const DeepCollectionEquality().hash(_voteCounts),voterCount);
+    return Object.hash(runtimeType,id,groupId,createdBy,question,const DeepCollectionEquality().hash(_options),allowMultiple,anonymous,perPlayer,closesAt,closedAt,const DeepCollectionEquality().hash(_voteCounts),voterCount);
 }
 
 @override
 String toString() {
-    return 'Poll(id: $id, groupId: $groupId, createdBy: $createdBy, question: $question, options: $options, allowMultiple: $allowMultiple, anonymous: $anonymous, closesAt: $closesAt, closedAt: $closedAt, voteCounts: $voteCounts, voterCount: $voterCount)';
+    return 'Poll(id: $id, groupId: $groupId, createdBy: $createdBy, question: $question, options: $options, allowMultiple: $allowMultiple, anonymous: $anonymous, perPlayer: $perPlayer, closesAt: $closesAt, closedAt: $closedAt, voteCounts: $voteCounts, voterCount: $voterCount)';
 }
 
 
@@ -292,7 +300,7 @@ abstract mixin class _$PollCopyWith<$Res> implements $PollCopyWith<$Res> {
   factory _$PollCopyWith(_Poll value, $Res Function(_Poll) _then) = __$PollCopyWithImpl;
 @override @useResult
 $Res call({
- PollId id, GroupId groupId, String createdBy, String question, List<PollOption> options, bool allowMultiple, bool anonymous, DateTime? closesAt, DateTime? closedAt, Map<String, int> voteCounts, int voterCount
+ PollId id, GroupId groupId, String createdBy, String question, List<PollOption> options, bool allowMultiple, bool anonymous, bool perPlayer, DateTime? closesAt, DateTime? closedAt, Map<String, int> voteCounts, int voterCount
 });
 
 
@@ -309,7 +317,7 @@ class __$PollCopyWithImpl<$Res>
 
 /// Create a copy of Poll
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? groupId = null,Object? createdBy = null,Object? question = null,Object? options = null,Object? allowMultiple = null,Object? anonymous = null,Object? closesAt = freezed,Object? closedAt = freezed,Object? voteCounts = null,Object? voterCount = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? groupId = null,Object? createdBy = null,Object? question = null,Object? options = null,Object? allowMultiple = null,Object? anonymous = null,Object? perPlayer = null,Object? closesAt = freezed,Object? closedAt = freezed,Object? voteCounts = null,Object? voterCount = null,}) {
   return _then(_Poll(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as PollId,groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
@@ -318,6 +326,7 @@ as String,question: null == question ? _self.question : question // ignore: cast
 as String,options: null == options ? _self._options : options // ignore: cast_nullable_to_non_nullable
 as List<PollOption>,allowMultiple: null == allowMultiple ? _self.allowMultiple : allowMultiple // ignore: cast_nullable_to_non_nullable
 as bool,anonymous: null == anonymous ? _self.anonymous : anonymous // ignore: cast_nullable_to_non_nullable
+as bool,perPlayer: null == perPlayer ? _self.perPlayer : perPlayer // ignore: cast_nullable_to_non_nullable
 as bool,closesAt: freezed == closesAt ? _self.closesAt : closesAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,closedAt: freezed == closedAt ? _self.closedAt : closedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,voteCounts: null == voteCounts ? _self._voteCounts : voteCounts // ignore: cast_nullable_to_non_nullable
@@ -870,9 +879,286 @@ as Set<String>,
 }
 
 /// @nodoc
+mixin _$PlayerPollVote {
+
+ PlayerId get playerId; Set<String> get optionIds; String get uid;
+/// Create a copy of PlayerPollVote
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$PlayerPollVoteCopyWith<PlayerPollVote> get copyWith => _$PlayerPollVoteCopyWithImpl<PlayerPollVote>(this as PlayerPollVote, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as PlayerPollVote;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PlayerPollVote&&(identical(other.playerId, _this.playerId) || other.playerId == _this.playerId)&&const DeepCollectionEquality().equals(other.optionIds, _this.optionIds)&&(identical(other.uid, _this.uid) || other.uid == _this.uid));
+}
+
+
+@override
+int get hashCode {
+  final _this = this as PlayerPollVote;
+  return Object.hash(runtimeType,_this.playerId,const DeepCollectionEquality().hash(_this.optionIds),_this.uid);
+}
+
+@override
+String toString() {
+  final _this = this as PlayerPollVote;
+  return 'PlayerPollVote(playerId: ${_this.playerId}, optionIds: ${_this.optionIds}, uid: ${_this.uid})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $PlayerPollVoteCopyWith<$Res>  {
+  factory $PlayerPollVoteCopyWith(PlayerPollVote value, $Res Function(PlayerPollVote) _then) = _$PlayerPollVoteCopyWithImpl;
+@useResult
+$Res call({
+ PlayerId playerId, Set<String> optionIds, String uid
+});
+
+
+
+
+}
+/// @nodoc
+class _$PlayerPollVoteCopyWithImpl<$Res>
+    implements $PlayerPollVoteCopyWith<$Res> {
+  _$PlayerPollVoteCopyWithImpl(this._self, this._then);
+
+  final PlayerPollVote _self;
+  final $Res Function(PlayerPollVote) _then;
+
+/// Create a copy of PlayerPollVote
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? playerId = null,Object? optionIds = null,Object? uid = null,}) {
+  return _then(PlayerPollVote(
+playerId: null == playerId ? _self.playerId : playerId // ignore: cast_nullable_to_non_nullable
+as PlayerId,optionIds: null == optionIds ? _self.optionIds : optionIds // ignore: cast_nullable_to_non_nullable
+as Set<String>,uid: null == uid ? _self.uid : uid // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [PlayerPollVote].
+extension PlayerPollVotePatterns on PlayerPollVote {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _PlayerPollVote value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _PlayerPollVote() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _PlayerPollVote value)  $default,){
+final _that = this;
+switch (_that) {
+case _PlayerPollVote():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _PlayerPollVote value)?  $default,){
+final _that = this;
+switch (_that) {
+case _PlayerPollVote() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( PlayerId playerId,  Set<String> optionIds,  String uid)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _PlayerPollVote() when $default != null:
+return $default(_that.playerId,_that.optionIds,_that.uid);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( PlayerId playerId,  Set<String> optionIds,  String uid)  $default,) {final _that = this;
+switch (_that) {
+case _PlayerPollVote():
+return $default(_that.playerId,_that.optionIds,_that.uid);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( PlayerId playerId,  Set<String> optionIds,  String uid)?  $default,) {final _that = this;
+switch (_that) {
+case _PlayerPollVote() when $default != null:
+return $default(_that.playerId,_that.optionIds,_that.uid);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _PlayerPollVote implements PlayerPollVote {
+  const _PlayerPollVote({required this.playerId, required  Set<String> optionIds, required this.uid}): _optionIds = optionIds;
+  
+
+@override final  PlayerId playerId;
+ final  Set<String> _optionIds;
+@override Set<String> get optionIds {
+  if (_optionIds is EqualUnmodifiableSetView) return _optionIds;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableSetView(_optionIds);
+}
+
+@override final  String uid;
+
+/// Create a copy of PlayerPollVote
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$PlayerPollVoteCopyWith<_PlayerPollVote> get copyWith => __$PlayerPollVoteCopyWithImpl<_PlayerPollVote>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PlayerPollVote&&(identical(other.playerId, playerId) || other.playerId == playerId)&&const DeepCollectionEquality().equals(other.optionIds, _optionIds)&&(identical(other.uid, uid) || other.uid == uid));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,playerId,const DeepCollectionEquality().hash(_optionIds),uid);
+}
+
+@override
+String toString() {
+    return 'PlayerPollVote(playerId: $playerId, optionIds: $optionIds, uid: $uid)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$PlayerPollVoteCopyWith<$Res> implements $PlayerPollVoteCopyWith<$Res> {
+  factory _$PlayerPollVoteCopyWith(_PlayerPollVote value, $Res Function(_PlayerPollVote) _then) = __$PlayerPollVoteCopyWithImpl;
+@override @useResult
+$Res call({
+ PlayerId playerId, Set<String> optionIds, String uid
+});
+
+
+
+
+}
+/// @nodoc
+class __$PlayerPollVoteCopyWithImpl<$Res>
+    implements _$PlayerPollVoteCopyWith<$Res> {
+  __$PlayerPollVoteCopyWithImpl(this._self, this._then);
+
+  final _PlayerPollVote _self;
+  final $Res Function(_PlayerPollVote) _then;
+
+/// Create a copy of PlayerPollVote
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? playerId = null,Object? optionIds = null,Object? uid = null,}) {
+  return _then(_PlayerPollVote(
+playerId: null == playerId ? _self.playerId : playerId // ignore: cast_nullable_to_non_nullable
+as PlayerId,optionIds: null == optionIds ? _self._optionIds : optionIds // ignore: cast_nullable_to_non_nullable
+as Set<String>,uid: null == uid ? _self.uid : uid // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
 mixin _$NewPoll {
 
- String get question; List<String> get options; bool get allowMultiple; bool get anonymous; DateTime? get closesAt;
+ String get question; List<String> get options; bool get allowMultiple; bool get anonymous;/// One vote per player on the roster (#96); only on a team.
+ bool get perPlayer; DateTime? get closesAt;
 /// Create a copy of NewPoll
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -884,20 +1170,20 @@ $NewPollCopyWith<NewPoll> get copyWith => _$NewPollCopyWithImpl<NewPoll>(this as
 @override
 bool operator ==(Object other) {
   final _this = this as NewPoll;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is NewPoll&&(identical(other.question, _this.question) || other.question == _this.question)&&const DeepCollectionEquality().equals(other.options, _this.options)&&(identical(other.allowMultiple, _this.allowMultiple) || other.allowMultiple == _this.allowMultiple)&&(identical(other.anonymous, _this.anonymous) || other.anonymous == _this.anonymous)&&(identical(other.closesAt, _this.closesAt) || other.closesAt == _this.closesAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NewPoll&&(identical(other.question, _this.question) || other.question == _this.question)&&const DeepCollectionEquality().equals(other.options, _this.options)&&(identical(other.allowMultiple, _this.allowMultiple) || other.allowMultiple == _this.allowMultiple)&&(identical(other.anonymous, _this.anonymous) || other.anonymous == _this.anonymous)&&(identical(other.perPlayer, _this.perPlayer) || other.perPlayer == _this.perPlayer)&&(identical(other.closesAt, _this.closesAt) || other.closesAt == _this.closesAt));
 }
 
 
 @override
 int get hashCode {
   final _this = this as NewPoll;
-  return Object.hash(runtimeType,_this.question,const DeepCollectionEquality().hash(_this.options),_this.allowMultiple,_this.anonymous,_this.closesAt);
+  return Object.hash(runtimeType,_this.question,const DeepCollectionEquality().hash(_this.options),_this.allowMultiple,_this.anonymous,_this.perPlayer,_this.closesAt);
 }
 
 @override
 String toString() {
   final _this = this as NewPoll;
-  return 'NewPoll(question: ${_this.question}, options: ${_this.options}, allowMultiple: ${_this.allowMultiple}, anonymous: ${_this.anonymous}, closesAt: ${_this.closesAt})';
+  return 'NewPoll(question: ${_this.question}, options: ${_this.options}, allowMultiple: ${_this.allowMultiple}, anonymous: ${_this.anonymous}, perPlayer: ${_this.perPlayer}, closesAt: ${_this.closesAt})';
 }
 
 
@@ -908,7 +1194,7 @@ abstract mixin class $NewPollCopyWith<$Res>  {
   factory $NewPollCopyWith(NewPoll value, $Res Function(NewPoll) _then) = _$NewPollCopyWithImpl;
 @useResult
 $Res call({
- String question, List<String> options, bool allowMultiple, bool anonymous, DateTime? closesAt
+ String question, List<String> options, bool allowMultiple, bool anonymous, bool perPlayer, DateTime? closesAt
 });
 
 
@@ -925,12 +1211,13 @@ class _$NewPollCopyWithImpl<$Res>
 
 /// Create a copy of NewPoll
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? question = null,Object? options = null,Object? allowMultiple = null,Object? anonymous = null,Object? closesAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? question = null,Object? options = null,Object? allowMultiple = null,Object? anonymous = null,Object? perPlayer = null,Object? closesAt = freezed,}) {
   return _then(NewPoll(
 question: null == question ? _self.question : question // ignore: cast_nullable_to_non_nullable
 as String,options: null == options ? _self.options : options // ignore: cast_nullable_to_non_nullable
 as List<String>,allowMultiple: null == allowMultiple ? _self.allowMultiple : allowMultiple // ignore: cast_nullable_to_non_nullable
 as bool,anonymous: null == anonymous ? _self.anonymous : anonymous // ignore: cast_nullable_to_non_nullable
+as bool,perPlayer: null == perPlayer ? _self.perPlayer : perPlayer // ignore: cast_nullable_to_non_nullable
 as bool,closesAt: freezed == closesAt ? _self.closesAt : closesAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,
   ));
@@ -1017,10 +1304,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String question,  List<String> options,  bool allowMultiple,  bool anonymous,  DateTime? closesAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String question,  List<String> options,  bool allowMultiple,  bool anonymous,  bool perPlayer,  DateTime? closesAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _NewPoll() when $default != null:
-return $default(_that.question,_that.options,_that.allowMultiple,_that.anonymous,_that.closesAt);case _:
+return $default(_that.question,_that.options,_that.allowMultiple,_that.anonymous,_that.perPlayer,_that.closesAt);case _:
   return orElse();
 
 }
@@ -1038,10 +1325,10 @@ return $default(_that.question,_that.options,_that.allowMultiple,_that.anonymous
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String question,  List<String> options,  bool allowMultiple,  bool anonymous,  DateTime? closesAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String question,  List<String> options,  bool allowMultiple,  bool anonymous,  bool perPlayer,  DateTime? closesAt)  $default,) {final _that = this;
 switch (_that) {
 case _NewPoll():
-return $default(_that.question,_that.options,_that.allowMultiple,_that.anonymous,_that.closesAt);case _:
+return $default(_that.question,_that.options,_that.allowMultiple,_that.anonymous,_that.perPlayer,_that.closesAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1058,10 +1345,10 @@ return $default(_that.question,_that.options,_that.allowMultiple,_that.anonymous
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String question,  List<String> options,  bool allowMultiple,  bool anonymous,  DateTime? closesAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String question,  List<String> options,  bool allowMultiple,  bool anonymous,  bool perPlayer,  DateTime? closesAt)?  $default,) {final _that = this;
 switch (_that) {
 case _NewPoll() when $default != null:
-return $default(_that.question,_that.options,_that.allowMultiple,_that.anonymous,_that.closesAt);case _:
+return $default(_that.question,_that.options,_that.allowMultiple,_that.anonymous,_that.perPlayer,_that.closesAt);case _:
   return null;
 
 }
@@ -1073,7 +1360,7 @@ return $default(_that.question,_that.options,_that.allowMultiple,_that.anonymous
 
 
 class _NewPoll extends NewPoll {
-  const _NewPoll({required this.question, required  List<String> options, this.allowMultiple = false, this.anonymous = false, this.closesAt}): _options = options,super._();
+  const _NewPoll({required this.question, required  List<String> options, this.allowMultiple = false, this.anonymous = false, this.perPlayer = false, this.closesAt}): _options = options,super._();
   
 
 @override final  String question;
@@ -1086,6 +1373,8 @@ class _NewPoll extends NewPoll {
 
 @override@JsonKey() final  bool allowMultiple;
 @override@JsonKey() final  bool anonymous;
+/// One vote per player on the roster (#96); only on a team.
+@override@JsonKey() final  bool perPlayer;
 @override final  DateTime? closesAt;
 
 /// Create a copy of NewPoll
@@ -1098,18 +1387,18 @@ _$NewPollCopyWith<_NewPoll> get copyWith => __$NewPollCopyWithImpl<_NewPoll>(thi
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _NewPoll&&(identical(other.question, question) || other.question == question)&&const DeepCollectionEquality().equals(other.options, _options)&&(identical(other.allowMultiple, allowMultiple) || other.allowMultiple == allowMultiple)&&(identical(other.anonymous, anonymous) || other.anonymous == anonymous)&&(identical(other.closesAt, closesAt) || other.closesAt == closesAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _NewPoll&&(identical(other.question, question) || other.question == question)&&const DeepCollectionEquality().equals(other.options, _options)&&(identical(other.allowMultiple, allowMultiple) || other.allowMultiple == allowMultiple)&&(identical(other.anonymous, anonymous) || other.anonymous == anonymous)&&(identical(other.perPlayer, perPlayer) || other.perPlayer == perPlayer)&&(identical(other.closesAt, closesAt) || other.closesAt == closesAt));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,question,const DeepCollectionEquality().hash(_options),allowMultiple,anonymous,closesAt);
+    return Object.hash(runtimeType,question,const DeepCollectionEquality().hash(_options),allowMultiple,anonymous,perPlayer,closesAt);
 }
 
 @override
 String toString() {
-    return 'NewPoll(question: $question, options: $options, allowMultiple: $allowMultiple, anonymous: $anonymous, closesAt: $closesAt)';
+    return 'NewPoll(question: $question, options: $options, allowMultiple: $allowMultiple, anonymous: $anonymous, perPlayer: $perPlayer, closesAt: $closesAt)';
 }
 
 
@@ -1120,7 +1409,7 @@ abstract mixin class _$NewPollCopyWith<$Res> implements $NewPollCopyWith<$Res> {
   factory _$NewPollCopyWith(_NewPoll value, $Res Function(_NewPoll) _then) = __$NewPollCopyWithImpl;
 @override @useResult
 $Res call({
- String question, List<String> options, bool allowMultiple, bool anonymous, DateTime? closesAt
+ String question, List<String> options, bool allowMultiple, bool anonymous, bool perPlayer, DateTime? closesAt
 });
 
 
@@ -1137,12 +1426,13 @@ class __$NewPollCopyWithImpl<$Res>
 
 /// Create a copy of NewPoll
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? question = null,Object? options = null,Object? allowMultiple = null,Object? anonymous = null,Object? closesAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? question = null,Object? options = null,Object? allowMultiple = null,Object? anonymous = null,Object? perPlayer = null,Object? closesAt = freezed,}) {
   return _then(_NewPoll(
 question: null == question ? _self.question : question // ignore: cast_nullable_to_non_nullable
 as String,options: null == options ? _self._options : options // ignore: cast_nullable_to_non_nullable
 as List<String>,allowMultiple: null == allowMultiple ? _self.allowMultiple : allowMultiple // ignore: cast_nullable_to_non_nullable
 as bool,anonymous: null == anonymous ? _self.anonymous : anonymous // ignore: cast_nullable_to_non_nullable
+as bool,perPlayer: null == perPlayer ? _self.perPlayer : perPlayer // ignore: cast_nullable_to_non_nullable
 as bool,closesAt: freezed == closesAt ? _self.closesAt : closesAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,
   ));

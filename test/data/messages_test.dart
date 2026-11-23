@@ -135,6 +135,18 @@ void main() {
       id: 'p2',
     );
     expect((await db.doc('polls/p2').get()).data()!['closesAt'], isNull);
+    // One vote per player is written only when it's on (#96).
+    expect(
+      (await db.doc('polls/p2').get()).data()!.containsKey('perPlayer'),
+      isFalse,
+    );
+    await repo.sendPoll(
+      _g,
+      _me,
+      const NewPoll(question: 'Q', options: ['a', 'b'], perPlayer: true),
+      id: 'p3',
+    );
+    expect((await db.doc('polls/p3').get()).data()!['perPlayer'], isTrue);
   });
 
   test('posts uploaded photos as an image message', () async {

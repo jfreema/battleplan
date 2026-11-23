@@ -182,6 +182,17 @@ describe('creating a poll (POLL-1)', () => {
     await assertFails(create('bob', 'Bob', { extra: true }));
   });
 
+  it('takes one vote per player on a team, not in a basic group (#96)', async () => {
+    await assertFails(create('bob', 'Bob', { perPlayer: 'yes' }));
+    await assertSucceeds(create('bob', 'Bob', { perPlayer: true }));
+    // A fresh start, as each poll here has the same ID.
+    await env.clearFirestore();
+    await seed();
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('groups/teamA').update({ kind: 'group' }));
+    await assertFails(create('bob', 'Bob', { perPlayer: true }));
+    await assertSucceeds(create('bob', 'Bob', { perPlayer: false }));
+  });
+
   it('refuses new polls on an archived team (TEAM-9)', async () => {
     await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('groups/teamA').update({ archivedAt: ts('2026-02-01T00:00:00Z') }));
     await assertFails(create('bob', 'Bob'));
@@ -250,6 +261,11 @@ describe('voting (POLL-2)', () => {
     await assertFails(as('alice').doc('pollVotes/p1_alice').delete());
   });
 
+  it("refuses a person's own vote on a one-vote-per-player poll, whose votes are the players' (#96)", async () => {
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('polls/p1').update({ perPlayer: true }));
+    await assertFails(vote('bob', 'p1', ['0']));
+  });
+
   it('refuses votes in another name, under another ID, or from another team', async () => {
     await assertFails(vote('bob', 'p1', ['0'], { uid: 'alice' }));
     await assertFails(vote('bob', 'p1', ['0'], {}, 'p1_alice'));
@@ -286,5 +302,46 @@ describe('who voted (POLL-3)', () => {
     await assertSucceeds(
       as('alice').collection('pollVotes').where('pollId', '==', 'p2').where('uid', '==', 'alice').limit(1).get(),
     );
+  });
+});
+
+describe("players' votes on a one-vote-per-player poll (#96)", () => {
+  // Bob is Emma's guardian, and Alice is on the team with no players.
+  // Votes are Functions' to write.
+  beforeEach(async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await db.doc('polls/p1').update({ perPlayer: true });
+      await db.doc('polls/p2').update({ perPlayer: true });
+      await db.doc('players/emma').set({ groupId: 'teamA', displayName: 'Emma', status: 'active' });
+      await db.doc('playerGuardians/emma_bob').set({ playerId: 'emma', groupId: 'teamA', uid: 'bob', relation: 'guardian' });
+      for (const p of ['p1', 'p2']) {
+        await db.doc(`pollPlayerVotes/${p}_emma`).set({ pollId: p, groupId: 'teamA', playerId: 'emma', optionIds: ['0'], uid: 'bob' });
+      }
+    });
+  });
+  const votesOf = (uid: string, pollId: string) =>
+    as(uid).collection('pollPlayerVotes').where('pollId', '==', pollId).limit(100).get();
+
+  it("lets a player's people read their vote, anonymous polls too, or find there's none", async () => {
+    await assertSucceeds(as('bob').doc('pollPlayerVotes/p2_emma').get());
+    await assertSucceeds(as('bob').doc('pollPlayerVotes/p3_emma').get());
+    await assertFails(as('alice').doc('pollPlayerVotes/p2_emma').get());
+    await assertFails(votesOf('alice', 'p2'));
+  });
+
+  it('shows teammates every player\'s vote on a poll that isn\'t anonymous, and nobody else', async () => {
+    await assertSucceeds(as('alice').doc('pollPlayerVotes/p1_emma').get());
+    await assertSucceeds(votesOf('alice', 'p1'));
+    await assertFails(as('carol').doc('pollPlayerVotes/p1_emma').get());
+    await assertFails(votesOf('carol', 'p1'));
+    await assertFails(as('bob').doc('pollPlayerVotes/p1_emma_x').get());
+  });
+
+  it('leaves writing them to Functions', async () => {
+    const vote = { pollId: 'p1', groupId: 'teamA', playerId: 'emma', optionIds: ['1'], uid: 'bob', updatedAt: now() };
+    await assertFails(as('bob').doc('pollPlayerVotes/p1_emma').set(vote));
+    await assertFails(as('bob').doc('pollPlayerVotes/p1_emma').delete());
+    await assertFails(as('alice').doc('pollPlayerVotes/p1_emma').update({ optionIds: ['1'] }));
   });
 });

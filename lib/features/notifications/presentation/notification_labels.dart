@@ -87,7 +87,9 @@ IconData notificationIcon(NotifyKind? kind) => switch (kind) {
   NotifyKind.playerAdded => AppIcons.family,
   NotifyKind.contentReported => AppIcons.report,
   NotifyKind.storageWarning => AppIcons.storage,
-  NotifyKind.pollCreated || NotifyKind.pollClosed => AppIcons.poll,
+  NotifyKind.pollCreated ||
+  NotifyKind.pollClosed ||
+  NotifyKind.pollVoteReplaced => AppIcons.poll,
   NotifyKind.eventCreated || NotifyKind.eventChanged => AppIcons.event,
   NotifyKind.eventReminder => AppIcons.reminder,
   NotifyKind.documentAdded => AppIcons.document,

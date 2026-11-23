@@ -9,7 +9,7 @@ import { groupMemberId } from '../shared/ids.js';
 import { requireAuth } from '../shared/guards.js';
 import { requireOpenTeam } from '../shared/roles.js';
 import { parse } from '../shared/validate.js';
-import { closePollNow } from './service.js';
+import { closePollNow, setPlayerVotes, tellVotesReplaced } from './service.js';
 
 /**
  * Closes a poll early (POLL-4): its creator, a team admin, or a super
@@ -46,4 +46,43 @@ export const closePoll = onCall(async (request) => {
     });
   }
   return { ok: true };
+});
+
+/** A document ID: no slashes, and no '_', which joins the parts of a vote's ID. */
+const DocId = z.string().regex(/^[^/_]{1,64}$/);
+
+/**
+ * Votes for my players on a one-vote-per-player poll (#96): Input
+ * `{ pollId, votes: { playerId: optionIds } }`, an empty list taking that
+ * player's vote back; returns `{ ok, replaced }`, how many players' votes
+ * it replaced that another guardian had cast. Each guardian whose vote it
+ * replaced is told who changed it and to what (pollVoteReplaced). A parent,
+ * guardian, or the player themselves votes, for their players on the
+ * poll's team only, while it's open and the team is neither archived nor
+ * suspended; super admins viewing the team can't (ADMIN-3).
+ */
+export const votePollForPlayers = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const input = parse(
+    z.object({
+      pollId: DocId,
+      votes: z.record(DocId, z.array(z.string().min(1).max(2)).max(10)),
+    }),
+    request.data,
+  );
+  const poll = await db().collection(Collections.polls).doc(input.pollId).get();
+  if (!poll.exists) throw new HttpsError('not-found', 'poll-not-found');
+  const groupId = String(poll.get('groupId'));
+  await requireOpenTeam(groupId, false);
+  const { poll: data, replaced } = await setPlayerVotes(input.pollId, uid, input.votes);
+  if (replaced.length) {
+    const member = await db().collection(Collections.groupMembers).doc(groupMemberId(groupId, uid)).get();
+    await tellVotesReplaced({
+      pollId: input.pollId,
+      poll: data,
+      actor: { uid, name: String(member.get('displayName') ?? '') },
+      replaced,
+    });
+  }
+  return { ok: true, replaced: replaced.length };
 });

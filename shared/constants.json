@@ -16,6 +16,7 @@
     "messages": "messages",
     "polls": "polls",
     "pollVotes": "pollVotes",
+    "pollPlayerVotes": "pollPlayerVotes",
     "eventSeries": "eventSeries",
     "events": "events",
     "rsvps": "rsvps",
@@ -264,6 +265,7 @@
       "storageWarning",
       "pollCreated",
       "pollClosed",
+      "pollVoteReplaced",
       "eventCreated",
       "eventChanged",
       "eventReminder",
@@ -492,6 +494,12 @@
     },
     "pollClosed": {
       "important": false,
+      "pref": "polls",
+      "center": true,
+      "channel": "polls"
+    },
+    "pollVoteReplaced": {
+      "important": true,
       "pref": "polls",
       "center": true,
       "channel": "polls"

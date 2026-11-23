@@ -1969,6 +1969,7 @@ class FakeMessageRepository implements MessageRepository {
         ],
         allowMultiple: p.allowMultiple,
         anonymous: p.anonymous,
+        perPlayer: p.perPlayer,
         closesAt: p.closesAt,
       ),
     );
@@ -2491,6 +2492,89 @@ class FakePollRepository implements PollRepository {
     if (failClose) throw const Offline('close');
     closed.add(pollId.value);
     put(polls[pollId.value]!.copyWith(closedAt: DateTime.now()));
+  }
+
+  /// One-vote-per-player votes (#96), by poll ID, then player.
+  final Map<String, Map<PlayerId, PlayerPollVote>> playerVotes = {};
+
+  /// Who [setPlayerVotes] votes as: the signed-in person, as the server
+  /// takes it from the call.
+  String playerVoter = 'coach';
+
+  /// What [setPlayerVotes] was sent: `pollId player=0,1` per player.
+  final List<String> playerVoteCalls = [];
+
+  /// Set to fail the next player votes, as offline would.
+  AppFailure? playerVoteFailure;
+
+  /// Set to hold [setPlayerVotes] until it completes, to see the card
+  /// before the server answers.
+  Completer<void>? holdPlayerVotes;
+
+  @override
+  Stream<Map<PlayerId, PlayerPollVote>> watchPlayerVotes(
+    PollId pollId,
+    List<PlayerId> playerIds,
+  ) => _live(
+    () => {for (final id in playerIds) id: ?playerVotes[pollId.value]?[id]},
+  );
+
+  @override
+  Future<List<PlayerPollVote>> loadPlayerVotes(PollId pollId) async => [
+    ...?playerVotes[pollId.value]?.values,
+  ];
+
+  @override
+  Future<int> setPlayerVotes(
+    Poll poll,
+    Map<PlayerId, Set<String>> votes,
+  ) async {
+    playerVoteCalls.add(
+      '${poll.id.value} '
+      '${[for (final e in votes.entries) '${e.key.value}=${(e.value.toList()..sort()).join(',')}'].join(' ')}',
+    );
+    if (holdPlayerVotes case final hold?) await hold.future;
+    if (playerVoteFailure case final failure?) throw failure;
+    final current = polls[poll.id.value]!;
+    if (refuseVotes || current.isClosedAt(DateTime.now())) {
+      throw const PermissionDenied('poll-closed');
+    }
+    final byPlayer = playerVotes.putIfAbsent(poll.id.value, () => {});
+    var replaced = 0;
+    for (final MapEntry(key: player, value: choices) in votes.entries) {
+      final before = byPlayer[player];
+      if (before != null &&
+          before.optionIds.length == choices.length &&
+          before.optionIds.containsAll(choices)) {
+        continue;
+      }
+      if (before != null &&
+          before.uid != playerVoter &&
+          before.optionIds.isNotEmpty) {
+        replaced++;
+      }
+      if (choices.isEmpty) {
+        byPlayer.remove(player);
+      } else {
+        byPlayer[player] = PlayerPollVote(
+          playerId: player,
+          optionIds: choices,
+          uid: playerVoter,
+        );
+      }
+    }
+    put(
+      current.copyWith(
+        voteCounts: {
+          for (final o in current.options)
+            o.id: byPlayer.values
+                .where((v) => v.optionIds.contains(o.id))
+                .length,
+        },
+        voterCount: byPlayer.length,
+      ),
+    );
+    return replaced;
   }
 }
 
