@@ -1153,6 +1153,20 @@ describe("Boot Camp Mix's theme editor (#88)", () => {
     expect(await audits('saveCampTheme')).toEqual([]);
   });
 
+  it('saves a header background with the colors, and drops it for the camouflage (#91)', async () => {
+    await asRoot(admin.adminSaveCampTheme, { scheme: 'dark', colors: { red: '#F45B5B' }, header: 'topo' });
+    expect(await campThemes()).toEqual({ dark: { red: '#F45B5B', header: 'topo' } });
+    await asRoot(admin.adminSaveCampTheme, { scheme: 'light', colors: {}, header: 'stripes' });
+    expect((await campThemes()).light).toEqual({ header: 'stripes' });
+    await asRoot(admin.adminSaveCampTheme, { scheme: 'dark', colors: { red: '#F45B5B' }, header: 'camo' });
+    expect((await campThemes()).dark).toEqual({ red: '#F45B5B' });
+    await asRoot(admin.adminSaveCampTheme, { scheme: 'light', colors: {}, header: 'camo' });
+    expect((await campThemes()).light).toBeUndefined();
+    await expect(asRoot(admin.adminSaveCampTheme, { scheme: 'dark', colors: {}, header: 'plaid' })).rejects.toMatchObject({
+      code: 'invalid-argument',
+    });
+  });
+
   it('puts a scheme back as it ships, from a reset or a save of no colors, and audits it', async () => {
     await asRoot(admin.adminSaveCampTheme, { scheme: 'dark', colors: { red: '#F45B5B' } });
     await asRoot(admin.adminSaveCampTheme, { scheme: 'light', colors: { red: '#F45B5B' } });

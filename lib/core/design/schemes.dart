@@ -613,7 +613,7 @@ class SchemeRoles {
 /// down because the roles are read everywhere a scheme is drawn.
 abstract final class ThemeCatalog {
   static Map<TeamScheme, ThemeOverride> _themes = const {};
-  static Map<TeamScheme, CampColors> _camp = const {};
+  static Map<TeamScheme, CampTheme> _camp = const {};
   static final _edited = <TeamScheme, SchemeRoles>{};
   static int _version = 0;
 
@@ -633,27 +633,32 @@ abstract final class ThemeCatalog {
   /// [scheme]'s theme, if the editor set one.
   static ThemeOverride? themeOf(TeamScheme scheme) => _themes[scheme];
 
-  /// Puts the theme editor's Boot Camp Mix colors in place (#88), from
-  /// `config/app.campThemes`: those that read, which every scheme is then
-  /// drawn in. Nothing happens when they're what's there.
-  static void installCamp(Map<TeamScheme, CampColors> colors) {
-    if (campThemesEqual(colors, _camp)) return;
-    _camp = Map.unmodifiable(colors);
+  /// Puts the theme editor's Boot Camp Mix changes in place (#88, #91),
+  /// from `config/app.campThemes`: those that read, which every scheme is
+  /// then drawn in. Nothing happens when they're what's there.
+  static void installCamp(Map<TeamScheme, CampTheme> themes) {
+    if (campThemesEqual(themes, _camp)) return;
+    _camp = Map.unmodifiable(themes);
     _edited.clear();
     _version++;
   }
 
-  /// The Boot Camp Mix colors installed now, by scheme.
-  static Map<TeamScheme, CampColors> get campThemes => _camp;
+  /// The Boot Camp Mix changes installed now, by scheme.
+  static Map<TeamScheme, CampTheme> get campThemes => _camp;
 
   /// [scheme]'s roles with the theme editor's colors, built once per change,
   /// or null when its Boot Camp Mix scheme has none.
   static SchemeRoles? editedRoles(TeamScheme scheme) {
     final look = scheme.look;
-    final colors = _camp[look];
+    final colors = _camp[look]?.colors;
     if (colors == null || colors.isEmpty) return null;
     return _edited.putIfAbsent(look, () => SchemeRoles.edited(look, colors));
   }
+
+  /// [scheme]'s header background (#91): the theme editor's, or the
+  /// camouflage.
+  static HeaderStyle headerStyleOf(TeamScheme scheme) =>
+      _camp[scheme.look]?.header ?? HeaderStyle.camo;
 
   /// The schemes the pickers offer: Boot Camp Mix's thirteen (#85, #86, #89, #90). The
   /// other built-in schemes and saved themes are no longer offered; a pick

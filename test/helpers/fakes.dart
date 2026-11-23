@@ -3929,15 +3929,15 @@ class FakeAdminRepository implements AdminRepository {
     config = _config.copyWith(themes: {..._config.themes}..remove(scheme));
   }
 
-  /// The Boot Camp Mix colors saved, as (scheme, colors), in order (#88).
-  final List<(TeamScheme, CampColors)> savedCampThemes = [];
+  /// The Boot Camp Mix changes saved, as (scheme, theme), in order (#88).
+  final List<(TeamScheme, CampTheme)> savedCampThemes = [];
 
   @override
-  Future<void> saveCampTheme(TeamScheme scheme, CampColors colors) async {
+  Future<void> saveCampTheme(TeamScheme scheme, CampTheme theme) async {
     await _act('saveCampTheme');
-    savedCampThemes.add((scheme, Map.of(colors)));
+    savedCampThemes.add((scheme, theme));
     config = _config.copyWith(
-      campThemes: {..._config.campThemes, scheme: Map.unmodifiable(colors)},
+      campThemes: {..._config.campThemes, scheme: theme},
     );
   }
 

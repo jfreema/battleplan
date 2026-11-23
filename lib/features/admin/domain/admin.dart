@@ -394,9 +394,10 @@ abstract class AppConfig with _$AppConfig {
     @Default(<TeamScheme, ThemeOverride>{})
     Map<TeamScheme, ThemeOverride> themes,
 
-    /// The theme editor's Boot Camp Mix colors (#88), by scheme: the tokens
-    /// a super admin changed, `config/app.campThemes`.
-    @Default(<TeamScheme, CampColors>{}) Map<TeamScheme, CampColors> campThemes,
+    /// The theme editor's Boot Camp Mix changes (#88), by scheme: the tokens
+    /// a super admin changed and the header background (#91),
+    /// `config/app.campThemes`.
+    @Default(<TeamScheme, CampTheme>{}) Map<TeamScheme, CampTheme> campThemes,
   }) = _AppConfig;
 
   const new _();

@@ -5,10 +5,12 @@
 // from, the games, send and alerts color first, with a preview; colors
 // nearly the same as what they sit on can't be saved; what's saved is
 // drawn everywhere but the panel itself.
+import 'package:battleplan/core/camp_theme.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/widgets/back_chevron.dart';
+import 'package:battleplan/core/widgets/camo.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/admin/presentation/theme_editor_screen.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
@@ -85,10 +87,10 @@ void main() {
       size: const Size(1280, 3000),
       config: const AppConfig(
         campThemes: {
-          TeamScheme.dark: {
-            CampColor.red: _coral,
-            CampColor.mustard: 0xFFFDD023,
-          },
+          TeamScheme.dark: CampTheme(
+            colors: {CampColor.red: _coral, CampColor.mustard: 0xFFFDD023},
+            header: HeaderStyle.topo,
+          ),
         },
       ),
     );
@@ -98,7 +100,7 @@ void main() {
     for (final scheme in bootCampSchemes) {
       expect(find.byKey(ValueKey('theme-${scheme.value}')), findsOneWidget);
     }
-    expect(find.text('2 colors changed'), findsOneWidget);
+    expect(find.text('Topo map header · 2 colors changed'), findsOneWidget);
     expect(find.text('As it ships'), findsNWidgets(bootCampSchemes.length - 1));
     await tester.tap(find.byKey(const ValueKey('theme-dark')));
     await tester.pumpAndSettle();
@@ -141,7 +143,8 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Save'));
     await tester.pumpAndSettle();
     expect(admin.savedCampThemes.single.$1, TeamScheme.dark);
-    expect(admin.savedCampThemes.single.$2, {CampColor.red: _coral});
+    expect(admin.savedCampThemes.single.$2.colors, {CampColor.red: _coral});
+    expect(admin.savedCampThemes.single.$2.header, HeaderStyle.camo);
     expect(find.textContaining('Everyone using Black sees'), findsOneWidget);
     expect(save(tester).onPressed, isNull);
   });
@@ -192,7 +195,34 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'Save'));
     await tester.pumpAndSettle();
-    expect(admin.savedCampThemes.single.$2, {CampColor.red: 0xFFFDD023});
+    expect(admin.savedCampThemes.single.$2.colors, {CampColor.red: 0xFFFDD023});
+  });
+
+  testWidgets('a header background comes from the six, each drawn in the '
+      "scheme's colors, shows in the preview, and saves with them (#91)", (
+    tester,
+  ) async {
+    final admin = await open(tester, path: '/admin/themes/graphite');
+    expect(find.text('Header background'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('header-style')));
+    await tester.pumpAndSettle();
+    expect(find.text('Choose a header background'), findsOneWidget);
+    for (final style in HeaderStyle.values) {
+      expect(find.byKey(ValueKey('header-${style.value}')), findsOneWidget);
+    }
+    await tester.tap(find.byKey(const ValueKey('header-halftone')));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<CampThemePreview>(find.byType(CampThemePreview)).header,
+      HeaderStyle.halftone,
+    );
+    expect(find.text('Halftone'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pumpAndSettle();
+    expect(
+      admin.savedCampThemes.single.$2,
+      const CampTheme(header: HeaderStyle.halftone),
+    );
   });
 
   testWidgets('a bad code says how to write one', (tester) async {
@@ -216,7 +246,7 @@ void main() {
       path: '/admin/themes/sky',
       config: const AppConfig(
         campThemes: {
-          TeamScheme.sky: {CampColor.red: _coral},
+          TeamScheme.sky: CampTheme(colors: {CampColor.red: _coral}),
         },
       ),
     );
@@ -250,23 +280,34 @@ void main() {
 
   testWidgets('what is saved is drawn in the app, but the Super Admin Panel '
       'keeps the colors as they ship', (tester) async {
+    // Its header too (#91).
     await open(
       tester,
       path: '/g/a/chat',
       config: const AppConfig(
         campThemes: {
-          TeamScheme.dark: {CampColor.red: _coral},
+          TeamScheme.dark: CampTheme(
+            colors: {CampColor.red: _coral},
+            header: HeaderStyle.topo,
+          ),
           // Hard to read, so never drawn.
-          TeamScheme.light: {CampColor.text: 0xFFF2EBE0},
+          TeamScheme.light: CampTheme(colors: {CampColor.text: 0xFFF2EBE0}),
         },
       ),
     );
+    Iterable<HeaderStyle> headers() => tester
+        .widgetList<CustomPaint>(find.byType(CustomPaint))
+        .map((p) => p.painter)
+        .whereType<CamoPainter>()
+        .map((p) => p.style);
     expect(ThemeCatalog.campThemes.keys, [TeamScheme.dark]);
     final chat = GumdropColors.of(tester.element(find.byType(Scaffold).last));
     expect(chat.roles.palette.red, const Color(_coral));
+    expect(headers(), contains(HeaderStyle.topo));
     GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/admin');
     await tester.pumpAndSettle();
     final panel = GumdropColors.of(tester.element(find.byType(Scaffold).last));
     expect(panel.roles.palette.red, SchemeRoles.dark.palette.red);
+    expect(headers(), isNot(contains(HeaderStyle.topo)));
   });
 }

@@ -4108,9 +4108,10 @@ mixin _$AppConfig {
  int? get emailsPerDay; Announcement? get announcementBanner;/// The first theme editor's colors (#82): changes to the schemes before
 /// Boot Camp Mix, and the saved themes in their slots, by scheme. Read
 /// only for what an old pick of a saved theme looks like (#85).
- Map<TeamScheme, ThemeOverride> get themes;/// The theme editor's Boot Camp Mix colors (#88), by scheme: the tokens
-/// a super admin changed, `config/app.campThemes`.
- Map<TeamScheme, CampColors> get campThemes;
+ Map<TeamScheme, ThemeOverride> get themes;/// The theme editor's Boot Camp Mix changes (#88), by scheme: the tokens
+/// a super admin changed and the header background (#91),
+/// `config/app.campThemes`.
+ Map<TeamScheme, CampTheme> get campThemes;
 /// Create a copy of AppConfig
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -4146,7 +4147,7 @@ abstract mixin class $AppConfigCopyWith<$Res>  {
   factory $AppConfigCopyWith(AppConfig value, $Res Function(AppConfig) _then) = _$AppConfigCopyWithImpl;
 @useResult
 $Res call({
- bool allowUserGroupCreation, int maxGroupsCreatedPerUserPerDay, int defaultStorageQuotaMb, int maxUploadMb, String supportEmail, bool emailAdminAlerts, int? emailsPerDay, Announcement? announcementBanner, Map<TeamScheme, ThemeOverride> themes, Map<TeamScheme, CampColors> campThemes
+ bool allowUserGroupCreation, int maxGroupsCreatedPerUserPerDay, int defaultStorageQuotaMb, int maxUploadMb, String supportEmail, bool emailAdminAlerts, int? emailsPerDay, Announcement? announcementBanner, Map<TeamScheme, ThemeOverride> themes, Map<TeamScheme, CampTheme> campThemes
 });
 
 
@@ -4175,7 +4176,7 @@ as bool,emailsPerDay: freezed == emailsPerDay ? _self.emailsPerDay : emailsPerDa
 as int?,announcementBanner: freezed == announcementBanner ? _self.announcementBanner : announcementBanner // ignore: cast_nullable_to_non_nullable
 as Announcement?,themes: null == themes ? _self.themes : themes // ignore: cast_nullable_to_non_nullable
 as Map<TeamScheme, ThemeOverride>,campThemes: null == campThemes ? _self.campThemes : campThemes // ignore: cast_nullable_to_non_nullable
-as Map<TeamScheme, CampColors>,
+as Map<TeamScheme, CampTheme>,
   ));
 }
 /// Create a copy of AppConfig
@@ -4272,7 +4273,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool allowUserGroupCreation,  int maxGroupsCreatedPerUserPerDay,  int defaultStorageQuotaMb,  int maxUploadMb,  String supportEmail,  bool emailAdminAlerts,  int? emailsPerDay,  Announcement? announcementBanner,  Map<TeamScheme, ThemeOverride> themes,  Map<TeamScheme, CampColors> campThemes)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool allowUserGroupCreation,  int maxGroupsCreatedPerUserPerDay,  int defaultStorageQuotaMb,  int maxUploadMb,  String supportEmail,  bool emailAdminAlerts,  int? emailsPerDay,  Announcement? announcementBanner,  Map<TeamScheme, ThemeOverride> themes,  Map<TeamScheme, CampTheme> campThemes)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AppConfig() when $default != null:
 return $default(_that.allowUserGroupCreation,_that.maxGroupsCreatedPerUserPerDay,_that.defaultStorageQuotaMb,_that.maxUploadMb,_that.supportEmail,_that.emailAdminAlerts,_that.emailsPerDay,_that.announcementBanner,_that.themes,_that.campThemes);case _:
@@ -4293,7 +4294,7 @@ return $default(_that.allowUserGroupCreation,_that.maxGroupsCreatedPerUserPerDay
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool allowUserGroupCreation,  int maxGroupsCreatedPerUserPerDay,  int defaultStorageQuotaMb,  int maxUploadMb,  String supportEmail,  bool emailAdminAlerts,  int? emailsPerDay,  Announcement? announcementBanner,  Map<TeamScheme, ThemeOverride> themes,  Map<TeamScheme, CampColors> campThemes)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool allowUserGroupCreation,  int maxGroupsCreatedPerUserPerDay,  int defaultStorageQuotaMb,  int maxUploadMb,  String supportEmail,  bool emailAdminAlerts,  int? emailsPerDay,  Announcement? announcementBanner,  Map<TeamScheme, ThemeOverride> themes,  Map<TeamScheme, CampTheme> campThemes)  $default,) {final _that = this;
 switch (_that) {
 case _AppConfig():
 return $default(_that.allowUserGroupCreation,_that.maxGroupsCreatedPerUserPerDay,_that.defaultStorageQuotaMb,_that.maxUploadMb,_that.supportEmail,_that.emailAdminAlerts,_that.emailsPerDay,_that.announcementBanner,_that.themes,_that.campThemes);case _:
@@ -4313,7 +4314,7 @@ return $default(_that.allowUserGroupCreation,_that.maxGroupsCreatedPerUserPerDay
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool allowUserGroupCreation,  int maxGroupsCreatedPerUserPerDay,  int defaultStorageQuotaMb,  int maxUploadMb,  String supportEmail,  bool emailAdminAlerts,  int? emailsPerDay,  Announcement? announcementBanner,  Map<TeamScheme, ThemeOverride> themes,  Map<TeamScheme, CampColors> campThemes)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool allowUserGroupCreation,  int maxGroupsCreatedPerUserPerDay,  int defaultStorageQuotaMb,  int maxUploadMb,  String supportEmail,  bool emailAdminAlerts,  int? emailsPerDay,  Announcement? announcementBanner,  Map<TeamScheme, ThemeOverride> themes,  Map<TeamScheme, CampTheme> campThemes)?  $default,) {final _that = this;
 switch (_that) {
 case _AppConfig() when $default != null:
 return $default(_that.allowUserGroupCreation,_that.maxGroupsCreatedPerUserPerDay,_that.defaultStorageQuotaMb,_that.maxUploadMb,_that.supportEmail,_that.emailAdminAlerts,_that.emailsPerDay,_that.announcementBanner,_that.themes,_that.campThemes);case _:
@@ -4328,7 +4329,7 @@ return $default(_that.allowUserGroupCreation,_that.maxGroupsCreatedPerUserPerDay
 
 
 class _AppConfig extends AppConfig {
-  const _AppConfig({this.allowUserGroupCreation = true, this.maxGroupsCreatedPerUserPerDay = Limits.groupsCreatedPerUserPerDay, this.defaultStorageQuotaMb = Limits.defaultStorageQuotaMb, this.maxUploadMb = Limits.maxUploadMb, this.supportEmail = '', this.emailAdminAlerts = true, this.emailsPerDay, this.announcementBanner,  Map<TeamScheme, ThemeOverride> themes = const <TeamScheme, ThemeOverride>{},  Map<TeamScheme, CampColors> campThemes = const <TeamScheme, CampColors>{}}): _themes = themes,_campThemes = campThemes,super._();
+  const _AppConfig({this.allowUserGroupCreation = true, this.maxGroupsCreatedPerUserPerDay = Limits.groupsCreatedPerUserPerDay, this.defaultStorageQuotaMb = Limits.defaultStorageQuotaMb, this.maxUploadMb = Limits.maxUploadMb, this.supportEmail = '', this.emailAdminAlerts = true, this.emailsPerDay, this.announcementBanner,  Map<TeamScheme, ThemeOverride> themes = const <TeamScheme, ThemeOverride>{},  Map<TeamScheme, CampTheme> campThemes = const <TeamScheme, CampTheme>{}}): _themes = themes,_campThemes = campThemes,super._();
   
 
 @override@JsonKey() final  bool allowUserGroupCreation;
@@ -4357,12 +4358,14 @@ class _AppConfig extends AppConfig {
   return EqualUnmodifiableMapView(_themes);
 }
 
-/// The theme editor's Boot Camp Mix colors (#88), by scheme: the tokens
-/// a super admin changed, `config/app.campThemes`.
- final  Map<TeamScheme, CampColors> _campThemes;
-/// The theme editor's Boot Camp Mix colors (#88), by scheme: the tokens
-/// a super admin changed, `config/app.campThemes`.
-@override@JsonKey() Map<TeamScheme, CampColors> get campThemes {
+/// The theme editor's Boot Camp Mix changes (#88), by scheme: the tokens
+/// a super admin changed and the header background (#91),
+/// `config/app.campThemes`.
+ final  Map<TeamScheme, CampTheme> _campThemes;
+/// The theme editor's Boot Camp Mix changes (#88), by scheme: the tokens
+/// a super admin changed and the header background (#91),
+/// `config/app.campThemes`.
+@override@JsonKey() Map<TeamScheme, CampTheme> get campThemes {
   if (_campThemes is EqualUnmodifiableMapView) return _campThemes;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableMapView(_campThemes);
@@ -4401,7 +4404,7 @@ abstract mixin class _$AppConfigCopyWith<$Res> implements $AppConfigCopyWith<$Re
   factory _$AppConfigCopyWith(_AppConfig value, $Res Function(_AppConfig) _then) = __$AppConfigCopyWithImpl;
 @override @useResult
 $Res call({
- bool allowUserGroupCreation, int maxGroupsCreatedPerUserPerDay, int defaultStorageQuotaMb, int maxUploadMb, String supportEmail, bool emailAdminAlerts, int? emailsPerDay, Announcement? announcementBanner, Map<TeamScheme, ThemeOverride> themes, Map<TeamScheme, CampColors> campThemes
+ bool allowUserGroupCreation, int maxGroupsCreatedPerUserPerDay, int defaultStorageQuotaMb, int maxUploadMb, String supportEmail, bool emailAdminAlerts, int? emailsPerDay, Announcement? announcementBanner, Map<TeamScheme, ThemeOverride> themes, Map<TeamScheme, CampTheme> campThemes
 });
 
 
@@ -4430,7 +4433,7 @@ as bool,emailsPerDay: freezed == emailsPerDay ? _self.emailsPerDay : emailsPerDa
 as int?,announcementBanner: freezed == announcementBanner ? _self.announcementBanner : announcementBanner // ignore: cast_nullable_to_non_nullable
 as Announcement?,themes: null == themes ? _self._themes : themes // ignore: cast_nullable_to_non_nullable
 as Map<TeamScheme, ThemeOverride>,campThemes: null == campThemes ? _self._campThemes : campThemes // ignore: cast_nullable_to_non_nullable
-as Map<TeamScheme, CampColors>,
+as Map<TeamScheme, CampTheme>,
   ));
 }
 

@@ -242,6 +242,9 @@ export type DocumentKind = (typeof documentKindValues)[number];
 export const playBoardValues = ['baseball', 'basketball', 'soccer', 'football', 'volleyball', 'blank'] as const;
 export type PlayBoard = (typeof playBoardValues)[number];
 
+export const headerStyleValues = ['camo', 'digital', 'topo', 'playbook', 'stripes', 'halftone'] as const;
+export type HeaderStyle = (typeof headerStyleValues)[number];
+
 export const campColorValues = ['page', 'panel', 'tabBar', 'ink', 'shadow', 'text', 'muted', 'panelText', 'panelMuted', 'headerLettering', 'mustard', 'balloon', 'red', 'blue', 'green', 'orange', 'purple', 'unansweredTag', 'answerRow', 'toolsRow', 'disabledIcon', 'camoGround', 'camoBig', 'camoMid', 'camoSmall', 'ballChain'] as const;
 export type CampColor = (typeof campColorValues)[number];
 

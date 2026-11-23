@@ -20,6 +20,7 @@ import {
   Collections,
   SCHEME_INK,
   campColorValues,
+  headerStyleValues,
   teamSchemeValues,
 } from '../shared/constants.js';
 
@@ -254,6 +255,9 @@ export const campSchemeValues = Object.keys(CAMP_PALETTES) as [string, ...string
 /** A scheme's changed colors, by token, as '#RRGGBB'. */
 export type CampColors = Partial<Record<CampColor, string>>;
 
+/** A scheme's entry in config/app.campThemes: its colors, and its header background (#91) unless camouflage. */
+export type CampThemeEntry = CampColors & { header?: string };
+
 export const SaveCampThemeInput = z.object({
   scheme: z.enum(campSchemeValues),
   colors: z.partialRecord(
@@ -263,23 +267,27 @@ export const SaveCampThemeInput = z.object({
       .regex(/^#[0-9A-Fa-f]{6}$/)
       .transform((s) => s.toUpperCase()),
   ),
+  // The header's background (#91); camouflage, as every scheme ships, when absent.
+  header: z.enum(headerStyleValues).optional(),
 });
 export type SaveCampThemeInput = z.infer<typeof SaveCampThemeInput>;
 
 export const ResetCampThemeInput = z.object({ scheme: z.enum(campSchemeValues) });
 
 /**
- * Saves the colors changed in a Boot Camp Mix scheme, in place of what was
- * saved for it, or refuses with `unreadable-theme` when one would be nearly
- * the same as what it sits on. No colors puts it back as it ships. Returns
- * the entry before and after, for the audit.
+ * Saves the colors changed in a Boot Camp Mix scheme, and its header
+ * background (#91), in place of what was saved for it, or refuses with
+ * `unreadable-theme` when a color would be nearly the same as what it sits
+ * on. No colors and the camouflage puts it back as it ships. Returns the
+ * entry before and after, for the audit.
  */
 export async function saveCampTheme(input: SaveCampThemeInput): Promise<{
-  before: CampColors | null;
-  after: CampColors | null;
+  before: CampThemeEntry | null;
+  after: CampThemeEntry | null;
 }> {
   const { scheme } = input;
   const colors = input.colors as CampColors;
+  const header = input.header !== undefined && input.header !== 'camo' ? input.header : undefined;
   const unreadable = unreadableCampParts(scheme, colors);
   if (unreadable.length > 0) {
     throw new HttpsError('failed-precondition', 'Some of those colors are nearly the same as what they sit on.', {
@@ -287,30 +295,31 @@ export async function saveCampTheme(input: SaveCampThemeInput): Promise<{
       parts: unreadable,
     });
   }
-  if (Object.keys(colors).length === 0) {
+  if (Object.keys(colors).length === 0 && header === undefined) {
     const { before } = await resetCampTheme(scheme);
     return { before, after: null };
   }
+  const entry: CampThemeEntry = header === undefined ? colors : { ...colors, header };
   const ref = db().collection(Collections.config).doc('app');
   return db().runTransaction(async (tx) => {
-    const before = (((await tx.get(ref)).get('campThemes') ?? {}) as Record<string, CampColors | undefined>)[scheme] ?? null;
+    const before = (((await tx.get(ref)).get('campThemes') ?? {}) as Record<string, CampThemeEntry | undefined>)[scheme] ?? null;
     // The scheme's entry replaced whole, so a color put back to the
     // original goes; the other schemes and settings stay, and a fresh
     // project's config/app is made.
     tx.set(
       ref,
-      { campThemes: { [scheme]: colors }, updatedAt: FieldValue.serverTimestamp() },
+      { campThemes: { [scheme]: entry }, updatedAt: FieldValue.serverTimestamp() },
       { mergeFields: [`campThemes.${scheme}`, 'updatedAt'] },
     );
-    return { before, after: colors };
+    return { before, after: entry };
   });
 }
 
 /** Puts a Boot Camp Mix scheme back as it ships. Returns the entry before. */
-export async function resetCampTheme(scheme: string): Promise<{ before: CampColors | null }> {
+export async function resetCampTheme(scheme: string): Promise<{ before: CampThemeEntry | null }> {
   const ref = db().collection(Collections.config).doc('app');
   const snap = await ref.get();
-  const before = ((snap.get('campThemes') ?? {}) as Record<string, CampColors | undefined>)[scheme] ?? null;
+  const before = ((snap.get('campThemes') ?? {}) as Record<string, CampThemeEntry | undefined>)[scheme] ?? null;
   if (snap.exists) {
     await ref.update({ [`campThemes.${scheme}`]: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() });
   }

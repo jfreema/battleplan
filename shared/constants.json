@@ -196,6 +196,14 @@
       "volleyball",
       "blank"
     ],
+    "headerStyle": [
+      "camo",
+      "digital",
+      "topo",
+      "playbook",
+      "stripes",
+      "halftone"
+    ],
     "campColor": [
       "page",
       "panel",

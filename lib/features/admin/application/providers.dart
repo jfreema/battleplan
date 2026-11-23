@@ -47,11 +47,11 @@ Map<TeamScheme, ThemeOverride> allThemes(Ref ref) =>
 Map<TeamScheme, ThemeOverride> themeOverrides(Ref ref) =>
     readableThemes(ref.watch(allThemesProvider));
 
-/// Every scheme's colors in `config/app.campThemes` (#88), as saved: the
+/// Every scheme's changes in `config/app.campThemes` (#88, #91), as saved: the
 /// Super Admin Panel's Themes page shows them all, even colors that are
 /// hard to read, so they can be put right. None signed out.
 @Riverpod(keepAlive: true)
-Map<TeamScheme, CampColors> allCampThemes(Ref ref) =>
+Map<TeamScheme, CampTheme> allCampThemes(Ref ref) =>
     ref.watch(appConfigProvider.select((c) => c.value?.campThemes ?? const {}));
 
 /// The theme editor's colors the app draws (#88): [allCampThemes] but any
@@ -59,7 +59,7 @@ Map<TeamScheme, CampColors> allCampThemes(Ref ref) =>
 /// refuse but colors saved by hand could be. What the app root installs in
 /// `ThemeCatalog`.
 @Riverpod(keepAlive: true)
-Map<TeamScheme, CampColors> campThemes(Ref ref) =>
+Map<TeamScheme, CampTheme> campThemes(Ref ref) =>
     readableCampThemes(ref.watch(allCampThemesProvider));
 
 /// The upload limit in bytes for documents and photos (ADMIN-7): the

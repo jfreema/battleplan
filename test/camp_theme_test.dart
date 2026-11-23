@@ -1,12 +1,16 @@
 // The theme editor's Boot Camp Mix colors (#88): read from config/app,
 // checked for colors nearly the same as what they sit on, and drawn in
-// every scheme they change, except the Super Admin Panel's.
+// every scheme they change, except the Super Admin Panel's; and the header
+// backgrounds drawn from its camouflage colors (#91).
+import 'dart:ui' as ui;
+
 import 'package:battleplan/core/camp_theme.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_theme.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/design/theme_readability.dart';
+import 'package:battleplan/core/widgets/header_patterns.dart';
 import 'package:battleplan/features/admin/data/functions_admin_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -25,7 +29,9 @@ void main() {
         'army': 'not a map',
       });
       expect(themes, {
-        TeamScheme.dark: {CampColor.red: _coral, CampColor.mustard: 0xFFFDD023},
+        TeamScheme.dark: const CampTheme(
+          colors: {CampColor.red: _coral, CampColor.mustard: 0xFFFDD023},
+        ),
       });
       expect(campThemesFromConfig(null), isEmpty);
       expect(campColorsToConfig({CampColor.red: _coral}), {'red': '#F45B5B'});
@@ -42,7 +48,7 @@ void main() {
         },
       });
       expect(config.campThemes, {
-        TeamScheme.sky: {CampColor.red: _coral},
+        TeamScheme.sky: const CampTheme(colors: {CampColor.red: _coral}),
       });
       expect(config.themes.keys, [TeamScheme.army]);
     });
@@ -51,10 +57,10 @@ void main() {
       expect(
         campThemesEqual(
           {
-            TeamScheme.dark: {CampColor.red: _coral},
+            TeamScheme.dark: const CampTheme(colors: {CampColor.red: _coral}),
           },
           {
-            TeamScheme.dark: {CampColor.red: _coral},
+            TeamScheme.dark: const CampTheme(colors: {CampColor.red: _coral}),
           },
         ),
         isTrue,
@@ -62,10 +68,10 @@ void main() {
       expect(
         campThemesEqual(
           {
-            TeamScheme.dark: {CampColor.red: _coral},
+            TeamScheme.dark: const CampTheme(colors: {CampColor.red: _coral}),
           },
           {
-            TeamScheme.dark: {CampColor.blue: _coral},
+            TeamScheme.dark: const CampTheme(colors: {CampColor.blue: _coral}),
           },
         ),
         isFalse,
@@ -98,12 +104,18 @@ void main() {
       for (final scheme in bootCampSchemes) {
         final p = SchemeRoles.builtIn(scheme).palette;
         expect(campThemeProblems(p, p), isEmpty, reason: scheme.value);
-        expect(campThemeReads(scheme, const {}), isTrue);
+        expect(campThemeReads(scheme, const CampTheme()), isTrue);
       }
     });
 
     test('games, send and alerts can be any color that stands apart', () {
-      expect(campThemeReads(TeamScheme.dark, {CampColor.red: _coral}), isTrue);
+      expect(
+        campThemeReads(
+          TeamScheme.dark,
+          const CampTheme(colors: {CampColor.red: _coral}),
+        ),
+        isTrue,
+      );
       // Not the page's, nor the panels'.
       const army = CampPalette.army;
       final problems = campThemeProblems(
@@ -152,8 +164,10 @@ void main() {
 
     test('colors saved that would be hard to read are never drawn', () {
       final themes = readableCampThemes({
-        TeamScheme.dark: {CampColor.red: _coral},
-        TeamScheme.light: {CampColor.text: CampPalette.light.page.toARGB32()},
+        TeamScheme.dark: const CampTheme(colors: {CampColor.red: _coral}),
+        TeamScheme.light: CampTheme(
+          colors: {CampColor.text: CampPalette.light.page.toARGB32()},
+        ),
       });
       expect(themes.keys, [TeamScheme.dark]);
     });
@@ -165,7 +179,7 @@ void main() {
       expect(SchemeRoles.of(TeamScheme.dark), same(SchemeRoles.dark));
       final before = ThemeCatalog.version;
       ThemeCatalog.installCamp({
-        TeamScheme.dark: {CampColor.red: _coral},
+        TeamScheme.dark: const CampTheme(colors: {CampColor.red: _coral}),
       });
       expect(ThemeCatalog.version, before + 1);
       final roles = SchemeRoles.of(TeamScheme.dark);
@@ -188,7 +202,7 @@ void main() {
       );
       // The same colors again change nothing.
       ThemeCatalog.installCamp({
-        TeamScheme.dark: {CampColor.red: _coral},
+        TeamScheme.dark: const CampTheme(colors: {CampColor.red: _coral}),
       });
       expect(ThemeCatalog.version, before + 1);
     });
@@ -198,15 +212,17 @@ void main() {
       final darkBefore = AppTheme.of(TeamScheme.dark);
       expect(darkBefore.brightness, Brightness.dark);
       ThemeCatalog.installCamp({
-        TeamScheme.dark: {
-          CampColor.page: 0xFFF2EBE0,
-          CampColor.text: 0xFF1A1A18,
-          CampColor.tabBar: 0xFFFFFFFF,
-          CampColor.panel: 0xFFFFFFFF,
-          CampColor.panelText: 0xFF1A1A18,
-          CampColor.headerLettering: 0xFF1A1A18,
-          CampColor.camoGround: 0xFFC7B787,
-        },
+        TeamScheme.dark: const CampTheme(
+          colors: {
+            CampColor.page: 0xFFF2EBE0,
+            CampColor.text: 0xFF1A1A18,
+            CampColor.tabBar: 0xFFFFFFFF,
+            CampColor.panel: 0xFFFFFFFF,
+            CampColor.panelText: 0xFF1A1A18,
+            CampColor.headerLettering: 0xFF1A1A18,
+            CampColor.camoGround: 0xFFC7B787,
+          },
+        ),
       });
       final after = AppTheme.of(TeamScheme.dark);
       expect(after, isNot(same(darkBefore)));
@@ -224,5 +240,120 @@ void main() {
         same(SchemeRoles.purplegold),
       );
     });
+  });
+
+  group('header backgrounds (#91)', () {
+    test("are read and kept with the scheme's colors, the camouflage unless "
+        'set', () {
+      final themes = campThemesFromConfig({
+        'dark': {'red': '#F45B5B', 'header': 'topo'},
+        'light': {'header': 'stripes'},
+        'army': {'header': 'plaid'},
+        'sky': {'header': 'camo'},
+      });
+      expect(themes, {
+        TeamScheme.dark: const CampTheme(
+          colors: {CampColor.red: _coral},
+          header: HeaderStyle.topo,
+        ),
+        TeamScheme.light: const CampTheme(header: HeaderStyle.stripes),
+      });
+      expect(const CampTheme().isEmpty, isTrue);
+      expect(
+        const CampTheme(header: HeaderStyle.digital),
+        isNot(const CampTheme()),
+      );
+    });
+
+    test('a scheme is drawn under its own; the panel under the camouflage', () {
+      expect(ThemeCatalog.headerStyleOf(TeamScheme.dark), HeaderStyle.camo);
+      ThemeCatalog.installCamp({
+        TeamScheme.dark: const CampTheme(header: HeaderStyle.playbook),
+      });
+      expect(ThemeCatalog.headerStyleOf(TeamScheme.dark), HeaderStyle.playbook);
+      expect(
+        ThemeCatalog.headerStyleOf(TeamScheme.scoreboard),
+        HeaderStyle.playbook,
+      );
+      expect(ThemeCatalog.headerStyleOf(TeamScheme.light), HeaderStyle.camo);
+      // A header alone changes no color.
+      expect(SchemeRoles.of(TeamScheme.dark), same(SchemeRoles.dark));
+    });
+
+    for (final style in HeaderStyle.values.skip(1)) {
+      test(
+        '${style.value} is drawn in the four camouflage colors only',
+        () async {
+          const p = CampPalette.army;
+          final recorder = ui.PictureRecorder();
+          HeaderPatternPainter(
+            style,
+            p,
+          ).paint(Canvas(recorder), HeaderPatternPainter.tile);
+          final image = await recorder.endRecording().toImage(400, 140);
+          final bytes = (await image.toByteData())!;
+          final counts = <int, int>{};
+          for (var i = 0; i < bytes.lengthInBytes; i += 4) {
+            final argb =
+                bytes.getUint8(i + 3) << 24 |
+                bytes.getUint8(i) << 16 |
+                bytes.getUint8(i + 1) << 8 |
+                bytes.getUint8(i + 2);
+            counts[argb] = (counts[argb] ?? 0) + 1;
+          }
+          image.dispose();
+          final camo = {
+            p.camoGround.toARGB32(),
+            p.camoBig.toARGB32(),
+            p.camoMid.toARGB32(),
+            p.camoSmall.toARGB32(),
+          };
+          // Every color that covers a real share of it is one of the four (or
+          // the halftone's 55% big-color wash), or, along the edges, a blend
+          // of two of them.
+          final colors = [
+            ...camo,
+            Color.alphaBlend(
+              p.camoBig.withValues(alpha: 0.55),
+              p.camoGround,
+            ).toARGB32(),
+          ];
+          bool between(int c, int a, int b) {
+            double? t;
+            for (final shift in [16, 8, 0]) {
+              final (x, y, z) = (
+                c >> shift & 0xFF,
+                a >> shift & 0xFF,
+                b >> shift & 0xFF,
+              );
+              if (y == z) {
+                if ((x - y).abs() > 2) return false;
+                continue;
+              }
+              final u = (x - y) / (z - y);
+              if (u < -0.02 || u > 1.02) return false;
+              if (t != null && (u - t).abs() > 0.08) return false;
+              t ??= u;
+            }
+            return true;
+          }
+
+          final main = [
+            for (final MapEntry(:key, :value) in counts.entries)
+              if (value > 400 * 140 * 0.01) key,
+          ];
+          expect(main, isNotEmpty);
+          for (final argb in main) {
+            expect(
+              colors.any((a) => colors.any((b) => between(argb, a, b))),
+              isTrue,
+              reason: '${style.value}: ${argb.toRadixString(16)}',
+            );
+          }
+          // And the ground shows, as on the camouflage.
+          expect(counts[p.camoGround.toARGB32()] ?? 0, greaterThan(0));
+        },
+      );
+    }
   });
 }

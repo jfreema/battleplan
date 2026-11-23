@@ -497,10 +497,12 @@ class FunctionsAdminRepository implements AdminRepository {
       _call('adminDeleteTheme', {'scheme': scheme.value});
 
   @override
-  Future<void> saveCampTheme(TeamScheme scheme, CampColors colors) => _call(
-    'adminSaveCampTheme',
-    {'scheme': scheme.value, 'colors': campColorsToConfig(colors)},
-  );
+  Future<void> saveCampTheme(TeamScheme scheme, CampTheme theme) =>
+      _call('adminSaveCampTheme', {
+        'scheme': scheme.value,
+        'colors': campColorsToConfig(theme.colors),
+        'header': theme.header.value,
+      });
 
   @override
   Future<void> resetCampTheme(TeamScheme scheme) =>

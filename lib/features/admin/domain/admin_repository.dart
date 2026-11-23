@@ -165,12 +165,12 @@ abstract interface class AdminRepository {
   /// team's default, their own default) gets what comes next.
   Future<void> deleteTheme(TeamScheme scheme);
 
-  /// Saves the colors a super admin changed in a Boot Camp Mix [scheme]
-  /// (#88), in `config/app.campThemes`: [colors] replaces what was saved for
-  /// it, and anything not in it is as the scheme ships. Refused with
-  /// `unreadable-theme` when a color would be nearly the same as what it
-  /// sits on.
-  Future<void> saveCampTheme(TeamScheme scheme, CampColors colors);
+  /// Saves what a super admin changed in a Boot Camp Mix [scheme] (#88):
+  /// [theme]'s colors and header background (#91) replace what was saved
+  /// for it in `config/app.campThemes`, and anything not in it is as the
+  /// scheme ships. Refused with `unreadable-theme` when a color would be
+  /// nearly the same as what it sits on.
+  Future<void> saveCampTheme(TeamScheme scheme, CampTheme theme);
 
   /// Puts a Boot Camp Mix [scheme] back as it ships (#88).
   Future<void> resetCampTheme(TeamScheme scheme);

@@ -151,9 +151,28 @@ String campColorHelp(AppLocalizations l10n, CampColor color) => switch (color) {
 };
 
 /// [scheme]'s palette with the colors saved for it.
-CampPalette _paletteOf(TeamScheme scheme, CampColors? colors) => colors == null
+CampPalette _paletteOf(TeamScheme scheme, CampTheme? theme) => theme == null
     ? SchemeRoles.builtIn(scheme).palette
-    : editedPalette(scheme, colors);
+    : editedPalette(scheme, theme.colors);
+
+/// What the editor calls a header background (#91).
+String headerStyleLabel(AppLocalizations l10n, HeaderStyle style) =>
+    switch (style) {
+      HeaderStyle.camo => l10n.headerCamo,
+      HeaderStyle.digital => l10n.headerDigital,
+      HeaderStyle.topo => l10n.headerTopo,
+      HeaderStyle.playbook => l10n.headerPlaybook,
+      HeaderStyle.stripes => l10n.headerStripes,
+      HeaderStyle.halftone => l10n.headerHalftone,
+    };
+
+/// What's changed in [theme], in a line: its header background and how
+/// many colors.
+String _changes(AppLocalizations l10n, CampTheme theme) => [
+  if (theme.header != HeaderStyle.camo)
+    l10n.adminThemeHeaderNamed(headerStyleLabel(l10n, theme.header)),
+  if (theme.colors.isNotEmpty) l10n.adminThemeChangedCount(theme.colors.length),
+].join(' · ');
 
 /// Themes (#88): every Boot Camp Mix scheme, each with a strip of its colors as
 /// they're drawn, and how many are changed. A scheme whose saved colors
@@ -185,9 +204,9 @@ class AdminThemesScreen extends ConsumerWidget {
                   title: Text(scheme.label(l10n)),
                   subtitle: Text(switch (saved[scheme]) {
                     null => l10n.adminThemeAsShipped,
-                    final colors when !campThemeReads(scheme, colors) =>
+                    final theme when !campThemeReads(scheme, theme) =>
                       l10n.adminThemeTurnedOff,
-                    final colors => l10n.adminThemeChangedCount(colors.length),
+                    final theme => _changes(l10n, theme),
                   }),
                   trailing: const Icon(AppIcons.chevronRight),
                   onTap: () => context.go('/admin/themes/${scheme.value}'),
@@ -233,11 +252,11 @@ class _PaletteStrip extends StatelessWidget {
   );
 }
 
-/// One scheme's colors (#88): a preview of them, then every color in its
-/// group, each by name with its code and what it changes; a tap chooses
-/// another. Colors nearly the same as what they sit on are marked and
-/// can't be saved. Save replaces what was saved for the scheme; Put back
-/// as it ships takes it all away.
+/// One scheme's colors (#88): a preview of them, its header background
+/// (#91), then every color in its group, each by name with its code and
+/// what it changes; a tap chooses another. Colors nearly the same as what
+/// they sit on are marked and can't be saved. Save replaces what was saved
+/// for the scheme; Put back as it ships takes it all away.
 class AdminThemeEditorScreen extends ConsumerStatefulWidget {
   const new({required this.scheme, super.key});
 
@@ -251,18 +270,22 @@ class AdminThemeEditorScreen extends ConsumerStatefulWidget {
 
 class _AdminThemeEditorScreenState
     extends ConsumerState<AdminThemeEditorScreen> {
-  /// What's changed here: the saved colors to start with.
-  late CampColors _colors = Map.of(
-    ref.read(allCampThemesProvider)[widget.scheme] ?? const {},
-  );
+  /// What's changed here: the saved colors and header to start with.
+  late CampColors _colors = Map.of(_start.colors);
+  late HeaderStyle _header = _start.header;
   bool _saving = false;
+
+  CampTheme get _start =>
+      ref.read(allCampThemesProvider)[widget.scheme] ?? const CampTheme();
 
   CampPalette get _base => SchemeRoles.builtIn(widget.scheme).palette;
 
-  CampColors get _saved =>
-      ref.watch(allCampThemesProvider)[widget.scheme] ?? const {};
+  CampTheme get _saved =>
+      ref.watch(allCampThemesProvider)[widget.scheme] ?? const CampTheme();
 
-  bool get _dirty => !campColorsEqual(_colors, _saved);
+  CampTheme get _edits => CampTheme(colors: _colors, header: _header);
+
+  bool get _dirty => _edits != _saved;
 
   /// [color] set to [value], or back to the original when it's that.
   void _set(CampColor color, Color value) => setState(() {
@@ -285,16 +308,26 @@ class _AdminThemeEditorScreenState
     if (picked != null && mounted) _set(color, picked);
   }
 
+  Future<void> _chooseHeader(CampPalette palette) async {
+    final picked = await showHeaderChooser(
+      context,
+      palette: palette,
+      current: _header,
+    );
+    if (picked != null && mounted) setState(() => _header = picked);
+  }
+
   Future<void> _save() async {
     final l10n = AppLocalizations.of(context);
     final name = widget.scheme.label(l10n);
     final repository = ref.read(adminRepositoryProvider);
+    final edits = CampTheme(colors: Map.of(_colors), header: _header);
     setState(() => _saving = true);
     await runAdminAction(
       context,
-      () => _colors.isEmpty
+      () => edits.isEmpty
           ? repository.resetCampTheme(widget.scheme)
-          : repository.saveCampTheme(widget.scheme, Map.of(_colors)),
+          : repository.saveCampTheme(widget.scheme, edits),
       done: l10n.adminThemeSaved(name),
     );
     if (mounted) setState(() => _saving = false);
@@ -321,7 +354,10 @@ class _AdminThemeEditorScreenState
     if (!mounted) return;
     setState(() {
       _saving = false;
-      if (done) _colors = {};
+      if (done) {
+        _colors = {};
+        _header = HeaderStyle.camo;
+      }
     });
   }
 
@@ -337,7 +373,10 @@ class _AdminThemeEditorScreenState
       destructive: true,
     );
     if (leave && mounted) {
-      setState(() => _colors = Map.of(_saved));
+      setState(() {
+        _colors = Map.of(_saved.colors);
+        _header = _saved.header;
+      });
       context.go('/admin/themes');
     }
   }
@@ -370,7 +409,33 @@ class _AdminThemeEditorScreenState
           children: [
             AdminSectionCard(
               title: l10n.adminThemePreview,
-              children: [Center(child: CampThemePreview(palette: palette))],
+              children: [
+                Center(
+                  child: CampThemePreview(palette: palette, header: _header),
+                ),
+              ],
+            ),
+            // The header's background (#91), drawn in these colors.
+            AdminSectionCard(
+              title: l10n.adminThemeHeader,
+              children: [
+                ListTile(
+                  key: const ValueKey('header-style'),
+                  contentPadding: EdgeInsets.zero,
+                  leading: _HeaderSwatch(palette: palette, style: _header),
+                  title: Text(headerStyleLabel(l10n, _header)),
+                  subtitle: Text(l10n.adminThemeHeaderHelp),
+                  trailing: _header == HeaderStyle.camo
+                      ? const Icon(AppIcons.chevronRight)
+                      : IconButton(
+                          tooltip: l10n.adminThemeUseOriginal,
+                          icon: const Icon(AppIcons.reset),
+                          onPressed: () =>
+                              setState(() => _header = HeaderStyle.camo),
+                        ),
+                  onTap: () => unawaited(_chooseHeader(palette)),
+                ),
+              ],
             ),
             for (final (title, colors) in _groups)
               AdminSectionCard(
@@ -413,7 +478,7 @@ class _AdminThemeEditorScreenState
                       : null,
                   child: Text(l10n.save),
                 ),
-                if (saved.isNotEmpty)
+                if (!saved.isEmpty)
                   TextButton.icon(
                     icon: const Icon(AppIcons.reset),
                     label: Text(l10n.adminThemeBackToShipped),
@@ -684,6 +749,99 @@ class _Swatches extends StatelessWidget {
   }
 }
 
+/// A header background (#91) in [palette]'s colors, as a small swatch.
+class _HeaderSwatch extends StatelessWidget {
+  const new({required this.palette, required this.style});
+
+  final CampPalette palette;
+  final HeaderStyle style;
+
+  @override
+  Widget build(BuildContext context) => ExcludeSemantics(
+    child: Container(
+      width: 64,
+      height: 36,
+      decoration: BoxDecoration(
+        border: Border.all(color: palette.ink, width: 2),
+      ),
+      child: CustomPaint(painter: CamoPainter(palette, style: style)),
+    ),
+  );
+}
+
+/// Chooses a header background (#91): the six, each drawn in [palette]'s
+/// colors, so they're seen as the scheme would have them. Returns the one
+/// picked, or null.
+Future<HeaderStyle?> showHeaderChooser(
+  BuildContext context, {
+  required CampPalette palette,
+  required HeaderStyle current,
+}) => showModalBottomSheet<HeaderStyle>(
+  context: context,
+  isScrollControlled: true,
+  useSafeArea: true,
+  showDragHandle: true,
+  builder: (context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return GumdropSurface(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(Space.lg, 0, Space.lg, Space.xl),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.adminThemeChooseHeader,
+              style: theme.textTheme.titleMedium,
+            ),
+            const SizedBox(height: Space.md),
+            Wrap(
+              spacing: Space.md,
+              runSpacing: Space.md,
+              children: [
+                for (final style in HeaderStyle.values)
+                  Semantics(
+                    button: true,
+                    selected: style == current,
+                    label: headerStyleLabel(l10n, style),
+                    child: InkWell(
+                      key: ValueKey('header-${style.value}'),
+                      onTap: () => Navigator.of(context).pop(style),
+                      child: ExcludeSemantics(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 150,
+                              height: 64,
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: style == current
+                                      ? theme.colorScheme.primary
+                                      : palette.ink,
+                                  width: style == current ? 4 : 2,
+                                ),
+                              ),
+                              child: CustomPaint(
+                                painter: CamoPainter(palette, style: style),
+                              ),
+                            ),
+                            const SizedBox(height: Space.xs),
+                            Text(headerStyleLabel(l10n, style)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  },
+);
+
 /// A small picture of a Boot Camp Mix scheme drawn from [palette] (#88):
 /// the camouflage header with the team's name and an unread dot, the page
 /// under its dot grid with someone's balloon and yours, a game panel under
@@ -691,9 +849,12 @@ class _Swatches extends StatelessWidget {
 /// and the tab bar with its current tab on the trim. Plain widgets painted
 /// from the palette, so it shows colors that aren't saved yet.
 class CampThemePreview extends StatelessWidget {
-  const new({required this.palette, super.key});
+  const new({required this.palette, this.header = HeaderStyle.camo, super.key});
 
   final CampPalette palette;
+
+  /// The header's background (#91).
+  final HeaderStyle header;
 
   /// Ink or white, whichever reads better on [face].
   Color _on(Color face) =>
@@ -761,7 +922,7 @@ class CampThemePreview extends StatelessWidget {
             SizedBox(
               height: 52,
               child: CustomPaint(
-                painter: CamoPainter(p),
+                painter: CamoPainter(p, style: header),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: Row(

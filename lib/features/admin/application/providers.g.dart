@@ -223,26 +223,26 @@ final class ThemeOverridesProvider
 
 String _$themeOverridesHash() => r'fee80604dd5c8ed89de07b0d45e440a8f0edb028';
 
-/// Every scheme's colors in `config/app.campThemes` (#88), as saved: the
+/// Every scheme's changes in `config/app.campThemes` (#88, #91), as saved: the
 /// Super Admin Panel's Themes page shows them all, even colors that are
 /// hard to read, so they can be put right. None signed out.
 
 @ProviderFor(allCampThemes)
 final allCampThemesProvider = AllCampThemesProvider._();
 
-/// Every scheme's colors in `config/app.campThemes` (#88), as saved: the
+/// Every scheme's changes in `config/app.campThemes` (#88, #91), as saved: the
 /// Super Admin Panel's Themes page shows them all, even colors that are
 /// hard to read, so they can be put right. None signed out.
 
 final class AllCampThemesProvider
     extends
         $FunctionalProvider<
-          Map<TeamScheme, CampColors>,
-          Map<TeamScheme, CampColors>,
-          Map<TeamScheme, CampColors>
+          Map<TeamScheme, CampTheme>,
+          Map<TeamScheme, CampTheme>,
+          Map<TeamScheme, CampTheme>
         >
-    with $Provider<Map<TeamScheme, CampColors>> {
-  /// Every scheme's colors in `config/app.campThemes` (#88), as saved: the
+    with $Provider<Map<TeamScheme, CampTheme>> {
+  /// Every scheme's changes in `config/app.campThemes` (#88, #91), as saved: the
   /// Super Admin Panel's Themes page shows them all, even colors that are
   /// hard to read, so they can be put right. None signed out.
   AllCampThemesProvider._()
@@ -261,25 +261,25 @@ final class AllCampThemesProvider
 
   @$internal
   @override
-  $ProviderElement<Map<TeamScheme, CampColors>> $createElement(
+  $ProviderElement<Map<TeamScheme, CampTheme>> $createElement(
     $ProviderPointer pointer,
   ) => $ProviderElement(pointer);
 
   @override
-  Map<TeamScheme, CampColors> create(Ref ref) {
+  Map<TeamScheme, CampTheme> create(Ref ref) {
     return allCampThemes(ref);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(Map<TeamScheme, CampColors> value) {
+  Override overrideWithValue(Map<TeamScheme, CampTheme> value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<Map<TeamScheme, CampColors>>(value),
+      providerOverride: $SyncValueProvider<Map<TeamScheme, CampTheme>>(value),
     );
   }
 }
 
-String _$allCampThemesHash() => r'3480891fabbba35b8766ace9df65a34016321126';
+String _$allCampThemesHash() => r'715cdb9cbd273f8117b855ac0a63719e5a404c73';
 
 /// The theme editor's colors the app draws (#88): [allCampThemes] but any
 /// that's hard to read (`campThemeReads`), which the editor and the server
@@ -297,11 +297,11 @@ final campThemesProvider = CampThemesProvider._();
 final class CampThemesProvider
     extends
         $FunctionalProvider<
-          Map<TeamScheme, CampColors>,
-          Map<TeamScheme, CampColors>,
-          Map<TeamScheme, CampColors>
+          Map<TeamScheme, CampTheme>,
+          Map<TeamScheme, CampTheme>,
+          Map<TeamScheme, CampTheme>
         >
-    with $Provider<Map<TeamScheme, CampColors>> {
+    with $Provider<Map<TeamScheme, CampTheme>> {
   /// The theme editor's colors the app draws (#88): [allCampThemes] but any
   /// that's hard to read (`campThemeReads`), which the editor and the server
   /// refuse but colors saved by hand could be. What the app root installs in
@@ -322,25 +322,25 @@ final class CampThemesProvider
 
   @$internal
   @override
-  $ProviderElement<Map<TeamScheme, CampColors>> $createElement(
+  $ProviderElement<Map<TeamScheme, CampTheme>> $createElement(
     $ProviderPointer pointer,
   ) => $ProviderElement(pointer);
 
   @override
-  Map<TeamScheme, CampColors> create(Ref ref) {
+  Map<TeamScheme, CampTheme> create(Ref ref) {
     return campThemes(ref);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(Map<TeamScheme, CampColors> value) {
+  Override overrideWithValue(Map<TeamScheme, CampTheme> value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<Map<TeamScheme, CampColors>>(value),
+      providerOverride: $SyncValueProvider<Map<TeamScheme, CampTheme>>(value),
     );
   }
 }
 
-String _$campThemesHash() => r'b951671cac4d552f2d7a9e69681a2a8e3f08c3fa';
+String _$campThemesHash() => r'ee322653a7d43e64871ed1d390c0d8c2b30343b4';
 
 /// The upload limit in bytes for documents and photos (ADMIN-7): the
 /// platform setting, capped at the storage rules' limit, which the server

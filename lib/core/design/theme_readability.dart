@@ -157,16 +157,18 @@ CampPalette editedPalette(TeamScheme scheme, CampColors colors) =>
       for (final MapEntry(:key, :value) in colors.entries) key: Color(value),
     });
 
-/// Whether [colors] over [scheme] can be drawn (#88): what the app shows,
-/// so colors saved by hand with text the color of its page never are.
-bool campThemeReads(TeamScheme scheme, CampColors colors) => campThemeProblems(
+/// Whether [theme]'s colors over [scheme] can be drawn (#88): what the app
+/// shows, so colors saved by hand with text the color of its page never
+/// are. Its header background (#91) is drawn from the colors, so it needs
+/// no check of its own.
+bool campThemeReads(TeamScheme scheme, CampTheme theme) => campThemeProblems(
   SchemeRoles.builtIn(scheme).palette,
-  editedPalette(scheme, colors),
+  editedPalette(scheme, theme.colors),
 ).isEmpty;
 
 /// [themes] without any that fail [campThemeReads].
-Map<TeamScheme, CampColors> readableCampThemes(
-  Map<TeamScheme, CampColors> themes,
+Map<TeamScheme, CampTheme> readableCampThemes(
+  Map<TeamScheme, CampTheme> themes,
 ) => {
   for (final MapEntry(:key, :value) in themes.entries)
     if (campThemeReads(key, value)) key: value,

@@ -1,4 +1,6 @@
+import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/widgets/camo.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
@@ -100,7 +102,16 @@ class CampAppBar extends StatelessWidget implements PreferredSizeWidget {
           ? Stack(
               fit: StackFit.expand,
               children: [
-                CustomPaint(painter: CamoPainter(p)),
+                // The theme editor's header background, if it set one
+                // (#91); the Super Admin Panel's, the camouflage.
+                CustomPaint(
+                  painter: CamoPainter(
+                    p,
+                    style: c.shipped
+                        ? HeaderStyle.camo
+                        : ThemeCatalog.headerStyleOf(c.scheme),
+                  ),
+                ),
                 ?flexibleSpace,
               ],
             )

@@ -139,6 +139,11 @@ describe('unreadableCampParts', () => {
     expect(unreadableCampParts('scoreboard', {})).toEqual(['scheme']);
   });
 
+  it('takes a header background by name (#91)', () => {
+    expect(SaveCampThemeInput.parse({ scheme: 'dark', colors: {}, header: 'halftone' }).header).toBe('halftone');
+    expect(() => SaveCampThemeInput.parse({ scheme: 'dark', colors: {}, header: 'plaid' })).toThrow();
+  });
+
   it('takes colors by token only, as #RRGGBB, upper-cased', () => {
     expect(SaveCampThemeInput.parse({ scheme: 'dark', colors: { red: '#f45b5b' } }).colors).toEqual({ red: '#F45B5B' });
     expect(() => SaveCampThemeInput.parse({ scheme: 'dark', colors: { accent: '#F45B5B' } })).toThrow();

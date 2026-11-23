@@ -1,7 +1,9 @@
 import 'dart:math' as math;
 
-import 'package:battleplan/core/design/camp_palette.dart';
+import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/schemes.dart';
+import 'package:battleplan/core/widgets/header_patterns.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Boot Camp Mix's camouflage header (#85, SPEC §7.4): [child] on the
@@ -23,13 +25,21 @@ class CampHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
     final p = c.roles.palette;
+    // The ink line over the pattern, which fills to the bottom edge.
     return DecoratedBox(
+      position: DecorationPosition.foreground,
       decoration: BoxDecoration(
-        color: p.camoGround,
         border: Border(bottom: BorderSide(color: p.ink, width: 3)),
       ),
       child: CustomPaint(
-        painter: CamoPainter(p),
+        // The theme editor's header background, if it set one (#91); the
+        // Super Admin Panel's is always the camouflage, as it ships.
+        painter: CamoPainter(
+          p,
+          style: c.shipped
+              ? HeaderStyle.camo
+              : ThemeCatalog.headerStyleOf(c.scheme),
+        ),
         child: Padding(
           padding: EdgeInsets.only(
             top: top ? MediaQuery.paddingOf(context).top : 0,
@@ -48,11 +58,15 @@ class CampHeader extends StatelessWidget {
 
 /// Paints the camouflage: blotches in [palette]'s three camouflage colors
 /// over its ground, and the header's halftone. The same blotches every
-/// time (a fixed seed), repeated across wide screens.
+/// time (a fixed seed), repeated across wide screens. With another [style]
+/// (#91, the theme editor's header backgrounds), that pattern in the same
+/// four colors instead of the blotches (`HeaderPatternPainter`), under the
+/// same halftone.
 class CamoPainter extends CustomPainter {
-  new(this.palette);
+  new(this.palette, {this.style = HeaderStyle.camo});
 
   final CampPalette palette;
+  final HeaderStyle style;
 
   /// One tile of the pattern, repeated across.
   static const Size tile = Size(260, 150);
@@ -91,6 +105,15 @@ class CamoPainter extends CustomPainter {
     canvas
       ..save()
       ..clipRect(Offset.zero & size);
+    if (style != HeaderStyle.camo) {
+      HeaderPatternPainter(style, palette).paint(canvas, size);
+      _halftone(canvas, size);
+      canvas.restore();
+      return;
+    }
+    // The ground under the blotches, so it's whole wherever it's drawn
+    // (the theme editor's swatches, #91, as well as the header).
+    canvas.drawRect(Offset.zero & size, Paint()..color = palette.camoGround);
     final colors = [palette.camoBig, palette.camoMid, palette.camoSmall];
     // From a tile up and left of the corner, so blots that spill over a
     // tile's edge show on its neighbor and tiles join without seams.
@@ -125,7 +148,8 @@ class CamoPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(CamoPainter old) => old.palette != palette;
+  bool shouldRepaint(CamoPainter old) =>
+      old.palette != palette || old.style != style;
 }
 
 /// One blotch: a soft lump around [center], stretched and turned.

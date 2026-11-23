@@ -616,6 +616,27 @@ enum PlayBoard {
   }
 }
 
+enum HeaderStyle {
+  camo('camo'),
+  digital('digital'),
+  topo('topo'),
+  playbook('playbook'),
+  stripes('stripes'),
+  halftone('halftone');
+
+  const HeaderStyle(this.value);
+
+  /// The string stored in Firestore.
+  final String value;
+
+  static HeaderStyle? tryParse(String? value) {
+    for (final e in values) {
+      if (e.value == value) return e;
+    }
+    return null;
+  }
+}
+
 enum CampColor {
   page('page'),
   panel('panel'),
