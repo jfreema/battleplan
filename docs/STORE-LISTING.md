@@ -45,6 +45,16 @@ Also new:
 • On a team, RSVPs are for players, each on their own row: parents answer for each of their kids, and adult players answer for themselves
 ```
 
+**What's New in 1.4.5** (ROADMAP task 463; saved on version 1.4.5 in App Store Connect on 2026-11-23, with the description's color schemes line changed to match and its Plays line naming volleyball; waiting for a build). Everything made since the 1.4.4 build (544, `3dfa0dc`): Boot Camp Mix and its thirteen schemes (tasks 454, 455, 458, 459), the Plays board as the mockup draws it and the volleyball court (456), and the iPad's full-width headers (461); the theme editor's changes (453, 457, 460) are for super admins only.
+
+```
+A whole new look, Boot Camp Mix: camouflage headers, bold stencil lettering, and thirteen color schemes. Black is the default, with Army green, Light, Sky Blue, Navy Steel, Forest, Graphite, Teal Wave, Tropic Blue, Desert Tan, Royal & Gold, Central Wildcats, and Geaux Tigahs. Pick the one you see for each team.
+
+Also new:
+• Plays: players, the ball, routes, and notes are redrawn to match, and there's a volleyball court, full or half
+• On an iPad, page headers run the full width of the screen
+```
+
 **What's New in 1.3** (ROADMAP task 375; live in the App Store since 2026-11-11, build 459, `64b53eb`, with this text). Everything made since the 1.2 build (435, `00a098c`): the settings gear and Team tab (task 374), Dark as the default (373), where new members' notifications start (371), events in the chat only when asked (370), Approve and Decline answering once (369), and the team default color scheme, No reminders, and light blue group messages (365 to 367). The description, keywords, promotional text, and review notes stay as 1.2's; the screenshots still show Army green and four tabs until they're retaken.
 
 ```
@@ -112,7 +122,7 @@ MORE FOR COACHES
 • Groups for anything that isn't a team, with the same chat, schedule, and RSVPs
 
 MAKE IT YOURS
-• Five color schemes: Army green, Light, Dark, Navy, and Light blue
+• Thirteen color schemes, from Black and Army green to Sky Blue, Navy Steel, and Royal & Gold
 • Pick the scheme you see for each team, and a default
 • Pick your icon: a photo, or your initials on a color
 • Coaches pick the chat's message color and background
