@@ -420,7 +420,7 @@ class _ComposerState extends State<Composer> {
                       // page under the box.
                       counterStyle: TextStyle(
                         fontFamily: AppFonts.body,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: AppFonts.reading,
                         fontSize: 12,
                         color: c.textMutedOnPage,
                       ),
@@ -565,7 +565,7 @@ class _AnnouncementBanner extends StatelessWidget {
               l10n.announcementBanner,
               style: TextStyle(
                 fontFamily: AppFonts.body,
-                fontWeight: FontWeight.w800,
+                fontWeight: AppFonts.reading,
                 fontSize: 14,
                 color: c.ink,
               ),

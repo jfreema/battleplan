@@ -112,7 +112,7 @@ class EventRow extends StatelessWidget {
             final style = GumdropStyle.of(context);
             final muted = TextStyle(
               fontFamily: AppFonts.body,
-              fontWeight: FontWeight.w700,
+              fontWeight: AppFonts.reading,
               fontSize: 13.5,
               height: 17 / 13.5,
               color: card.textMuted,

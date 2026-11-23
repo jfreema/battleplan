@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
@@ -137,7 +138,7 @@ class _ChatRow extends ConsumerWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
-          fontWeight: unread > 0 ? FontWeight.w800 : FontWeight.w700,
+          fontWeight: unread > 0 ? AppFonts.bold : AppFonts.reading,
         ),
       ),
       subtitle: Text(preview, maxLines: 1, overflow: TextOverflow.ellipsis),

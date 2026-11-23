@@ -126,7 +126,7 @@ class EventCard extends ConsumerWidget {
             final card = GumdropColors.of(context);
             final muted = TextStyle(
               fontFamily: AppFonts.body,
-              fontWeight: FontWeight.w700,
+              fontWeight: AppFonts.reading,
               fontSize: 14.5,
               height: 20 / 14.5,
               color: card.textMuted,
@@ -358,7 +358,7 @@ class _CardRsvps extends ConsumerWidget {
           );
     final muted = TextStyle(
       fontFamily: AppFonts.body,
-      fontWeight: FontWeight.w700,
+      fontWeight: AppFonts.reading,
       fontSize: 14,
       height: 18 / 14,
       color: GumdropColors.of(context).textMuted,

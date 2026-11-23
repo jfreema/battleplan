@@ -78,12 +78,12 @@ flutter:
   # Boot Camp Mix's fonts, bundled so text looks the same on every platform
   # and offline (SPEC §7.3, ARCH §5.5): Battleplan Stencil (Big Shoulders
   # Stencil Display Black, its small letters drawn as capitals) for titles,
-  # labels, buttons, tabs and counts, and Comic Neue for reading text. From
+  # labels, buttons, tabs and counts, and Nunito for reading text (#97). From
   # Google Fonts; each is OFL 1.1, whose text ships with it and shows under
   # Licenses (tools/make_fonts.sh).
   assets:
     - assets/fonts/battleplan_stencil/OFL.txt
-    - assets/fonts/comic_neue/OFL.txt
+    - assets/fonts/nunito/OFL.txt
     # Jared's Venmo card, for Buy Jared a coffee (TEAM-5, About).
     - assets/about/venmo.png
     # Apple's App Store badge, for the web app's invite page (INV-7).
@@ -91,14 +91,17 @@ flutter:
   fonts:
     # Boot Camp Mix (#85; tools/make_fonts.sh builds both): the stencil for
     # titles, labels, buttons, tabs and counts, always in capitals, and
-    # Comic Neue for reading text.
+    # Nunito for reading text (#97): SemiBold, and Bold for bold spans. Any
+    # lighter weight asked for draws in SemiBold, any heavier in Bold.
     - family: Battleplan Stencil
       fonts:
         - asset: assets/fonts/battleplan_stencil/BattleplanStencil-Black.ttf
           weight: 900
-    - family: Comic Neue
+    - family: Nunito
       fonts:
-        - asset: assets/fonts/comic_neue/ComicNeue-Bold.ttf
+        - asset: assets/fonts/nunito/Nunito-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/nunito/Nunito-Bold.ttf
           weight: 700
 
 # App icons and splash screens from the Stencil Crest on Army green (SPEC

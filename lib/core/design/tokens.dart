@@ -25,9 +25,9 @@ abstract final class Space {
   static const double page = 20;
 }
 
-/// Chat messages' text (CHAT-1): Comic Neue on every platform, as Gumdrop Pop
-/// sets it, a point bigger (17 px, the owner's request, 2026-10-27) on a
-/// 1.35 line, bold in others' bubbles and extra bold in mine.
+/// Chat messages' text (CHAT-1): Nunito SemiBold on every platform (#97), a
+/// point bigger (17 px, the owner's request, 2026-10-27) on a 23 px line,
+/// the same in others' bubbles and mine.
 abstract final class ChatText {
   static const double size = 17;
   static const double height = 23 / 17;
@@ -38,7 +38,7 @@ abstract final class ChatText {
       .copyWith(
         fontSize: size,
         height: height,
-        fontWeight: FontWeight.w500,
+        fontWeight: AppFonts.reading,
         letterSpacing: 0,
       );
 

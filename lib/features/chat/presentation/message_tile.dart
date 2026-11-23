@@ -419,10 +419,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
         child: Text(
           m.text,
           textAlign: TextAlign.center,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: c.textMutedOnPage,
-            fontWeight: FontWeight.w800,
-          ),
+          style: theme.textTheme.bodySmall?.copyWith(color: c.textMutedOnPage),
         ),
       );
     }
@@ -1094,7 +1091,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     );
     final rest = TextStyle(
       fontFamily: AppFonts.body,
-      fontWeight: FontWeight.w700,
+      fontWeight: AppFonts.reading,
       fontSize: 12.5,
       height: 18 / 12.5,
       color: muted,
@@ -1178,7 +1175,7 @@ class ReadReceipt extends StatelessWidget {
           label,
           style: TextStyle(
             fontFamily: AppFonts.body,
-            fontWeight: FontWeight.w900,
+            fontWeight: AppFonts.reading,
             fontSize: 12,
             color: c.textMutedOnPage,
           ),

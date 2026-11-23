@@ -518,9 +518,9 @@ abstract final class AppTheme {
     );
   }
 
-  /// Boot Camp Mix (#85): Comic Neue for reading text, and the stencil,
-  /// always in capitals and a little spaced, for headings, labels, buttons,
-  /// and names.
+  /// Boot Camp Mix (#85): Nunito SemiBold for reading text (#97), and the
+  /// stencil, always in capitals and a little spaced, for headings, labels,
+  /// buttons, and names.
   static TextTheme _textTheme(GumdropColors g, GumdropStyle style, Color text) {
     TextStyle heading(double size, double height) => TextStyle(
       fontFamily: style.displayFont,
@@ -539,9 +539,9 @@ abstract final class AppTheme {
       letterSpacing: GumdropStyle.stencilSpacing(size),
       color: text,
     );
-    TextStyle nunito(double size, {double height = 1.35}) => TextStyle(
+    TextStyle reading(double size, {double height = 1.35}) => TextStyle(
       fontFamily: AppFonts.body,
-      fontWeight: FontWeight.w700,
+      fontWeight: AppFonts.reading,
       fontSize: size,
       height: height,
       letterSpacing: 0,
@@ -557,9 +557,9 @@ abstract final class AppTheme {
       titleLarge: heading(TypeScale.title, 1.1),
       titleMedium: fredoka(TypeScale.subtitle),
       titleSmall: fredoka(15),
-      bodyLarge: nunito(TypeScale.body),
-      bodyMedium: nunito(TypeScale.secondary),
-      bodySmall: nunito(14),
+      bodyLarge: reading(TypeScale.body),
+      bodyMedium: reading(TypeScale.secondary),
+      bodySmall: reading(14),
       labelLarge: fredoka(15, height: 1),
       labelMedium: fredoka(TypeScale.secondary, height: 1),
       labelSmall: fredoka(TypeScale.label, height: 1),

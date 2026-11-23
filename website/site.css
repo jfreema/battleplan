@@ -4,9 +4,9 @@
    on a hard olive shadow, mustard caption tags, panels with ink outlines and
    hard shadows, push buttons, dog tags, camouflage under the heroes with a
    halftone fade, and a fine dot grid on the page. The app's own colors
-   (SPEC §7.4) and its own two fonts, Battleplan Stencil and Comic Neue,
-   bundled in fonts/ (SIL OFL, made by tools/make_web_fonts.sh), so the site
-   makes no third-party requests. Every page is Black; the landing page shows
+   (SPEC §7.4) and its own fonts, Battleplan Stencil and Nunito (SemiBold
+   for reading, Bold for bold spans, #97), bundled in fonts/ (SIL OFL, made
+   by tools/make_web_fonts.sh), so the site makes no third-party requests. Every page is Black; the landing page shows
    the thirteen schemes as dog tags. */
 
 @font-face {
@@ -16,8 +16,14 @@
   font-display: swap;
 }
 @font-face {
-  font-family: "Comic Neue";
-  src: url("/fonts/comic-neue.woff2") format("woff2");
+  font-family: "Nunito";
+  src: url("/fonts/nunito-semibold.woff2") format("woff2");
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Nunito";
+  src: url("/fonts/nunito-bold.woff2") format("woff2");
   font-weight: 700;
   font-display: swap;
 }
@@ -59,7 +65,7 @@
   --max: 1160px;
   --gutter: 20px;
   --stencil: "Battleplan Stencil", Impact, "Arial Narrow Bold", sans-serif;
-  --body: "Comic Neue", "Comic Sans MS", "Trebuchet MS", system-ui, sans-serif;
+  --body: "Nunito", "Trebuchet MS", system-ui, sans-serif;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -70,7 +76,7 @@ body {
   margin: 0;
   background: radial-gradient(circle, var(--dots) 1.15px, transparent 1.45px) 0 0 / 8px 8px, var(--page);
   color: var(--text);
-  font: 700 17px/1.55 var(--body);
+  font: 600 17px/1.55 var(--body);
   -webkit-font-smoothing: antialiased;
   overflow-wrap: break-word;
 }
@@ -475,7 +481,7 @@ section { padding: 64px 0; }
    row for every player, and Your schedule. */
 .lp-rsvp { margin: 24px 0 0; padding: 16px; max-width: 470px; background: var(--card); border: 3px solid #000; box-shadow: 5px 5px 0 var(--drop); }
 .lp-rsvp-q { display: flex; justify-content: space-between; gap: 10px; margin: 0 0 12px; font: 900 1.02rem/1.1 var(--stencil); letter-spacing: 0.06em; text-transform: uppercase; }
-.lp-rsvp-q span { font: 700 0.9rem/1.1 var(--body); letter-spacing: 0; text-transform: none; color: var(--muted); }
+.lp-rsvp-q span { font: 600 0.9rem/1.1 var(--body); letter-spacing: 0; text-transform: none; color: var(--muted); }
 .lp-rsvp-row { display: flex; gap: 9px; }
 .lp-rsvp-row span {
   flex: 1 1 0; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
@@ -661,7 +667,7 @@ kbd, .ui {
   padding-bottom: 20px; margin-bottom: 8px; border-bottom: 1px solid var(--hairline);
 }
 .made-by .battle-baseball { width: 168px; height: auto; flex: none; overflow: visible; }
-.made-by p { flex: 1 1 220px; color: var(--text); font: 700 1.05rem/1.4 var(--body); }
+.made-by p { flex: 1 1 220px; color: var(--text); font: 600 1.05rem/1.4 var(--body); }
 /* Apple's credit line, on the pages that show the App Store badge. */
 .site-footer .credit { font-size: 0.85rem; }
 @media (min-width: 760px) {

@@ -612,8 +612,8 @@ class PageListRow extends StatelessWidget {
 
 /// A row in a panel of rows (SPEC §7.3; Boot Camp Mix, #85): at least 52
 /// tall, its [icon] in ink on a 36 px mustard round badge in an ink outline
-/// (or [leading]), the title in Comic Neue Bold 16.5/21, the subtitle 14/17
-/// muted, and a 20 px chevron when it opens something. [destructive] puts
+/// (or [leading]), the title in Nunito Bold 16.5/21, the subtitle SemiBold
+/// 14/17 muted, and a 20 px chevron when it opens something. [destructive] puts
 /// the badge in the red and the title in the accent text.
 /// Screen readers hear the row as one item, or as [semanticsLabel] when
 /// it's given (a sentence: "Luke #7, Uniforms, $25 left of $45"); with
@@ -755,7 +755,6 @@ class PageRow extends StatelessWidget {
                               style: text.bodyMedium?.copyWith(
                                 fontSize: 14,
                                 height: 17 / 14,
-                                fontWeight: FontWeight.w700,
                                 color: c.textMutedOnPage,
                               ),
                             ),
@@ -903,7 +902,7 @@ class SettingsCard extends StatelessWidget {
 }
 
 /// A settings row (SPEC §7.3): a [PageRow], its icon on a mustard badge,
-/// the title in Comic Neue Bold, the subtitle muted, and a chevron when it
+/// the title in Nunito Bold, the subtitle muted, and a chevron when it
 /// opens something. [highlighted] sets the title bold; a cherry
 /// [accent] (Delete) puts the icon and title in the accent text. A
 /// [ListTile]'s semantics, through [PageRow].
@@ -961,7 +960,7 @@ class SettingsRow extends StatelessWidget {
   }
 }
 
-/// A permission row's text style (design §3.8, §3.11): Comic Neue 800 15, in
+/// A permission row's text style (design §3.8, §3.11): Nunito Bold 15, in
 /// the card's text color (a switch row sits on a card).
 TextStyle? switchRowTitle(BuildContext context) =>
     Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -1052,8 +1051,8 @@ class LabeledField extends StatelessWidget {
   }
 }
 
-/// The settings field look (design §3.13): 44 tall, 14 px corners, Comic Neue
-/// 800 16. The fill and outline come from the theme.
+/// The settings field look (design §3.13): 44 tall, 14 px corners, Nunito
+/// SemiBold 16. The fill and outline come from the theme.
 InputDecoration gumdropField({String? hint, Widget? suffixIcon}) =>
     InputDecoration(
       hintText: hint,
@@ -1063,10 +1062,9 @@ InputDecoration gumdropField({String? hint, Widget? suffixIcon}) =>
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
     );
 
-/// The settings field text: Comic Neue 800 16.
+/// The settings field text: Nunito SemiBold 16, as reading text is.
 TextStyle? gumdropFieldText(BuildContext context) =>
-    Theme.of(context).textTheme.bodyLarge
-        ?.copyWith(fontWeight: FontWeight.w800, height: 1.2);
+    Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.2);
 
 /// The team color picker (design §3.18): 34 px swatches eight to a row,
 /// spread across, the picked one ringed in the page color and the text

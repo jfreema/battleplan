@@ -245,7 +245,7 @@ class _Stat extends StatelessWidget {
       note,
       style: TextStyle(
         fontFamily: AppFonts.body,
-        fontWeight: FontWeight.w700,
+        fontWeight: AppFonts.reading,
         fontSize: 14,
         height: 17 / 14,
         color: c.textMuted,

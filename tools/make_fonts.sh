@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds the app's two bundled fonts (#85, Boot Camp Mix; SPEC §7.3) from
+# Builds the app's bundled fonts (#85, Boot Camp Mix; SPEC §7.3) from
 # the full fonts in tools/fonts/, the same every time:
 #
 #   Battleplan Stencil  Big Shoulders Stencil at its Display size and
@@ -10,15 +10,25 @@
 #                       is written, as the design sets them. Renamed, as
 #                       a Modified Version under the SIL Open Font License
 #                       should be (it names no Reserved Font Name).
-#   Comic Neue          Bold, as it comes, for reading text: messages,
-#                       descriptions, and fields.
+#   Nunito              SemiBold and Bold, for reading text (#97):
+#                       messages, descriptions, fields, and every
+#                       information line in SemiBold, bold spans in Bold.
+#                       Cut to every character but Cyrillic (125 KB to
+#                       79 KB a weight), so the web app downloads less
+#                       before its first frame (ARCH §5.5). Cyrillic draws
+#                       in a fallback font instead, as Greek and other
+#                       scripts Nunito never had already do: on the web,
+#                       Roboto, which the engine loads at startup anyway,
+#                       and the system's on phones. Vietnamese stays, so no
+#                       Latin word mixes two fonts. Neither license names a
+#                       Reserved Font Name, so both allow the cut.
 #
 # Both are from Google Fonts (github.com/google/fonts, ofl/), with their
 # licenses beside them here and in assets/fonts/<family>/OFL.txt. Uses
 # fonttools in a temporary virtualenv.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-mkdir -p assets/fonts/battleplan_stencil assets/fonts/comic_neue
+mkdir -p assets/fonts/battleplan_stencil assets/fonts/nunito
 
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
@@ -29,6 +39,7 @@ python3 -m venv "$tmp/venv"
 import shutil
 import unicodedata
 
+from fontTools import subset
 from fontTools.ttLib import TTFont
 from fontTools.varLib import instancer
 
@@ -67,8 +78,24 @@ font.save("assets/fonts/battleplan_stencil/BattleplanStencil-Black.ttf")
 shutil.copy("tools/fonts/BigShouldersStencil-OFL.txt",
             "assets/fonts/battleplan_stencil/OFL.txt")
 
-shutil.copy("tools/fonts/ComicNeue-Bold.ttf",
-            "assets/fonts/comic_neue/ComicNeue-Bold.ttf")
-shutil.copy("tools/fonts/ComicNeue-OFL.txt", "assets/fonts/comic_neue/OFL.txt")
-print("assets/fonts: Battleplan Stencil Black, Comic Neue Bold")
+# Nunito without Cyrillic, keeping its kerning, ligatures and names.
+CYRILLIC = [(0x0400, 0x052F), (0x1C80, 0x1C8F), (0x2DE0, 0x2DFF),
+            (0xA640, 0xA69F), (0xFE2E, 0xFE2F)]
+for weight in ["SemiBold", "Bold"]:
+    options = subset.Options()
+    options.layout_features = ["*"]
+    options.name_IDs = ["*"]
+    options.name_languages = ["*"]
+    options.notdef_outline = True
+    nunito = subset.load_font(f"tools/fonts/Nunito-{weight}.ttf", options)
+    subsetter = subset.Subsetter(options)
+    subsetter.populate(unicodes=[
+        c for c in nunito.getBestCmap()
+        if not any(lo <= c <= hi for lo, hi in CYRILLIC)
+    ])
+    subsetter.subset(nunito)
+    subset.save_font(nunito, f"assets/fonts/nunito/Nunito-{weight}.ttf",
+                     options)
+shutil.copy("tools/fonts/Nunito-OFL.txt", "assets/fonts/nunito/OFL.txt")
+print("assets/fonts: Battleplan Stencil Black, Nunito SemiBold and Bold")
 PY

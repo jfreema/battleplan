@@ -143,11 +143,8 @@ class RefreshFailedNotice extends StatelessWidget {
                   Flexible(
                     child: Text(
                       l10n.refreshFailed,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: ink,
-                      ),
+                      style: Theme.of(context).textTheme.bodyMedium
+                          ?.copyWith(fontSize: 15, color: ink),
                     ),
                   ),
                 ],

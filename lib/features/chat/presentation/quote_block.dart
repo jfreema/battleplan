@@ -75,7 +75,7 @@ class QuoteBlock extends StatelessWidget {
     final line = inBubble ? ink.withValues(alpha: 0.8) : c.textMutedOnPage;
     final muted = TextStyle(
       fontFamily: AppFonts.body,
-      fontWeight: FontWeight.w700,
+      fontWeight: AppFonts.reading,
       fontSize: 13,
       height: 1.25,
       color: line,

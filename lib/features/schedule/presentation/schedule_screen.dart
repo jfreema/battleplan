@@ -822,7 +822,7 @@ class _PlayerPickHint extends StatelessWidget {
     final c = GumdropColors.of(context);
     final style = TextStyle(
       fontFamily: AppFonts.body,
-      fontWeight: FontWeight.w700,
+      fontWeight: AppFonts.reading,
       fontSize: 14,
       height: 18 / 14,
       color: c.textMuted,

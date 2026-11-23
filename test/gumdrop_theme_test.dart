@@ -621,14 +621,18 @@ void main() {
     });
 
     test('titles and labels are the stencil, with no drop; body text is '
-        'Comic Neue', () {
+        'Nunito SemiBold', () {
       for (final scheme in bootCampSchemes) {
         final t = AppTheme.of(scheme).textTheme;
         expect(t.headlineMedium!.fontFamily, 'Battleplan Stencil');
         expect(t.headlineMedium!.fontWeight, FontWeight.w900);
         expect(t.headlineMedium!.shadows ?? const <Shadow>[], isEmpty);
         expect(t.labelLarge!.fontFamily, 'Battleplan Stencil');
-        expect(t.bodyMedium!.fontFamily, 'Comic Neue');
+        // Reading text is Nunito SemiBold in every scheme (#97).
+        for (final body in [t.bodyLarge!, t.bodyMedium!, t.bodySmall!]) {
+          expect(body.fontFamily, 'Nunito');
+          expect(body.fontWeight, FontWeight.w600);
+        }
       }
       expect(
         GumdropStyle.bootCamp.headingShadow(const Color(0xFF1A1A18)),

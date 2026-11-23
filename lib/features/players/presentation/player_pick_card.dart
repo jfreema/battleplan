@@ -111,7 +111,7 @@ class PlayerPickCard extends ConsumerWidget {
                     : l10n.playerPickCard,
                 style: TextStyle(
                   fontFamily: AppFonts.body,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: AppFonts.reading,
                   fontSize: 15,
                   height: 20 / 15,
                   color: card.textPrimary,

@@ -280,7 +280,7 @@ class _PollCardState extends ConsumerState<PollCard> {
           final rule = widget.mine ? ink.withValues(alpha: 0.22) : c.divider;
           final small = TextStyle(
             fontFamily: AppFonts.body,
-            fontWeight: FontWeight.w700,
+            fontWeight: AppFonts.reading,
             fontSize: 13,
             color: widget.mine ? ink : c.textMuted,
           );
@@ -733,7 +733,7 @@ class _OptionRow extends StatelessWidget {
       l10n.pollOptionVotesShare(votes, (share * 100).round()),
       style: TextStyle(
         fontFamily: AppFonts.body,
-        fontWeight: FontWeight.w700,
+        fontWeight: AppFonts.reading,
         fontSize: 14,
         height: 22 / 14,
         color: ink,
@@ -811,8 +811,8 @@ class _OptionRow extends StatelessWidget {
                         style: TextStyle(
                           fontFamily: AppFonts.body,
                           fontWeight: chosen || leading
-                              ? FontWeight.w800
-                              : FontWeight.w700,
+                              ? AppFonts.bold
+                              : AppFonts.reading,
                           fontSize: 16,
                           height: 22 / 16,
                           color: ink,

@@ -878,7 +878,7 @@ class CampThemePreview extends StatelessWidget {
     TextStyle body(Color color) => TextStyle(
       fontFamily: AppFonts.body,
       fontSize: 13,
-      fontWeight: FontWeight.w700,
+      fontWeight: AppFonts.reading,
       color: color,
     );
     Widget balloon(String text, Color face, {required bool mine}) => Align(

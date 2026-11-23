@@ -1,4 +1,5 @@
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/team_switcher_button.dart';
@@ -863,8 +864,9 @@ void main() {
           .text
           .style
           ?.fontWeight;
-      expect(weight('Unread one'), FontWeight.w800);
-      expect(weight('Read one'), FontWeight.w700);
+      // Bold unread, SemiBold read (#97).
+      expect(weight('Unread one'), AppFonts.bold);
+      expect(weight('Read one'), AppFonts.reading);
       final c = GumdropColors.of(tester.element(find.text('Unread one')));
       for (final tile in tester.widgetList<ListTile>(find.byType(ListTile))) {
         expect(tile.tileColor, isNull);

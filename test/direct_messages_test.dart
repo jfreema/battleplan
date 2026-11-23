@@ -489,8 +489,9 @@ void main() {
           .text
           .style
           ?.fontWeight;
-      expect(weight('Alex Kim'), FontWeight.w800);
-      expect(weight('Sam Rivera'), FontWeight.w700);
+      // Bold unread, SemiBold read (#97).
+      expect(weight('Alex Kim'), AppFonts.bold);
+      expect(weight('Sam Rivera'), AppFonts.reading);
       await tester.tap(find.text('Alex Kim'));
       await tester.pumpAndSettle();
       expect(find.text('Message Alex Kim…'), findsOneWidget);

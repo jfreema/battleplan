@@ -1542,17 +1542,30 @@ void main() {
       final manifest = await rootBundle.loadString('FontManifest.json');
       for (final file in [
         'assets/fonts/battleplan_stencil/BattleplanStencil-Black.ttf',
-        'assets/fonts/comic_neue/ComicNeue-Bold.ttf',
+        // Reading text (#97): SemiBold, and Bold for bold spans.
+        'assets/fonts/nunito/Nunito-SemiBold.ttf',
+        'assets/fonts/nunito/Nunito-Bold.ttf',
       ]) {
         expect(manifest, contains(file));
       }
-      // Open Field's are gone (#85).
-      for (final gone in ['Lilita', 'Fredoka', 'Nunito', 'BlackOps', 'Inter']) {
+      // Open Field's other fonts are gone (#85), and Comic Neue (#97).
+      for (final gone in [
+        'Lilita',
+        'Fredoka',
+        'BlackOps',
+        'Inter',
+        'Comic',
+        'Nunito-Regular',
+        'Nunito-ExtraBold',
+        'Nunito-Black',
+      ]) {
         expect(manifest, isNot(contains(gone)));
       }
       expect(AppFonts.display, 'Battleplan Stencil');
       expect(AppFonts.label, AppFonts.display);
-      expect(AppFonts.body, 'Comic Neue');
+      expect(AppFonts.body, 'Nunito');
+      expect(AppFonts.reading, FontWeight.w600);
+      expect(AppFonts.bold, FontWeight.w700);
       registerFontLicenses();
       final entries = await LicenseRegistry.licenses.toList();
       for (final family in fontLicenseAssets.keys) {

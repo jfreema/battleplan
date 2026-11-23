@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
@@ -291,7 +292,7 @@ class _NotificationRow extends StatelessWidget {
           maxLines: showTeam ? 1 : 2,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontWeight: unread ? FontWeight.w800 : FontWeight.w700,
+            fontWeight: unread ? AppFonts.bold : AppFonts.reading,
           ),
         ),
         subtitle: showTeam

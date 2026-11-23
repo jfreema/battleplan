@@ -684,7 +684,6 @@ class _RsvpSection extends ConsumerWidget {
     // Text straight on the page (it differs from the cards').
     final muted = theme.textTheme.bodyMedium?.copyWith(
       color: c.textMutedOnPage,
-      fontWeight: FontWeight.w800,
     );
     Widget padded(Widget child) => Padding(
       padding: const EdgeInsets.symmetric(vertical: Space.xs),
@@ -1498,25 +1497,25 @@ class _AttendeeRow extends StatelessWidget {
                                 text: number,
                                 style: body(
                                   17,
-                                  FontWeight.w700,
+                                  AppFonts.reading,
                                   c.textMutedOnPage,
                                 ),
                               ),
                           ],
                         ),
-                        style: body(17, FontWeight.w700, c.textOnPage),
+                        style: body(17, AppFonts.reading, c.textOnPage),
                       ),
                       if (note.isNotEmpty)
                         Text(
                           '"$note"',
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: body(15, FontWeight.w700, c.textOnPage),
+                          style: body(15, AppFonts.reading, c.textOnPage),
                         ),
                       if (answeredBy case final by?)
                         Text(
                           by,
-                          style: body(14, FontWeight.w700, c.textMutedOnPage),
+                          style: body(14, AppFonts.reading, c.textMutedOnPage),
                         ),
                     ],
                   ),

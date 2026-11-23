@@ -152,7 +152,6 @@ class _VerifyEmailBannerState extends ConsumerState<VerifyEmailBanner> {
                           l10n.verifyEmailBanner(user!.email!),
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: ink,
-                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
