@@ -621,7 +621,7 @@ section { padding: 64px 0; }
 /* 1. Team chat: the chat on a phone, and a poll at full size across it. */
 .lp-scene-chat { aspect-ratio: 100 / 124; max-width: 500px; }
 .lp-scene-chat .phone { --pw: 56%; top: 0; right: 3%; transform: rotate(4deg); }
-.lp-clip-poll { --ar: 600 / 515; --oy: 20.4%; --mx: 18%; left: 0; bottom: 9%; width: 60%; z-index: 2; transform: rotate(-5deg); }
+.lp-clip-poll { --ar: 600 / 515; --oy: 47.6%; --mx: 18%; left: 0; bottom: 9%; width: 60%; z-index: 2; transform: rotate(-5deg); }
 
 /* 2. Schedule: three screens in a line, each with its own tilt. */
 .lp-sched .lp-body { margin-top: -22px; }
@@ -630,7 +630,7 @@ section { padding: 64px 0; }
 .lp-formation figcaption { margin-top: 20px; color: var(--muted); font-size: 1rem; line-height: 1.4; text-wrap: balance; }
 .lp-formation figcaption b { display: block; color: var(--text); font: 600 1.14rem/1.25 var(--label); }
 .lp-f-rows { grid-column: 1 / -1; }
-.lp-f-rows .lp-clip { --ar: 600 / 433; --oy: 47.6%; --mx: 76%; transform: rotate(-2deg); }
+.lp-f-rows .lp-clip { --ar: 600 / 433; --oy: 62.4%; --mx: 76%; transform: rotate(-2deg); }
 .lp-f-event .phone { transform: rotate(3deg); }
 .lp-f-yours { padding-top: 22px; }
 /* On a phone, Your schedule gets the full width under the event, so its cards can be read. */
@@ -638,7 +638,7 @@ section { padding: 64px 0; }
   .lp-f-yours { grid-column: 1 / -1; padding-top: 28px; }
   .lp-f-yours .lp-clip { width: min(100%, 360px); }
 }
-.lp-f-yours .lp-clip { --ar: 600 / 700; --oy: 86.1%; --candy: var(--blue); transform: rotate(-2deg); }
+.lp-f-yours .lp-clip { --ar: 600 / 560; --oy: 85.1%; --candy: var(--blue); transform: rotate(-2deg); }
 .lp-aside { margin: 0; color: var(--muted); font-size: 1.08rem; }
 .lp-aside a { color: var(--text); font-weight: 800; text-decoration-color: var(--mark); text-decoration-thickness: 2.5px; }
 
@@ -658,12 +658,12 @@ section { padding: 64px 0; }
 .lp-board h2 { font-size: clamp(2.7rem, 6.4vw, 4.6rem); }
 .lp-scene-board { aspect-ratio: 100 / 106; max-width: 560px; }
 .lp-clip-field { --ar: 600 / 617; --oy: 44.35%; --mx: 12%; left: 2%; top: 0; width: 84%; transform: rotate(-3deg); }
-.lp-clip-controls { --ar: 600 / 165; --oy: 92.7%; --candy: var(--coral); --mx: 84%; right: 0; bottom: 3%; width: 78%; z-index: 2; transform: rotate(3deg); }
+.lp-clip-controls { --ar: 600 / 165; --oy: 91.35%; --candy: var(--coral); --mx: 84%; right: 0; bottom: 3%; width: 78%; z-index: 2; transform: rotate(3deg); }
 
 /* 4. Dues: what a guardian owes, and the admin's totals across it. */
 .lp-scene-dues { aspect-ratio: 100 / 102; max-width: 540px; }
-.lp-clip-mine { --ar: 600 / 520; --oy: 29.8%; --candy: var(--lemon); --mx: 70%; right: 0; top: 0; width: 62%; transform: rotate(4deg); }
-.lp-clip-admin { --ar: 600 / 655; --oy: 36.5%; --mx: 16%; left: 0; top: 24%; width: 67%; z-index: 2; transform: rotate(-3deg); }
+.lp-clip-mine { --ar: 600 / 560; --oy: 35.5%; --candy: var(--lemon); --mx: 70%; right: 0; top: 0; width: 62%; transform: rotate(4deg); }
+.lp-clip-admin { --ar: 600 / 700; --oy: 42.6%; --mx: 16%; left: 0; top: 24%; width: 67%; z-index: 2; transform: rotate(-3deg); }
 
 /* 5. Switching: five rings in a line, the apps' names beside them, and five
    routes running to Battleplan. */
