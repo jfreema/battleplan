@@ -7,7 +7,7 @@ The iPhone and iPad app is on the App Store (https://apps.apple.com/app/id682388
 ## Features
 
 - Group chat: photos, replies, reactions, @mentions, pinned messages, announcements, chat search, and direct messages.
-- Schedule and RSVPs: games, practices, meetings, and team events with Going, Maybe, or Not going; opponent, home or away, directions, and reminders.
+- Schedule and RSVPs: games, practices, meetings, and team events with Going, Maybe, or Can't go; opponent, home or away, directions, and reminders.
 - Calendar link: one private link keeps Google Calendar, Apple Calendar, or Outlook up to date with every team's schedule, including new times, new places, and cancellations.
 - Assignments: snacks, drinks, a scorekeeper, or anything else for an event. Members volunteer for open ones, and admins can assign anyone.
 - Players and guardians: on a team, RSVPs are for players. Guardians answer for each of their players, and adult players answer for themselves. Groups (not teams) have no players: everyone answers for themselves.
