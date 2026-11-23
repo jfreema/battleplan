@@ -239,7 +239,7 @@ export type AssignmentKind = (typeof assignmentKindValues)[number];
 export const documentKindValues = ['file', 'link'] as const;
 export type DocumentKind = (typeof documentKindValues)[number];
 
-export const playBoardValues = ['baseball', 'basketball', 'soccer', 'football', 'blank'] as const;
+export const playBoardValues = ['baseball', 'basketball', 'soccer', 'football', 'volleyball', 'blank'] as const;
 export type PlayBoard = (typeof playBoardValues)[number];
 
 export const reportReasonValues = ['spam', 'harassment', 'inappropriate', 'other'] as const;

@@ -12,6 +12,7 @@ import firebase from 'firebase/compat/app';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
+import { playBoardValues } from '../../src/shared/constants.js';
 
 type Db = firebase.firestore.Firestore;
 
@@ -95,6 +96,11 @@ describe('drawing plays (BOARD-2, BOARD-4)', () => {
 
   it('checks what a play holds', async () => {
     const add = (extra: object) => as('alice').collection('plays').add(play('alice', extra));
+    // Every board the app draws (shared/constants.json), volleyball's court
+    // too (#87), and no others.
+    for (const board of playBoardValues) {
+      await assertSucceeds(add({ board }));
+    }
     await assertFails(add({ board: 'hockey' }));
     await assertFails(add({ variant: 'third' }));
     await assertFails(add({ title: '  ' }));

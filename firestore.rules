@@ -1215,7 +1215,7 @@ service cloud.firestore {
     function validPlay(p) {
       return p.keys().hasOnly(['groupId', 'board', 'variant', 'title', 'note', 'steps',
             'createdBy', 'createdAt', 'updatedAt'])
-        && p.board in ['baseball', 'basketball', 'soccer', 'football', 'blank']
+        && p.board in ['baseball', 'basketball', 'soccer', 'football', 'volleyball', 'blank']
         && p.variant in ['full', 'half']
         && p.title is string && p.title.trim().size() > 0 && p.title.size() <= 80
         && p.note is string && p.note.size() <= 1000

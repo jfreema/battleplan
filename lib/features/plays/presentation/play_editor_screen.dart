@@ -3,11 +3,13 @@ import 'dart:math' as math;
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/camp_round_border.dart';
 import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/widgets/camo.dart';
 import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
@@ -21,6 +23,7 @@ import 'package:battleplan/features/plays/domain/board_edit.dart';
 import 'package:battleplan/features/plays/domain/board_layout.dart';
 import 'package:battleplan/features/plays/domain/play.dart';
 import 'package:battleplan/features/plays/presentation/board_painter.dart';
+import 'package:battleplan/features/plays/presentation/pass_arrow_icon.dart';
 import 'package:battleplan/features/plays/presentation/play_board.dart';
 import 'package:battleplan/features/plays/presentation/plays_screen.dart';
 import 'package:battleplan/features/plays/presentation/step_player.dart';
@@ -685,67 +688,98 @@ class _PlayEditorState extends ConsumerState<PlayEditorScreen>
     );
   }
 
-  /// The board, as big as it fits: on a phone, the screen's width, edge to
-  /// edge.
-  Widget _boardArea({required bool phone}) => Padding(
-    padding: phone ? EdgeInsets.zero : const EdgeInsets.all(Space.md),
-    child: Center(
-      child: AspectRatio(
-        aspectRatio: boardAspect(_board, _variant),
-        child: LayoutBuilder(
-          builder: (context, box) {
-            final size = box.biggest;
-            // The board may show only part of the field (baseball's is cut
-            // to the fence): where a touch is on the field, and how wide
-            // the whole field is on screen.
-            final frame = _frame;
-            BoardPoint at(Offset o) => onBoard(
-              frame.pointAt(o.dx / size.width, o.dy / size.height),
-              frame,
-            );
-            final width = size.width / frame.width;
-            return GestureDetector(
-              key: const ValueKey('playBoard'),
-              behavior: HitTestBehavior.opaque,
-              // Report where a drag began, not where it was recognized:
-              // arrows start at the finger.
-              dragStartBehavior: DragStartBehavior.down,
-              onTapUp: (d) => unawaited(_tap(at(d.localPosition), width)),
-              onDoubleTap: _selected == null
-                  ? null
-                  : () => unawaited(_editSelected()),
-              onPanStart: (d) => _panStart(at(d.localPosition), width),
-              onPanUpdate: (d) => _panUpdate(at(d.localPosition)),
-              onPanEnd: (_) => _panEnd(width),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(phone ? 0 : 8),
-                // While playing, the board repaints each frame.
-                child: AnimatedBuilder(
-                  animation: _player.controller,
-                  builder: (context, child) => CustomPaint(
-                    size: size,
-                    painter: PlayPainter(
-                      board: _board,
-                      variant: _variant,
-                      elements: _player.elements(_edit.steps, _edit.elements),
-                      // What's being dragged is ringed while it moves.
-                      selectedId: _dragId ?? _selected,
-                      draft: _draft,
-                      dark: Theme.of(context).brightness == Brightness.dark,
-                    ),
-                    child: child,
-                  ),
-                  child: Semantics(
-                    label: AppLocalizations.of(context).playBoardLabel(
-                      boardName(AppLocalizations.of(context), _board),
-                    ),
-                  ),
+  /// The board, as big as it fits, on the page's dot grid: on a phone,
+  /// the screen's width, edge to edge, ruled off in ink above and below as
+  /// the mockup has it (#87). A board too tall for that (volleyball's full
+  /// court), and any board on a bigger screen, is framed in ink all round.
+  Widget _boardArea({required bool phone}) => PageDots(
+    child: Padding(
+      padding: phone ? EdgeInsets.zero : const EdgeInsets.all(Space.md),
+      child: LayoutBuilder(
+        builder: (context, area) {
+          const rule = 3.0;
+          final aspect = boardAspect(_board, _variant);
+          final edgeToEdge =
+              phone && area.maxWidth / aspect + 2 * rule <= area.maxHeight;
+          final ink = BorderSide(
+            color: GumdropColors.of(context).ink,
+            width: rule,
+          );
+          return Center(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                border: edgeToEdge
+                    ? Border.symmetric(horizontal: ink)
+                    : Border.fromBorderSide(ink),
+              ),
+              child: Padding(
+                padding: edgeToEdge
+                    ? const EdgeInsets.symmetric(vertical: rule)
+                    : const EdgeInsets.all(rule),
+                child: _drawnBoard(aspect),
+              ),
+            ),
+          );
+        },
+      ),
+    ),
+  );
+
+  /// The board itself, [aspect] wide for its height, drawn and touched.
+  Widget _drawnBoard(double aspect) => AspectRatio(
+    aspectRatio: aspect,
+    child: LayoutBuilder(
+      builder: (context, box) {
+        final size = box.biggest;
+        // The board may show only part of the field (baseball's is cut
+        // to the fence): where a touch is on the field, and how wide
+        // the whole field is on screen.
+        final frame = _frame;
+        BoardPoint at(Offset o) => onBoard(
+          frame.pointAt(o.dx / size.width, o.dy / size.height),
+          frame,
+        );
+        final width = size.width / frame.width;
+        return GestureDetector(
+          key: const ValueKey('playBoard'),
+          behavior: HitTestBehavior.opaque,
+          // Report where a drag began, not where it was recognized:
+          // arrows start at the finger.
+          dragStartBehavior: DragStartBehavior.down,
+          onTapUp: (d) => unawaited(_tap(at(d.localPosition), width)),
+          onDoubleTap: _selected == null
+              ? null
+              : () => unawaited(_editSelected()),
+          onPanStart: (d) => _panStart(at(d.localPosition), width),
+          onPanUpdate: (d) => _panUpdate(at(d.localPosition)),
+          onPanEnd: (_) => _panEnd(width),
+          // Square, inside its ink (#87).
+          child: ClipRect(
+            // While playing, the board repaints each frame.
+            child: AnimatedBuilder(
+              animation: _player.controller,
+              builder: (context, child) => CustomPaint(
+                size: size,
+                painter: PlayPainter(
+                  board: _board,
+                  variant: _variant,
+                  elements: _player.elements(_edit.steps, _edit.elements),
+                  // What's being dragged is ringed while it moves.
+                  selectedId: _dragId ?? _selected,
+                  draft: _draft,
+                  dark: Theme.of(context).brightness == Brightness.dark,
+                ),
+                child: child,
+              ),
+              child: Semantics(
+                label: AppLocalizations.of(context).playBoardLabel(
+                  boardName(AppLocalizations.of(context), _board),
                 ),
               ),
-            );
-          },
-        ),
-      ),
+            ),
+          ),
+        );
+      },
     ),
   );
 }
@@ -1000,7 +1034,8 @@ class _PhoneBar extends StatelessWidget implements PreferredSizeWidget {
             ]);
           }
           // Boot Camp Mix (#85): Saved and Add step as push buttons, the
-          // icons as round buttons in an ink outline.
+          // icons as round buttons in an ink outline, on a hard shadow as
+          // the mockup has them (#87).
           final c = GumdropColors.of(context);
           final round = IconButtonThemeData(
             style: ButtonStyle(
@@ -1012,7 +1047,10 @@ class _PhoneBar extends StatelessWidget implements PreferredSizeWidget {
                     : c.card.textOnPage,
               ),
               shape: WidgetStatePropertyAll(
-                CircleBorder(side: BorderSide(color: c.ink, width: 2.5)),
+                CampRoundBorder(
+                  side: BorderSide(color: c.ink, width: 2.5),
+                  shadow: c.pageShadow,
+                ),
               ),
               fixedSize: const WidgetStatePropertyAll(Size.square(36)),
               minimumSize: const WidgetStatePropertyAll(Size.square(36)),
@@ -1031,32 +1069,38 @@ class _PhoneBar extends StatelessWidget implements PreferredSizeWidget {
             padding: const EdgeInsets.symmetric(horizontal: Space.xs),
             child: IconButtonTheme(
               data: round,
-              child: TextButtonTheme(
-                data: push,
-                child: Row(
-                  children: [
-                    if (back) const BackButton(),
-                    ...lead,
-                    const Spacer(),
-                    ?undo,
-                    ?redo,
-                    _MoreButton(
-                      actions: [
-                        if (saveInMore) (label: saveLabel, onPressed: onSave),
-                        ...overflow,
-                        ...more,
-                      ],
-                    ),
-                    if (!saveInMore)
-                      IconButton(
-                        tooltip: saveLabel,
-                        onPressed: onSave,
-                        // A candy in the "you" color, with an ink icon.
-                        style: GumdropButtons.of(context)
-                            .icon(accent: GumdropColors.of(context).you),
-                        icon: const Icon(AppIcons.save),
+              // More's icon follows the menu theme, not the button theme
+              // (#87): the panel's lettering, as undo and redo have.
+              child: PopupMenuTheme(
+                data: PopupMenuTheme.of(context)
+                    .copyWith(iconColor: c.card.textOnPage),
+                child: TextButtonTheme(
+                  data: push,
+                  child: Row(
+                    children: [
+                      if (back) const BackButton(),
+                      ...lead,
+                      const Spacer(),
+                      ?undo,
+                      ?redo,
+                      _MoreButton(
+                        actions: [
+                          if (saveInMore) (label: saveLabel, onPressed: onSave),
+                          ...overflow,
+                          ...more,
+                        ],
                       ),
-                  ],
+                      if (!saveInMore)
+                        IconButton(
+                          tooltip: saveLabel,
+                          onPressed: onSave,
+                          // A candy in the "you" color, with an ink icon.
+                          style: GumdropButtons.of(context)
+                              .icon(accent: GumdropColors.of(context).you),
+                          icon: const Icon(AppIcons.save),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -1090,30 +1134,32 @@ class _Tools extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final football = board == PlayBoard.football;
-    final items = [
-      (BoardTool.move, AppIcons.toolMove, l10n.toolMove),
+    // The mockup's tools (#87): the ball is the board's sport's, and a pass
+    // is a dashed arrow, as it's drawn on the board.
+    final items = <(BoardTool, Widget, String)>[
+      (BoardTool.move, const Icon(AppIcons.toolMove), l10n.toolMove),
       (
         BoardTool.team,
-        AppIcons.toolTeam,
+        const Icon(AppIcons.toolTeam),
         football ? l10n.toolOffense : l10n.toolTeam,
       ),
       (
         BoardTool.opponent,
-        AppIcons.toolOpponent,
+        const Icon(AppIcons.toolOpponent),
         football ? l10n.toolDefense : l10n.toolOpponent,
       ),
-      (BoardTool.ball, AppIcons.toolBall, l10n.toolBall),
-      (BoardTool.run, AppIcons.toolRun, l10n.toolRun),
-      (BoardTool.pass, AppIcons.toolPass, l10n.toolPass),
-      (BoardTool.block, AppIcons.toolBlock, l10n.toolBlock),
-      (BoardTool.draw, AppIcons.toolDraw, l10n.toolDraw),
-      (BoardTool.text, AppIcons.toolText, l10n.toolText),
-      (BoardTool.erase, AppIcons.toolErase, l10n.toolErase),
+      (BoardTool.ball, Icon(AppIcons.toolBallOn(board)), l10n.toolBall),
+      (BoardTool.run, const Icon(AppIcons.toolRun), l10n.toolRun),
+      (BoardTool.pass, const PassArrowIcon(), l10n.toolPass),
+      (BoardTool.block, const Icon(AppIcons.toolBlock), l10n.toolBlock),
+      (BoardTool.draw, const Icon(AppIcons.toolDraw), l10n.toolDraw),
+      (BoardTool.text, const Icon(AppIcons.toolText), l10n.toolText),
+      (BoardTool.erase, const Icon(AppIcons.toolErase), l10n.toolErase),
     ];
     final side = compact ? kMinInteractiveDimension : 52.0;
     // Boot Camp Mix (#85): round buttons in the panel color in an ink
-    // outline on the tools row's own color; the tool in hand is mustard
-    // with ink on it, turned -4°.
+    // outline on a hard shadow (#87), on the tools row's own color; the
+    // tool in hand is mustard with ink on it, turned -4°.
     final c = GumdropColors.of(context);
     final mustard = c.roles.palette.mustard;
     final toolStyle = ButtonStyle(
@@ -1128,7 +1174,10 @@ class _Tools extends StatelessWidget {
         (s) => s.contains(WidgetState.selected) ? c.ink : c.card.textOnPage,
       ),
       shape: WidgetStatePropertyAll(
-        CircleBorder(side: BorderSide(color: c.ink, width: 2.5)),
+        CampRoundBorder(
+          side: BorderSide(color: c.ink, width: 2.5),
+          shadow: c.pageShadow,
+        ),
       ),
     );
     final buttons = [
@@ -1152,45 +1201,49 @@ class _Tools extends StatelessWidget {
                     height: side,
                   ),
                   onPressed: () => onTool(t),
-                  icon: Icon(icon),
+                  icon: icon,
                 ),
               ),
             ),
           ),
         ),
     ];
-    // On the tools row's color, ruled off from the board in ink.
+    // On the tools row's color, ruled off from the board in ink. The icons
+    // are a little bolder, as the mockup's are (#87).
     final rule = BorderSide(color: c.ink, width: 3);
-    return vertical
-        ? DecoratedBox(
-            decoration: BoxDecoration(
-              color: c.roles.palette.toolsRow,
-              border: Border(left: rule),
-            ),
-            child: SizedBox(
-              width: 72,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(vertical: Space.sm),
-                child: Column(children: buttons),
+    return IconTheme.merge(
+      data: const IconThemeData(weight: 600),
+      child: vertical
+          ? DecoratedBox(
+              decoration: BoxDecoration(
+                color: c.roles.palette.toolsRow,
+                border: Border(left: rule),
               ),
-            ),
-          )
-        : DecoratedBox(
-            decoration: BoxDecoration(
-              color: c.roles.palette.toolsRow,
-              border: Border(top: rule),
-            ),
-            child: SizedBox(
-              height: compact ? side + Space.sm : 68,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.symmetric(
-                  horizontal: compact ? Space.xs : Space.sm,
+              child: SizedBox(
+                width: 72,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(vertical: Space.sm),
+                  child: Column(children: buttons),
                 ),
-                child: Row(children: buttons),
+              ),
+            )
+          : DecoratedBox(
+              decoration: BoxDecoration(
+                color: c.roles.palette.toolsRow,
+                border: Border(top: rule),
+              ),
+              child: SizedBox(
+                height: compact ? side + Space.sm : 68,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: compact ? Space.xs : Space.sm,
+                  ),
+                  child: Row(children: buttons),
+                ),
               ),
             ),
-          );
+    );
   }
 }
 

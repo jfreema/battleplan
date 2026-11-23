@@ -6,6 +6,32 @@ import 'package:battleplan/features/plays/domain/board_layout.dart';
 import 'package:battleplan/features/plays/domain/play.dart';
 import 'package:material_ui/material_ui.dart';
 
+/// Boot Camp Mix's board pieces (#87), as the mockup draws them (style 31's
+/// Plays): every piece in a heavy ink edge, like the rest of Boot Camp. The
+/// same on every board and in every scheme, as the fields are.
+abstract final class BoardPieces {
+  /// Every edge, and the lettering on the pieces.
+  static const ink = Color(0xFF1A1A18);
+
+  /// Our team's players.
+  static const team = Color(0xFF7DB7DA);
+
+  /// The other team's, and baseball's batter and runners.
+  static const opponent = Color(0xFFEF6A52);
+
+  /// Arrows, lines, notes, the ball, and football's X's and O's: chalk over
+  /// the ink.
+  static const chalk = Color(0xFFFFFFFF);
+
+  /// What's picked in the editor.
+  static const pick = Color(0xFFF2C230);
+}
+
+/// The order arrows and lines are drawn in, as the mockup draws them: what's
+/// picked ringed in mustard, then the ink under every one, then the chalk
+/// over them all, so where two cross their chalk runs over both.
+enum _Pass { pick, ink, chalk }
+
 /// Draws a play: its board's field, from the real measurements in
 /// board_layout.dart, and what's drawn on it (BOARD-1, BOARD-2). The same
 /// painter draws the editor, the viewer, and the small pictures in lists
@@ -49,21 +75,29 @@ class PlayPainter extends CustomPainter {
         _soccer(canvas, field, variant);
       case PlayBoard.football:
         _football(canvas, field);
+      case PlayBoard.volleyball:
+        _volleyball(canvas, field, variant);
       case PlayBoard.blank:
         _blank(canvas, field, dark: dark);
     }
     // What's drawn on the field is sized by the board as shown, so it
     // stays the same size however much of the field is.
     final shown = size.width;
-    final ink = inkFor(board, dark: dark);
-    for (final e in [...elements, ?draft]) {
-      switch (e) {
-        case ArrowElement():
-          _arrow(canvas, field, shown, e, ink, selected: e.id == selectedId);
-        case LineElement():
-          _line(canvas, field, shown, e, ink, selected: e.id == selectedId);
-        case MarkerElement() || NoteElement():
-          break;
+    final strokes = [
+      for (final e in [...elements, ?draft])
+        if (e is ArrowElement || e is LineElement) e,
+    ];
+    for (final pass in _Pass.values) {
+      for (final e in strokes) {
+        if (pass == _Pass.pick && e.id != selectedId) continue;
+        switch (e) {
+          case ArrowElement():
+            _arrow(canvas, field, shown, e, pass);
+          case LineElement():
+            _line(canvas, field, shown, e, pass);
+          case MarkerElement() || NoteElement():
+            break;
+        }
       }
     }
     for (final e in elements) {
@@ -71,7 +105,7 @@ class PlayPainter extends CustomPainter {
         case MarkerElement():
           _marker(canvas, field, shown, e, selected: e.id == selectedId);
         case NoteElement():
-          _note(canvas, field, shown, e, ink, selected: e.id == selectedId);
+          _note(canvas, field, shown, e, selected: e.id == selectedId);
         case ArrowElement() || LineElement():
           break;
       }
@@ -88,12 +122,14 @@ class PlayPainter extends CustomPainter {
       old.dark != dark;
 
   // ---- Elements --------------------------------------------------------------------
+  //
+  // Sizes are the mockup's, on its 390-wide board, scaled with the board.
 
-  /// A marker's radius on [board] shown [width] pixels across: big enough
-  /// to read on a phone, still readable in a thumbnail. Football's are
-  /// smaller, so a line's eleven stand side by side.
+  /// A marker's radius on [board] shown [width] pixels across: the mockup's
+  /// 10.5, big enough to read on a phone, still readable in a thumbnail.
+  /// Football's are smaller, so a line's eleven stand side by side.
   static double markerRadius(double width, PlayBoard board) =>
-      width * (board == PlayBoard.football ? 0.015 : 0.025);
+      width * (board == PlayBoard.football ? 0.015 : 10.5 / 390);
 
   void _marker(
     Canvas canvas,
@@ -104,240 +140,263 @@ class PlayPainter extends CustomPainter {
   }) {
     final c = Offset(m.at.x * field.width, m.at.y * field.height);
     final r = markerRadius(shown, board);
+    // The mockup's 2.4 edge on its 10.5 disc.
+    final edge = r * 2.4 / 10.5;
     if (selected) {
-      canvas.drawCircle(c, r * 1.45, Paint()..color = const Color(0xCCFFD43B));
+      // Picked: a mustard ring in its own ink edge.
+      _disc(canvas, c, r * 1.5, BoardPieces.pick, edge);
     }
-    final shadow = Paint()
-      ..color = const Color(0x55000000)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, r * 0.18);
     switch (m.side) {
       case MarkerSide.ball:
-        final br = r * 0.55;
-        canvas
-          ..drawCircle(c + Offset(0, r * 0.08), br, shadow)
-          ..drawCircle(c, br, Paint()..color = _ballColor)
-          ..drawCircle(
-            c,
-            br,
-            Paint()
-              ..style = PaintingStyle.stroke
-              ..strokeWidth = math.max(1, br * 0.18)
-              ..color = const Color(0xFF1F2937),
-          );
-        return;
+        // The mockup's 6.3 ball in a 2.2 edge.
+        _disc(canvas, c, r * 6.3 / 10.5, _ballColor, r * 2.2 / 10.5);
       case MarkerSide.opponent when board == PlayBoard.football:
-        // X's and O's: the defense is an X.
+        // X's and O's: the defense is an X, chalk over ink, its label
+        // under it.
         final arm = r * 0.72;
-        final x = Paint()
-          ..color = Colors.white
-          ..strokeWidth = r * 0.34
-          ..strokeCap = StrokeCap.round;
-        final xShadow = Paint()
-          ..color = const Color(0x66000000)
-          ..strokeWidth = r * 0.5
-          ..strokeCap = StrokeCap.round;
-        for (final p in [xShadow, x]) {
+        final chalk = r * 0.34;
+        for (final (color, width) in [
+          (BoardPieces.ink, chalk + 2 * edge),
+          (BoardPieces.chalk, chalk),
+        ]) {
+          final p = Paint()
+            ..color = color
+            ..strokeWidth = width
+            ..strokeCap = StrokeCap.round;
           canvas
             ..drawLine(c - Offset(arm, arm), c + Offset(arm, arm), p)
             ..drawLine(c + Offset(-arm, arm), c + Offset(arm, -arm), p);
         }
-        _label(
-          canvas,
-          c + Offset(0, r * 1.25),
-          m.label,
-          r * 0.62,
-          Colors.white,
-        );
-        return;
+        _label(canvas, c + Offset(0, r * 1.5), m.label, r, outlined: true);
       case MarkerSide.team when board == PlayBoard.football:
-        // The offense is an O.
-        canvas
-          ..drawCircle(c + Offset(0, r * 0.08), r, shadow)
-          ..drawCircle(c, r, Paint()..color = Colors.white)
-          ..drawCircle(
-            c,
-            r * 0.86,
-            Paint()
-              ..style = PaintingStyle.stroke
-              ..strokeWidth = r * 0.2
-              ..color = const Color(0xFF1F2937),
-          );
-        _label(canvas, c, m.label, r * 0.78, const Color(0xFF111827));
-        return;
+        // The offense is an O: chalk in an ink edge.
+        _disc(canvas, c, r, BoardPieces.chalk, edge);
+        _label(canvas, c, m.label, r);
       case MarkerSide.team || MarkerSide.opponent:
-        final fill = m.side == MarkerSide.team ? _team : _opponent;
-        canvas
-          ..drawCircle(c + Offset(0, r * 0.08), r, shadow)
-          ..drawCircle(c, r, Paint()..color = fill)
-          ..drawCircle(
-            c,
-            r,
-            Paint()
-              ..style = PaintingStyle.stroke
-              ..strokeWidth = math.max(1.2, r * 0.12)
-              ..color = Colors.white,
-          );
-        _label(canvas, c, m.label, r * 0.82, Colors.white);
+        _disc(
+          canvas,
+          c,
+          r,
+          m.side == MarkerSide.team ? BoardPieces.team : BoardPieces.opponent,
+          edge,
+        );
+        _label(canvas, c, m.label, r);
     }
   }
-
-  static const _team = Color(0xFF2F5BEA);
-  static const _opponent = Color(0xFFDC2626);
 
   Color get _ballColor => switch (board) {
     PlayBoard.basketball => const Color(0xFFE8590C),
     PlayBoard.football => const Color(0xFF8B4513),
-    _ => Colors.white,
+    _ => BoardPieces.chalk,
   };
 
-  /// [text] centered on [at], shrunk to fit a marker.
+  /// A disc of [fill] in an ink edge [edge] wide, on its rim as the mockup
+  /// strokes it.
+  static void _disc(
+    Canvas canvas,
+    Offset c,
+    double r,
+    Color fill,
+    double edge,
+  ) => canvas
+    ..drawCircle(c, r, Paint()..color = fill)
+    ..drawCircle(
+      c,
+      r,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = edge
+        ..color = BoardPieces.ink,
+    );
+
+  /// [text] on a piece of radius [r] centered on [at], in ink in the
+  /// reading font as the mockup letters them: 9.4 for one letter and 8.2
+  /// for more on a 10.5 disc, shrunk to fit. [outlined] is chalk in an ink
+  /// edge, for a label beside a piece (under football's X's).
   static void _label(
     Canvas canvas,
     Offset at,
     String text,
-    double size,
-    Color color,
-  ) {
+    double r, {
+    bool outlined = false,
+  }) {
     if (text.isEmpty) return;
-    final fontSize = text.length <= 2
-        ? size
-        : size * 2 / text.length.clamp(2, 5);
-    final p = TextPainter(
+    var fontSize = r * (text.characters.length == 1 ? 9.4 : 8.2) / 10.5;
+    TextPainter painter(double size, {Paint? stroke}) => TextPainter(
       text: TextSpan(
         text: text,
         style: TextStyle(
-          fontFamily: AppFonts.label,
-          color: color,
-          fontSize: fontSize,
+          fontFamily: AppFonts.body,
+          fontSize: size,
           fontWeight: FontWeight.w700,
           height: 1,
+          color: stroke != null
+              ? null
+              : outlined
+              ? BoardPieces.chalk
+              : BoardPieces.ink,
+          foreground: stroke,
         ),
       ),
       textDirection: TextDirection.ltr,
       maxLines: 1,
     )..layout();
-    p.paint(canvas, at - Offset(p.width / 2, p.height / 2));
+    var fill = painter(fontSize);
+    // A long label (a roster player's name) shrinks to fit the disc, or a
+    // little wider beside it.
+    final room = r * (outlined ? 2.6 : 1.62);
+    if (fill.width > room) {
+      fontSize *= room / fill.width;
+      fill = painter(fontSize);
+    }
+    // The capitals' middle on [at]: the baseline 0.36 of the size below
+    // it, where the mockup sets it.
+    final baseline = fill.computeDistanceToActualBaseline(
+      TextBaseline.alphabetic,
+    );
+    final topLeft = at - Offset(fill.width / 2, baseline - fontSize * 0.36);
+    if (outlined) {
+      painter(
+        fontSize,
+        stroke: Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = fontSize * 0.3
+          ..strokeJoin = StrokeJoin.round
+          ..color = BoardPieces.ink,
+      ).paint(canvas, topLeft);
+    }
+    fill.paint(canvas, topLeft);
   }
 
-  /// An arrow's width on a board shown [width] pixels across.
-  static double strokeFor(double width) => math.max(2.5, width * 0.005);
+  /// An arrow's chalk line on a board shown [width] pixels across: the
+  /// mockup's 2.8, never thinner than reads in a list's picture.
+  static double strokeFor(double width) => math.max(1.6, width * 2.8 / 390);
 
+  /// The ink under a chalk line [w] wide: the mockup's 6.4 under its 2.8.
+  static double _edgeFor(double w) => w * 6.4 / 2.8;
+
+  /// A round-ended stroke.
+  static Paint _stroke(Color color, double width) => Paint()
+    ..color = color
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = width
+    ..strokeCap = StrokeCap.round
+    ..strokeJoin = StrokeJoin.round;
+
+  /// What's picked: a wide mustard glow under the ink.
+  static Paint _pickStroke(double edge) =>
+      _stroke(BoardPieces.pick.withValues(alpha: 0.7), edge * 2.2);
+
+  /// One [pass] of an arrow: a run (solid), a pass (dashed), or a block or
+  /// screen (ending in a T), each chalk over ink with its head to match.
   void _arrow(
     Canvas canvas,
     Size field,
     double shown,
     ArrowElement a,
-    Color ink, {
-    required bool selected,
-  }) {
+    _Pass pass,
+  ) {
     final pts = [
       for (final p in a.points) Offset(p.x * field.width, p.y * field.height),
     ];
     if (pts.length < 2) return;
     final w = strokeFor(shown);
-    final path = _smooth(pts);
-    final paint = Paint()
-      ..color = ink
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = w
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    if (selected) {
-      canvas.drawPath(
-        path,
-        Paint()
-          ..color = const Color(0x99FFD43B)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = w * 3.2
-          ..strokeCap = StrokeCap.round,
-      );
+    final edge = _edgeFor(w);
+    final smooth = _smooth(pts);
+    if (pass == _Pass.pick) {
+      canvas.drawPath(smooth, _pickStroke(edge));
+      return;
     }
-    canvas.drawPath(
-      a.kind == ArrowKind.pass ? _dashed(path, w * 3) : path,
-      paint,
-    );
+    final ink = pass == _Pass.ink;
     final end = pts.last;
-    final from = pts.length >= 2 ? pts[pts.length - 2] : pts.first;
+    final from = pts[pts.length - 2];
     final angle = math.atan2(end.dy - from.dy, end.dx - from.dx);
-    if (a.kind == ArrowKind.block) {
-      // A block or screen ends in a T.
-      final half = w * 3.2;
-      final across = Offset(
-        math.cos(angle + math.pi / 2),
-        math.sin(angle + math.pi / 2),
-      );
-      canvas.drawLine(end - across * half, end + across * half, paint);
-    } else {
-      final head = w * 3.6;
-      final tip = Path()
-        ..moveTo(end.dx, end.dy)
-        ..lineTo(
-          end.dx - head * math.cos(angle - 0.45),
-          end.dy - head * math.sin(angle - 0.45),
-        )
-        ..lineTo(
-          end.dx - head * math.cos(angle + 0.45),
-          end.dy - head * math.sin(angle + 0.45),
-        )
-        ..close();
-      canvas.drawPath(tip, Paint()..color = ink);
+    final dir = Offset(math.cos(angle), math.sin(angle));
+    final across = Offset(-dir.dy, dir.dx);
+    final block = a.kind == ArrowKind.block;
+    // The mockup's head: 11 long and 9 wide on a 2.8 line.
+    final head = w * 11 / 2.8;
+    // A head's line stops inside it, so the line's round end stays under
+    // the point.
+    var path = block ? smooth : _trim(smooth, head * 0.2);
+    if (a.kind == ArrowKind.pass) {
+      // The mockup's dashes: 7.5 on, 8 off, the same on both layers.
+      path = _dashed(path, w * 7.5 / 2.8, w * 8 / 2.8);
     }
+    final line = _stroke(
+      ink ? BoardPieces.ink : BoardPieces.chalk,
+      ink ? edge : w,
+    );
+    canvas.drawPath(path, line);
+    if (block) {
+      // A block or screen ends in a T.
+      final half = w * 2.6;
+      canvas.drawLine(end - across * half, end + across * half, line);
+      return;
+    }
+    final base = end - dir * head;
+    final wing = across * (head * 4.5 / 11);
+    final tip = Path()
+      ..moveTo(end.dx, end.dy)
+      ..lineTo((base + wing).dx, (base + wing).dy)
+      ..lineTo((base - wing).dx, (base - wing).dy)
+      ..close();
+    // Under the chalk, the head's ink runs as far past it as the line's.
+    final rim = w * 0.6 / 2.8;
+    canvas
+      ..drawPath(
+        tip,
+        Paint()..color = ink ? BoardPieces.ink : BoardPieces.chalk,
+      )
+      ..drawPath(
+        tip,
+        _stroke(
+          ink ? BoardPieces.ink : BoardPieces.chalk,
+          ink ? edge - w + rim : rim,
+        ),
+      );
   }
 
+  /// One [pass] of a freehand line: chalk over ink, like the arrows.
   void _line(
     Canvas canvas,
     Size field,
     double shown,
     LineElement l,
-    Color ink, {
-    required bool selected,
-  }) {
+    _Pass pass,
+  ) {
     final pts = [
       for (final p in l.points) Offset(p.x * field.width, p.y * field.height),
     ];
     if (pts.length < 2) return;
-    final w = strokeFor(shown) * 0.85;
-    final path = _smooth(pts);
-    if (selected) {
-      canvas.drawPath(
-        path,
-        Paint()
-          ..color = const Color(0x99FFD43B)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = w * 3.2
-          ..strokeCap = StrokeCap.round,
-      );
-    }
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = ink
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = w
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round,
-    );
+    final w = strokeFor(shown);
+    canvas.drawPath(_smooth(pts), switch (pass) {
+      _Pass.pick => _pickStroke(_edgeFor(w)),
+      _Pass.ink => _stroke(BoardPieces.ink, _edgeFor(w)),
+      _Pass.chalk => _stroke(BoardPieces.chalk, w),
+    });
   }
 
+  /// A note: ink lettering on a chalk tag in an ink edge, on a hard ink
+  /// shadow, like Boot Camp's panels.
   void _note(
     Canvas canvas,
     Size field,
     double shown,
-    NoteElement n,
-    Color ink, {
+    NoteElement n, {
     required bool selected,
   }) {
     final c = Offset(n.at.x * field.width, n.at.y * field.height);
     final fontSize = (shown * 0.0215).clamp(9.0, 20.0);
-    final dark = ink.computeLuminance() > 0.5;
     final p = TextPainter(
       text: TextSpan(
         text: n.text,
         style: TextStyle(
-          fontFamily: AppFonts.label,
-          color: dark ? Colors.white : const Color(0xFF111827),
+          fontFamily: AppFonts.body,
+          color: BoardPieces.ink,
           fontSize: fontSize,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
+          height: 1.15,
         ),
       ),
       textDirection: TextDirection.ltr,
@@ -347,20 +406,22 @@ class PlayPainter extends CustomPainter {
     final box = Rect.fromCenter(
       center: c,
       width: p.width + fontSize,
-      height: p.height + fontSize * 0.5,
+      height: p.height + fontSize * 0.6,
     );
-    final rrect = RRect.fromRectAndRadius(box, Radius.circular(fontSize * 0.4));
+    final edge = strokeFor(shown);
     if (selected) {
-      canvas.drawRRect(
-        rrect.inflate(fontSize * 0.25),
-        Paint()..color = const Color(0xCCFFD43B),
-      );
+      canvas
+        ..drawRect(box.inflate(fontSize * 0.35), _fill(BoardPieces.pick))
+        ..drawRect(
+          box.inflate(fontSize * 0.35),
+          _chalk(edge * 0.85, BoardPieces.ink),
+        );
     }
-    canvas.drawRRect(
-      rrect,
-      Paint()..color = dark ? const Color(0xB3111827) : const Color(0xE6FFFFFF),
-    );
-    p.paint(canvas, box.topLeft + Offset(fontSize / 2, fontSize * 0.25));
+    canvas
+      ..drawRect(box.shift(Offset(edge, edge)), _fill(BoardPieces.ink))
+      ..drawRect(box, _fill(BoardPieces.chalk))
+      ..drawRect(box, _chalk(edge, BoardPieces.ink));
+    p.paint(canvas, box.topLeft + Offset(fontSize / 2, fontSize * 0.3));
   }
 
   /// A smooth path through [pts]: each corner rounded through the midpoints.
@@ -374,7 +435,21 @@ class PlayPainter extends CustomPainter {
     return path..lineTo(pts.last.dx, pts.last.dy);
   }
 
-  static Path _dashed(Path source, double dash) {
+  /// [source] without its last [by] pixels.
+  static Path _trim(Path source, double by) {
+    final out = Path();
+    final metrics = source.computeMetrics().toList();
+    for (final (i, metric) in metrics.indexed) {
+      final keep = i == metrics.length - 1
+          ? math.max<double>(0, metric.length - by)
+          : metric.length;
+      out.addPath(metric.extractPath(0, keep), Offset.zero);
+    }
+    return out;
+  }
+
+  /// [source] as dashes [dash] long, [gap] apart.
+  static Path _dashed(Path source, double dash, double gap) {
     final out = Path();
     for (final metric in source.computeMetrics()) {
       var d = 0.0;
@@ -383,7 +458,7 @@ class PlayPainter extends CustomPainter {
           metric.extractPath(d, math.min(d + dash, metric.length)),
           Offset.zero,
         );
-        d += dash * 1.8;
+        d += dash + gap;
       }
     }
     return out;
@@ -759,6 +834,68 @@ class PlayPainter extends CustomPainter {
       );
   }
 
+  /// Volleyball's court (#87): a tan floor in a darker free zone, its
+  /// lines inside it, the attack lines run on as broken lines past the
+  /// sidelines, the service zone's marks, and the net across the middle,
+  /// chalk over ink like the arrows, post to post.
+  void _volleyball(Canvas canvas, Size size, BoardVariant v) {
+    final m = size.width / VolleyballCourt.widthMeters;
+    final top = VolleyballCourt.topOf(v);
+    Offset o(double x, double y) => Offset(x * m, (y - top) * m);
+    const left = VolleyballCourt.sideZone;
+    const right = left + VolleyballCourt.courtWidth;
+    const net = VolleyballCourt.netMeters;
+    const near = net - VolleyballCourt.courtLength / 2;
+    const far = net + VolleyballCourt.courtLength / 2;
+    const attack = VolleyballCourt.attackMeters;
+    canvas.drawRect(Offset.zero & size, _fill(const Color(0xFFC4925B)));
+    final court = Rect.fromPoints(o(left, near), o(right, far));
+    canvas.drawRect(court, _fill(const Color(0xFFDDB07C)));
+    // Floorboards, up the board.
+    final boards = Paint()
+      ..color = const Color(0x14000000)
+      ..strokeWidth = 1;
+    for (var i = 1; i < 26; i++) {
+      final x = size.width * i / 26;
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), boards);
+    }
+    final line = math.max(1.5, size.width * 0.005);
+    final chalk = _chalk(line);
+    // The lines are part of the court, so they're drawn inside it.
+    canvas.drawRect(court.deflate(line / 2), chalk);
+    for (final y in [net - attack, net + attack]) {
+      canvas.drawLine(o(left, y), o(right, y), chalk);
+      // Each attack line runs on past the sidelines as five 15 cm dashes,
+      // 20 cm apart.
+      for (final (x, out) in [(left, -1.0), (right, 1.0)]) {
+        for (var k = 0; k < 5; k++) {
+          final x0 = x + out * (0.2 + k * 0.35);
+          canvas.drawLine(o(x0, y), o(x0 + out * 0.15, y), chalk);
+        }
+      }
+    }
+    // The service zone's marks, behind each end line in line with the
+    // sidelines.
+    for (final (y, out) in [(near, -1.0), (far, 1.0)]) {
+      for (final x in [left, right]) {
+        canvas.drawLine(o(x, y + out * 0.2), o(x, y + out * 0.35), chalk);
+      }
+    }
+    // The net over the center line, a meter past each sideline to its
+    // posts.
+    final posts = [o(left - 1, net), o(right + 1, net)];
+    canvas
+      ..drawLine(posts.first, posts.last, _stroke(BoardPieces.ink, line * 4.2))
+      ..drawLine(
+        posts.first,
+        posts.last,
+        _stroke(BoardPieces.chalk, line * 1.8),
+      );
+    for (final p in posts) {
+      _disc(canvas, p, line * 2.4, BoardPieces.chalk, line * 1.1);
+    }
+  }
+
   void _blank(Canvas canvas, Size size, {required bool dark}) {
     canvas.drawRect(
       Offset.zero & size,
@@ -776,11 +913,3 @@ class PlayPainter extends CustomPainter {
     }
   }
 }
-
-/// The color arrows, lines, and notes are drawn in on [board]: chalk white
-/// on grass, dark on wood or a light board.
-Color inkFor(PlayBoard board, {required bool dark}) => switch (board) {
-  PlayBoard.baseball || PlayBoard.soccer || PlayBoard.football => Colors.white,
-  PlayBoard.basketball => const Color(0xFF1F2937),
-  PlayBoard.blank => dark ? Colors.white : const Color(0xFF1F2937),
-};

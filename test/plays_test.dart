@@ -3,6 +3,7 @@
 // may do what, and posting a play to the chat or saving it as a GIF.
 import 'dart:async';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
@@ -21,6 +22,7 @@ import 'package:battleplan/features/plays/domain/board_layout.dart';
 import 'package:battleplan/features/plays/domain/play.dart';
 import 'package:battleplan/features/plays/domain/play_gif.dart';
 import 'package:battleplan/features/plays/presentation/board_painter.dart';
+import 'package:battleplan/features/plays/presentation/pass_arrow_icon.dart';
 import 'package:battleplan/features/plays/presentation/play_editor_screen.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -123,7 +125,8 @@ void main() {
       expect(boardForSport(Sport.basketball), PlayBoard.basketball);
       expect(boardForSport(Sport.soccer), PlayBoard.soccer);
       expect(boardForSport(Sport.football), PlayBoard.football);
-      expect(boardForSport(Sport.volleyball), PlayBoard.blank);
+      expect(boardForSport(Sport.volleyball), PlayBoard.volleyball);
+      expect(boardForSport(Sport.hockey), PlayBoard.blank);
       expect(boardVariants(PlayBoard.basketball), [
         BoardVariant.half,
         BoardVariant.full,
@@ -140,6 +143,160 @@ void main() {
         hasLength(11),
       );
     });
+  });
+
+  group("volleyball's court (BOARD-1, #87)", () {
+    final net = VolleyballCourt.at(
+      0,
+      VolleyballCourt.netMeters,
+      BoardVariant.full,
+    ).y;
+    Spot at(Formation f, String label) =>
+        f.spots.firstWhere((s) => s.label == label);
+
+    test('is the 9 by 18 meter court up the board, the net across its '
+        'middle, in a full or half court', () {
+      expect(boardVariants(PlayBoard.volleyball), [
+        BoardVariant.full,
+        BoardVariant.half,
+      ]);
+      expect(net, 0.5);
+      // The court and its free zone: 2 meters at the sides, 3 behind the
+      // end lines.
+      expect(
+        boardAspect(PlayBoard.volleyball, BoardVariant.full),
+        closeTo(13 / 24, 1e-9),
+      );
+      // The half court is the team's side and the far side's front zone.
+      final half = VolleyballCourt.at(
+        0,
+        VolleyballCourt.netMeters - VolleyballCourt.attackMeters,
+        BoardVariant.half,
+      );
+      expect(half.y, inExclusiveRange(0, 0.1));
+      expect(
+        boardAspect(PlayBoard.volleyball, BoardVariant.half),
+        greaterThan(boardAspect(PlayBoard.volleyball, BoardVariant.full)),
+      );
+    });
+
+    test('six a side stand in their rotation spots, facing the net', () {
+      final team = teamFormations(PlayBoard.volleyball, BoardVariant.full);
+      final other = opponentFormations(PlayBoard.volleyball, BoardVariant.full);
+      expect(team.map((f) => f.id), ['rotation', '5-1']);
+      final spots = team.first;
+      expect(spots.spots.map((s) => s.label), ['1', '2', '3', '4', '5', '6']);
+      // The team below the net: 4, 3 and 2 across the front, nearer it
+      // than 5, 6 and 1, and 1 (the server) at the right.
+      expect(spots.spots.every((s) => s.at.y > net), isTrue);
+      for (final front in ['2', '3', '4']) {
+        expect(at(spots, front).at.y, lessThan(at(spots, '1').at.y));
+      }
+      expect(at(spots, '4').at.x, lessThan(at(spots, '3').at.x));
+      expect(at(spots, '3').at.x, lessThan(at(spots, '2').at.x));
+      expect(at(spots, '1').at.x, greaterThan(0.5));
+      // The other team above it, turned to face it: their 1 at the top
+      // left, mirrored through the court's middle.
+      final theirs = other.first;
+      expect(theirs.spots.every((s) => s.at.y < net), isTrue);
+      expect(at(theirs, '1').at.x, closeTo(1 - at(spots, '1').at.x, 1e-9));
+      expect(at(theirs, '1').at.y, closeTo(1 - at(spots, '1').at.y, 1e-9));
+      // A 5-1: the setter serving, the libero in at the back.
+      expect(team[1].spots.map((s) => s.label), [
+        'S', 'OH', 'MB', 'OPP', 'OH', 'L', //
+      ]);
+      // On the half court only the other team's front row shows.
+      expect(
+        opponentFormations(
+          PlayBoard.volleyball,
+          BoardVariant.half,
+        ).first.spots.map((s) => s.label),
+        ['2', '3', '4'],
+      );
+      // The ball with the server, behind the team's end line on the right.
+      final ball = ballSpot(PlayBoard.volleyball, BoardVariant.full)!;
+      final endLine = VolleyballCourt.at(
+        0,
+        VolleyballCourt.netMeters + VolleyballCourt.courtLength / 2,
+        BoardVariant.full,
+      ).y;
+      expect(ball.y, greaterThan(endLine));
+      expect(ball.x, greaterThan(0.5));
+    });
+  });
+
+  group("the board's pieces (BOARD-2, #87)", () {
+    test(
+      'are drawn as the mockup draws them: players light blue and the '
+      'other team coral, each in an ink edge, and arrows chalk over ink',
+      () async {
+        const width = 390.0;
+        // A blank board 390 wide is 292.5 tall: these land on pixel centers.
+        final size = Size(
+          width,
+          width / boardAspect(PlayBoard.blank, BoardVariant.full),
+        );
+        final recorder = ui.PictureRecorder();
+        const PlayPainter(
+          board: PlayBoard.blank,
+          variant: BoardVariant.full,
+          elements: [
+            BoardElement.marker(
+              id: 't',
+              at: (x: 0.2, y: 0.5),
+              side: MarkerSide.team,
+            ),
+            BoardElement.marker(
+              id: 'o',
+              at: (x: 0.4, y: 0.5),
+              side: MarkerSide.opponent,
+            ),
+            BoardElement.marker(
+              id: 'b',
+              at: (x: 0.6, y: 0.5),
+              side: MarkerSide.ball,
+            ),
+            BoardElement.arrow(
+              id: 'a',
+              kind: ArrowKind.run,
+              points: [(x: 0.1, y: 0.2), (x: 0.9, y: 0.2)],
+            ),
+          ],
+        ).paint(Canvas(recorder), size);
+        final image = await recorder.endRecording().toImage(
+          size.width.ceil(),
+          size.height.ceil(),
+        );
+        final bytes = (await image.toByteData())!;
+        Color at(double x, double y) {
+          final i = (y.floor() * image.width + x.floor()) * 4;
+          return Color.fromARGB(
+            bytes.getUint8(i + 3),
+            bytes.getUint8(i),
+            bytes.getUint8(i + 1),
+            bytes.getUint8(i + 2),
+          );
+        }
+
+        final middle = size.height * 0.5;
+        expect(at(width * 0.2, middle), BoardPieces.team);
+        expect(at(width * 0.4, middle), BoardPieces.opponent);
+        expect(at(width * 0.6, middle), BoardPieces.chalk);
+        // The mockup's 10.5 disc on its 390-wide board, in its 2.4 ink edge.
+        final r = PlayPainter.markerRadius(width, PlayBoard.blank);
+        expect(r, closeTo(10.5, 1e-9));
+        expect(at(width * 0.2 + r, middle), BoardPieces.ink);
+        expect(at(width * 0.4 - r, middle), BoardPieces.ink);
+        // The arrow: its 2.8 chalk down the middle, the ink 6.4 wide under it.
+        expect(PlayPainter.strokeFor(width), closeTo(2.8, 1e-9));
+        final line = size.height * 0.2;
+        expect(at(width * 0.5, line), BoardPieces.chalk);
+        expect(at(width * 0.5, line + 2), BoardPieces.ink);
+        expect(at(width * 0.5, line - 2), BoardPieces.ink);
+        expect(at(width * 0.5, line - 4), isNot(BoardPieces.ink));
+        image.dispose();
+      },
+    );
   });
 
   group('drawing (BOARD-2, BOARD-3)', () {
@@ -730,6 +887,70 @@ void main() {
       await tester.tap(find.widgetWithText(TextButton, 'Saved plays'));
       await tester.pumpAndSettle();
       expect(find.text('Pickoff at first'), findsOneWidget);
+    });
+
+    testWidgets("a volleyball team's whiteboard is its court, with a "
+        'volleyball for the ball tool and a dashed arrow for passes (#87)', (
+      tester,
+    ) async {
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {
+          'a': testGroup('a', 'Spikers').copyWith(sport: Sport.volleyball),
+        },
+        memberships: [testMembership('a', 'coach', role: MemberRole.admin)],
+        playRepo: FakePlayRepository(),
+        size: const Size(1024, 1366),
+      );
+      unawaited(
+        GoRouter.of(tester.element(find.byType(Scaffold).first))
+            .push('/g/a/plays'),
+      );
+      await tester.pumpAndSettle();
+      PlayPainter painter() =>
+          tester
+                  .widget<CustomPaint>(
+                    find.descendant(
+                      of: find.byKey(const ValueKey('playBoard')),
+                      matching: find.byType(CustomPaint),
+                    ),
+                  )
+                  .painter!
+              as PlayPainter;
+      expect(painter().board, PlayBoard.volleyball);
+      expect(painter().variant, BoardVariant.full);
+      final markers = painter().elements.whereType<MarkerElement>();
+      expect(
+        markers.where((m) => m.side == MarkerSide.team).map((m) => m.label),
+        ['1', '2', '3', '4', '5', '6'],
+      );
+      expect(markers.where((m) => m.side == MarkerSide.ball), hasLength(1));
+      expect(
+        find.byIcon(AppIcons.toolBallOn(PlayBoard.volleyball)),
+        findsOneWidget,
+      );
+      expect(find.byType(PassArrowIcon), findsOneWidget);
+      // A new board offers the court whole or half, and both sides' lineups.
+      await tester.tap(find.byTooltip('New board'));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Volleyball'))
+            .selected,
+        isTrue,
+      );
+      await tester.tap(find.text('Half court'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start drawing'));
+      await tester.pumpAndSettle();
+      expect(painter().variant, BoardVariant.half);
+      expect(
+        painter().elements.whereType<MarkerElement>().where(
+          (m) => m.side == MarkerSide.team,
+        ),
+        hasLength(6),
+      );
     });
 
     testWidgets('the whiteboard keeps its drawing until it is cleared', (

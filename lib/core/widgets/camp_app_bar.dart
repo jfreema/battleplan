@@ -78,6 +78,10 @@ class CampAppBar extends StatelessWidget implements PreferredSizeWidget {
         tapTargetSize: MaterialTapTargetSize.padded,
       ),
     );
+    // A menu's button (More) takes its icon's color from the menu theme
+    // over the button theme, so it's set there too (#87): otherwise it's
+    // the header's lettering, white on Candy Pop's white face.
+    final menus = PopupMenuTheme.of(context).copyWith(iconColor: onPanel);
     final buttons = actions;
     final bar = AppBar(
       leading: leading,
@@ -85,7 +89,13 @@ class CampAppBar extends StatelessWidget implements PreferredSizeWidget {
       title: title,
       actions: buttons == null || !camo
           ? buttons
-          : [for (final a in buttons) IconButtonTheme(data: round, child: a)],
+          : [
+              for (final a in buttons)
+                IconButtonTheme(
+                  data: round,
+                  child: PopupMenuTheme(data: menus, child: a),
+                ),
+            ],
       flexibleSpace: camo
           ? Stack(
               fit: StackFit.expand,

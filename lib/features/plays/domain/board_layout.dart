@@ -149,6 +149,42 @@ abstract final class FootballField {
       (x: x / widthYards, y: (scrimmageYards + behind) / windowYards);
 }
 
+/// Indoor volleyball (#87): the 9 by 18 meter court up the board, the net
+/// across its middle and the team's side below it, in meters. The free zone
+/// around the court shows too: 2 meters at the sides, for the net's posts,
+/// and 3 behind each end line, for the server. The half court is the
+/// team's side, with the far side to just past its attack line, so the
+/// other team's front row shows across the net.
+abstract final class VolleyballCourt {
+  static const double courtWidth = 9;
+  static const double courtLength = 18;
+  static const double sideZone = 2;
+  static const double endZone = 3;
+
+  /// The board's width and the full board's length, free zone and all.
+  static const double widthMeters = courtWidth + 2 * sideZone;
+  static const double lengthMeters = courtLength + 2 * endZone;
+
+  /// The net and the center line under it, from the full board's top.
+  static const double netMeters = endZone + courtLength / 2;
+
+  /// Each attack line's distance from the net.
+  static const double attackMeters = 3;
+
+  /// Where [v]'s board starts, in meters from the full board's top: the
+  /// half court's a little past the far attack line, so the line shows.
+  static double topOf(BoardVariant v) =>
+      v == BoardVariant.half ? netMeters - attackMeters - 0.75 : 0;
+
+  static double lengthOf(BoardVariant v) => lengthMeters - topOf(v);
+
+  static double aspectOf(BoardVariant v) => widthMeters / lengthOf(v);
+
+  /// A spot in meters from the board's left edge and the full board's top.
+  static BoardPoint at(double x, double y, BoardVariant v) =>
+      (x: x / widthMeters, y: (y - topOf(v)) / lengthOf(v));
+}
+
 /// A blank board for any other sport (BOARD-1).
 abstract final class BlankBoard {
   static const double aspect = 4 / 3;
@@ -161,6 +197,7 @@ double fieldAspect(PlayBoard board, BoardVariant variant) => switch (board) {
   PlayBoard.basketball => BasketballCourt.aspectOf(variant),
   PlayBoard.soccer => SoccerPitch.aspectOf(variant),
   PlayBoard.football => FootballField.aspect,
+  PlayBoard.volleyball => VolleyballCourt.aspectOf(variant),
   PlayBoard.blank => BlankBoard.aspect,
 };
 
@@ -175,10 +212,12 @@ double boardAspect(PlayBoard board, BoardVariant variant) {
 }
 
 /// The variants [board] has (BOARD-1): basketball's half and full court,
-/// soccer's full and half pitch; one for the others.
+/// soccer's full and half pitch, volleyball's full and half court; one for
+/// the others.
 List<BoardVariant> boardVariants(PlayBoard board) => switch (board) {
   PlayBoard.basketball => const [BoardVariant.half, BoardVariant.full],
-  PlayBoard.soccer => const [BoardVariant.full, BoardVariant.half],
+  PlayBoard.soccer ||
+  PlayBoard.volleyball => const [BoardVariant.full, BoardVariant.half],
   _ => const [BoardVariant.full],
 };
 
@@ -189,6 +228,7 @@ PlayBoard boardForSport(Sport? sport) => switch (sport) {
   Sport.basketball => PlayBoard.basketball,
   Sport.soccer => PlayBoard.soccer,
   Sport.football => PlayBoard.football,
+  Sport.volleyball => PlayBoard.volleyball,
   _ => PlayBoard.blank,
 };
 
@@ -377,6 +417,69 @@ List<Spot> get _threeFour => [
   _s('SS', FootballField.at(_mid + 6, -11)),
 ];
 
+// ---- Volleyball ------------------------------------------------------------------
+
+/// The six rotation spots on a side, as its players see them facing the
+/// net: 4, 3 and 2 across the front, 2 meters off the net, and 5, 6 and 1
+/// across the back, 6.5 meters off it; 1 serves. Meters from the left
+/// sideline, and back from the net.
+const _rotation = <(String, double, double)>[
+  ('1', 7.5, 6.5), ('2', 7.5, 2), ('3', 4.5, 2), //
+  ('4', 1.5, 2), ('5', 1.5, 6.5), ('6', 4.5, 6.5),
+];
+
+/// A 5-1 in its first rotation: the setter serving, the opposite across
+/// from them, the outside hitters across from each other, a middle in
+/// front and the libero in for the other at the back.
+const _fiveOne = {
+  '1': 'S', '2': 'OH', '3': 'MB', //
+  '4': 'OPP', '5': 'OH', '6': 'L',
+};
+
+/// The rotation's spots on [v], labeled by [labels] (or by spot). The team
+/// stands below the net; the other team above it, turned to face it, so
+/// its 1 is at the board's top left. On the half court only the other
+/// team's front row shows.
+List<Spot> _volleyballSpots(
+  BoardVariant v, {
+  required bool opponent,
+  Map<String, String>? labels,
+}) => [
+  for (final (spot, x, back) in _rotation)
+    if (!opponent ||
+        VolleyballCourt.netMeters - back >= VolleyballCourt.topOf(v))
+      _s(
+        labels?[spot] ?? spot,
+        opponent
+            ? VolleyballCourt.at(
+                VolleyballCourt.sideZone + VolleyballCourt.courtWidth - x,
+                VolleyballCourt.netMeters - back,
+                v,
+              )
+            : VolleyballCourt.at(
+                VolleyballCourt.sideZone + x,
+                VolleyballCourt.netMeters + back,
+                v,
+              ),
+      ),
+];
+
+List<Formation> _volleyballFormations(
+  BoardVariant v, {
+  required bool opponent,
+}) => [
+  Formation(
+    id: 'rotation',
+    name: 'Rotation spots 1-6',
+    spots: _volleyballSpots(v, opponent: opponent),
+  ),
+  Formation(
+    id: '5-1',
+    name: '5-1 (S, OH, MB, OPP, L)',
+    spots: _volleyballSpots(v, opponent: opponent, labels: _fiveOne),
+  ),
+];
+
 /// The team's formations on [board] in [variant], the first the default.
 List<Formation> teamFormations(PlayBoard board, BoardVariant variant) =>
     switch (board) {
@@ -402,6 +505,7 @@ List<Formation> teamFormations(PlayBoard board, BoardVariant variant) =>
         Formation(id: 'i-form', name: 'I formation', spots: _iFormation),
         Formation(id: 'shotgun', name: 'Shotgun', spots: _shotgun),
       ],
+      PlayBoard.volleyball => _volleyballFormations(variant, opponent: false),
       PlayBoard.blank => const [],
     };
 
@@ -436,6 +540,7 @@ List<Formation> opponentFormations(PlayBoard board, BoardVariant variant) =>
         Formation(id: '4-3', name: '4-3 defense', spots: _fourThree),
         Formation(id: '3-4', name: '3-4 defense', spots: _threeFour),
       ],
+      PlayBoard.volleyball => _volleyballFormations(variant, opponent: true),
       PlayBoard.blank => const [],
     };
 
@@ -449,7 +554,8 @@ String newElementId() => List.generate(
 
 /// Where the ball starts on [board] in [variant], for dragging through a
 /// play: in the pitcher's hand, with the point guard, on the center spot,
-/// on the line of scrimmage. None on a blank board.
+/// on the line of scrimmage, where the server serves from. None on a blank
+/// board.
 BoardPoint? ballSpot(PlayBoard board, BoardVariant variant) => switch (board) {
   PlayBoard.baseball => (
     x: BaseballField.mound.x + 0.03,
@@ -459,6 +565,12 @@ BoardPoint? ballSpot(PlayBoard board, BoardVariant variant) => switch (board) {
   PlayBoard.soccer =>
     variant == BoardVariant.half ? (x: 0.5, y: 0.62) : (x: 0.5, y: 0.5),
   PlayBoard.football => FootballField.at(_mid, 0),
+  // Behind the team's end line, on the right: spot 1's side.
+  PlayBoard.volleyball => VolleyballCourt.at(
+    VolleyballCourt.sideZone + 7.5,
+    VolleyballCourt.netMeters + VolleyballCourt.courtLength / 2 + 1.2,
+    variant,
+  ),
   PlayBoard.blank => null,
 };
 

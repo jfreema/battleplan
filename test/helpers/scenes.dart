@@ -17,6 +17,10 @@ import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/groups/presentation/teams_screen.dart';
 import 'package:battleplan/features/players/domain/player.dart';
+import 'package:battleplan/features/plays/application/providers.dart';
+import 'package:battleplan/features/plays/domain/board_layout.dart';
+import 'package:battleplan/features/plays/domain/play.dart';
+import 'package:battleplan/features/plays/domain/whiteboard_store.dart';
 import 'package:battleplan/features/polls/domain/poll.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/domain/rsvp.dart';
@@ -743,7 +747,8 @@ const wideSize = Size(1280, 800);
 /// settings, invite, both Color scheme screens, a group's schedule, Dues (an
 /// admin's, a due, Who owes what, and a member's and a guardian's own), Your
 /// icon, the chat and schedule of a parent who hasn't picked their player
-/// yet, and the wide rail layout.
+/// yet, the wide rail layout, and the coach's whiteboard on a baseball and
+/// a volleyball team.
 final Map<
   String,
   Future<void> Function(WidgetTester, {required TeamScheme scheme})
@@ -856,7 +861,118 @@ goldenScreens = {
     await tester.tap(find.text('Schedule'));
     await tester.pumpAndSettle();
   },
+  // The coach's whiteboard (BOARD-2) on a baseball team, with the mockup's
+  // relay on it: Boot Camp's board pieces (#87).
+  'plays': (tester, {required scheme}) => pumpWhiteboard(
+    tester,
+    scheme: scheme,
+    sport: Sport.baseball,
+    board: PlayBoard.baseball,
+    variant: BoardVariant.full,
+    elements: sceneRelay,
+  ),
+  // A volleyball team's: both sides in a 5-1, the net between them.
+  'plays_volleyball': (tester, {required scheme}) => pumpWhiteboard(
+    tester,
+    scheme: scheme,
+    sport: Sport.volleyball,
+    board: PlayBoard.volleyball,
+    variant: BoardVariant.full,
+    elements: startingStep(
+      teamFormations(PlayBoard.volleyball, BoardVariant.full)[1],
+      opponentFormations(PlayBoard.volleyball, BoardVariant.full)[1],
+      ball: ballSpot(PlayBoard.volleyball, BoardVariant.full),
+    ).elements,
+  ),
 };
+
+/// The team (playing [sport]) on its Plays tab, its coach's whiteboard
+/// holding [elements] on [board].
+Future<void> pumpWhiteboard(
+  WidgetTester tester, {
+  required TeamScheme scheme,
+  required Sport sport,
+  required PlayBoard board,
+  required BoardVariant variant,
+  required List<BoardElement> elements,
+}) async {
+  final whiteboard = MemoryWhiteboardStore();
+  await whiteboard.save(const GroupId('a'), (
+    board: board,
+    variant: variant,
+    title: '',
+    note: '',
+    steps: [PlayStep(elements: elements)],
+  ));
+  await pumpTeam(
+    tester,
+    scheme: scheme,
+    team: sceneTeam.copyWith(sport: sport),
+    overrides: [whiteboardStoreProvider.overrideWithValue(whiteboard)],
+  );
+  await goTo(tester, '/g/a/plays');
+}
+
+/// The mockup's relay (style 31's Plays, #87), on the baseball board: the
+/// nine in the field, a runner off second and the batter; center field and
+/// right field go to the ball, the second baseman out to take the throw
+/// and relay it home, the runner rounds third, the batter heads for first.
+/// Drawn from the mockup's own points, on its 390 by 401.8 board.
+final List<BoardElement> sceneRelay = () {
+  BoardPoint p(double x, double y) {
+    const f = BaseballField.frame;
+    return (x: f.left + x / 390 * f.width, y: f.top + y / 401.8 * f.height);
+  }
+
+  // A curved run: the mockup's quadratic curve, then its arrow's point.
+  List<BoardPoint> curve(
+    (double, double) a,
+    (double, double) c,
+    (double, double) e,
+    (double, double) tip,
+  ) => [
+    for (var i = 0; i <= 12; i++)
+      p(_bezier(a.$1, c.$1, e.$1, i / 12), _bezier(a.$2, c.$2, e.$2, i / 12)),
+    p(tip.$1, tip.$2),
+  ];
+  var n = 0;
+  BoardElement run(ArrowKind kind, List<BoardPoint> points) =>
+      BoardElement.arrow(id: 'r${n++}', kind: kind, points: points);
+  BoardElement at(MarkerSide side, String label, double x, double y) =>
+      BoardElement.marker(id: 'm${n++}', at: p(x, y), side: side, label: label);
+  return [
+    run(ArrowKind.run, [p(206.7, 88.4), p(269.6, 64.6)]),
+    run(ArrowKind.run, [p(304.2, 135.7), p(284.5, 71.9)]),
+    run(ArrowKind.run, [p(237.2, 243.7), p(281.9, 207.4)]),
+    run(ArrowKind.pass, [p(281.1, 71.6), p(283.9, 196.9)]),
+    run(ArrowKind.pass, [p(279.5, 213.5), p(208.9, 335.8)]),
+    run(ArrowKind.run, [p(84.3, 159.9), p(101.2, 257.5)]),
+    run(
+      ArrowKind.run,
+      curve((185, 255.8), (125.3, 304.2), (161.7, 336.6), (163.3, 338)),
+    ),
+    run(
+      ArrowKind.run,
+      curve((186.6, 350.5), (225, 353.9), (244.3, 318.6), (245.4, 316.6)),
+    ),
+    at(MarkerSide.team, 'P', 195, 306),
+    at(MarkerSide.team, 'C', 195, 370.6),
+    at(MarkerSide.team, '1B', 256.7, 284.4),
+    at(MarkerSide.team, '2B', 227.5, 251.6),
+    at(MarkerSide.team, 'SS', 162.5, 251.6),
+    at(MarkerSide.team, '3B', 133.3, 284.4),
+    at(MarkerSide.team, 'LF', 82.1, 147.6),
+    at(MarkerSide.team, 'CF', 195, 92.8),
+    at(MarkerSide.team, 'RF', 307.9, 147.6),
+    at(MarkerSide.opponent, 'R', 193.3, 247.4),
+    at(MarkerSide.opponent, 'B', 180.4, 359.9),
+    at(MarkerSide.ball, '', 280.9, 60.3),
+  ];
+}();
+
+/// A quadratic Bézier's coordinate at [t], from [a] through [c] to [e].
+double _bezier(double a, double c, double e, double t) =>
+    (1 - t) * (1 - t) * a + 2 * (1 - t) * t * c + t * t * e;
 
 /// The team as Sam, a parent who just joined and isn't linked to a player
 /// yet (PLAYER-3), opened on the chat, whose card says how to answer

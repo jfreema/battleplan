@@ -105,7 +105,7 @@ PLAYERS AND PARENTS
 MORE FOR COACHES
 • Polls for quick decisions
 • Documents: lineups, rules, waivers, and links
-• Plays: a whiteboard with real baseball, basketball, soccer, and football fields. Drag players and the ball, draw routes, play the steps back, and save the plays worth keeping, then post them to the chat, or save or share them as animated GIFs
+• Plays: a whiteboard with real baseball, basketball, soccer, football, and volleyball fields and courts. Drag players and the ball, draw routes, play the steps back, and save the plays worth keeping, then post them to the chat, or save or share them as animated GIFs
 • Dues: track who owes and who's paid for uniforms and fees, and show the team how to pay. Payments go person to person, outside the app
 • Bring your team's messages, photos, files, and schedule over from the app or calendar you use now
 • Start a new season from a team, bringing along the players, parents, and coaches you pick

@@ -186,8 +186,16 @@ abstract final class AppIcons {
   static const IconData toolTeam = Symbols.person_rounded;
   static const IconData toolOpponent = Symbols.close_rounded;
   static const IconData toolBall = Symbols.sports_baseball_rounded;
+
+  /// The ball tool's icon on [board]: its sport's ball (#87).
+  static IconData toolBallOn(PlayBoard board) => switch (board) {
+    PlayBoard.basketball => Symbols.sports_basketball_rounded,
+    PlayBoard.soccer => Symbols.sports_soccer_rounded,
+    PlayBoard.football => Symbols.sports_football_rounded,
+    PlayBoard.volleyball => Symbols.sports_volleyball_rounded,
+    PlayBoard.baseball || PlayBoard.blank => toolBall,
+  };
   static const IconData toolRun = Symbols.north_east_rounded;
-  static const IconData toolPass = Symbols.timeline_rounded;
   static const IconData toolBlock = Symbols.vertical_align_top_rounded;
   static const IconData toolDraw = Symbols.gesture_rounded;
   static const IconData toolText = Symbols.text_fields_rounded;

@@ -53,14 +53,17 @@ String boardName(AppLocalizations l10n, PlayBoard board) => switch (board) {
   PlayBoard.basketball => l10n.boardBasketball,
   PlayBoard.soccer => l10n.boardSoccer,
   PlayBoard.football => l10n.boardFootball,
+  PlayBoard.volleyball => l10n.boardVolleyball,
   PlayBoard.blank => l10n.boardBlank,
 };
 
 /// [v]'s name on [board]: half court, full pitch.
 String variantName(AppLocalizations l10n, PlayBoard board, BoardVariant v) =>
     switch ((board, v)) {
-      (PlayBoard.basketball, BoardVariant.half) => l10n.boardHalfCourt,
-      (PlayBoard.basketball, BoardVariant.full) => l10n.boardFullCourt,
+      (PlayBoard.basketball || PlayBoard.volleyball, BoardVariant.half) =>
+        l10n.boardHalfCourt,
+      (PlayBoard.basketball || PlayBoard.volleyball, BoardVariant.full) =>
+        l10n.boardFullCourt,
       (PlayBoard.soccer, BoardVariant.half) => l10n.boardHalfPitch,
       (PlayBoard.soccer, BoardVariant.full) => l10n.boardFullPitch,
       _ => boardName(l10n, board),

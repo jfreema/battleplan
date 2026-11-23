@@ -596,6 +596,7 @@ enum PlayBoard {
   basketball('basketball'),
   soccer('soccer'),
   football('football'),
+  volleyball('volleyball'),
   blank('blank');
 
   const PlayBoard(this.value);
