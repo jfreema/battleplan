@@ -242,6 +242,9 @@ export type DocumentKind = (typeof documentKindValues)[number];
 export const playBoardValues = ['baseball', 'basketball', 'soccer', 'football', 'volleyball', 'blank'] as const;
 export type PlayBoard = (typeof playBoardValues)[number];
 
+export const campColorValues = ['page', 'panel', 'tabBar', 'ink', 'shadow', 'text', 'muted', 'panelText', 'panelMuted', 'headerLettering', 'mustard', 'balloon', 'red', 'blue', 'green', 'orange', 'purple', 'unansweredTag', 'answerRow', 'toolsRow', 'disabledIcon', 'camoGround', 'camoBig', 'camoMid', 'camoSmall', 'ballChain'] as const;
+export type CampColor = (typeof campColorValues)[number];
+
 export const reportReasonValues = ['spam', 'harassment', 'inappropriate', 'other'] as const;
 export type ReportReason = (typeof reportReasonValues)[number];
 
@@ -276,6 +279,17 @@ export const SCHEME_INK: Readonly<Record<string, SchemeInk>> = {
 };
 
 export type SchemeInk = { page: string; text: string; tabbar: string; field: string; card: string; cardText: string; cardField: string; popup: string; candyInk: string };
+
+/** Each Boot Camp Mix scheme's colors as they ship, by campColor, as '#RRGGBB' (#88): the theme editor's server check. */
+export const CAMP_PALETTES: Readonly<Record<string, Readonly<Record<CampColor, string>>>> = {
+  army: { page: '#474C2B', panel: '#575A3A', tabBar: '#3D4124', ink: '#1A1A18', shadow: '#1A1A18', text: '#F4EAD0', muted: '#D3CCAE', panelText: '#F4EAD0', panelMuted: '#D3CCAE', headerLettering: '#F4EAD0', mustard: '#F2C230', balloon: '#F2C230', red: '#DB442F', blue: '#5FA3C8', green: '#9AD04A', orange: '#F5A040', purple: '#AD8CD6', unansweredTag: '#7E8160', answerRow: '#4C5130', toolsRow: '#4C5130', disabledIcon: '#8E9173', camoGround: '#3F4722', camoBig: '#2A3016', camoMid: '#7F7A48', camoSmall: '#14170B', ballChain: '#1A1A18' },
+  dark: { page: '#0D0D0C', panel: '#252522', tabBar: '#070707', ink: '#000000', shadow: '#363A28', text: '#F4EAD0', muted: '#B5B1A2', panelText: '#F4EAD0', panelMuted: '#B5B1A2', headerLettering: '#F4EAD0', mustard: '#F2C230', balloon: '#93CFF5', red: '#DB442F', blue: '#4F93B9', green: '#8DC63F', orange: '#F2983A', purple: '#9B79C4', unansweredTag: '#47473F', answerRow: '#1B1B19', toolsRow: '#1A1A18', disabledIcon: '#64645C', camoGround: '#23241F', camoBig: '#161713', camoMid: '#3A3C33', camoSmall: '#070706', ballChain: '#77786E' },
+  light: { page: '#F2EBE0', panel: '#FFFFFF', tabBar: '#FFFFFF', ink: '#1A1A18', shadow: '#1A1A18', text: '#1A1A18', muted: '#5E584B', panelText: '#1A1A18', panelMuted: '#5E584B', headerLettering: '#1A1A18', mustard: '#EFBE2B', balloon: '#EFBE2B', red: '#D4432C', blue: '#4A86A8', green: '#86B93B', orange: '#EE9230', purple: '#8C68AD', unansweredTag: '#DCD3C3', answerRow: '#FAEDB2', toolsRow: '#E6DCCB', disabledIcon: '#B2AB9B', camoGround: '#C7B787', camoBig: '#A69468', camoMid: '#E0D4AC', camoSmall: '#6E6143', ballChain: '#1A1A18' },
+  sky: { page: '#BCD9F5', panel: '#BCD9F5', tabBar: '#BCD9F5', ink: '#0B1531', shadow: '#0B1531', text: '#0B1531', muted: '#34476E', panelText: '#0B1531', panelMuted: '#34476E', headerLettering: '#FFFFFF', mustard: '#F5C731', balloon: '#F5C731', red: '#E2463A', blue: '#4C90E2', green: '#7CC84E', orange: '#F5943A', purple: '#A98BEB', unansweredTag: '#E6F1FC', answerRow: '#FBEFB4', toolsRow: '#A9CBEE', disabledIcon: '#6F86AB', camoGround: '#2F5596', camoBig: '#1E3A70', camoMid: '#6390CC', camoSmall: '#0E1D42', ballChain: '#0B1531' },
+  candypop: { page: '#1748D4', panel: '#FFFFFF', tabBar: '#0B1640', ink: '#0B1640', shadow: '#0B1640', text: '#FFFFFF', muted: '#DCE6FF', panelText: '#0B1640', panelMuted: '#4B5A8C', headerLettering: '#FFFFFF', mustard: '#FFD43A', balloon: '#FFD43A', red: '#F2473D', blue: '#35B0FF', green: '#5ED36A', orange: '#FF9A2E', purple: '#B58BFF', unansweredTag: '#C9D3EE', answerRow: '#FFF1B0', toolsRow: '#1240B8', disabledIcon: '#A3B0D6', camoGround: '#1238A8', camoBig: '#0C2A86', camoMid: '#3F6FF2', camoSmall: '#0B1640', ballChain: '#DCE6FF' },
+  wildcat: { page: '#5E1224', panel: '#701C30', tabBar: '#0B0B0B', ink: '#0B0B0B', shadow: '#0B0B0B', text: '#FFFFFF', muted: '#CDD1D8', panelText: '#FFFFFF', panelMuted: '#CDD1D8', headerLettering: '#FFFFFF', mustard: '#C9CED6', balloon: '#C9CED6', red: '#EE4B37', blue: '#5FA8E0', green: '#86C94A', orange: '#F59A3A', purple: '#B08AE0', unansweredTag: '#8A5562', answerRow: '#5A1525', toolsRow: '#681A2E', disabledIcon: '#A88892', camoGround: '#55111F', camoBig: '#350A14', camoMid: '#8A2E42', camoSmall: '#0B0B0B', ballChain: '#C0C5CC' },
+  purplegold: { page: '#461D7C', panel: '#55278F', tabBar: '#2E1157', ink: '#170730', shadow: '#170730', text: '#FFFFFF', muted: '#D5C6F0', panelText: '#FFFFFF', panelMuted: '#D5C6F0', headerLettering: '#FFFFFF', mustard: '#FDD023', balloon: '#FDD023', red: '#E8473A', blue: '#5AA5EE', green: '#7FCB52', orange: '#F79A3C', purple: '#C7A6FF', unansweredTag: '#7A56AE', answerRow: '#481F7C', toolsRow: '#4E2287', disabledIcon: '#9A86C0', camoGround: '#3F1A72', camoBig: '#2A0F50', camoMid: '#6C3DB0', camoSmall: '#150628', ballChain: '#FDD023' },
+};
 
 /** How each notification kind behaves (NOTIF-2): pushes at "Important only", its global switch, center, channel. */
 export const NOTIFY_KINDS = {

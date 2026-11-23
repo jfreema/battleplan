@@ -270,6 +270,30 @@ void _tsSchemeInk(StringBuffer b, Map<String, dynamic> json) {
     );
 }
 
+/// Each Boot Camp Mix scheme's colors the theme editor can change, as they
+/// ship (#88), for its server check. The app reads its own `CampPalette`,
+/// which a test checks against this.
+void _tsCampPalettes(StringBuffer b, Map<String, dynamic> json) {
+  final palettes = json['campPalettes'] as Map<String, dynamic>?;
+  if (palettes == null) return;
+  b
+    ..writeln()
+    ..writeln(
+      "/** Each Boot Camp Mix scheme's colors as they ship, by campColor, as '#RRGGBB' (#88): the theme editor's server check. */",
+    )
+    ..writeln(
+      'export const CAMP_PALETTES: Readonly<Record<string, Readonly<Record<CampColor, string>>>> = {',
+    );
+  palettes.forEach((scheme, v) {
+    if (scheme.startsWith(r'$')) return;
+    final colors = (v as Map<String, dynamic>).entries
+        .map((e) => "${e.key}: '${e.value}'")
+        .join(', ');
+    b.writeln('  $scheme: { $colors },');
+  });
+  b.writeln('};');
+}
+
 String _ts(Map<String, dynamic> json) {
   final b = StringBuffer()
     ..writeln('// $_header')
@@ -327,6 +351,7 @@ String _ts(Map<String, dynamic> json) {
       );
   });
   _tsSchemeInk(b, json);
+  _tsCampPalettes(b, json);
   final kinds = json['notifyKinds'] as Map<String, dynamic>?;
   if (kinds != null) {
     b

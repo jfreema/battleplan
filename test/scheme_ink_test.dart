@@ -6,6 +6,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/color_math.dart';
 import 'package:battleplan/core/design/schemes.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -32,6 +33,24 @@ void main() {
         'popup': ColorMath.hex(r.popup),
         'candyInk': ColorMath.hex(r.candyInk),
       }, reason: '${scheme.value}: run the change through schemeInk too');
+    }
+  });
+
+  // The theme editor's server check starts from each Boot Camp Mix
+  // scheme's colors as it ships (#88): campPalettes, which must be the
+  // app's CampPalette, every token the editor changes.
+  test("campPalettes is each Boot Camp Mix scheme's colors as it ships", () {
+    final json = jsonDecode(
+      File('shared/constants.json').readAsStringSync(),
+    ) as Map<String, dynamic>;
+    final palettes = Map.of(json['campPalettes'] as Map<String, dynamic>)
+      ..remove(r'$comment');
+    expect(palettes.keys.toSet(), {for (final s in bootCampSchemes) s.value});
+    for (final scheme in bootCampSchemes) {
+      final p = SchemeRoles.builtIn(scheme).palette;
+      expect(palettes[scheme.value], {
+        for (final c in CampColor.values) c.value: ColorMath.hex(p.colorOf(c)),
+      }, reason: '${scheme.value}: run the change through campPalettes too');
     }
   });
 }

@@ -1,3 +1,4 @@
+import 'package:battleplan/core/camp_theme.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/color_math.dart';
 import 'package:battleplan/core/design/schemes.dart';
@@ -102,4 +103,71 @@ Map<TeamScheme, ThemeOverride> readableThemes(
 ) => {
   for (final MapEntry(:key, :value) in themes.entries)
     if (themeReads(key, value)) key: value,
+};
+
+// ---- Boot Camp Mix (#88) ------------------------------------------------------
+
+/// One Boot Camp Mix token drawn on another, as the theme editor's tokens
+/// name them.
+typedef CampPair = ({CampColor fg, CampColor bg, Color fgColor, Color bgColor});
+
+/// Where [p]'s lettering and accents sit on a color the theme editor can
+/// change (#88): the text on the page, the tab bar, and text boxes (Candy
+/// Pop's are the camouflage's deeper blue, where its page's white reads),
+/// the panels' text on them, the header's lettering on the camouflage, the
+/// tags' ink lettering on the trim, the current tab's trim tile on the tab
+/// bar, games, send and alerts on the page and on panels, and your messages
+/// on the page. What the app makes read by itself (second lines, colored
+/// words, the lettering on a colored block) isn't checked; the server checks
+/// the same pairs (`unreadableCampParts` in functions/src/admin/themes.ts).
+List<CampPair> campPairs(CampPalette p) {
+  final field = p.panelText != p.text ? CampColor.camoGround : CampColor.panel;
+  CampPair pair(CampColor fg, CampColor bg) =>
+      (fg: fg, bg: bg, fgColor: p.colorOf(fg), bgColor: p.colorOf(bg));
+  return [
+    pair(CampColor.text, CampColor.page),
+    pair(CampColor.text, CampColor.tabBar),
+    pair(CampColor.text, field),
+    pair(CampColor.panelText, CampColor.panel),
+    pair(CampColor.headerLettering, CampColor.camoGround),
+    pair(CampColor.ink, CampColor.mustard),
+    pair(CampColor.mustard, CampColor.tabBar),
+    pair(CampColor.red, CampColor.page),
+    pair(CampColor.red, CampColor.panel),
+    pair(CampColor.balloon, CampColor.page),
+  ];
+}
+
+/// The pairs in [themed] whose colors are nearly the same, where in [base],
+/// the scheme as it ships, they aren't: so a scheme is never refused for
+/// what it has itself.
+List<CampPair> campThemeProblems(CampPalette base, CampPalette themed) {
+  final before = campPairs(base);
+  return [
+    for (final (i, pair) in campPairs(themed).indexed)
+      if (ColorMath.deltaE(pair.fgColor, pair.bgColor) < nearlySame &&
+          ColorMath.deltaE(before[i].fgColor, before[i].bgColor) >= nearlySame)
+        pair,
+  ];
+}
+
+/// [scheme]'s palette with the theme editor's [colors] (#88).
+CampPalette editedPalette(TeamScheme scheme, CampColors colors) =>
+    SchemeRoles.builtIn(scheme).palette.withColors({
+      for (final MapEntry(:key, :value) in colors.entries) key: Color(value),
+    });
+
+/// Whether [colors] over [scheme] can be drawn (#88): what the app shows,
+/// so colors saved by hand with text the color of its page never are.
+bool campThemeReads(TeamScheme scheme, CampColors colors) => campThemeProblems(
+  SchemeRoles.builtIn(scheme).palette,
+  editedPalette(scheme, colors),
+).isEmpty;
+
+/// [themes] without any that fail [campThemeReads].
+Map<TeamScheme, CampColors> readableCampThemes(
+  Map<TeamScheme, CampColors> themes,
+) => {
+  for (final MapEntry(:key, :value) in themes.entries)
+    if (campThemeReads(key, value)) key: value,
 };

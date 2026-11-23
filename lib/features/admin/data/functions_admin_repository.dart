@@ -1,3 +1,4 @@
+import 'package:battleplan/core/camp_theme.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
@@ -494,6 +495,16 @@ class FunctionsAdminRepository implements AdminRepository {
   @override
   Future<void> deleteTheme(TeamScheme scheme) =>
       _call('adminDeleteTheme', {'scheme': scheme.value});
+
+  @override
+  Future<void> saveCampTheme(TeamScheme scheme, CampColors colors) => _call(
+    'adminSaveCampTheme',
+    {'scheme': scheme.value, 'colors': campColorsToConfig(colors)},
+  );
+
+  @override
+  Future<void> resetCampTheme(TeamScheme scheme) =>
+      _call('adminResetCampTheme', {'scheme': scheme.value});
 }
 
 /// A palette color as the team docs store it, `#RRGGBB`, or null.
@@ -530,6 +541,7 @@ AppConfig appConfigFromFirestore(Map<String, dynamic> d) {
           )
         : null,
     themes: themesFromConfig(d['themes']),
+    campThemes: campThemesFromConfig(d['campThemes']),
   );
 }
 

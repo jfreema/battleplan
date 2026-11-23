@@ -223,6 +223,125 @@ final class ThemeOverridesProvider
 
 String _$themeOverridesHash() => r'fee80604dd5c8ed89de07b0d45e440a8f0edb028';
 
+/// Every scheme's colors in `config/app.campThemes` (#88), as saved: the
+/// Super Admin Panel's Themes page shows them all, even colors that are
+/// hard to read, so they can be put right. None signed out.
+
+@ProviderFor(allCampThemes)
+final allCampThemesProvider = AllCampThemesProvider._();
+
+/// Every scheme's colors in `config/app.campThemes` (#88), as saved: the
+/// Super Admin Panel's Themes page shows them all, even colors that are
+/// hard to read, so they can be put right. None signed out.
+
+final class AllCampThemesProvider
+    extends
+        $FunctionalProvider<
+          Map<TeamScheme, CampColors>,
+          Map<TeamScheme, CampColors>,
+          Map<TeamScheme, CampColors>
+        >
+    with $Provider<Map<TeamScheme, CampColors>> {
+  /// Every scheme's colors in `config/app.campThemes` (#88), as saved: the
+  /// Super Admin Panel's Themes page shows them all, even colors that are
+  /// hard to read, so they can be put right. None signed out.
+  AllCampThemesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'allCampThemesProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$allCampThemesHash();
+
+  @$internal
+  @override
+  $ProviderElement<Map<TeamScheme, CampColors>> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  Map<TeamScheme, CampColors> create(Ref ref) {
+    return allCampThemes(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Map<TeamScheme, CampColors> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Map<TeamScheme, CampColors>>(value),
+    );
+  }
+}
+
+String _$allCampThemesHash() => r'3480891fabbba35b8766ace9df65a34016321126';
+
+/// The theme editor's colors the app draws (#88): [allCampThemes] but any
+/// that's hard to read (`campThemeReads`), which the editor and the server
+/// refuse but colors saved by hand could be. What the app root installs in
+/// `ThemeCatalog`.
+
+@ProviderFor(campThemes)
+final campThemesProvider = CampThemesProvider._();
+
+/// The theme editor's colors the app draws (#88): [allCampThemes] but any
+/// that's hard to read (`campThemeReads`), which the editor and the server
+/// refuse but colors saved by hand could be. What the app root installs in
+/// `ThemeCatalog`.
+
+final class CampThemesProvider
+    extends
+        $FunctionalProvider<
+          Map<TeamScheme, CampColors>,
+          Map<TeamScheme, CampColors>,
+          Map<TeamScheme, CampColors>
+        >
+    with $Provider<Map<TeamScheme, CampColors>> {
+  /// The theme editor's colors the app draws (#88): [allCampThemes] but any
+  /// that's hard to read (`campThemeReads`), which the editor and the server
+  /// refuse but colors saved by hand could be. What the app root installs in
+  /// `ThemeCatalog`.
+  CampThemesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'campThemesProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$campThemesHash();
+
+  @$internal
+  @override
+  $ProviderElement<Map<TeamScheme, CampColors>> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  Map<TeamScheme, CampColors> create(Ref ref) {
+    return campThemes(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Map<TeamScheme, CampColors> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Map<TeamScheme, CampColors>>(value),
+    );
+  }
+}
+
+String _$campThemesHash() => r'b951671cac4d552f2d7a9e69681a2a8e3f08c3fa';
+
 /// The upload limit in bytes for documents and photos (ADMIN-7): the
 /// platform setting, capped at the storage rules' limit, which the server
 /// enforces whatever this says.

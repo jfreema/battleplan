@@ -22,7 +22,16 @@ import { eraseMessage } from '../chat/service.js';
 import { deleteDocumentOf } from '../documents/service.js';
 import { resendApiKey } from '../email/service.js';
 import { alertTeamDeleted } from './alerts.js';
-import { DeleteThemeInput, SaveThemeInput, deleteTheme, saveTheme } from './themes.js';
+import {
+  DeleteThemeInput,
+  ResetCampThemeInput,
+  SaveCampThemeInput,
+  SaveThemeInput,
+  deleteTheme,
+  resetCampTheme,
+  saveCampTheme,
+  saveTheme,
+} from './themes.js';
 import { updatePlayerProfile } from '../players/service.js';
 import { closeReport, openReport, reopenReport } from '../safety/service.js';
 import { auth, db, storage } from '../shared/admin.js';
@@ -599,6 +608,31 @@ export const adminSaveTheme = onCall(async (request) => {
   const { scheme, before, after } = await saveTheme(input);
   await audit({ actorId: actor, action: 'saveTheme', targetType: 'theme', targetId: scheme, before: before ?? undefined, after });
   return { ok: true, scheme };
+});
+
+/** #88: saves the colors a super admin changed in a Boot Camp Mix scheme. */
+export const adminSaveCampTheme = onCall(async (request) => {
+  const actor = requireSuperAdmin(request);
+  const input = parse(SaveCampThemeInput, request.data);
+  const { before, after } = await saveCampTheme(input);
+  await audit({
+    actorId: actor,
+    action: 'saveCampTheme',
+    targetType: 'theme',
+    targetId: input.scheme,
+    before: before ?? undefined,
+    after: after ?? undefined,
+  });
+  return { ok: true };
+});
+
+/** #88: puts a Boot Camp Mix scheme back as it ships. */
+export const adminResetCampTheme = onCall(async (request) => {
+  const actor = requireSuperAdmin(request);
+  const { scheme } = parse(ResetCampThemeInput, request.data);
+  const { before } = await resetCampTheme(scheme);
+  await audit({ actorId: actor, action: 'resetCampTheme', targetType: 'theme', targetId: scheme, before: before ?? undefined });
+  return { ok: true };
 });
 
 /** #82: takes a theme's colors away, or deletes a saved theme and its picks. */

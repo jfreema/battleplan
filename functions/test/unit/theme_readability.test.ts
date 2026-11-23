@@ -7,13 +7,16 @@
 import { describe, expect, it } from 'vitest';
 import {
   builtInSchemeValues,
+  campSchemeValues,
   contrast,
   deltaE,
   NEARLY_SAME,
+  SaveCampThemeInput,
+  unreadableCampParts,
   unreadableParts,
   type ThemeColors,
 } from '../../src/admin/themes.js';
-import { SCHEME_INK } from '../../src/shared/constants.js';
+import { CAMP_PALETTES, SCHEME_INK } from '../../src/shared/constants.js';
 
 const none: ThemeColors = { accent: null, page: null, card: null, text: null, cardText: null };
 const theme = (colors: Partial<ThemeColors>): ThemeColors => ({ ...none, ...colors });
@@ -87,3 +90,57 @@ describe('unreadableParts', () => {
     expect(unreadableParts('plaid', none)).toEqual(['base']);
   });
 });
+
+// Boot Camp Mix's theme editor (#88): every token of the seven schemes, the
+// same pairs as the app's campPairs.
+describe('unreadableCampParts', () => {
+  it('knows the seven schemes, and each passes as it ships', () => {
+    expect(campSchemeValues.sort()).toEqual(['army', 'candypop', 'dark', 'light', 'purplegold', 'sky', 'wildcat']);
+    for (const scheme of campSchemeValues) expect(unreadableCampParts(scheme, {})).toEqual([]);
+  });
+
+  it('lets games, send and alerts be any color that stands apart: coral on Black, gold on Geaux Tigahs', () => {
+    expect(unreadableCampParts('dark', { red: '#F45B5B' })).toEqual([]);
+    expect(unreadableCampParts('purplegold', { red: '#FDD023' })).toEqual([]);
+  });
+
+  it('refuses games, send and alerts nearly the color of the page or the panels', () => {
+    const page = CAMP_PALETTES.army.page;
+    expect(unreadableCampParts('army', { red: page })).toEqual(['red on page', 'red on panel']);
+    // Candy Pop's panels are white on its royal blue page.
+    expect(unreadableCampParts('candypop', { red: '#FFFFFE' })).toEqual(['red on panel']);
+  });
+
+  it('refuses text nearly the color of the page, tab bar, text boxes or panels', () => {
+    expect(unreadableCampParts('dark', { page: CAMP_PALETTES.dark.text })).toEqual(['text on page']);
+    expect(unreadableCampParts('light', { tabBar: '#1A1A1A' })).toEqual(['text on tabBar']);
+    expect(unreadableCampParts('light', { panel: '#222222' })).toContain('panelText on panel');
+    // Candy Pop's text boxes are the camouflage's ground, where its page's
+    // white reads.
+    expect(unreadableCampParts('candypop', { camoGround: '#FFFFFF' })).toContain('text on camoGround');
+  });
+
+  it("refuses the tags' trim nearly the ink of their lettering, or the tab bar of the current tab", () => {
+    expect(unreadableCampParts('dark', { mustard: '#050505' })).toEqual(['ink on mustard', 'mustard on tabBar']);
+    expect(unreadableCampParts('army', { mustard: CAMP_PALETTES.army.tabBar })).toEqual(['mustard on tabBar']);
+  });
+
+  it('never refuses a pair the scheme ships with nearly the same', () => {
+    // Black's ink is black on its near-black page, by design: its panels
+    // stand off it on an olive shadow.
+    expect(deltaE(CAMP_PALETTES.dark.ink, CAMP_PALETTES.dark.page)).toBeLessThan(NEARLY_SAME);
+    expect(unreadableCampParts('dark', { shadow: '#000000' })).toEqual([]);
+  });
+
+  it('refuses an unknown scheme', () => {
+    expect(unreadableCampParts('navy', {})).toEqual(['scheme']);
+  });
+
+  it('takes colors by token only, as #RRGGBB, upper-cased', () => {
+    expect(SaveCampThemeInput.parse({ scheme: 'dark', colors: { red: '#f45b5b' } }).colors).toEqual({ red: '#F45B5B' });
+    expect(() => SaveCampThemeInput.parse({ scheme: 'dark', colors: { accent: '#F45B5B' } })).toThrow();
+    expect(() => SaveCampThemeInput.parse({ scheme: 'dark', colors: { red: 'red' } })).toThrow();
+    expect(() => SaveCampThemeInput.parse({ scheme: 'navy', colors: {} })).toThrow();
+  });
+});
+

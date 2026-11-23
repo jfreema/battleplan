@@ -6,6 +6,7 @@ import 'package:battleplan/app/route_extra_codec.dart';
 import 'package:battleplan/app/update_required_screen.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/links.dart';
@@ -620,12 +621,31 @@ GoRouter router(Ref ref) {
             builder: (_, _) =>
                 _AdminPanel(() => admin_panel.PlatformSettingsScreen()),
           ),
-          // The theme editor's addresses (#82), from before Boot Camp Mix
-          // took it out (#85): to the dashboard.
+          // The theme editor (#82; Boot Camp Mix's since #88): the seven
+          // schemes, then one's colors. Any other scheme's address, from
+          // the first editor's bookmarks, goes to the list.
           GoRoute(
             path: 'themes',
-            redirect: (_, _) => '/admin',
-            routes: [GoRoute(path: ':scheme', redirect: (_, _) => '/admin')],
+            builder: (_, _) =>
+                _AdminPanel(() => admin_panel.AdminThemesScreen()),
+            routes: [
+              GoRoute(
+                path: ':scheme',
+                redirect: (_, state) =>
+                    bootCampSchemes.contains(
+                      TeamScheme.tryParse(state.pathParameters['scheme']),
+                    )
+                    ? null
+                    : '/admin/themes',
+                builder: (_, state) => _AdminPanel(
+                  () => admin_panel.AdminThemeEditorScreen(
+                    scheme: TeamScheme.tryParse(
+                      state.pathParameters['scheme'],
+                    )!,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

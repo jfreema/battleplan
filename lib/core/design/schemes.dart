@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:battleplan/core/camp_theme.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/camp_palette.dart';
 import 'package:battleplan/core/design/color_math.dart';
@@ -169,6 +170,14 @@ class SchemeRoles {
       you: p.balloon,
     );
   }
+
+  /// [scheme]'s Boot Camp Mix roles with the theme editor's [colors] (#88):
+  /// what the app draws once they're saved, and the editor's preview.
+  factory edited(TeamScheme scheme, CampColors colors) => SchemeRoles.camp(
+    builtIn(scheme).palette.withColors({
+      for (final MapEntry(:key, :value) in colors.entries) key: Color(value),
+    }),
+  );
 
   /// The Boot Camp Mix tokens these roles come from (#85): the candy faces,
   /// the camouflage, and the rest the roles don't name.
@@ -549,10 +558,11 @@ class SchemeRoles {
     _ => dark,
   };
 
-  /// The roles [scheme] is drawn in (#85): its Boot Camp Mix scheme's. The
-  /// theme editor's colors (#82) no longer apply; `config/app.themes` is
-  /// left as it was.
-  static SchemeRoles of(TeamScheme scheme) => builtIn(scheme);
+  /// The roles [scheme] is drawn in (#85): its Boot Camp Mix scheme's, with
+  /// the colors the theme editor changed (#88). The first editor's colors
+  /// (#82, `config/app.themes`) no longer apply.
+  static SchemeRoles of(TeamScheme scheme) =>
+      ThemeCatalog.editedRoles(scheme) ?? builtIn(scheme);
 
   /// The roles of [scheme] with [theme]'s colors, saved or not (the theme
   /// editor's preview, #82). A saved slot with no theme is the default's.
@@ -578,6 +588,8 @@ class SchemeRoles {
 /// down because the roles are read everywhere a scheme is drawn.
 abstract final class ThemeCatalog {
   static Map<TeamScheme, ThemeOverride> _themes = const {};
+  static Map<TeamScheme, CampColors> _camp = const {};
+  static final _edited = <TeamScheme, SchemeRoles>{};
   static int _version = 0;
 
   /// Goes up with each change, so `AppTheme`'s cache knows to rebuild.
@@ -595,6 +607,28 @@ abstract final class ThemeCatalog {
 
   /// [scheme]'s theme, if the editor set one.
   static ThemeOverride? themeOf(TeamScheme scheme) => _themes[scheme];
+
+  /// Puts the theme editor's Boot Camp Mix colors in place (#88), from
+  /// `config/app.campThemes`: those that read, which every scheme is then
+  /// drawn in. Nothing happens when they're what's there.
+  static void installCamp(Map<TeamScheme, CampColors> colors) {
+    if (campThemesEqual(colors, _camp)) return;
+    _camp = Map.unmodifiable(colors);
+    _edited.clear();
+    _version++;
+  }
+
+  /// The Boot Camp Mix colors installed now, by scheme.
+  static Map<TeamScheme, CampColors> get campThemes => _camp;
+
+  /// [scheme]'s roles with the theme editor's colors, built once per change,
+  /// or null when its Boot Camp Mix scheme has none.
+  static SchemeRoles? editedRoles(TeamScheme scheme) {
+    final look = scheme.look;
+    final colors = _camp[look];
+    if (colors == null || colors.isEmpty) return null;
+    return _edited.putIfAbsent(look, () => SchemeRoles.edited(look, colors));
+  }
 
   /// The schemes the pickers offer: Boot Camp Mix's seven (#85, #86). The
   /// other built-in schemes and saved themes are no longer offered; a pick

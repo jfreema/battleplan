@@ -1,3 +1,4 @@
+import 'package:battleplan/core/camp_theme.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/theme_override.dart';
@@ -387,10 +388,15 @@ abstract class AppConfig with _$AppConfig {
     int? emailsPerDay,
     Announcement? announcementBanner,
 
-    /// The theme editor's colors (#82): changes to built-in schemes, and the
-    /// saved themes in their slots, by scheme.
+    /// The first theme editor's colors (#82): changes to the schemes before
+    /// Boot Camp Mix, and the saved themes in their slots, by scheme. Read
+    /// only for what an old pick of a saved theme looks like (#85).
     @Default(<TeamScheme, ThemeOverride>{})
     Map<TeamScheme, ThemeOverride> themes,
+
+    /// The theme editor's Boot Camp Mix colors (#88), by scheme: the tokens
+    /// a super admin changed, `config/app.campThemes`.
+    @Default(<TeamScheme, CampColors>{}) Map<TeamScheme, CampColors> campThemes,
   }) = _AppConfig;
 
   const new _();

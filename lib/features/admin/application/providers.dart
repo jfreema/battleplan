@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:battleplan/core/camp_theme.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/theme_readability.dart';
 import 'package:battleplan/core/ids.dart';
@@ -45,6 +46,21 @@ Map<TeamScheme, ThemeOverride> allThemes(Ref ref) =>
 @Riverpod(keepAlive: true)
 Map<TeamScheme, ThemeOverride> themeOverrides(Ref ref) =>
     readableThemes(ref.watch(allThemesProvider));
+
+/// Every scheme's colors in `config/app.campThemes` (#88), as saved: the
+/// Super Admin Panel's Themes page shows them all, even colors that are
+/// hard to read, so they can be put right. None signed out.
+@Riverpod(keepAlive: true)
+Map<TeamScheme, CampColors> allCampThemes(Ref ref) =>
+    ref.watch(appConfigProvider.select((c) => c.value?.campThemes ?? const {}));
+
+/// The theme editor's colors the app draws (#88): [allCampThemes] but any
+/// that's hard to read (`campThemeReads`), which the editor and the server
+/// refuse but colors saved by hand could be. What the app root installs in
+/// `ThemeCatalog`.
+@Riverpod(keepAlive: true)
+Map<TeamScheme, CampColors> campThemes(Ref ref) =>
+    readableCampThemes(ref.watch(allCampThemesProvider));
 
 /// The upload limit in bytes for documents and photos (ADMIN-7): the
 /// platform setting, capped at the storage rules' limit, which the server

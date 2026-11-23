@@ -14,7 +14,14 @@ import { HttpsError } from 'firebase-functions/v2/https';
 import { z } from 'zod';
 import { db } from '../shared/admin.js';
 import { forEachPage } from '../shared/batch.js';
-import { Collections, SCHEME_INK, teamSchemeValues } from '../shared/constants.js';
+import {
+  CAMP_PALETTES,
+  type CampColor,
+  Collections,
+  SCHEME_INK,
+  campColorValues,
+  teamSchemeValues,
+} from '../shared/constants.js';
 
 /** The slots saved themes take, in order: a new one takes the first free. */
 export const customSchemeValues = teamSchemeValues.filter((s) => s.startsWith('custom'));
@@ -231,3 +238,117 @@ export function unreadableParts(base: string, colors: ThemeColors): string[] {
     .filter(([, fg, bg, shippedFg, shippedBg]) => deltaE(fg, bg) < NEARLY_SAME && deltaE(shippedFg, shippedBg) >= NEARLY_SAME)
     .map(([what]) => what);
 }
+
+// ---- Boot Camp Mix (#88) -------------------------------------------------
+//
+// The theme editor back for Boot Camp Mix (owner's request 2026-11-22: "can
+// you put the theme editor back in? only available to super admins, of
+// course."): every color a scheme is drawn from, games, send and alerts
+// too, in config/app.campThemes under the scheme's value, token by token.
+// config/app.themes above keeps the first editor's colors, for the schemes
+// before Boot Camp Mix; the app no longer draws them.
+
+/** The Boot Camp Mix schemes the editor changes. */
+export const campSchemeValues = Object.keys(CAMP_PALETTES) as [string, ...string[]];
+
+/** A scheme's changed colors, by token, as '#RRGGBB'. */
+export type CampColors = Partial<Record<CampColor, string>>;
+
+export const SaveCampThemeInput = z.object({
+  scheme: z.enum(campSchemeValues),
+  colors: z.partialRecord(
+    z.enum(campColorValues),
+    z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/)
+      .transform((s) => s.toUpperCase()),
+  ),
+});
+export type SaveCampThemeInput = z.infer<typeof SaveCampThemeInput>;
+
+export const ResetCampThemeInput = z.object({ scheme: z.enum(campSchemeValues) });
+
+/**
+ * Saves the colors changed in a Boot Camp Mix scheme, in place of what was
+ * saved for it, or refuses with `unreadable-theme` when one would be nearly
+ * the same as what it sits on. No colors puts it back as it ships. Returns
+ * the entry before and after, for the audit.
+ */
+export async function saveCampTheme(input: SaveCampThemeInput): Promise<{
+  before: CampColors | null;
+  after: CampColors | null;
+}> {
+  const { scheme } = input;
+  const colors = input.colors as CampColors;
+  const unreadable = unreadableCampParts(scheme, colors);
+  if (unreadable.length > 0) {
+    throw new HttpsError('failed-precondition', 'Some of those colors are nearly the same as what they sit on.', {
+      reason: 'unreadable-theme',
+      parts: unreadable,
+    });
+  }
+  if (Object.keys(colors).length === 0) {
+    const { before } = await resetCampTheme(scheme);
+    return { before, after: null };
+  }
+  const ref = db().collection(Collections.config).doc('app');
+  return db().runTransaction(async (tx) => {
+    const before = (((await tx.get(ref)).get('campThemes') ?? {}) as Record<string, CampColors | undefined>)[scheme] ?? null;
+    // The scheme's entry replaced whole, so a color put back to the
+    // original goes; the other schemes and settings stay, and a fresh
+    // project's config/app is made.
+    tx.set(
+      ref,
+      { campThemes: { [scheme]: colors }, updatedAt: FieldValue.serverTimestamp() },
+      { mergeFields: [`campThemes.${scheme}`, 'updatedAt'] },
+    );
+    return { before, after: colors };
+  });
+}
+
+/** Puts a Boot Camp Mix scheme back as it ships. Returns the entry before. */
+export async function resetCampTheme(scheme: string): Promise<{ before: CampColors | null }> {
+  const ref = db().collection(Collections.config).doc('app');
+  const snap = await ref.get();
+  const before = ((snap.get('campThemes') ?? {}) as Record<string, CampColors | undefined>)[scheme] ?? null;
+  if (snap.exists) {
+    await ref.update({ [`campThemes.${scheme}`]: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() });
+  }
+  return { before };
+}
+
+/**
+ * Where [colors] over the Boot Camp Mix scheme [scheme] would put a color
+ * on one nearly the same as it, as "fg on bg"; none when there's nowhere.
+ * The pairs are the app's campPairs: the text on the page, the tab bar and
+ * text boxes (Candy Pop's are the camouflage's ground, where its page's
+ * white reads), the panels' text on them, the header's lettering on the
+ * camouflage, the tags' ink lettering on the trim, the current tab's trim
+ * on the tab bar, games, send and alerts on the page and on panels, and
+ * your messages on the page. Never refused for what the scheme ships with.
+ */
+export function unreadableCampParts(scheme: string, colors: CampColors): string[] {
+  const base = CAMP_PALETTES[scheme];
+  if (base === undefined) return ['scheme'];
+  const themed: Record<CampColor, string> = { ...base, ...colors };
+  const pairs = (p: Record<CampColor, string>): [CampColor, CampColor][] => [
+    ['text', 'page'],
+    ['text', 'tabBar'],
+    ['text', p.panelText !== p.text ? 'camoGround' : 'panel'],
+    ['panelText', 'panel'],
+    ['headerLettering', 'camoGround'],
+    ['ink', 'mustard'],
+    ['mustard', 'tabBar'],
+    ['red', 'page'],
+    ['red', 'panel'],
+    ['balloon', 'page'],
+  ];
+  const before = pairs(base);
+  return pairs(themed)
+    .filter(([fg, bg], i) => {
+      const [shippedFg, shippedBg] = before[i];
+      return deltaE(themed[fg], themed[bg]) < NEARLY_SAME && deltaE(base[shippedFg], base[shippedBg]) >= NEARLY_SAME;
+    })
+    .map(([fg, bg]) => `${fg} on ${bg}`);
+}
+

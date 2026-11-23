@@ -612,6 +612,47 @@ enum PlayBoard {
   }
 }
 
+enum CampColor {
+  page('page'),
+  panel('panel'),
+  tabBar('tabBar'),
+  ink('ink'),
+  shadow('shadow'),
+  text('text'),
+  muted('muted'),
+  panelText('panelText'),
+  panelMuted('panelMuted'),
+  headerLettering('headerLettering'),
+  mustard('mustard'),
+  balloon('balloon'),
+  red('red'),
+  blue('blue'),
+  green('green'),
+  orange('orange'),
+  purple('purple'),
+  unansweredTag('unansweredTag'),
+  answerRow('answerRow'),
+  toolsRow('toolsRow'),
+  disabledIcon('disabledIcon'),
+  camoGround('camoGround'),
+  camoBig('camoBig'),
+  camoMid('camoMid'),
+  camoSmall('camoSmall'),
+  ballChain('ballChain');
+
+  const CampColor(this.value);
+
+  /// The string stored in Firestore.
+  final String value;
+
+  static CampColor? tryParse(String? value) {
+    for (final e in values) {
+      if (e.value == value) return e;
+    }
+    return null;
+  }
+}
+
 enum ReportReason {
   spam('spam'),
   harassment('harassment'),

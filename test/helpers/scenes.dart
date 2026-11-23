@@ -747,8 +747,8 @@ const wideSize = Size(1280, 800);
 /// settings, invite, both Color scheme screens, a group's schedule, Dues (an
 /// admin's, a due, Who owes what, and a member's and a guardian's own), Your
 /// icon, the chat and schedule of a parent who hasn't picked their player
-/// yet, the wide rail layout, and the coach's whiteboard on a baseball and
-/// a volleyball team.
+/// yet, the wide rail layout, the theme editor, and the coach's whiteboard
+/// on a baseball and a volleyball team.
 final Map<
   String,
   Future<void> Function(WidgetTester, {required TeamScheme scheme})
@@ -860,6 +860,13 @@ goldenScreens = {
     await pumpNewParent(tester, scheme: scheme);
     await tester.tap(find.text('Schedule'));
     await tester.pumpAndSettle();
+  },
+  // The theme editor (#88, ADMIN-10): the scheme's own colors, as a super
+  // admin opens it from Themes.
+  'admin_theme_editor': (tester, {required scheme}) async {
+    await pumpTeam(tester, scheme: scheme, user: boss);
+    await goTo(tester, '/admin/themes');
+    await pushTo(tester, '/admin/themes/${scheme.value}');
   },
   // The coach's whiteboard (BOARD-2) on a baseball team, with the mockup's
   // relay on it: Boot Camp's board pieces (#87).

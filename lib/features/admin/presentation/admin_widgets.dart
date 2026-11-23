@@ -4,6 +4,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_colors.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_buttons.dart';
+import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/services/time_zones.dart';
@@ -29,6 +30,7 @@ enum AdminSection {
   users('/admin/users'),
   reports('/admin/reports'),
   audit('/admin/audit'),
+  themes('/admin/themes'),
   settings('/admin/settings');
 
   new(this.path);
@@ -65,6 +67,7 @@ class AdminScaffold extends StatelessWidget {
     AdminSection.users => AppIcons.person,
     AdminSection.reports => AppIcons.report,
     AdminSection.audit => AppIcons.history,
+    AdminSection.themes => AppIcons.colorScheme,
     AdminSection.settings => AppIcons.tune,
   };
 
@@ -193,6 +196,7 @@ String adminSectionLabel(AppLocalizations l10n, AdminSection s) => switch (s) {
   AdminSection.users => l10n.adminUsers,
   AdminSection.reports => l10n.reportsTitle,
   AdminSection.audit => l10n.adminAuditLog,
+  AdminSection.themes => l10n.adminThemes,
   AdminSection.settings => l10n.adminSettings,
 };
 
@@ -374,7 +378,8 @@ String userStatusLabel(AppLocalizations l10n, UserStatus s) => switch (s) {
   UserStatus.disabled => l10n.adminStatusDisabled,
 };
 
-/// A titled block on a detail page.
+/// A titled block on a detail page, in the card's colors: Candy Pop's are
+/// navy on its white cards (#86, #88).
 class AdminSectionCard extends StatelessWidget {
   const new({
     required this.title,
@@ -390,25 +395,30 @@ class AdminSectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Card.outlined(
     margin: const EdgeInsets.only(bottom: Space.lg),
-    child: Padding(
-      padding: const EdgeInsets.all(Space.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium,
+    child: GumdropSurface(
+      child: Padding(
+        padding: const EdgeInsets.all(Space.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  // In the card's own theme, under the surface.
+                  child: Builder(
+                    builder: (context) => Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
                 ),
-              ),
-              ?trailing,
-            ],
-          ),
-          const SizedBox(height: Space.sm),
-          ...children,
-        ],
+                ?trailing,
+              ],
+            ),
+            const SizedBox(height: Space.sm),
+            ...children,
+          ],
+        ),
       ),
     ),
   );

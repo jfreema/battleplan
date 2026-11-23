@@ -167,6 +167,8 @@ describe('only super admins (ADMIN-8)', () => {
     ['adminUpdatePlayer', admin.adminUpdatePlayer, { playerId: 'emma', displayName: 'Em' }],
     ['adminSaveTheme', admin.adminSaveTheme, { scheme: 'army', accent: '#123456' }],
     ['adminDeleteTheme', admin.adminDeleteTheme, { scheme: 'army' }],
+    ['adminSaveCampTheme', admin.adminSaveCampTheme, { scheme: 'dark', colors: { red: '#F45B5B' } }],
+    ['adminResetCampTheme', admin.adminResetCampTheme, { scheme: 'dark' }],
   ];
 
   it.each(calls)('%s refuses team owners and anyone without the claim', async (_name, fn, data) => {
@@ -1110,6 +1112,60 @@ describe('platform settings (ADMIN-7) and createGroup', () => {
     expect((await groups().doc(second.groupId).get()).get('storageQuotaBytes')).toBe(2048 * MB);
     // The default is every team's without its own limit, so the first moved too.
     expect((await groups().doc(first.groupId).get()).get('storageQuotaBytes')).toBe(2048 * MB);
+  });
+});
+
+describe("Boot Camp Mix's theme editor (#88)", () => {
+  const config = () => db().collection(Collections.config).doc('app');
+  const campThemes = async () => ((await config().get()).get('campThemes') ?? {}) as Record<string, unknown>;
+
+  it("saves a scheme's colors over a fresh config, upper-cased, and audits it", async () => {
+    await asRoot(admin.adminSaveCampTheme, { scheme: 'dark', colors: { red: '#f45b5b', mustard: '#FDD023' } });
+    expect(await campThemes()).toEqual({ dark: { red: '#F45B5B', mustard: '#FDD023' } });
+    const [entry] = await audits('saveCampTheme');
+    expect(entry).toMatchObject({ actorId: 'root', targetType: 'theme', targetId: 'dark', after: { red: '#F45B5B' } });
+  });
+
+  it("replaces what was saved for the scheme, and keeps the others, the first editor's themes and the settings", async () => {
+    await config().set({ supportEmail: 'help@example.com', themes: { navy: { accent: '#FDD023' } }, campThemes: { army: { red: '#F45B5B' } } });
+    await asRoot(admin.adminSaveCampTheme, { scheme: 'dark', colors: { red: '#F45B5B', page: '#101010' } });
+    await asRoot(admin.adminSaveCampTheme, { scheme: 'dark', colors: { red: '#E04A3A' } });
+    const saved = (await config().get()).data()!;
+    expect(saved.supportEmail).toBe('help@example.com');
+    expect(saved.themes).toEqual({ navy: { accent: '#FDD023' } });
+    expect(saved.campThemes).toEqual({ army: { red: '#F45B5B' }, dark: { red: '#E04A3A' } });
+    const latest = (await audits('saveCampTheme')).at(-1)!;
+    expect(latest.before).toEqual({ red: '#F45B5B', page: '#101010' });
+  });
+
+  it('refuses colors nearly the same as what they sit on, and unknown schemes or tokens', async () => {
+    await expect(asRoot(admin.adminSaveCampTheme, { scheme: 'army', colors: { red: '#474C2B' } })).rejects.toMatchObject({
+      details: { reason: 'unreadable-theme' },
+    });
+    for (const bad of [
+      { scheme: 'navy', colors: { red: '#F45B5B' } },
+      { scheme: 'dark', colors: { accent: '#F45B5B' } },
+      { scheme: 'dark', colors: { red: 'coral' } },
+    ]) {
+      await expect(asRoot(admin.adminSaveCampTheme, bad)).rejects.toMatchObject({ code: 'invalid-argument' });
+    }
+    expect(await campThemes()).toEqual({});
+    expect(await audits('saveCampTheme')).toEqual([]);
+  });
+
+  it('puts a scheme back as it ships, from a reset or a save of no colors, and audits it', async () => {
+    await asRoot(admin.adminSaveCampTheme, { scheme: 'dark', colors: { red: '#F45B5B' } });
+    await asRoot(admin.adminSaveCampTheme, { scheme: 'light', colors: { red: '#F45B5B' } });
+    await asRoot(admin.adminResetCampTheme, { scheme: 'dark' });
+    expect(await campThemes()).toEqual({ light: { red: '#F45B5B' } });
+    await asRoot(admin.adminSaveCampTheme, { scheme: 'light', colors: {} });
+    expect(await campThemes()).toEqual({});
+    const [reset] = await audits('resetCampTheme');
+    expect(reset).toMatchObject({ targetId: 'dark', before: { red: '#F45B5B' } });
+    // On a project with no config yet, a reset is a no-op.
+    await config().delete();
+    await asRoot(admin.adminResetCampTheme, { scheme: 'army' });
+    expect((await config().get()).exists).toBe(false);
   });
 });
 

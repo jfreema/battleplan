@@ -451,12 +451,10 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
 
   /// Light, or dark, for Material and the status bar: the page's, or in
   /// the card context the card's. They agree in every scheme but Candy
-  /// Pop, whose white cards are light on its dark blue page (#72).
-  Brightness get brightness => onCard
-      ? ThemeData.estimateBrightnessForColor(surface)
-      : scheme.isDark
-      ? Brightness.dark
-      : Brightness.light;
+  /// Pop, whose white cards are light on its dark blue page (#72). The
+  /// colors drawn, so a page the theme editor changed (#88) counts.
+  Brightness get brightness =>
+      ThemeData.estimateBrightnessForColor(onCard ? surface : page);
 
   /// What text sits on in this context: the page, or a card.
   Color get background => onCard ? surface : page;

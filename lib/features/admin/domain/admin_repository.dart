@@ -1,3 +1,4 @@
+import 'package:battleplan/core/camp_theme.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
@@ -163,4 +164,14 @@ abstract interface class AdminRepository {
   /// it ships; a saved theme is deleted, and anyone using it (a pick, a
   /// team's default, their own default) gets what comes next.
   Future<void> deleteTheme(TeamScheme scheme);
+
+  /// Saves the colors a super admin changed in a Boot Camp Mix [scheme]
+  /// (#88), in `config/app.campThemes`: [colors] replaces what was saved for
+  /// it, and anything not in it is as the scheme ships. Refused with
+  /// `unreadable-theme` when a color would be nearly the same as what it
+  /// sits on.
+  Future<void> saveCampTheme(TeamScheme scheme, CampColors colors);
+
+  /// Puts a Boot Camp Mix [scheme] back as it ships (#88).
+  Future<void> resetCampTheme(TeamScheme scheme);
 }

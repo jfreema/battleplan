@@ -1,3 +1,4 @@
+import 'package:battleplan/core/constants.g.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// One Boot Camp Mix color scheme's tokens (#85, owner's pick 2026-11-22:
@@ -123,6 +124,74 @@ final class CampPalette {
 
   /// The ball chain the dog tags hang from.
   final Color ballChain;
+
+  /// The token [color] names, as the theme editor shows and saves it (#88).
+  Color colorOf(CampColor color) => switch (color) {
+    CampColor.page => page,
+    CampColor.panel => panel,
+    CampColor.tabBar => tabBar,
+    CampColor.ink => ink,
+    CampColor.shadow => shadow,
+    CampColor.text => text,
+    CampColor.muted => muted,
+    CampColor.panelText => panelText,
+    CampColor.panelMuted => panelMuted,
+    CampColor.headerLettering => headerLettering,
+    CampColor.mustard => mustard,
+    CampColor.balloon => balloon,
+    CampColor.red => red,
+    CampColor.blue => blue,
+    CampColor.green => green,
+    CampColor.orange => orange,
+    CampColor.purple => purple,
+    CampColor.unansweredTag => unansweredTag,
+    CampColor.answerRow => answerRow,
+    CampColor.toolsRow => toolsRow,
+    CampColor.disabledIcon => disabledIcon,
+    CampColor.camoGround => camoGround,
+    CampColor.camoBig => camoBig,
+    CampColor.camoMid => camoMid,
+    CampColor.camoSmall => camoSmall,
+    CampColor.ballChain => ballChain,
+  };
+
+  /// This palette with the theme editor's [colors] in place of its own
+  /// (#88); the rest, and the see-through page dots and header halftone,
+  /// as they are.
+  CampPalette withColors(Map<CampColor, Color> colors) {
+    if (colors.isEmpty) return this;
+    Color pick(CampColor c) => colors[c] ?? colorOf(c);
+    return CampPalette(
+      ink: pick(CampColor.ink),
+      shadow: pick(CampColor.shadow),
+      page: pick(CampColor.page),
+      pageDots: pageDots,
+      panel: pick(CampColor.panel),
+      tabBar: pick(CampColor.tabBar),
+      text: pick(CampColor.text),
+      muted: pick(CampColor.muted),
+      panelText: pick(CampColor.panelText),
+      panelMuted: pick(CampColor.panelMuted),
+      mustard: pick(CampColor.mustard),
+      balloon: pick(CampColor.balloon),
+      red: pick(CampColor.red),
+      blue: pick(CampColor.blue),
+      green: pick(CampColor.green),
+      orange: pick(CampColor.orange),
+      purple: pick(CampColor.purple),
+      unansweredTag: pick(CampColor.unansweredTag),
+      answerRow: pick(CampColor.answerRow),
+      toolsRow: pick(CampColor.toolsRow),
+      disabledIcon: pick(CampColor.disabledIcon),
+      camoGround: pick(CampColor.camoGround),
+      camoBig: pick(CampColor.camoBig),
+      camoMid: pick(CampColor.camoMid),
+      camoSmall: pick(CampColor.camoSmall),
+      headerHalftone: headerHalftone,
+      headerLettering: pick(CampColor.headerLettering),
+      ballChain: pick(CampColor.ballChain),
+    );
+  }
 
   /// Army green: an olive page, panels a shade lighter, cream lettering,
   /// woodland camouflage.

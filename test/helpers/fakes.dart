@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:battleplan/core/camp_theme.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
@@ -3926,6 +3927,30 @@ class FakeAdminRepository implements AdminRepository {
     await _act('deleteTheme');
     deletedThemes.add(scheme);
     config = _config.copyWith(themes: {..._config.themes}..remove(scheme));
+  }
+
+  /// The Boot Camp Mix colors saved, as (scheme, colors), in order (#88).
+  final List<(TeamScheme, CampColors)> savedCampThemes = [];
+
+  @override
+  Future<void> saveCampTheme(TeamScheme scheme, CampColors colors) async {
+    await _act('saveCampTheme');
+    savedCampThemes.add((scheme, Map.of(colors)));
+    config = _config.copyWith(
+      campThemes: {..._config.campThemes, scheme: Map.unmodifiable(colors)},
+    );
+  }
+
+  /// The Boot Camp Mix schemes put back as they ship, in order (#88).
+  final List<TeamScheme> resetCampThemes = [];
+
+  @override
+  Future<void> resetCampTheme(TeamScheme scheme) async {
+    await _act('resetCampTheme');
+    resetCampThemes.add(scheme);
+    config = _config.copyWith(
+      campThemes: {..._config.campThemes}..remove(scheme),
+    );
   }
 }
 
