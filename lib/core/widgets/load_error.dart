@@ -1,5 +1,6 @@
 import 'package:battleplan/core/design/app_colors.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/color_math.dart';
 import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
@@ -95,6 +96,16 @@ class RefreshFailedNotice extends StatelessWidget {
     final c = GumdropColors.of(context);
     final ink = c.onCard ? c.textPrimary : c.textOnPage;
     final gutter = Space.gutter(MediaQuery.sizeOf(context).width);
+    // A Maybe tint over what it's on; where that would take the words under
+    // 4.5:1 (white on Tropic Blue's mid-blue page, #90), an ink tint, which
+    // deepens it instead.
+    final tinted = Color.alphaBlend(
+      AppColors.of(context).maybe.withValues(alpha: 0.18),
+      c.background,
+    );
+    final fill = ColorMath.contrast(ink, tinted) >= 4.5
+        ? tinted
+        : Color.alphaBlend(c.ink.withValues(alpha: 0.18), c.background);
     return Semantics(
       container: true,
       liveRegion: true,
@@ -104,10 +115,7 @@ class RefreshFailedNotice extends StatelessWidget {
         margin: EdgeInsets.fromLTRB(gutter, 8, gutter, 4),
         padding: const EdgeInsets.only(left: 12, right: 8),
         decoration: BoxDecoration(
-          color: Color.alphaBlend(
-            AppColors.of(context).maybe.withValues(alpha: 0.18),
-            c.background,
-          ),
+          color: fill,
           borderRadius: BorderRadius.circular(12),
         ),
         // The icon rides with the words, so with large text it stays by

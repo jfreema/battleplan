@@ -108,13 +108,14 @@ class SchemeRoles {
     final twoLetterings = p.panelText != p.text;
     final field = twoLetterings ? p.camoGround : p.panel;
     // Muted text, made to read on the page, fields, and the tab bar alike,
-    // and on panels where they share the page's lettering (Army green's
-    // panel is a shade lighter than its page).
+    // and on panels and their tracks where they share the page's lettering
+    // (Army green's panel is a shade lighter than its page; Desert Tan's
+    // segments sit on its tools row's khaki, #90).
     final muted = ColorMath.readable(p.muted, [
       p.page,
       field,
       p.tabBar,
-      if (!twoLetterings) p.panel,
+      if (!twoLetterings) ...[p.panel, p.toolsRow],
     ]);
     final cardMuted = twoLetterings
         ? ColorMath.readable(p.panelMuted, [p.panel])
@@ -536,9 +537,9 @@ class SchemeRoles {
   /// lettering, a navy and sky camouflage.
   static final sky = SchemeRoles.camp(CampPalette.sky);
 
-  /// Candy Pop (#86): a bright blue page under white, white panels under
-  /// navy.
-  static final candypop = SchemeRoles.camp(CampPalette.candyPop);
+  /// Royal & Gold (#90), in Candy Pop's place and its stored value (D82):
+  /// royal blue and gold. The identifier keeps the stored value's name.
+  static final candypop = SchemeRoles.camp(CampPalette.royalGold);
 
   /// Central Wildcats (#86): maroon and silver, with black ink.
   static final wildcat = SchemeRoles.camp(CampPalette.wildcat);
@@ -558,6 +559,12 @@ class SchemeRoles {
   /// Forest (#89), in Open Field's Forest green's stored value (D81).
   static final darkarmy = SchemeRoles.camp(CampPalette.forest);
 
+  /// Tropic Blue (#90): ocean blue, its panels white under navy.
+  static final tropicblue = SchemeRoles.camp(CampPalette.tropicBlue);
+
+  /// Desert Tan (#90): sand and olive, a light scheme.
+  static final deserttan = SchemeRoles.camp(CampPalette.desertTan);
+
   /// The roles of [scheme]'s Boot Camp Mix scheme ([TeamSchemeLook.look]),
   /// whatever was stored.
   static SchemeRoles builtIn(TeamScheme scheme) => switch (scheme.look) {
@@ -571,6 +578,8 @@ class SchemeRoles {
     TeamScheme.tealwave => tealwave,
     TeamScheme.navy => navy,
     TeamScheme.darkarmy => darkarmy,
+    TeamScheme.tropicblue => tropicblue,
+    TeamScheme.deserttan => deserttan,
     _ => dark,
   };
 
@@ -646,7 +655,7 @@ abstract final class ThemeCatalog {
     return _edited.putIfAbsent(look, () => SchemeRoles.edited(look, colors));
   }
 
-  /// The schemes the pickers offer: Boot Camp Mix's eleven (#85, #86, #89). The
+  /// The schemes the pickers offer: Boot Camp Mix's thirteen (#85, #86, #89, #90). The
   /// other built-in schemes and saved themes are no longer offered; a pick
   /// of one shows in its closest ([TeamSchemeLook.look]).
   static const List<TeamScheme> available = bootCampSchemes;
@@ -654,8 +663,9 @@ abstract final class ThemeCatalog {
 
 /// The Boot Camp Mix schemes, in picker order (#85, owner's pick
 /// 2026-11-22: "let's replace the existing themes with these 3 themes";
-/// #86, the same day: "add 4 new themes to the UI"; and #89, the next:
-/// Graphite, Teal Wave, Navy Steel, and Forest).
+/// #86, the same day: "add 4 new themes to the UI"; #89, the next:
+/// Graphite, Teal Wave, Navy Steel, and Forest; and #90: Royal & Gold in
+/// Candy Pop's place, Tropic Blue, and Desert Tan).
 const List<TeamScheme> bootCampSchemes = [
   TeamScheme.army,
   TeamScheme.dark,
@@ -668,13 +678,15 @@ const List<TeamScheme> bootCampSchemes = [
   TeamScheme.tealwave,
   TeamScheme.navy,
   TeamScheme.darkarmy,
+  TeamScheme.tropicblue,
+  TeamScheme.deserttan,
 ];
 
 /// What each scheme is called, which Boot Camp Mix scheme it's drawn in,
 /// and whether its page is dark.
 extension TeamSchemeLook on TeamScheme {
-  /// The Boot Camp Mix scheme this is drawn in (#85, #86, #89): itself for
-  /// the eleven; for a scheme the app no longer offers, the closest. Stored
+  /// The Boot Camp Mix scheme this is drawn in (#85, #86, #89, #90): itself for
+  /// the thirteen; for a scheme the app no longer offers, the closest. Stored
   /// picks are never rewritten, so an older app still shows its own. Since
   /// #89 Open Field's Navy is Navy Steel and its Forest green is Forest
   /// (D81); Scoreboard goes to Black; Sky Blue Pop to Sky Blue; a saved
@@ -690,6 +702,8 @@ extension TeamSchemeLook on TeamScheme {
     TeamScheme.tealwave => TeamScheme.tealwave,
     TeamScheme.navy => TeamScheme.navy,
     TeamScheme.darkarmy => TeamScheme.darkarmy,
+    TeamScheme.tropicblue => TeamScheme.tropicblue,
+    TeamScheme.deserttan => TeamScheme.deserttan,
     TeamScheme.dark || TeamScheme.scoreboard => TeamScheme.dark,
     _ => _savedLook,
   };
@@ -725,6 +739,8 @@ extension TeamSchemeLook on TeamScheme {
     TeamScheme.tealwave => l10n.schemeTealwave,
     TeamScheme.navy => l10n.schemeNavy,
     TeamScheme.darkarmy => l10n.schemeDarkarmy,
+    TeamScheme.tropicblue => l10n.schemeTropicblue,
+    TeamScheme.deserttan => l10n.schemeDeserttan,
     _ => l10n.schemeDark,
   };
 
@@ -740,6 +756,8 @@ extension TeamSchemeLook on TeamScheme {
     TeamScheme.tealwave => l10n.schemeTealwaveShort,
     TeamScheme.navy => l10n.schemeNavyShort,
     TeamScheme.darkarmy => l10n.schemeDarkarmyShort,
+    TeamScheme.tropicblue => l10n.schemeTropicblueShort,
+    TeamScheme.deserttan => l10n.schemeDeserttanShort,
     _ => l10n.schemeDarkShort,
   };
 }

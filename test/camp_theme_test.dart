@@ -139,8 +139,8 @@ void main() {
       expect(problems(dark, {CampColor.headerLettering: dark.camoGround}), [
         (CampColor.headerLettering, CampColor.camoGround),
       ]);
-      // Candy Pop's text boxes are the camouflage's ground.
-      const candy = CampPalette.candyPop;
+      // Tropic Blue's text boxes are the camouflage's ground.
+      const candy = CampPalette.tropicBlue;
       expect(problems(candy, {CampColor.camoGround: const Color(0xFFFFFFFF)}), [
         (CampColor.text, CampColor.camoGround),
         (CampColor.headerLettering, CampColor.camoGround),

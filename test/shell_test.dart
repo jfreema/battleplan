@@ -728,7 +728,7 @@ void main() {
     });
 
     testWidgets('a pick of a scheme that left is drawn and checked as the '
-        'closest of the eleven, and never rewritten (#85)', (tester) async {
+        'closest of the thirteen, and never rewritten (#85)', (tester) async {
       // Scoreboard left in #85; it's drawn as Black.
       final members = FakeMemberRepository([
         testMembership(

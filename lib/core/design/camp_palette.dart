@@ -3,9 +3,10 @@ import 'package:material_ui/material_ui.dart';
 
 /// One Boot Camp Mix color scheme's tokens (#85, owner's pick 2026-11-22:
 /// "let's replace the existing themes with these 3 themes"; SPEC §7.4):
-/// Army green, Black, and Light, since #86 Sky Blue, Candy Pop, Central
-/// Wildcat, and Geaux Tigahs, and since #89 Graphite, Teal Wave, Navy
-/// Steel, and Forest. Every color the look draws comes from
+/// Army green, Black, and Light, since #86 Sky Blue, Candy Pop (Royal &
+/// Gold since #90), Central Wildcat, and Geaux Tigahs, since #89 Graphite,
+/// Teal Wave, Navy Steel, and Forest, and since #90 Tropic Blue and Desert
+/// Tan. Every color the look draws comes from
 /// here; `SchemeRoles` and `GumdropColors` are built from it.
 @immutable
 final class CampPalette {
@@ -61,8 +62,9 @@ final class CampPalette {
   /// Times, places, and other second lines.
   final Color muted;
 
-  /// Lettering on panels: the page's [text], but navy on Candy Pop's white
-  /// panels (#86), the one scheme with two lettering colors.
+  /// Lettering on panels: the page's [text], but navy on Tropic Blue's white
+  /// panels (#90; Candy Pop's before), the one scheme with two lettering
+  /// colors.
   final Color panelText;
 
   /// Second lines on panels: [muted], or Candy Pop's navy-gray.
@@ -294,17 +296,19 @@ final class CampPalette {
   );
 
   /// Sky Blue (#86, owner's request 2026-11-22: "Sky Blue (with sky blue
-  /// also being the background color of the boxes)"): a sky-blue page and
-  /// boxes the same sky blue, set off by navy outlines and hard shadows
-  /// (the page keeps its dots, the boxes are plain), navy for every word,
-  /// and a navy and sky camouflage with white lettering.
+  /// also being the background color of the boxes)"; since #90, 2026-11-23:
+  /// "update the sky blue theme to be like the new mockup with the white
+  /// boxes", style 49): a sky-blue page, white boxes and tab bar, navy
+  /// outlines and hard shadows, navy for every word, and a navy and sky
+  /// camouflage with white lettering.
   static const sky = CampPalette(
     ink: Color(0xFF0B1531),
     shadow: Color(0xFF0B1531),
     page: Color(0xFFBCD9F5),
     pageDots: Color(0x210B1531),
-    panel: Color(0xFFBCD9F5),
-    tabBar: Color(0xFFBCD9F5),
+    // White boxes and tab bar since #90 (the page's sky blue before).
+    panel: Color(0xFFFFFFFF),
+    tabBar: Color(0xFFFFFFFF),
     text: Color(0xFF0B1531),
     muted: Color(0xFF34476E),
     panelText: Color(0xFF0B1531),
@@ -329,39 +333,40 @@ final class CampPalette {
     ballChain: Color(0xFF0B1531),
   );
 
-  /// Candy Pop (#86, owner's request: "Candy Pop (royal blue/white)"): a
-  /// bright blue page under white lettering, white panels under navy
-  /// lettering and navy-gray small print, navy ink and tab bar, and
-  /// candy-bright accents.
-  static const candyPop = CampPalette(
-    ink: Color(0xFF0B1640),
-    shadow: Color(0xFF0B1640),
-    page: Color(0xFF1748D4),
-    pageDots: Color(0x21FFFFFF),
-    panel: Color(0xFFFFFFFF),
-    tabBar: Color(0xFF0B1640),
+  /// Royal & Gold (#90, owner's request 2026-11-23: "replace the candy pop
+  /// theme with the Royal and Gold theme"; the mockups' style 45), in Candy
+  /// Pop's place and its stored value: a royal-blue page, panels a shade
+  /// lighter, white lettering, gold trim and balloons, practices in sky blue
+  /// so they show on the royal, and a royal camouflage.
+  static const royalGold = CampPalette(
+    ink: Color(0xFF050B24),
+    shadow: Color(0xFF050B24),
+    page: Color(0xFF17307F),
+    pageDots: Color(0x12FFFFFF),
+    panel: Color(0xFF22409E),
+    tabBar: Color(0xFF0E1E54),
     text: Color(0xFFFFFFFF),
-    muted: Color(0xFFDCE6FF),
-    panelText: Color(0xFF0B1640),
-    panelMuted: Color(0xFF4B5A8C),
-    mustard: Color(0xFFFFD43A),
-    balloon: Color(0xFFFFD43A),
-    red: Color(0xFFF2473D),
-    blue: Color(0xFF35B0FF),
-    green: Color(0xFF5ED36A),
-    orange: Color(0xFFFF9A2E),
-    purple: Color(0xFFB58BFF),
-    unansweredTag: Color(0xFFC9D3EE),
-    answerRow: Color(0xFFFFF1B0),
-    toolsRow: Color(0xFF1240B8),
-    disabledIcon: Color(0xFFA3B0D6),
-    camoGround: Color(0xFF1238A8),
-    camoBig: Color(0xFF0C2A86),
-    camoMid: Color(0xFF3F6FF2),
-    camoSmall: Color(0xFF0B1640),
-    headerHalftone: Color(0x38FFFFFF),
+    muted: Color(0xFFC9D3F2),
+    panelText: Color(0xFFFFFFFF),
+    panelMuted: Color(0xFFC9D3F2),
+    mustard: Color(0xFFF5C431),
+    balloon: Color(0xFFF5C431),
+    red: Color(0xFFE8473A),
+    blue: Color(0xFF6FC0FF),
+    green: Color(0xFF86D04F),
+    orange: Color(0xFFF79A3C),
+    purple: Color(0xFFC3A6FF),
+    unansweredTag: Color(0xFF4560B0),
+    answerRow: Color(0xFF13286A),
+    toolsRow: Color(0xFF1A3486),
+    disabledIcon: Color(0xFF7A8CC4),
+    camoGround: Color(0xFF1B3690),
+    camoBig: Color(0xFF112468),
+    camoMid: Color(0xFF2F52B8),
+    camoSmall: Color(0xFF070F33),
+    headerHalftone: Color(0x24FFFFFF),
     headerLettering: Color(0xFFFFFFFF),
-    ballChain: Color(0xFFDCE6FF),
+    ballChain: Color(0xFFF5C431),
   );
 
   /// Central Wildcats (#86, owner's request: "Central Wildcats
@@ -569,5 +574,77 @@ final class CampPalette {
     headerHalftone: Color(0x21FFFFFF),
     headerLettering: Color(0xFFFFFFFF),
     ballChain: Color(0xFFCFE3D6),
+  );
+
+  /// Tropic Blue (#90, "Add the Tropic Blue theme to the app as well.";
+  /// style 50): Candy Pop's arrangement, an ocean-blue page under white
+  /// lettering and white panels under deep-sea navy lettering, sunny yellow
+  /// trim and balloons, and a blue camouflage.
+  static const tropicBlue = CampPalette(
+    ink: Color(0xFF062033),
+    shadow: Color(0xFF062033),
+    // A hair deeper than the mockup's #0A84B4, so its white lettering
+    // reads at 4.5:1 (WCAG AA, SPEC §7.6).
+    page: Color(0xFF0A7EAC),
+    pageDots: Color(0x21FFFFFF),
+    panel: Color(0xFFFFFFFF),
+    tabBar: Color(0xFF062A45),
+    text: Color(0xFFFFFFFF),
+    muted: Color(0xFFD8F1FF),
+    panelText: Color(0xFF062033),
+    panelMuted: Color(0xFF3D5F7A),
+    mustard: Color(0xFFFFD23F),
+    balloon: Color(0xFFFFD23F),
+    red: Color(0xFFFF5A4E),
+    blue: Color(0xFF4FCBF7),
+    green: Color(0xFF4FD38A),
+    orange: Color(0xFFFF9A2E),
+    purple: Color(0xFFB58BFF),
+    unansweredTag: Color(0xFFCDE7F2),
+    answerRow: Color(0xFFFFF1B0),
+    toolsRow: Color(0xFF0B76A3),
+    disabledIcon: Color(0xFF9CC3D6),
+    camoGround: Color(0xFF0A6E99),
+    camoBig: Color(0xFF075478),
+    camoMid: Color(0xFF1E9CC8),
+    camoSmall: Color(0xFF04324A),
+    headerHalftone: Color(0x38FFFFFF),
+    headerLettering: Color(0xFFFFFFFF),
+    ballChain: Color(0xFFFFD23F),
+  );
+
+  /// Desert Tan (#90, "also add the Desert Tan theme to the app"; style
+  /// 38): a sand page, khaki-cream panels and tab bar, dark lettering, olive
+  /// trim and balloons, and a khaki camouflage lettered in ink: a light
+  /// scheme that reads in bright sun.
+  static const desertTan = CampPalette(
+    ink: Color(0xFF24231B),
+    shadow: Color(0xFF24231B),
+    page: Color(0xFFE4D6B4),
+    pageDots: Color(0x1F24231B),
+    panel: Color(0xFFF4ECD8),
+    tabBar: Color(0xFFF4ECD8),
+    text: Color(0xFF24231B),
+    muted: Color(0xFF615A45),
+    panelText: Color(0xFF24231B),
+    panelMuted: Color(0xFF615A45),
+    mustard: Color(0xFFA3A95A),
+    balloon: Color(0xFFA3A95A),
+    red: Color(0xFFC9452E),
+    blue: Color(0xFF4A86A8),
+    green: Color(0xFF6DB33F),
+    orange: Color(0xFFE08A2E),
+    purple: Color(0xFF8C68AD),
+    unansweredTag: Color(0xFFD3C6A6),
+    answerRow: Color(0xFFE6E2C0),
+    toolsRow: Color(0xFFD8C9A5),
+    disabledIcon: Color(0xFFA39A80),
+    camoGround: Color(0xFFA8956A),
+    camoBig: Color(0xFF8A7A52),
+    camoMid: Color(0xFFC9B88C),
+    camoSmall: Color(0xFF5C5236),
+    headerHalftone: Color(0x47FFFFFF),
+    headerLettering: Color(0xFF24231B),
+    ballChain: Color(0xFF24231B),
   );
 }

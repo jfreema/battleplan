@@ -16,148 +16,177 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// The design's tokens (#85, #86, #89), by name, in [bootCampSchemes]'
-/// order: Army green, Black, Light, Sky Blue, Candy Pop, Central Wildcats,
-/// Geaux Tigahs, then Graphite, Teal Wave, Navy Steel, and Forest.
+/// order: Army green, Black, Light, Sky Blue, Royal & Gold (in Candy Pop's
+/// place since #90), Central Wildcats, Geaux Tigahs, Graphite, Teal Wave,
+/// Navy Steel, Forest, Tropic Blue, and Desert Tan.
 const _tokens = <String, List<int>>{
   'ink': [
     0xFF1A1A18, 0xFF000000, 0xFF1A1A18, //
-    0xFF0B1531, 0xFF0B1640, 0xFF0B0B0B, 0xFF170730,
+    0xFF0B1531, 0xFF050B24, 0xFF0B0B0B, 0xFF170730,
     0xFF070A0D, 0xFF021214, 0xFF02060F, 0xFF050D09,
+    0xFF062033, 0xFF24231B,
   ],
   'shadow': [
     0xFF1A1A18, 0xFF363A28, 0xFF1A1A18, //
-    0xFF0B1531, 0xFF0B1640, 0xFF0B0B0B, 0xFF170730,
+    0xFF0B1531, 0xFF050B24, 0xFF0B0B0B, 0xFF170730,
     0xFF070A0D, 0xFF021214, 0xFF02060F, 0xFF050D09,
+    0xFF062033, 0xFF24231B,
   ],
   'page': [
     0xFF474C2B, 0xFF0D0D0C, 0xFFF2EBE0, //
-    0xFFBCD9F5, 0xFF1748D4, 0xFF5E1224, 0xFF461D7C,
+    0xFFBCD9F5, 0xFF17307F, 0xFF5E1224, 0xFF461D7C,
     0xFF2B323B, 0xFF0B3B40, 0xFF101D3A, 0xFF0F2E1F,
+    0xFF0A7EAC, 0xFFE4D6B4,
   ],
   'pageDots': [
     0x331A1A18, 0x0EF4EAD0, 0x1A1A1A18, //
-    0x210B1531, 0x21FFFFFF, 0x1CC0C5CC, 0x1CFDD023,
+    0x210B1531, 0x12FFFFFF, 0x1CC0C5CC, 0x1CFDD023,
     0x0FF1F4F7, 0x12F0FBFA, 0x12F2F6FF, 0x0FFFFFFF,
+    0x21FFFFFF, 0x1F24231B,
   ],
   'panel': [
     0xFF575A3A, 0xFF252522, 0xFFFFFFFF, //
-    0xFFBCD9F5, 0xFFFFFFFF, 0xFF701C30, 0xFF55278F,
+    0xFFFFFFFF, 0xFF22409E, 0xFF701C30, 0xFF55278F,
     0xFF3A434E, 0xFF135058, 0xFF2B3850, 0xFF183E2C,
+    0xFFFFFFFF, 0xFFF4ECD8,
   ],
   'tabBar': [
     0xFF3D4124, 0xFF070707, 0xFFFFFFFF, //
-    0xFFBCD9F5, 0xFF0B1640, 0xFF0B0B0B, 0xFF2E1157,
+    0xFFFFFFFF, 0xFF0E1E54, 0xFF0B0B0B, 0xFF2E1157,
     0xFF1E242B, 0xFF062A2E, 0xFF08101F, 0xFF081F14,
+    0xFF062A45, 0xFFF4ECD8,
   ],
   'text': [
     0xFFF4EAD0, 0xFFF4EAD0, 0xFF1A1A18, //
     0xFF0B1531, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
     0xFFF1F4F7, 0xFFF0FBFA, 0xFFF2F6FF, 0xFFFFFFFF,
+    0xFFFFFFFF, 0xFF24231B,
   ],
   'muted': [
     0xFFD3CCAE, 0xFFB5B1A2, 0xFF5E584B, //
-    0xFF34476E, 0xFFDCE6FF, 0xFFCDD1D8, 0xFFD5C6F0,
+    0xFF34476E, 0xFFC9D3F2, 0xFFCDD1D8, 0xFFD5C6F0,
     0xFFAEB8C4, 0xFFA9D3D0, 0xFFAFBACB, 0xFFB5CFC0,
+    0xFFD8F1FF, 0xFF615A45,
   ],
   'panelText': [
     0xFFF4EAD0, 0xFFF4EAD0, 0xFF1A1A18, //
-    0xFF0B1531, 0xFF0B1640, 0xFFFFFFFF, 0xFFFFFFFF,
+    0xFF0B1531, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
     0xFFF1F4F7, 0xFFF0FBFA, 0xFFF2F6FF, 0xFFFFFFFF,
+    0xFF062033, 0xFF24231B,
   ],
   'panelMuted': [
     0xFFD3CCAE, 0xFFB5B1A2, 0xFF5E584B, //
-    0xFF34476E, 0xFF4B5A8C, 0xFFCDD1D8, 0xFFD5C6F0,
+    0xFF34476E, 0xFFC9D3F2, 0xFFCDD1D8, 0xFFD5C6F0,
     0xFFAEB8C4, 0xFFA9D3D0, 0xFFAFBACB, 0xFFB5CFC0,
+    0xFF3D5F7A, 0xFF615A45,
   ],
   'mustard': [
     0xFFF2C230, 0xFFF2C230, 0xFFEFBE2B, //
-    0xFFF5C731, 0xFFFFD43A, 0xFFC9CED6, 0xFFFDD023,
+    0xFFF5C731, 0xFFF5C431, 0xFFC9CED6, 0xFFFDD023,
     0xFFFF7F66, 0xFF5CE1D3, 0xFFF2F5FA, 0xFFFFFFFF,
+    0xFFFFD23F, 0xFFA3A95A,
   ],
   'balloon': [
     0xFFF2C230, 0xFF93CFF5, 0xFFEFBE2B, //
-    0xFFF5C731, 0xFFFFD43A, 0xFFC9CED6, 0xFFFDD023,
+    0xFFF5C731, 0xFFF5C431, 0xFFC9CED6, 0xFFFDD023,
     0xFFFF7F66, 0xFFFF8D75, 0xFFF2F5FA, 0xFFFFFFFF,
+    0xFFFFD23F, 0xFFA3A95A,
   ],
   'red': [
     0xFFDB442F, 0xFFDB442F, 0xFFD4432C, //
-    0xFFE2463A, 0xFFF2473D, 0xFFEE4B37, 0xFFE8473A,
+    0xFFE2463A, 0xFFE8473A, 0xFFEE4B37, 0xFFE8473A,
     0xFFF26A50, 0xFFFF6B57, 0xFFE2463A, 0xFFE5483A,
+    0xFFFF5A4E, 0xFFC9452E,
   ],
   'blue': [
     0xFF5FA3C8, 0xFF4F93B9, 0xFF4A86A8, //
-    0xFF4C90E2, 0xFF35B0FF, 0xFF5FA8E0, 0xFF5AA5EE,
+    0xFF4C90E2, 0xFF6FC0FF, 0xFF5FA8E0, 0xFF5AA5EE,
     0xFF5AA7F0, 0xFF5AA7F0, 0xFF5AA0E0, 0xFF5BA8E0,
+    0xFF4FCBF7, 0xFF4A86A8,
   ],
   'green': [
     0xFF9AD04A, 0xFF8DC63F, 0xFF86B93B, //
-    0xFF7CC84E, 0xFF5ED36A, 0xFF86C94A, 0xFF7FCB52,
+    0xFF7CC84E, 0xFF86D04F, 0xFF86C94A, 0xFF7FCB52,
     0xFF8DC63F, 0xFF8DD85A, 0xFF7CC84E, 0xFF8BDB5A,
+    0xFF4FD38A, 0xFF6DB33F,
   ],
   'orange': [
     0xFFF5A040, 0xFFF2983A, 0xFFEE9230, //
-    0xFFF5943A, 0xFFFF9A2E, 0xFFF59A3A, 0xFFF79A3C,
+    0xFFF5943A, 0xFFF79A3C, 0xFFF59A3A, 0xFFF79A3C,
     0xFFF5A93A, 0xFFFFB347, 0xFFF5943A, 0xFFF5A03A,
+    0xFFFF9A2E, 0xFFE08A2E,
   ],
   'purple': [
     0xFFAD8CD6, 0xFF9B79C4, 0xFF8C68AD, //
-    0xFFA98BEB, 0xFFB58BFF, 0xFFB08AE0, 0xFFC7A6FF,
+    0xFFA98BEB, 0xFFC3A6FF, 0xFFB08AE0, 0xFFC7A6FF,
     0xFFB49AF0, 0xFFB99AF0, 0xFFA98BEB, 0xFFB794E8,
+    0xFFB58BFF, 0xFF8C68AD,
   ],
   'unansweredTag': [
     0xFF7E8160, 0xFF47473F, 0xFFDCD3C3, //
-    0xFFE6F1FC, 0xFFC9D3EE, 0xFF8A5562, 0xFF7A56AE,
+    0xFFE6F1FC, 0xFF4560B0, 0xFF8A5562, 0xFF7A56AE,
     0xFF4F5966, 0xFF3D6B70, 0xFF4A5670, 0xFF375A48,
+    0xFFCDE7F2, 0xFFD3C6A6,
   ],
   'answerRow': [
     0xFF4C5130, 0xFF1B1B19, 0xFFFAEDB2, //
-    0xFFFBEFB4, 0xFFFFF1B0, 0xFF5A1525, 0xFF481F7C,
+    0xFFFBEFB4, 0xFF13286A, 0xFF5A1525, 0xFF481F7C,
     0xFF2E2A2D, 0xFF0A3035, 0xFF1A2742, 0xFF0C2619,
+    0xFFFFF1B0, 0xFFE6E2C0,
   ],
   'toolsRow': [
     0xFF4C5130, 0xFF1A1A18, 0xFFE6DCCB, //
-    0xFFA9CBEE, 0xFF1240B8, 0xFF681A2E, 0xFF4E2287,
+    0xFFA9CBEE, 0xFF1A3486, 0xFF681A2E, 0xFF4E2287,
     0xFF2F3740, 0xFF10464D, 0xFF22304A, 0xFF14382A,
+    0xFF0B76A3, 0xFFD8C9A5,
   ],
   'disabledIcon': [
     0xFF8E9173, 0xFF64645C, 0xFFB2AB9B, //
-    0xFF6F86AB, 0xFFA3B0D6, 0xFFA88892, 0xFF9A86C0,
+    0xFF6F86AB, 0xFF7A8CC4, 0xFFA88892, 0xFF9A86C0,
     0xFF6F7A87, 0xFF5F8E91, 0xFF6B7790, 0xFF6A897A,
+    0xFF9CC3D6, 0xFFA39A80,
   ],
   'camoGround': [
     0xFF3F4722, 0xFF23241F, 0xFFC7B787, //
-    0xFF2F5596, 0xFF1238A8, 0xFF55111F, 0xFF3F1A72,
+    0xFF2F5596, 0xFF1B3690, 0xFF55111F, 0xFF3F1A72,
     0xFF333B45, 0xFF0E4A50, 0xFF1C2840, 0xFF133524,
+    0xFF0A6E99, 0xFFA8956A,
   ],
   'camoBig': [
     0xFF2A3016, 0xFF161713, 0xFFA69468, //
-    0xFF1E3A70, 0xFF0C2A86, 0xFF350A14, 0xFF2A0F50,
+    0xFF1E3A70, 0xFF112468, 0xFF350A14, 0xFF2A0F50,
     0xFF232A32, 0xFF083338, 0xFF121A2C, 0xFF0B2418,
+    0xFF075478, 0xFF8A7A52,
   ],
   'camoMid': [
     0xFF7F7A48, 0xFF3A3C33, 0xFFE0D4AC, //
-    0xFF6390CC, 0xFF3F6FF2, 0xFF8A2E42, 0xFF6C3DB0,
+    0xFF6390CC, 0xFF2F52B8, 0xFF8A2E42, 0xFF6C3DB0,
     0xFF4A5562, 0xFF1F6E73, 0xFF3A4760, 0xFF28543D,
+    0xFF1E9CC8, 0xFFC9B88C,
   ],
   'camoSmall': [
     0xFF14170B, 0xFF070706, 0xFF6E6143, //
-    0xFF0E1D42, 0xFF0B1640, 0xFF0B0B0B, 0xFF150628,
+    0xFF0E1D42, 0xFF070F33, 0xFF0B0B0B, 0xFF150628,
     0xFF12161B, 0xFF03191C, 0xFF060A14, 0xFF05110B,
+    0xFF04324A, 0xFF5C5236,
   ],
   'headerHalftone': [
     0x33F4EAD0, 0x1FF4EAD0, 0x73FFFFFF, //
-    0x57FFFFFF, 0x38FFFFFF, 0x24FFFFFF, 0x29FFFFFF,
+    0x57FFFFFF, 0x24FFFFFF, 0x24FFFFFF, 0x29FFFFFF,
     0x1FFFFFFF, 0x24F0FBFA, 0x21F2F6FF, 0x21FFFFFF,
+    0x38FFFFFF, 0x47FFFFFF,
   ],
   'headerLettering': [
     0xFFF4EAD0, 0xFFF4EAD0, 0xFF1A1A18, //
     0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
     0xFFF1F4F7, 0xFFF0FBFA, 0xFFF2F6FF, 0xFFFFFFFF,
+    0xFFFFFFFF, 0xFF24231B,
   ],
   'ballChain': [
     0xFF1A1A18, 0xFF77786E, 0xFF1A1A18, //
-    0xFF0B1531, 0xFFDCE6FF, 0xFFC0C5CC, 0xFFFDD023,
+    0xFF0B1531, 0xFFF5C431, 0xFFC0C5CC, 0xFFFDD023,
     0xFFFF7F66, 0xFF5FE0D6, 0xFF8E9AB4, 0xFFCFE3D6,
+    0xFFFFD23F, 0xFF24231B,
   ],
 };
 
@@ -227,8 +256,9 @@ void main() {
       test('${scheme.value}: the roles come from the tokens', () {
         final r = SchemeRoles.of(scheme);
         final p = r.palette;
-        // Candy Pop letters its page white and its white panels navy (#86):
-        // its text boxes and menus opened from the page take a deeper blue.
+        // Tropic Blue letters its page white and its white panels navy (#90,
+        // as Candy Pop did in #86): its text boxes and menus opened from the
+        // page take the camouflage's deeper blue.
         final two = p.panelText != p.text;
         final field = two ? p.camoGround : p.panel;
         expect(r.page, p.page);
@@ -240,7 +270,7 @@ void main() {
             p.page,
             field,
             p.tabBar,
-            if (!two) p.panel,
+            if (!two) ...[p.panel, p.toolsRow],
           ]),
         );
         expect(r.card, p.panel);
@@ -264,7 +294,7 @@ void main() {
       });
     }
 
-    test('the eleven are offered, and Black is the default', () {
+    test('the thirteen are offered, and Black is the default', () {
       expect(ThemeCatalog.available, [
         TeamScheme.army,
         TeamScheme.dark,
@@ -277,11 +307,13 @@ void main() {
         TeamScheme.tealwave,
         TeamScheme.navy,
         TeamScheme.darkarmy,
+        TeamScheme.tropicblue,
+        TeamScheme.deserttan,
       ]);
       expect(defaultTeamScheme, TeamScheme.dark);
     });
 
-    test('every other stored scheme is drawn in the closest of the eleven, '
+    test('every other stored scheme is drawn in the closest of the thirteen, '
         'and never rewritten', () {
       const want = {
         TeamScheme.army: TeamScheme.army,
@@ -296,6 +328,8 @@ void main() {
         TeamScheme.navy: TeamScheme.navy,
         TeamScheme.graphite: TeamScheme.graphite,
         TeamScheme.tealwave: TeamScheme.tealwave,
+        TeamScheme.tropicblue: TeamScheme.tropicblue,
+        TeamScheme.deserttan: TeamScheme.deserttan,
         TeamScheme.wildcat: TeamScheme.wildcat,
         TeamScheme.purplegold: TeamScheme.purplegold,
         TeamScheme.scoreboard: TeamScheme.dark,
@@ -363,15 +397,16 @@ void main() {
       }
     });
 
-    test("light pages are Light and Sky Blue; cards agree but Candy Pop's "
-        'white ones', () {
+    test('light pages are Light, Sky Blue and Desert Tan; cards agree but '
+        "Tropic Blue's white ones", () {
       expect(bootCampSchemes.where((s) => !s.isDark), [
         TeamScheme.light,
         TeamScheme.sky,
+        TeamScheme.deserttan,
       ]);
       for (final scheme in bootCampSchemes) {
         final want = scheme.isDark ? Brightness.dark : Brightness.light;
-        final card = scheme == TeamScheme.candypop ? Brightness.light : want;
+        final card = scheme == TeamScheme.tropicblue ? Brightness.light : want;
         expect(GumdropColors.forScheme(scheme).brightness, want);
         expect(GumdropColors.forScheme(scheme, onCard: true).brightness, card);
         expect(AppTheme.of(scheme).brightness, want);
@@ -459,8 +494,8 @@ void main() {
         expect(card.blueRaspberry.text, r.blueRaspberryCardText);
         expect(page.textMutedOnPage, r.pageMuted);
         expect(card.textMutedOnPage, r.cardMuted);
-        // On Candy Pop's blue page its wells are its text boxes' deeper
-        // blue (#86).
+        // On Tropic Blue's blue page its wells are its text boxes' deeper
+        // blue (#90, as on Candy Pop's in #86).
         expect(page.well, r.cardText == r.text ? r.cardTrack : r.field);
         expect(card.well, r.cardTrack);
         // Plain headings have no drop; big titles are outlined.
@@ -498,7 +533,7 @@ void main() {
           // Low is the cards and sheets, whose content is in the card
           // context (its own check): from the page, only the containers
           // Material draws its own rows on (menus, pickers) need the page's
-          // text to read. They're one color but in Candy Pop (#72).
+          // text to read. They're one color but in Tropic Blue (#72, #90).
           for (final (bg, name) in [
             (s.surface, 'surface'),
             (s.surfaceContainerLowest, 'lowest'),
@@ -522,8 +557,8 @@ void main() {
               _reads(fg, s.surfaceContainerLow, '$where $name on cards');
             }
           }
-          if (!onCard && scheme != TeamScheme.candypop) {
-            // Panels and pop-ups are one color, but in Candy Pop, whose
+          if (!onCard && scheme != TeamScheme.tropicblue) {
+            // Panels and pop-ups are one color, but in Tropic Blue, whose
             // pop-ups from the page are a deeper blue than its white panels.
             expect(s.surfaceContainerLow, s.surfaceContainer);
           }

@@ -109,7 +109,7 @@ service cloud.firestore {
         // shared/constants.json (users.test.ts checks).
         && (p.get('colorScheme', null) == null
             || p.colorScheme in ['army', 'darkarmy', 'light', 'dark', 'navy', 'sky', 'skyblue', 'candypop', 'wildcat', 'purplegold', 'scoreboard',
-                 'graphite', 'tealwave',
+                 'graphite', 'tealwave', 'tropicblue', 'deserttan',
                  'custom1', 'custom2', 'custom3', 'custom4', 'custom5', 'custom6', 'custom7', 'custom8', 'custom9', 'custom10', 'custom11', 'custom12'])
         && (p.get('avatarColor', null) == null
             || p.avatarColor in ['blueRaspberry', 'lemon', 'mint', 'grape', 'bubblegum',
@@ -184,7 +184,7 @@ service cloud.firestore {
         // null for none (members then see their own default).
         && (!('colorScheme' in changed()) || incoming().get('colorScheme', null) == null
             || incoming().colorScheme in ['army', 'darkarmy', 'light', 'dark', 'navy', 'sky', 'skyblue', 'candypop', 'wildcat', 'purplegold', 'scoreboard',
-                 'graphite', 'tealwave',
+                 'graphite', 'tealwave', 'tropicblue', 'deserttan',
                  'custom1', 'custom2', 'custom3', 'custom4', 'custom5', 'custom6', 'custom7', 'custom8', 'custom9', 'custom10', 'custom11', 'custom12'])
         // Where team notifications start for people who join (TEAM-5,
         // NOTIF-3): one of the three levels. Top-level, not in settings,
@@ -270,7 +270,7 @@ service cloud.firestore {
         // ten-photo message must stay under the 1,000-expression budget.)
         && (incoming().get('colorScheme', null) == null
             || incoming().colorScheme in ['army', 'darkarmy', 'light', 'dark', 'navy', 'sky', 'skyblue', 'candypop', 'wildcat', 'purplegold', 'scoreboard',
-                 'graphite', 'tealwave',
+                 'graphite', 'tealwave', 'tropicblue', 'deserttan',
                  'custom1', 'custom2', 'custom3', 'custom4', 'custom5', 'custom6', 'custom7', 'custom8', 'custom9', 'custom10', 'custom11', 'custom12'])
         // What they said to "Who are you here for?" without picking a
         // player (PLAYER-3): Not now ('later'), or a coach or another adult
