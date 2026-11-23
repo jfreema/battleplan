@@ -5,9 +5,13 @@
 // The test font draws every letter 1 em square, so names are wide here;
 // the phone is a wide one so the small title has room.
 
+import 'dart:math' as math;
+
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/widgets/back_chevron.dart';
+import 'package:battleplan/core/widgets/camo.dart';
+import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/core/widgets/team_switcher_button.dart';
 import 'package:battleplan/features/chat/presentation/messages_button.dart';
 import 'package:battleplan/features/groups/groups.dart';
@@ -37,16 +41,27 @@ void main() {
     await pushTo(tester, '/settings');
     expect(find.widgetWithText(PageTitle, 'Settings'), findsOneWidget);
     expect(_small('Settings'), findsNothing);
-    AppBar bar() => tester.widget<AppBar>(find.byType(AppBar).last);
     // Boot Camp Mix's header (#85): camouflage, with a 3 px ink line under
-    // it from the start.
-    expect((bar().shape! as Border).bottom.width, 3);
+    // it from the start. At 800 wide the page is a 560 column, so the line
+    // runs under the whole width, around the bar rather than on it (#92).
+    double inkLine() => tester
+        .widgetList<DecoratedBox>(
+          find.descendant(
+            of: find.byType(CampAppBar).last,
+            matching: find.byType(DecoratedBox),
+          ),
+        )
+        .map((box) => box.decoration)
+        .whereType<BoxDecoration>()
+        .map((d) => (d.border as Border?)?.bottom.width ?? 0)
+        .fold(0, math.max);
+    expect(inkLine(), 3);
 
     await _scroll(tester, 400);
     // Out of sight, and the back row says where you are instead.
     expect(find.widgetWithText(PageTitle, 'Settings'), findsNothing);
     expect(_small('Settings'), findsOneWidget);
-    expect(bar().shape, isA<Border>());
+    expect(inkLine(), 3);
     // Still one heading for screen readers: the small title is only its
     // echo.
     expect(
@@ -321,6 +336,19 @@ void main() {
       final back = tester.getRect(find.byType(BackChevron));
       expect(back.left, greaterThanOrEqualTo(column.left));
       expect(back.left, lessThan(column.left + 20));
+      // The camouflage behind them still runs the window's whole width,
+      // not just the column's (#92: on an iPad it stopped short of both
+      // edges).
+      final bar = tester.getRect(find.byType(CampAppBar));
+      expect(bar.left, 0, reason: title);
+      expect(bar.width, wideSize.width, reason: title);
+      final ground = find.descendant(
+        of: find.byType(CampAppBar),
+        matching: find.byWidgetPredicate(
+          (w) => w is CustomPaint && w.painter is CamoPainter,
+        ),
+      );
+      expect(tester.getRect(ground.first).width, wideSize.width);
       for (final icon in [
         ...tester.widgetList(find.byType(IconButton)),
         ...tester.widgetList(find.byType(FloatingActionButton)),

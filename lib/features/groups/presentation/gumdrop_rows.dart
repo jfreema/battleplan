@@ -114,42 +114,42 @@ class _GumdropScaffoldState extends State<GumdropScaffold> {
           };
     final actions = widget.actions ?? const <Widget>[];
     return Scaffold(
-      appBar: _ColumnBar(
-        maxWidth: widget.maxWidth,
-        bar: CampAppBar(
-          toolbarHeight: 48,
-          automaticallyImplyLeading: false,
-          // The back row isn't the heading; the title is, and names the
-          // route.
-          excludeHeaderSemantics: true,
-          titleSpacing: 4,
-          title: back == null
-              ? null
-              : Align(alignment: AlignmentDirectional.centerStart, child: back),
-          actions: actions,
-          actionsPadding: const EdgeInsets.only(right: 4),
-          // A hairline under the row once the page scrolls under it, so its
-          // edge shows; none at the top, where the title sits below it. As
-          // wide as the column, as the team header's is.
-          shape: _away
-              ? Border(
-                  bottom: BorderSide(color: GumdropColors.of(context).divider),
-                )
-              : null,
-          flexibleSpace: SafeArea(
-            bottom: false,
-            child: SizedBox(
-              height: 48,
-              child: _SmallTitle(
-                title: widget.title,
-                shown: _away,
-                // Where the back button and the actions are, so the small
-                // title, centered, never runs into either.
-                left: back == null
-                    ? 4
-                    : 4 + BackChevron.widthOf(context, backLabel),
-                right: 4 + 48.0 * actions.length,
-              ),
+      // The camouflage across the window, the back row in the page's
+      // centered column on a wide screen (#29).
+      appBar: CampAppBar(
+        columnWidth: widget.maxWidth,
+        toolbarHeight: 48,
+        automaticallyImplyLeading: false,
+        // The back row isn't the heading; the title is, and names the
+        // route.
+        excludeHeaderSemantics: true,
+        titleSpacing: 4,
+        title: back == null
+            ? null
+            : Align(alignment: AlignmentDirectional.centerStart, child: back),
+        actions: actions,
+        actionsPadding: const EdgeInsets.only(right: 4),
+        // A hairline under the row once the page scrolls under it, so its
+        // edge shows; none at the top, where the title sits below it. As
+        // wide as the column, as the team header's is.
+        shape: _away
+            ? Border(
+                bottom: BorderSide(color: GumdropColors.of(context).divider),
+              )
+            : null,
+        flexibleSpace: SafeArea(
+          bottom: false,
+          child: SizedBox(
+            height: 48,
+            child: _SmallTitle(
+              title: widget.title,
+              shown: _away,
+              // Where the back button and the actions are, so the small
+              // title, centered, never runs into either.
+              left: back == null
+                  ? 4
+                  : 4 + BackChevron.widthOf(context, backLabel),
+              right: 4 + 48.0 * actions.length,
             ),
           ),
         ),
@@ -193,32 +193,6 @@ class _GumdropScaffoldState extends State<GumdropScaffold> {
       ),
     );
   }
-}
-
-/// [GumdropScaffold]'s back row in the page's centered column of
-/// [maxWidth] on a wide screen (#29, 2026-11-20): on a computer or an iPad
-/// the chevron stood at the window's left edge and the icons at its right,
-/// far from a 560 px page in the middle. The margins are the page's own
-/// color, as the bar is. As wide as the window when [maxWidth] is null or
-/// the window is no wider than it.
-class _ColumnBar extends StatelessWidget implements PreferredSizeWidget {
-  const new({required this.bar, this.maxWidth});
-
-  final PreferredSizeWidget bar;
-  final double? maxWidth;
-
-  @override
-  Size get preferredSize => bar.preferredSize;
-
-  @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, box) => Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: _margin(box.maxWidth, maxWidth),
-      ),
-      child: bar,
-    ),
-  );
 }
 
 /// The even margin either side of a centered column of [column] in

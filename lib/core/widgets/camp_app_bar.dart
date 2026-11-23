@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/schemes.dart';
@@ -29,8 +31,18 @@ class CampAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.titleTextStyle,
     this.systemOverlayStyle,
     this.actionsPadding,
+    this.columnWidth,
     super.key,
   });
+
+  /// The page's centered column on a wide screen, if it has one: the
+  /// camouflage and its ink line still run the bar's whole width, but the
+  /// back button, title, and actions stand in the column, over the page
+  /// they belong to. Before, a page in a column (`GumdropScaffold`, #29)
+  /// narrowed the whole bar, so on an iPad or a computer its camouflage
+  /// stopped short of both edges, a strip floating mid-page. Null for a
+  /// bar as wide as its contents.
+  final double? columnWidth;
 
   final Widget? leading;
   final bool automaticallyImplyLeading;
@@ -85,7 +97,15 @@ class CampAppBar extends StatelessWidget implements PreferredSizeWidget {
     // the header's lettering, white on Candy Pop's white face.
     final menus = PopupMenuTheme.of(context).copyWith(iconColor: onPanel);
     final buttons = actions;
-    final bar = AppBar(
+    // The theme editor's header background, if it set one (#91); the
+    // Super Admin Panel's, the camouflage.
+    final ground = CamoPainter(
+      p,
+      style: c.shipped
+          ? HeaderStyle.camo
+          : ThemeCatalog.headerStyleOf(c.scheme),
+    );
+    AppBar barOf({required bool painted}) => AppBar(
       leading: leading,
       automaticallyImplyLeading: automaticallyImplyLeading,
       title: title,
@@ -98,27 +118,30 @@ class CampAppBar extends StatelessWidget implements PreferredSizeWidget {
                   child: PopupMenuTheme(data: menus, child: a),
                 ),
             ],
-      flexibleSpace: camo
+      flexibleSpace: camo && painted
           ? Stack(
               fit: StackFit.expand,
               children: [
-                // The theme editor's header background, if it set one
-                // (#91); the Super Admin Panel's, the camouflage.
-                CustomPaint(
-                  painter: CamoPainter(
-                    p,
-                    style: c.shipped
-                        ? HeaderStyle.camo
-                        : ThemeCatalog.headerStyleOf(c.scheme),
-                  ),
-                ),
+                CustomPaint(painter: ground),
                 ?flexibleSpace,
               ],
             )
           : flexibleSpace,
       bottom: bottom,
-      shape: camo ? Border(bottom: BorderSide(color: p.ink, width: 3)) : shape,
-      backgroundColor: camo ? p.camoGround : backgroundColor,
+      shape: !camo
+          ? shape
+          : painted
+          ? Border(bottom: BorderSide(color: p.ink, width: 3))
+          : null,
+      // In a column the ground is painted around the bar, so the bar
+      // itself is clear and never tints as the page scrolls under it.
+      backgroundColor: !camo
+          ? backgroundColor
+          : painted
+          ? p.camoGround
+          : Colors.transparent,
+      scrolledUnderElevation: camo && !painted ? 0 : null,
+      surfaceTintColor: camo && !painted ? Colors.transparent : null,
       foregroundColor: foregroundColor,
       iconTheme: iconTheme,
       actionsIconTheme: actionsIconTheme,
@@ -129,7 +152,35 @@ class CampAppBar extends StatelessWidget implements PreferredSizeWidget {
       systemOverlayStyle: systemOverlayStyle,
       actionsPadding: actionsPadding,
     );
+    final column = columnWidth;
+    if (!camo) return barOf(painted: true);
     // Lettered for the camouflage (Sky Blue's white, #86).
-    return camo ? CampHeaderTheme(child: bar) : bar;
+    if (column == null) return CampHeaderTheme(child: barOf(painted: true));
+    return CampHeaderTheme(
+      child: LayoutBuilder(
+        builder: (context, box) {
+          final margin = math.max<double>(0, (box.maxWidth - column) / 2);
+          if (margin == 0) return barOf(painted: true);
+          // The ground and its ink line across the whole width, the bar's
+          // contents in the column over it.
+          return DecoratedBox(
+            position: DecorationPosition.foreground,
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: p.ink, width: 3)),
+            ),
+            child: ColoredBox(
+              color: p.camoGround,
+              child: CustomPaint(
+                painter: ground,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: margin),
+                  child: barOf(painted: false),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 }
