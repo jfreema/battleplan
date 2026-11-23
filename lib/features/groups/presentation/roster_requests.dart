@@ -74,7 +74,8 @@ class RosterRequest {
 
   /// Who's already linked to the claimed player, by name, so the coach can
   /// tell a real parent from a mistake.
-  final List<({String name, PlayerRelation relation})> linked;
+  final List<({String name, PlayerRelation relation, GuardianTitle title})>
+  linked;
 
   /// When it was asked, oldest first; null sorts last.
   DateTime? get at => pending?.addedAt ?? claim?.createdAt;
@@ -112,14 +113,26 @@ class RosterRequest {
             ? (l10n.requestPlayerSelf(who), [who])
             : (l10n.requestPlayerSelfNumber(who, number), [who]);
       }
+      // As the guardian picked to be called (#95).
       return (
-        l10n.requestPlayerGuardian(who, player, p.firstName),
+        p.proposedTitle == GuardianTitle.parent
+            ? l10n.requestPlayerParent(who, player, p.firstName)
+            : l10n.requestPlayerGuardian(who, player, p.firstName),
         [who, player],
       );
     }
-    return claim!.relation == PlayerRelation.self
-        ? (l10n.requestClaimSelf(who, player), [who, player])
-        : (l10n.requestClaimGuardian(who, player), [who, player]);
+    final c = claim!;
+    return switch ((c.relation, c.title)) {
+      (PlayerRelation.self, _) => (
+        l10n.requestClaimSelf(who, player),
+        [who, player],
+      ),
+      (_, GuardianTitle.parent) => (
+        l10n.requestClaimParent(who, player),
+        [who, player],
+      ),
+      _ => (l10n.requestClaimGuardian(who, player), [who, player]),
+    };
   }
 
   /// Approves or declines it, and says what changed for the person who
@@ -574,12 +587,13 @@ class _RequestSheetState extends ConsumerState<RequestSheet> {
                 )
               else
                 for (final l in request.linked)
-                  Text(
-                    l.relation == PlayerRelation.self
-                        ? l10n.requestLinkedSelf(l.name)
-                        : l10n.requestLinkedGuardian(l.name),
-                    style: theme.textTheme.bodyMedium,
-                  ),
+                  Text(switch ((l.relation, l.title)) {
+                    (PlayerRelation.self, _) => l10n.requestLinkedSelf(l.name),
+                    (_, GuardianTitle.parent) => l10n.requestLinkedParent(
+                      l.name,
+                    ),
+                    _ => l10n.requestLinkedGuardian(l.name),
+                  }, style: theme.textTheme.bodyMedium),
             ],
             if (error != null) ...[
               const SizedBox(height: Space.md),

@@ -28,7 +28,8 @@ import 'package:material_ui/material_ui.dart';
 /// - **I'm a player**: pick yourself from the roster (a claim as yourself),
 ///   or add yourself (a pending player linked to you, PLAYER-4).
 /// - **I'm here for a player**: pick your players (claims as their parent
-///   or guardian), or add one who isn't listed.
+///   or guardian), or add one who isn't listed, listed as Guardian or
+///   Parent (#95).
 /// - **I'm a coach or another adult**: saved on their membership
 ///   ([HereFor.nobody]), so the team's prompts stop asking them.
 ///
@@ -50,6 +51,10 @@ class _WhoAreYouScreenState extends ConsumerState<WhoAreYouScreen> {
   /// Null until they pick: `self` is "I'm a player", `guardian` is "I'm
   /// here for a player".
   PlayerRelation? _as;
+
+  /// What a guardian is listed as (#95): a guardian unless they pick
+  /// Parent.
+  GuardianTitle _title = GuardianTitle.guardian;
   final Set<PlayerId> _picked = {};
   bool _adding = false;
   bool _saving = false;
@@ -107,7 +112,7 @@ class _WhoAreYouScreenState extends ConsumerState<WhoAreYouScreen> {
       for (final id in _picked) {
         final outcome = await ref
             .read(playerRepositoryProvider)
-            .claimPlayer(widget.groupId, id, relation);
+            .claimPlayer(widget.groupId, id, relation, title: _title);
         linked = linked && outcome == ClaimOutcome.linked;
       }
       return linked ? l10n.claimLinked : l10n.guardianRequestSent;
@@ -124,6 +129,7 @@ class _WhoAreYouScreenState extends ConsumerState<WhoAreYouScreen> {
             widget.groupId,
             name: p.name,
             relation: p.relation,
+            title: p.title,
             jerseyNumber: p.jerseyNumber,
             dateOfBirth: p.dateOfBirth,
           );
@@ -223,6 +229,14 @@ class _WhoAreYouScreenState extends ConsumerState<WhoAreYouScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(self ? l10n.whoPickYourself : l10n.whoAreYouHereForHelp),
+          // How they're listed on their players' cards (#95).
+          if (!self) ...[
+            const SizedBox(height: Space.md),
+            GuardianTitleField(
+              value: _title,
+              onChanged: (t) => setState(() => _title = t),
+            ),
+          ],
           if (selfTaken) ...[
             const SizedBox(height: Space.sm),
             Text(l10n.whoAlreadyAskedAsPlayer),

@@ -1662,9 +1662,14 @@ class FakePlayerRepository implements PlayerRepository {
   Future<ClaimOutcome> claimPlayer(
     GroupId groupId,
     PlayerId playerId,
-    PlayerRelation relation,
-  ) async {
-    calls.add('claim ${playerId.value} ${relation.value}');
+    PlayerRelation relation, {
+    GuardianTitle title = GuardianTitle.guardian,
+  }) async {
+    // A parent's claim says so (#95); a guardian's reads as it always did.
+    calls.add(
+      'claim ${playerId.value} ${relation.value}'
+      '${title == GuardianTitle.parent ? ' as parent' : ''}',
+    );
     if (claimsAs case final uid? when claimOutcome == ClaimOutcome.requested) {
       requests.add(
         GuardianRequest(
@@ -1673,6 +1678,7 @@ class FakePlayerRepository implements PlayerRepository {
           uid: UserId(uid),
           status: GuardianRequestStatus.pending,
           relation: relation,
+          title: title,
         ),
       );
       _claimed.add(null);
@@ -1698,12 +1704,14 @@ class FakePlayerRepository implements PlayerRepository {
     GroupId groupId, {
     required String name,
     required PlayerRelation relation,
+    GuardianTitle title = GuardianTitle.guardian,
     String? jerseyNumber,
     String? dateOfBirth,
   }) async {
     calls.add(
       'propose $name #${jerseyNumber ?? ''} '
-      '${relation.value}${dateOfBirth == null ? '' : ' born $dateOfBirth'}',
+      '${relation.value}${dateOfBirth == null ? '' : ' born $dateOfBirth'}'
+      '${title == GuardianTitle.parent ? ' as parent' : ''}',
     );
     return proposedStatus;
   }
@@ -1752,6 +1760,19 @@ class FakePlayerRepository implements PlayerRepository {
     PlayerId playerId,
     UserId uid,
   ) async => calls.add('removeGuardian ${playerId.value} ${uid.value}');
+
+  /// Set to refuse the next title change (#95), as the server would.
+  AppFailure? titleFailure;
+
+  @override
+  Future<void> setGuardianTitle(
+    GroupId groupId,
+    PlayerId playerId,
+    GuardianTitle title,
+  ) async {
+    if (titleFailure case final failure?) throw failure;
+    calls.add('title ${playerId.value} ${title.value}');
+  }
 
   /// Players' details by player ID (PLAYER-12). Saves and deletes change
   /// them, and the watches update, as Firestore's would.
@@ -4032,14 +4053,16 @@ class RefusingPlayerRepository extends FakePlayerRepository {
   Future<ClaimOutcome> claimPlayer(
     GroupId groupId,
     PlayerId playerId,
-    PlayerRelation relation,
-  ) async => throw failure;
+    PlayerRelation relation, {
+    GuardianTitle title = GuardianTitle.guardian,
+  }) async => throw failure;
 
   @override
   Future<PlayerStatus> proposePlayer(
     GroupId groupId, {
     required String name,
     required PlayerRelation relation,
+    GuardianTitle title = GuardianTitle.guardian,
     String? jerseyNumber,
     String? dateOfBirth,
   }) async => throw failure;

@@ -17,8 +17,10 @@ import {
   playerStatusOf,
   playerSummaryOf,
   relationOf,
+  titleOf,
   type PlayerInput,
   type Relation,
+  type Title,
 } from './roster.js';
 import { memberSnapshotOf, newMemberLevelOf } from '../teams/service.js';
 
@@ -233,6 +235,12 @@ export interface LinkOptions {
    * it), nothing is written and this throws `already-decided`.
    */
   claim?: FirebaseFirestore.DocumentReference;
+  /**
+   * What a guardian is called (#95): 'parent' when they picked it, else a
+   * guardian. Only a guardian's link carries it; the player's own never
+   * does.
+   */
+  title?: Title;
 }
 
 /** What a claim records when an admin decides it (PLAYER-4). */
@@ -343,6 +351,8 @@ export async function linkGuardian(
       groupId,
       uid: user.uid,
       relation,
+      // A guardian's label (#95); a parent is a guardian everywhere else.
+      ...(relation === 'guardian' ? { guardianTitle: options.title ?? 'guardian' } : {}),
       addedBy,
       via,
       createdAt: now,
@@ -576,6 +586,7 @@ export async function claimPlayer(
   playerId: string,
   relation: Relation,
   admin: boolean,
+  title: Title = 'guardian',
 ): Promise<ClaimResult> {
   const player = await db().collection(Collections.players).doc(playerId).get();
   if (!player.exists || player.get('groupId') !== groupId || playerStatusOf(player.data()) !== 'active') {
@@ -586,7 +597,10 @@ export async function claimPlayer(
   await requireLinkAllowed(groupId, playerId, uid, relation);
   const requestRef = db().collection(Collections.guardianRequests).doc(compositeId(playerId, uid));
   if (admin) {
-    await linkGuardian(groupId, playerId, await profileOf(uid, 'Member'), uid, 'claim', relation, { requireMember: true });
+    await linkGuardian(groupId, playerId, await profileOf(uid, 'Member'), uid, 'claim', relation, {
+      requireMember: true,
+      title,
+    });
     await requestRef.delete();
     await refreshPlayerSummary(groupId, uid);
     return { status: 'linked', playerName };
@@ -596,6 +610,8 @@ export async function claimPlayer(
     groupId,
     uid,
     relation,
+    // What they'll be called once approved (#95); the player's own claim has none.
+    ...(relation === 'guardian' ? { guardianTitle: title } : {}),
     status: 'pending',
     decidedBy: null,
     decidedAt: null,
@@ -607,6 +623,8 @@ export async function claimPlayer(
 /** A claim an admin just decided (PLAYER-4). */
 export interface ClaimDecision {
   relation: Relation;
+  /** What the guardian picked to be called (#95). */
+  title: Title;
   /** The player's name, for the member's notification. */
   playerName: string;
 }
@@ -639,13 +657,14 @@ export async function resolvePlayerClaim(
   ]);
   if (!request.exists || request.get('groupId') !== groupId || request.get('status') !== 'pending') return null;
   const relation = relationOf(request.data());
+  const title = titleOf(request.data());
   const playerName = (player.get('displayName') as string | undefined) || 'a player';
   // Someone who has left the team since asking isn't put back on it (TEAM-8).
   if (!member.exists) {
     await ref.delete();
     return null;
   }
-  if (!approve) return (await decideClaim(ref, false, actorUid)) ? { relation, playerName } : null;
+  if (!approve) return (await decideClaim(ref, false, actorUid)) ? { relation, title, playerName } : null;
   if (!player.exists || playerStatusOf(player.data()) !== 'active') {
     await ref.delete();
     return null;
@@ -658,7 +677,11 @@ export async function resolvePlayerClaim(
     try {
       // The PLAYER-3 limits are checked, and the claim marked approved, in
       // the transaction that writes the link.
-      await linkGuardian(groupId, playerId, profile, actorUid, 'request', relation, { requireMember: true, claim: ref });
+      await linkGuardian(groupId, playerId, profile, actorUid, 'request', relation, {
+        requireMember: true,
+        claim: ref,
+        title,
+      });
     } catch (e) {
       if (!(e instanceof HttpsError)) throw e;
       // An earlier tap, or another admin, decided it first.
@@ -670,7 +693,7 @@ export async function resolvePlayerClaim(
     }
   }
   await refreshPlayerSummary(groupId, uid);
-  return { relation, playerName };
+  return { relation, title, playerName };
 }
 
 export interface NewPlayerInput {
@@ -680,6 +703,8 @@ export interface NewPlayerInput {
   /** 'YYYY-MM-DD' (optional), checked by the handler (PLAYER-12). */
   dateOfBirth?: string | null;
   relation: Relation;
+  /** What a guardian picked to be called (#95); ignored for the player themselves. */
+  title?: Title;
 }
 
 /**
@@ -744,6 +769,8 @@ export async function proposePlayer(
     status,
     proposedBy: uid,
     proposedRelation: input.relation,
+    // What its guardian picked to be called (#95), for the request and the link.
+    ...(input.relation === 'guardian' ? { proposedGuardianTitle: input.title ?? 'guardian' } : {}),
     decidedBy: admin ? uid : null,
     decidedAt: admin ? now : null,
     createdBy: uid,
@@ -757,6 +784,7 @@ export async function proposePlayer(
     try {
       await linkGuardian(groupId, ref.id, await profileOf(uid, 'Member'), uid, 'proposal', input.relation, {
         requireMember: true,
+        title: input.title,
       });
     } catch (e) {
       // Became a player meanwhile (PLAYER-3): no unlinked duplicate is left.
@@ -773,6 +801,8 @@ export interface PendingDecision {
   playerName: string;
   proposedBy: string | null;
   relation: Relation;
+  /** What its guardian picked to be called (#95). */
+  title: Title;
   /** Whether the proposer was linked on approval (false if they left, or the limits no longer allow it). */
   linked: boolean;
 }
@@ -811,6 +841,7 @@ export async function resolvePendingPlayer(
   if (!player) return null;
   const proposedBy = (player.get('proposedBy') as string | null | undefined) ?? null;
   const relation = relationOf({ relation: player.get('proposedRelation') });
+  const title = titleOf(player.data(), 'proposedGuardianTitle');
   const playerName = (player.get('displayName') as string | undefined) || 'a player';
   if (!approve) {
     // Anything left pointing at it goes too, though a pending player can't
@@ -818,7 +849,7 @@ export async function resolvePendingPlayer(
     for (const collection of [Collections.playerGuardians, Collections.guardianRequests]) {
       await forEachPage(db().collection(collection).where('playerId', '==', playerId), (b, d) => b.delete(d.ref));
     }
-    return { playerName, proposedBy, relation, linked: false };
+    return { playerName, proposedBy, relation, title, linked: false };
   }
   let linked = false;
   if (proposedBy) {
@@ -829,7 +860,7 @@ export async function resolvePendingPlayer(
     if (member.exists) {
       try {
         // The PLAYER-3 limits are checked in the transaction that writes the link.
-        await linkGuardian(groupId, playerId, profile, actorUid, 'proposal', relation, { requireMember: true });
+        await linkGuardian(groupId, playerId, profile, actorUid, 'proposal', relation, { requireMember: true, title });
         linked = true;
       } catch (e) {
         if (!(e instanceof HttpsError)) throw e;
@@ -838,7 +869,7 @@ export async function resolvePendingPlayer(
     }
   }
   await refreshPlayerCount(groupId);
-  return { playerName, proposedBy, relation, linked };
+  return { playerName, proposedBy, relation, title, linked };
 }
 
 /**
@@ -850,6 +881,21 @@ export async function removeGuardianLink(groupId: string, playerId: string, uid:
   await db().collection(Collections.playerGuardians).doc(compositeId(playerId, uid)).delete();
   await db().collection(Collections.guardianRequests).doc(compositeId(playerId, uid)).delete();
   await refreshPlayerSummary(groupId, uid);
+}
+
+/**
+ * A guardian changes what they're called on a player's card (#95):
+ * "Guardian" or "Parent". Only their own link, and only as a guardian: the
+ * player's own link has no title. Purely a label, so nothing else changes.
+ * Throws not-found when they aren't the player's guardian.
+ */
+export async function setGuardianTitle(playerId: string, uid: string, title: Title): Promise<void> {
+  const ref = db().collection(Collections.playerGuardians).doc(compositeId(playerId, uid));
+  await db().runTransaction(async (tx) => {
+    const link = await tx.get(ref);
+    if (!link.exists || relationOf(link.data()) !== 'guardian') throw new HttpsError('not-found', 'not-linked');
+    if (titleOf(link.data()) !== title) tx.update(ref, { guardianTitle: title });
+  });
 }
 
 /** What a super admin may change on a player (ADMIN-3): the same fields the rules' validPlayer allows (PLAYER-10). */

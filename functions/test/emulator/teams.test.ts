@@ -121,6 +121,7 @@ describe('a suspended team takes no changes from anyone on it (§3)', () => {
     ['proposePlayer', players.proposePlayer, (g) => ({ groupId: g, displayName: 'Leo', relation: 'guardian' })],
     ['resolvePlayerClaim', players.resolvePlayerClaim, (g) => ({ playerId: `${g}-p1`, uid: 'sam', approve: true })],
     ['resolvePendingPlayer', players.resolvePendingPlayer, (g) => ({ playerId: `${g}-p1`, approve: true })],
+    ['setGuardianTitle', players.setGuardianTitle, (g) => ({ playerId: `${g}-p1`, title: 'parent' })],
   ];
 
   for (const [name, fn, data] of calls) {
@@ -218,6 +219,7 @@ describe('an archived team is read-only (TEAM-9)', () => {
       [teams.transferOwnership, { groupId: 'archived', uid: 'ada' }],
       [invites.getTeamInvite, { groupId: 'archived' }],
       [players.inviteGuardian, { groupId: 'archived', playerId: 'archived-p1', email: 'x@example.com' }],
+      [players.setGuardianTitle, { playerId: 'archived-p1', title: 'parent' }],
     ] as [Callable, object][]) {
       await expect(run(fn, 'pat', data)).rejects.toMatchObject({ code: 'failed-precondition', message: 'team-archived' });
       await expect(run(fn, 'root', data, ROOT)).rejects.toMatchObject({ message: 'team-archived' });
@@ -509,6 +511,54 @@ describe('claims and pending players (PLAYER-3, PLAYER-4)', () => {
     expect(await summary('sam')).toBe('Emma');
     expect(await items('guardianApproved')).toEqual(["sam: You're now Emma's guardian"]);
     expect((await db().collection(Collections.guardianRequests).doc('open-p1_sam').get()).get('status')).toBe('approved');
+  });
+
+  it('keeps a parent listed as a parent, from the claim to the link and the notifications (#95)', async () => {
+    await run(players.claimPlayer, 'sam', { playerId: 'open-p1', relation: 'guardian', title: 'parent' });
+    expect((await db().collection(Collections.guardianRequests).doc('open-p1_sam').get()).data()).toMatchObject({
+      relation: 'guardian',
+      guardianTitle: 'parent',
+    });
+    expect(await items('guardianRequest')).toContain("pat: Sam Rivera asked to be Emma's parent");
+    await run(players.resolvePlayerClaim, 'pat', { playerId: 'open-p1', uid: 'sam', approve: true });
+    expect(await link('open-p1', 'sam')).toMatchObject({ relation: 'guardian', guardianTitle: 'parent' });
+    expect(await items('guardianApproved')).toEqual(["sam: You're now Emma's parent"]);
+    // A parent is a guardian everywhere else: Who's who, and the 4-guardian limit.
+    expect(await summary('sam')).toBe('Emma');
+  });
+
+  it("lists a claim, a new player, and an admin's own link as a guardian unless they pick parent (#95)", async () => {
+    await run(players.claimPlayer, 'sam', { playerId: 'open-p1', relation: 'guardian' });
+    expect((await db().collection(Collections.guardianRequests).doc('open-p1_sam').get()).get('guardianTitle')).toBe('guardian');
+    const leo = await run<{ playerId: string }>(players.proposePlayer, 'sam', {
+      groupId: 'open', displayName: 'Leo Rivera', relation: 'guardian', title: 'parent',
+    });
+    expect((await player(leo.playerId))?.proposedGuardianTitle).toBe('parent');
+    await run(players.resolvePendingPlayer, 'pat', { playerId: leo.playerId, approve: true });
+    expect(await link(leo.playerId, 'sam')).toMatchObject({ relation: 'guardian', guardianTitle: 'parent' });
+    // An admin's own claim links at once, as they picked; the player's own link has none.
+    await run(players.claimPlayer, 'ada', { playerId: 'open-p1', relation: 'guardian', title: 'parent' });
+    expect(await link('open-p1', 'ada')).toMatchObject({ guardianTitle: 'parent' });
+    const me = await run<{ playerId: string }>(players.proposePlayer, 'pat', { groupId: 'open', displayName: 'Pat', relation: 'self', title: 'parent' });
+    expect((await link(me.playerId, 'pat'))?.guardianTitle).toBeUndefined();
+    expect((await player(me.playerId))?.proposedGuardianTitle).toBeUndefined();
+    // Anything else is refused.
+    await expect(run(players.claimPlayer, 'sam', { playerId: 'open-p1', relation: 'guardian', title: 'aunt' }))
+      .rejects.toMatchObject({ code: 'invalid-argument' });
+  });
+
+  it('lets a guardian change what they are called, only on their own guardian link (#95)', async () => {
+    await guardian('open', 'open-p1', 'sam');
+    expect(await run(players.setGuardianTitle, 'sam', { playerId: 'open-p1', title: 'parent' })).toEqual({ ok: true });
+    expect((await link('open-p1', 'sam'))?.guardianTitle).toBe('parent');
+    expect(await run(players.setGuardianTitle, 'sam', { groupId: 'open', playerId: 'open-p1', title: 'guardian' })).toEqual({ ok: true });
+    expect((await link('open-p1', 'sam'))?.guardianTitle).toBe('guardian');
+    // Not someone who isn't linked, not the player's own link, not a mismatched team.
+    await expect(run(players.setGuardianTitle, 'lee', { playerId: 'open-p1', title: 'parent' })).rejects.toMatchObject({ code: 'not-found' });
+    await db().collection(Collections.playerGuardians).doc('open-p1_ada').set({ groupId: 'open', playerId: 'open-p1', uid: 'ada', relation: 'self' });
+    await expect(run(players.setGuardianTitle, 'ada', { playerId: 'open-p1', title: 'parent' })).rejects.toMatchObject({ code: 'not-found' });
+    await expect(run(players.setGuardianTitle, 'sam', { groupId: 'archived', playerId: 'open-p1', title: 'parent' }))
+      .rejects.toMatchObject({ code: 'not-found' });
   });
 
   it('links "I am this player" as self, showing their number in Who\'s who (PLAYER-8)', async () => {

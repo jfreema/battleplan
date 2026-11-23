@@ -507,6 +507,23 @@ enum PlayerRelation {
   }
 }
 
+enum GuardianTitle {
+  guardian('guardian'),
+  parent('parent');
+
+  const GuardianTitle(this.value);
+
+  /// The string stored in Firestore.
+  final String value;
+
+  static GuardianTitle? tryParse(String? value) {
+    for (final e in values) {
+      if (e.value == value) return e;
+    }
+    return null;
+  }
+}
+
 enum HereFor {
   later('later'),
   nobody('nobody');

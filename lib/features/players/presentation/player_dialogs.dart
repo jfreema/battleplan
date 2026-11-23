@@ -14,38 +14,117 @@ String relationChoice(AppLocalizations l10n, PlayerRelation r) => switch (r) {
   PlayerRelation.guardian => l10n.relationGuardian,
 };
 
+/// What a guardian is called on the player card (#95): "Guardian" or
+/// "Parent". Purely a label; a parent is a guardian everywhere else.
+String guardianTitleName(AppLocalizations l10n, GuardianTitle t) => switch (t) {
+  GuardianTitle.guardian => l10n.playerLinkGuardian,
+  GuardianTitle.parent => l10n.playerLinkParent,
+};
+
+/// How a player is claimed: as the player, or as a guardian listed as
+/// `title` (#95).
+typedef ClaimChoice = ({PlayerRelation relation, GuardianTitle title});
+
 /// Asks how the member is linked to [playerName] before claiming it
-/// (PLAYER-3). "I am this player" is left out when [canBeSelf] is false:
-/// the player already has its member, or the member already is a player
-/// on this team. Null when canceled.
-Future<PlayerRelation?> askClaimRelation(
+/// (PLAYER-3): "I am this player" or "I'm their parent or guardian", and
+/// for a guardian, Listed as Guardian (the default) or Parent (#95). "I am
+/// this player" is left out when [canBeSelf] is false: the player already
+/// has its member, or the member already is a player on this team. Null
+/// when canceled.
+Future<ClaimChoice?> askClaimRelation(
   BuildContext context, {
   required String playerName,
   required bool canBeSelf,
 }) {
   final l10n = AppLocalizations.of(context);
-  return showCardDialog<PlayerRelation>(
+  var relation = canBeSelf ? null : PlayerRelation.guardian;
+  var title = GuardianTitle.guardian;
+  return showCardDialog<ClaimChoice>(
     context: context,
-    builder: (context) => SimpleDialog(
-      title: Text(l10n.claimPlayerTitle(playerName)),
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(Space.xl, 0, Space.xl, Space.sm),
-          child: Text(l10n.claimPlayerHelp),
+    builder: (context) => StatefulBuilder(
+      builder: (context, setState) => AlertDialog(
+        title: Text(l10n.claimPlayerTitle(playerName)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(l10n.claimPlayerHelp),
+              const SizedBox(height: Space.sm),
+              RadioGroup<PlayerRelation>(
+                groupValue: relation,
+                onChanged: (r) => setState(() => relation = r),
+                child: Column(
+                  children: [
+                    for (final r in PlayerRelation.values)
+                      if (r != PlayerRelation.self || canBeSelf)
+                        RadioListTile<PlayerRelation>(
+                          contentPadding: EdgeInsets.zero,
+                          value: r,
+                          title: Text(relationChoice(l10n, r)),
+                        ),
+                  ],
+                ),
+              ),
+              if (relation == PlayerRelation.guardian) ...[
+                const SizedBox(height: Space.sm),
+                GuardianTitleField(
+                  value: title,
+                  onChanged: (t) => setState(() => title = t),
+                ),
+              ],
+            ],
+          ),
         ),
-        for (final r in PlayerRelation.values)
-          if (r != PlayerRelation.self || canBeSelf)
-            SimpleDialogOption(
-              onPressed: () => Navigator.of(context).pop(r),
-              child: Text(relationChoice(l10n, r)),
-            ),
-        SimpleDialogOption(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.cancel),
-        ),
-      ],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: switch (relation) {
+              final r? => () => Navigator.of(
+                context,
+              ).pop((relation: r, title: title)),
+              null => null,
+            },
+            child: Text(l10n.claimSend),
+          ),
+        ],
+      ),
     ),
   );
+}
+
+/// "Listed as" Guardian or Parent (#95), wherever a guardian links to a
+/// player: claiming one, adding one who isn't listed, and their own row on
+/// the player card. A guardian unless they pick Parent; the help says it's
+/// only a label.
+class GuardianTitleField extends StatelessWidget {
+  const new({required this.value, required this.onChanged, super.key});
+
+  final GuardianTitle value;
+  final ValueChanged<GuardianTitle> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return DropdownButtonFormField<GuardianTitle>(
+      initialValue: value,
+      decoration: InputDecoration(
+        labelText: l10n.guardianTitleLabel,
+        helperText: l10n.guardianTitleHelp,
+        helperMaxLines: 3,
+      ),
+      items: [
+        for (final t in GuardianTitle.values)
+          DropdownMenuItem(value: t, child: Text(guardianTitleName(l10n, t))),
+      ],
+      onChanged: (t) {
+        if (t != null) onChanged(t);
+      },
+    );
+  }
 }
 
 /// A player a member adds (PLAYER-4).
@@ -56,6 +135,9 @@ typedef ProposedPlayer = ({
   /// 'YYYY-MM-DD', or null (PLAYER-12).
   String? dateOfBirth,
   PlayerRelation relation,
+
+  /// What a guardian is listed as (#95); a guardian unless they picked it.
+  GuardianTitle title,
 });
 
 /// The form for a player who isn't listed (PLAYER-4): name, number, date
@@ -89,6 +171,7 @@ class _ProposePlayerFormState extends State<ProposePlayerForm> {
   final _number = TextEditingController();
   late PlayerRelation? _relation =
       widget.relation ?? (widget.canBeSelf ? null : PlayerRelation.guardian);
+  GuardianTitle _title = GuardianTitle.guardian;
   DateTime? _dob;
   bool _tried = false;
 
@@ -111,6 +194,7 @@ class _ProposePlayerFormState extends State<ProposePlayerForm> {
       jerseyNumber: _blank(_number),
       dateOfBirth: _dob == null ? null : formatDateOfBirth(_dob!),
       relation: relation,
+      title: _title,
     ));
   }
 
@@ -177,6 +261,14 @@ class _ProposePlayerFormState extends State<ProposePlayerForm> {
           ),
           if (_tried && _relation == null)
             Text(l10n.howAreYouLinkedRequired, style: error),
+        ],
+        // A guardian picks how they're listed (#95).
+        if (_relation == PlayerRelation.guardian) ...[
+          const SizedBox(height: Space.md),
+          GuardianTitleField(
+            value: _title,
+            onChanged: (t) => setState(() => _title = t),
+          ),
         ],
         const SizedBox(height: Space.md),
         Text(

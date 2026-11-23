@@ -466,6 +466,35 @@ void main() {
       },
     );
 
+    testWidgets('a guardian adding one picks how they are listed (#95)', (
+      tester,
+    ) async {
+      final playerRepo = FakePlayerRepository();
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: youth,
+        memberships: [testMembership('y', 'coach')],
+        playerRepo: playerRepo,
+      );
+      await push(tester, '/g/y/players/add');
+      await tester.enterText(find.byType(TextField).at(0), 'Ava Park');
+      expect(find.text('Listed as'), findsNothing);
+      await tester.tap(find.text("I'm their parent or guardian"));
+      await tester.pumpAndSettle();
+      final listed = find.text('Guardian');
+      await tester.ensureVisible(listed);
+      await tester.tap(listed);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Parent').last);
+      await tester.pumpAndSettle();
+      final add = find.widgetWithText(FilledButton, 'Add player');
+      await tester.ensureVisible(add);
+      await tester.tap(add);
+      await tester.pumpAndSettle();
+      expect(playerRepo.calls.single, 'propose Ava Park # guardian as parent');
+    });
+
     test('problem lines name each refused link', () {
       final l10n = lookupAppLocalizations(const Locale('en'));
       expect(

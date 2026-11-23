@@ -242,6 +242,29 @@ void main() {
       expect(find.textContaining('Waiting for the coach'), findsNothing);
     });
 
+    testWidgets('a parent can be listed as Parent instead of Guardian (#95)', (
+      tester,
+    ) async {
+      final app = await open(tester);
+      await tester.tap(find.text('Pick my player'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text("I'm here for a player"));
+      await tester.pumpAndSettle();
+      // Guardian until they pick otherwise, and it says it's only a label.
+      expect(find.text('Listed as'), findsOneWidget);
+      expect(find.text('Guardian'), findsOneWidget);
+      expect(find.textContaining('only how your name is labeled'), findsOne);
+      await tester.tap(find.text('Guardian'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Parent').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Max Lee'));
+      await tester.pump();
+      await tester.tap(find.text('Ask to link 1 player'));
+      await tester.pumpAndSettle();
+      expect(app.players.calls, ['claim max guardian as parent']);
+    });
+
     testWidgets("I'm a coach or another adult comes back too, and is "
         'remembered', (tester) async {
       final app = await open(tester);

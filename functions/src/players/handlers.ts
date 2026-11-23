@@ -18,7 +18,7 @@ import { teamUrl } from '../links/service.js';
 import { trySend } from '../notify/service.js';
 import { notifyAddedToTeam } from '../teams/service.js';
 import { groupMemberId } from '../shared/ids.js';
-import { validDateOfBirth, type Relation } from './roster.js';
+import { validDateOfBirth, type Relation, type Title } from './roster.js';
 import {
   addPlayers as add,
   claimPlayer as claim,
@@ -32,6 +32,7 @@ import {
   removePlayer as remove,
   resolvePendingPlayer as resolvePending,
   resolvePlayerClaim as resolveClaim,
+  setGuardianTitle as setTitle,
 } from './service.js';
 
 const Guardian = z.object({
@@ -171,6 +172,9 @@ const actsAsAdmin = (role: string, superAdmin: boolean) => superAdmin || role ==
 
 const RelationInput = z.enum(['self', 'guardian']);
 
+/** What a guardian is called (#95); a guardian unless they picked parent. */
+const TitleInput = z.enum(['guardian', 'parent']).default('guardian');
+
 /** The team a player is on, checked against [groupId] when the caller passed one. */
 async function teamOfPlayer(playerId: string, groupId?: string): Promise<string> {
   const player = await db().collection(Collections.players).doc(playerId).get();
@@ -179,9 +183,12 @@ async function teamOfPlayer(playerId: string, groupId?: string): Promise<string>
   return team;
 }
 
-/** "Maria R. asked to be Emma's guardian" / "Jared F. asked to be linked as the player Jared" (NOTIF-2). */
-export function claimBody(name: string, playerName: string, relation: Relation): string {
-  return relation === 'self' ? `${name} asked to be linked as the player ${playerName}` : `${name} asked to be ${playerName}'s guardian`;
+/**
+ * "Maria R. asked to be Emma's guardian" (or "parent", as they picked,
+ * #95) / "Jared F. asked to be linked as the player Jared" (NOTIF-2).
+ */
+export function claimBody(name: string, playerName: string, relation: Relation, title: Title = 'guardian'): string {
+  return relation === 'self' ? `${name} asked to be linked as the player ${playerName}` : `${name} asked to be ${playerName}'s ${title}`;
 }
 
 /** "Maria R. asked to add a player: Emma" / "Jared F. asked to join the roster as Jared" (NOTIF-2). */
@@ -189,10 +196,10 @@ export function pendingPlayerBody(name: string, playerName: string, relation: Re
   return relation === 'self' ? `${name} asked to join the roster as ${playerName}` : `${name} asked to add a player: ${playerName}`;
 }
 
-/** What an approved member hears (NOTIF-2): a claim, or a player they proposed. */
-export function approvedBody(playerName: string, relation: Relation, proposal: boolean): string {
+/** What an approved member hears (NOTIF-2): a claim, or a player they proposed; a guardian as they picked to be called (#95). */
+export function approvedBody(playerName: string, relation: Relation, proposal: boolean, title: Title = 'guardian'): string {
   if (relation === 'self') return `You're now on the roster as ${playerName}`;
-  return proposal ? `${playerName} was added to the roster` : `You're now ${playerName}'s guardian`;
+  return proposal ? `${playerName} was added to the roster` : `You're now ${playerName}'s ${title}`;
 }
 
 /** Asks the team's admins to decide on a claim or pending player (NOTIF-2, kind guardianRequest). */
@@ -203,6 +210,7 @@ async function askAdmins(input: {
   playerId: string;
   playerName: string;
   relation: Relation;
+  title: Title;
   request: 'claim' | 'player';
 }): Promise<void> {
   // The team's admins are asked, even at Important only.
@@ -224,7 +232,7 @@ async function askAdmins(input: {
       },
       body:
         input.request === 'claim'
-          ? claimBody(name, input.playerName, input.relation)
+          ? claimBody(name, input.playerName, input.relation, input.title)
           : pendingPlayerBody(name, input.playerName, input.relation),
       // Claim IDs are reused when someone asks again, so each ask gets its own key.
       dedupeKey: randomUUID(),
@@ -241,6 +249,7 @@ async function tellApproved(input: {
   playerId: string;
   playerName: string;
   relation: Relation;
+  title: Title;
   proposal: boolean;
 }): Promise<void> {
   await trySend(async () => {
@@ -253,7 +262,7 @@ async function tellApproved(input: {
       target: { type: 'player', id: input.playerId },
       route: `/g/${input.groupId}/roster/players/${input.playerId}`,
       params: { playerId: input.playerId, playerName: input.playerName, relation: input.relation },
-      body: approvedBody(input.playerName, input.relation, input.proposal),
+      body: approvedBody(input.playerName, input.relation, input.proposal, input.title),
       dedupeKey: randomUUID(),
     };
   });
@@ -261,14 +270,20 @@ async function tellApproved(input: {
 
 /**
  * Claim a player (PLAYER-3): "I am this player" ('self') or "I'm their
- * parent or guardian". Claims by admins, and by super admins on the team,
- * are approved at once; others wait for an admin (PLAYER-4). Input { playerId, relation, groupId? }; returns
- * { status: 'linked' | 'requested' }.
+ * parent or guardian", listed as a guardian or, if they picked it, a parent
+ * (#95). Claims by admins, and by super admins on the team, are approved at
+ * once; others wait for an admin (PLAYER-4). Input { playerId, relation,
+ * title?, groupId? }; returns { status: 'linked' | 'requested' }.
  */
 export const claimPlayer = onCall(async (request) => {
   const uid = requireAuth(request);
   const input = parse(
-    z.object({ groupId: z.string().min(1).optional(), playerId: z.string().min(1), relation: RelationInput }),
+    z.object({
+      groupId: z.string().min(1).optional(),
+      playerId: z.string().min(1),
+      relation: RelationInput,
+      title: TitleInput,
+    }),
     request.data,
   );
   const groupId = await teamOfPlayer(input.playerId, input.groupId);
@@ -276,7 +291,7 @@ export const claimPlayer = onCall(async (request) => {
   const { role, teamName } = await requireTeamMember(groupId, uid, superAdmin, true);
   const admin = actsAsAdmin(role, superAdmin);
   if (!admin) await consumeRateLimit(uid, 'guardianRequest', Limits.guardianRequestsPerUserPerDay);
-  const result = await claim(groupId, uid, input.playerId, input.relation, admin);
+  const result = await claim(groupId, uid, input.playerId, input.relation, admin, input.title);
   await audit({
     actorId: uid,
     action: 'claimPlayer',
@@ -293,6 +308,7 @@ export const claimPlayer = onCall(async (request) => {
       playerId: input.playerId,
       playerName: result.playerName,
       relation: input.relation,
+      title: input.title,
       request: 'claim',
     });
   }
@@ -340,6 +356,7 @@ export const resolvePlayerClaim = onCall(async (request) => {
           playerId: input.playerId,
           playerName: decision.playerName,
           relation: decision.relation,
+          title: decision.title,
           proposal: false,
         })
       : undefined,
@@ -351,7 +368,7 @@ export const resolvePlayerClaim = onCall(async (request) => {
  * Add a player who isn't on the roster (PLAYER-3), saying how you're
  * linked. A member's player is pending until an admin approves it; an
  * admin's (or a super admin's on the team) is active at once. Input { groupId, displayName, jerseyNumber?,
- * position?, relation }; returns { playerId, status: 'active' | 'pending' }.
+ * position?, relation, title? }; returns { playerId, status: 'active' | 'pending' }.
  */
 export const proposePlayer = onCall(async (request) => {
   const uid = requireAuth(request);
@@ -363,6 +380,7 @@ export const proposePlayer = onCall(async (request) => {
       position: z.string().trim().max(30).nullable().optional(),
       dateOfBirth: DateOfBirth,
       relation: RelationInput,
+      title: TitleInput,
     }),
     request.data,
   );
@@ -390,6 +408,7 @@ export const proposePlayer = onCall(async (request) => {
       playerId: result.playerId,
       playerName: input.displayName,
       relation: input.relation,
+      title: input.title,
       request: 'player',
     });
   }
@@ -431,6 +450,7 @@ export const resolvePendingPlayer = onCall(async (request) => {
           playerId: input.playerId,
           playerName: decision.playerName,
           relation: decision.relation,
+          title: decision.title,
           proposal: true,
         })
       : undefined,
@@ -550,7 +570,8 @@ async function linkTeamMemberAsGuardian(
   await linkGuardian(groupId, playerId, user, actor, 'guardian', 'guardian', { requireMember: true });
   await refreshPlayerSummary(groupId, uid);
   if (uid !== actor) {
-    await tellApproved({ groupId, uid, actor, playerId, playerName, relation: 'guardian', proposal: false });
+    // Added by someone else, so a guardian until they pick parent (#95).
+    await tellApproved({ groupId, uid, actor, playerId, playerName, relation: 'guardian', title: 'guardian', proposal: false });
   }
   await audit({
     actorId: actor,
@@ -586,5 +607,23 @@ export const removeGuardian = onCall(async (request) => {
     targetId: input.playerId,
     before: { uid: input.uid },
   });
+  return { ok: true };
+});
+
+/**
+ * A guardian picks what they're called on the player's card (#95):
+ * "Guardian" or "Parent". Purely a label, so it changes nothing else, and
+ * only their own link: Input { playerId, title, groupId? }; returns { ok }.
+ * Not on an archived or suspended team, which are read-only (TEAM-9).
+ */
+export const setGuardianTitle = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const input = parse(
+    z.object({ groupId: z.string().min(1).optional(), playerId: z.string().min(1), title: z.enum(['guardian', 'parent']) }),
+    request.data,
+  );
+  const groupId = await teamOfPlayer(input.playerId, input.groupId);
+  await requireOpenTeam(groupId, request.auth?.token.superAdmin === true);
+  await setTitle(input.playerId, uid, input.title);
   return { ok: true };
 });

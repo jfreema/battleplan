@@ -8,6 +8,7 @@ import {
   playerStatusOf,
   playerSummaryOf,
   relationOf,
+  titleOf,
   validDateOfBirth,
 } from '../../src/players/roster.js';
 import { approvedBody, claimBody, pendingPlayerBody } from '../../src/players/handlers.js';
@@ -100,6 +101,20 @@ describe('player links and pending players (PLAYER-3, PLAYER-4)', () => {
     expect(approvedBody('Emma', 'guardian', true)).toBe('Emma was added to the roster');
     expect(approvedBody('Jared Freeman', 'self', true)).toBe("You're now on the roster as Jared Freeman");
     expect(approvedBody('Jared Freeman', 'self', false)).toBe("You're now on the roster as Jared Freeman");
+  });
+
+  it('says parent where the guardian picked it, and guardian otherwise (#95)', () => {
+    expect(claimBody('Maria R.', 'Emma', 'guardian', 'parent')).toBe("Maria R. asked to be Emma's parent");
+    expect(approvedBody('Emma', 'guardian', false, 'parent')).toBe("You're now Emma's parent");
+    // The player's own claim has no title.
+    expect(claimBody('Jared F.', 'Jared Freeman', 'self', 'parent')).toBe('Jared F. asked to be linked as the player Jared Freeman');
+    expect(titleOf({ guardianTitle: 'parent' })).toBe('parent');
+    expect(titleOf({ guardianTitle: 'guardian' })).toBe('guardian');
+    // Made before titles, or anything unknown: a guardian.
+    expect(titleOf({})).toBe('guardian');
+    expect(titleOf(undefined)).toBe('guardian');
+    expect(titleOf({ guardianTitle: 'aunt' })).toBe('guardian');
+    expect(titleOf({ proposedGuardianTitle: 'parent' }, 'proposedGuardianTitle')).toBe('parent');
   });
 });
 

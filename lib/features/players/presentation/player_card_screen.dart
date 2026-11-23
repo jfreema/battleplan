@@ -39,7 +39,8 @@ import 'package:material_ui/material_ui.dart';
 
 /// PLAYER-2 at `/g/:groupId/team/players/:playerId`: name, number, walk-up
 /// song, date of birth (for those who see the Details), and who's linked, each marked
-/// Player or Guardian. Linked
+/// Player, Guardian, or Parent (#95; a guardian picks theirs from their own
+/// row). Linked
 /// members (the player themselves included) and admins edit the details
 /// and add a guardian, picked from the team or by email (PLAYER-5); admins remove links and the player, and
 /// a linked member can remove their own link. A member who isn't linked can claim
@@ -182,6 +183,12 @@ class PlayerCardScreen extends ConsumerWidget {
               _LinkRow(
                 member: m,
                 isSelf: l.isSelf,
+                title: l.title,
+                // A guardian changes how they're listed themselves (#95),
+                // unless the team is read-only.
+                onTitle: !l.isSelf && m.uid.value == me && detailsEditable
+                    ? (t) => unawaited(_setTitle(context, ref, t))
+                    : null,
                 // Admins unlink anyone; a member can unlink themselves.
                 onUnlink: isAdmin || m.uid.value == me
                     ? () => unawaited(
@@ -448,6 +455,22 @@ class PlayerCardScreen extends ConsumerWidget {
     }
   }
 
+  /// Lists me as [title] on this player's card (#95): Guardian or Parent.
+  Future<void> _setTitle(
+    BuildContext context,
+    WidgetRef ref,
+    GuardianTitle title,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    try {
+      await ref
+          .read(playerRepositoryProvider)
+          .setGuardianTitle(groupId, playerId, title);
+    } on AppFailure {
+      if (context.mounted) showAppSnackBar(context, l10n.errorGuardianTitle);
+    }
+  }
+
   /// Edits the name and number (PLAYER-2), and with
   /// [withDateOfBirth] the date of birth, which is saved in the player's
   /// details (PLAYER-12).
@@ -656,12 +679,25 @@ class _UpcomingRsvps extends ConsumerWidget {
 /// theirs, so the name and "Guardian" keep the row's width and never break
 /// inside a word.
 class _LinkRow extends StatelessWidget {
-  const new({required this.member, required this.isSelf, this.onUnlink});
+  const new({
+    required this.member,
+    required this.isSelf,
+    this.title = GuardianTitle.guardian,
+    this.onTitle,
+    this.onUnlink,
+  });
 
   final Membership member;
 
   /// Linked as the player, not as a guardian.
   final bool isSelf;
+
+  /// A guardian's label (#95): "Guardian" or "Parent".
+  final GuardianTitle title;
+
+  /// Where the viewer is this guardian, changes how they're listed (#95):
+  /// their label is a dropdown. Null for everyone else's row.
+  final ValueChanged<GuardianTitle>? onTitle;
 
   /// Null where the viewer may not unlink them.
   final VoidCallback? onUnlink;
@@ -692,12 +728,34 @@ class _LinkRow extends StatelessWidget {
       ),
       null => null,
     };
-    final role = Text(
-      [
-        if (isSelf) l10n.playerLinkPlayer else l10n.playerLinkGuardian,
-        if (member.pending) l10n.notJoinedYet,
-      ].join(' · '),
-    );
+    final role = switch (onTitle) {
+      // My own guardian row: Guardian or Parent, mine to pick (#95).
+      final pick? => Semantics(
+        // "Listed as, Guardian": what it is, then what it says.
+        label: l10n.guardianTitleLabel,
+        child: DropdownButton<GuardianTitle>(
+          value: title,
+          isDense: true,
+          underline: const SizedBox.shrink(),
+          items: [
+            for (final t in GuardianTitle.values)
+              DropdownMenuItem(
+                value: t,
+                child: Text(guardianTitleName(l10n, t)),
+              ),
+          ],
+          onChanged: (t) {
+            if (t != null && t != title) pick(t);
+          },
+        ),
+      ),
+      null => Text(
+        [
+          if (isSelf) l10n.playerLinkPlayer else guardianTitleName(l10n, title),
+          if (member.pending) l10n.notJoinedYet,
+        ].join(' · '),
+      ),
+    };
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Avatar(
@@ -796,17 +854,22 @@ class _ClaimState extends ConsumerState<_Claim> {
 
   Future<void> _claim() async {
     final l10n = AppLocalizations.of(context);
-    final relation = await askClaimRelation(
+    final choice = await askClaimRelation(
       context,
       playerName: widget.player.displayName,
       canBeSelf: widget.canBeSelf,
     );
-    if (relation == null || !mounted) return;
+    if (choice == null || !mounted) return;
     setState(() => _saving = true);
     try {
       final outcome = await ref
           .read(playerRepositoryProvider)
-          .claimPlayer(widget.player.groupId, widget.player.id, relation);
+          .claimPlayer(
+            widget.player.groupId,
+            widget.player.id,
+            choice.relation,
+            title: choice.title,
+          );
       if (mounted) {
         showAppSnackBar(
           context,

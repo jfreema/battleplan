@@ -1427,13 +1427,13 @@ void main() {
       // One plain sentence each (#23).
       expect(
         find.text(
-          "Pat Lee wants to add Noah Park #4 to the roster, as Noah's parent "
-          'or guardian.',
+          "Pat Lee wants to add Noah Park #4 to the roster, as Noah's "
+          'guardian.',
         ),
         findsOneWidget,
       );
       expect(
-        find.text("Pat Lee says they're a parent or guardian of Emma #7."),
+        find.text("Pat Lee says they're a guardian of Emma #7."),
         findsOneWidget,
       );
       expect(
@@ -1494,7 +1494,7 @@ void main() {
       );
       await openRoster(tester);
       final claimRow = find.ancestor(
-        of: find.text("Pat Lee says they're a parent or guardian of Emma #7."),
+        of: find.text("Pat Lee says they're a guardian of Emma #7."),
         matching: find.byType(RequestTile),
       );
       Finder inClaim(Finder f) => find.descendant(of: claimRow, matching: f);
@@ -1686,6 +1686,8 @@ void main() {
       );
       await tester.tap(find.text('I am this player'));
       await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Send'));
+      await tester.pumpAndSettle();
       expect(playerRepo.calls, ['claim emma self']);
       expect(find.text('Request sent to the team admins'), findsOneWidget);
     });
@@ -1721,8 +1723,39 @@ void main() {
       expect(find.text('I am this player'), findsNothing);
       await tester.tap(find.text("I'm their parent or guardian"));
       await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Send'));
+      await tester.pumpAndSettle();
       expect(playerRepo.calls, ['claim emma guardian']);
       expect(find.text("You're linked to this player"), findsOneWidget);
+    });
+
+    testWidgets('claiming from the card, a parent can be listed as Parent '
+        '(#95)', (tester) async {
+      final playerRepo = emmaTeam();
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: team,
+        memberships: [testMembership('y', 'coach')],
+        playerRepo: playerRepo,
+      );
+      await go(tester, '/g/y/team/players/emma');
+      await tester.tap(find.text('Claim this player'));
+      await tester.pumpAndSettle();
+      // Nothing is sent until they pick how they're linked.
+      final send = find.widgetWithText(FilledButton, 'Send');
+      expect(tester.widget<FilledButton>(send).onPressed, isNull);
+      expect(find.text('Listed as'), findsNothing);
+      await tester.tap(find.text("I'm their parent or guardian"));
+      await tester.pumpAndSettle();
+      expect(find.text('Listed as'), findsOneWidget);
+      await tester.tap(find.text('Guardian'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Parent').last);
+      await tester.pumpAndSettle();
+      await tester.tap(send);
+      await tester.pumpAndSettle();
+      expect(playerRepo.calls, ['claim emma guardian as parent']);
     });
 
     group('"I am this player" waits on a claim or player of my own', () {

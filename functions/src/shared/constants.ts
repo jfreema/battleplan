@@ -224,6 +224,9 @@ export type PlayerStatus = (typeof playerStatusValues)[number];
 export const playerRelationValues = ['self', 'guardian'] as const;
 export type PlayerRelation = (typeof playerRelationValues)[number];
 
+export const guardianTitleValues = ['guardian', 'parent'] as const;
+export type GuardianTitle = (typeof guardianTitleValues)[number];
+
 export const hereForValues = ['later', 'nobody'] as const;
 export type HereFor = (typeof hereForValues)[number];
 

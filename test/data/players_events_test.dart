@@ -46,6 +46,7 @@ void main() {
         'status': 'pending',
         'proposedBy': 'luis',
         'proposedRelation': 'guardian',
+        'proposedGuardianTitle': 'parent',
       });
       await db.doc('players/sam').set({
         'groupId': 'g1',
@@ -64,6 +65,13 @@ void main() {
         'playerId': 'emma',
         'uid': 'maria',
       });
+      await db.doc('playerGuardians/emma_dan').set({
+        'groupId': 'g1',
+        'playerId': 'emma',
+        'uid': 'dan',
+        'relation': 'guardian',
+        'guardianTitle': 'parent',
+      });
       await db.doc('playerGuardians/emma_emma1').set({
         'groupId': 'g1',
         'playerId': 'emma',
@@ -75,6 +83,7 @@ void main() {
         'playerId': 'emma',
         'uid': 'luis',
         'status': 'pending',
+        'guardianTitle': 'parent',
       });
       await db.doc('guardianRequests/emma_sam').set({
         'groupId': 'g1',
@@ -95,6 +104,8 @@ void main() {
       expect(pending.first.isPending, isTrue);
       expect(pending.first.proposedBy, 'luis');
       expect(pending.first.proposedRelation, PlayerRelation.guardian);
+      expect(pending.first.proposedTitle, GuardianTitle.parent);
+      expect(pending.last.proposedTitle, GuardianTitle.guardian);
       final mine = await repo
           .watchMyPendingPlayers(_g, const UserId('sam'))
           .first;
@@ -104,11 +115,26 @@ void main() {
       final links = await repo.watchGuardianLinks(_g).first;
       expect(
         {for (final l in links) l.uid.value: l.relation},
-        {'maria': PlayerRelation.guardian, 'emma1': PlayerRelation.self},
+        {
+          'maria': PlayerRelation.guardian,
+          'dan': PlayerRelation.guardian,
+          'emma1': PlayerRelation.self,
+        },
       );
+      // Old links without a title, and unknown ones, read Guardian (#95).
+      expect(
+        {for (final l in links) l.uid.value: l.title},
+        {
+          'maria': GuardianTitle.guardian,
+          'dan': GuardianTitle.parent,
+          'emma1': GuardianTitle.guardian,
+        },
+      );
+      expect(titleFromFirestore('aunt'), GuardianTitle.guardian);
       final open = (await repo.watchPendingRequests(_g).first).single;
       expect(open.uid, const UserId('luis'));
       expect(open.relation, PlayerRelation.guardian);
+      expect(open.title, GuardianTitle.parent);
       final asked = await repo.watchMyRequests(_g, const UserId('sam')).first;
       expect(asked.single.status, GuardianRequestStatus.declined);
       expect(asked.single.relation, PlayerRelation.self);
@@ -210,16 +236,30 @@ void main() {
         ),
         ClaimOutcome.requested,
       );
+      // A guardian unless they pick parent (#95).
       expect(functions.lastData('claimPlayer'), {
         'groupId': 'g1',
         'playerId': 'emma',
         'relation': 'guardian',
+        'title': 'guardian',
       });
+      await repo.claimPlayer(
+        _g,
+        const PlayerId('emma'),
+        PlayerRelation.guardian,
+        title: GuardianTitle.parent,
+      );
+      expect((functions.lastData('claimPlayer')! as Map)['title'], 'parent');
       // An admin's claim is approved at once (PLAYER-3).
       functions.handlers['claimPlayer'] = (_) => {'status': 'linked'};
       expect(
         await repo.claimPlayer(_g, const PlayerId('emma'), PlayerRelation.self),
         ClaimOutcome.linked,
+      );
+      // The player's own claim has no title.
+      expect(
+        (functions.lastData('claimPlayer')! as Map).containsKey('title'),
+        isFalse,
       );
       await repo.resolvePlayerClaim(
         _g,
@@ -245,7 +285,15 @@ void main() {
         'displayName': 'Noah',
         'jerseyNumber': '4',
         'relation': 'guardian',
+        'title': 'guardian',
       });
+      await repo.proposePlayer(
+        _g,
+        name: 'Noah',
+        relation: PlayerRelation.guardian,
+        title: GuardianTitle.parent,
+      );
+      expect((functions.lastData('proposePlayer')! as Map)['title'], 'parent');
       functions.handlers['proposePlayer'] = (_) => {'status': 'active'};
       expect(
         await repo.proposePlayer(
@@ -299,6 +347,18 @@ void main() {
         const PlayerId('emma'),
         const UserId('luis'),
       );
+      // A guardian changes how they're listed (#95).
+      functions.handlers['setGuardianTitle'] = (_) => {'ok': true};
+      await repo.setGuardianTitle(
+        _g,
+        const PlayerId('emma'),
+        GuardianTitle.parent,
+      );
+      expect(functions.lastData('setGuardianTitle'), {
+        'groupId': 'g1',
+        'playerId': 'emma',
+        'title': 'parent',
+      });
       expect(functions.lastData('resolvePlayerClaim'), {
         'groupId': 'g1',
         'playerId': 'emma',

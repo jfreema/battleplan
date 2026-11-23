@@ -99,10 +99,9 @@ void main() {
       GoRouter.of(tester.element(find.byType(Navigator).first)).state.uri
           .toString();
 
-  const claimSentence = "Pat Lee says they're a parent or guardian of Emma #7.";
+  const claimSentence = "Pat Lee says they're a guardian of Emma #7.";
   const noahSentence =
-      "Pat Lee wants to add Noah Park to the roster, as Noah's parent or "
-      'guardian.';
+      "Pat Lee wants to add Noah Park to the roster, as Noah's guardian.";
 
   group('a count where coaches look', () {
     testWidgets('the Team tab counts new players and claims for admins', (
@@ -212,8 +211,8 @@ void main() {
       await openTeamTab(tester);
       const self = "Claire Dunphy says they're Emma #7 on the roster.";
       const noah4 =
-          "Pat Lee wants to add Noah Park #4 to the roster, as Noah's parent "
-          'or guardian.';
+          "Pat Lee wants to add Noah Park #4 to the roster, as Noah's "
+          'guardian.';
       const claireNew = 'Claire Dunphy wants to join the roster as player #12.';
       final order = [self, noah4, claimSentence, claireNew];
       for (final s in order) {
@@ -243,6 +242,38 @@ void main() {
         ),
         findsOneWidget,
       );
+    });
+
+    testWidgets("a parent's say parent, as they picked (#95)", (tester) async {
+      await open(
+        tester,
+        players: [
+          emma,
+          noah().copyWith(proposedTitle: GuardianTitle.parent),
+        ],
+        requests: [patClaim.copyWith(title: GuardianTitle.parent)],
+        links: const [
+          GuardianLink(
+            playerId: PlayerId('emma'),
+            groupId: GroupId('y'),
+            uid: UserId('claire'),
+            title: GuardianTitle.parent,
+          ),
+        ],
+      );
+      await openTeamTab(tester);
+      const parentClaim = "Pat Lee says they're a parent of Emma #7.";
+      expect(find.text(parentClaim), findsOneWidget);
+      expect(
+        find.text(
+          "Pat Lee wants to add Noah Park to the roster, as Noah's parent.",
+        ),
+        findsOneWidget,
+      );
+      // Who's linked already says it too.
+      await tester.tap(find.text(parentClaim));
+      await tester.pumpAndSettle();
+      expect(find.text('Claire Dunphy, parent'), findsOneWidget);
     });
 
     testWidgets('a self request with no number', (tester) async {
@@ -410,7 +441,7 @@ void main() {
       await tester.tap(find.text(claimSentence));
       await tester.pumpAndSettle();
       expect(find.text('Approve this link?'), findsOneWidget);
-      expect(find.text('Claire Dunphy, parent or guardian'), findsOneWidget);
+      expect(find.text('Claire Dunphy, guardian'), findsOneWidget);
       // Closing it changes nothing.
       await tester.tapAt(const Offset(10, 10));
       await tester.pumpAndSettle();

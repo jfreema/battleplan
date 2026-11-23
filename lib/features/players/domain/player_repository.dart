@@ -42,12 +42,13 @@ abstract interface class PlayerRepository {
 
   /// Claims a player as [relation] (PLAYER-3): approved at once for
   /// admins (super admins on the team included), otherwise sent to the
-  /// admins.
+  /// admins. A guardian is listed as [title] (#95).
   Future<ClaimOutcome> claimPlayer(
     GroupId groupId,
     PlayerId playerId,
-    PlayerRelation relation,
-  );
+    PlayerRelation relation, {
+    GuardianTitle title = GuardianTitle.guardian,
+  });
 
   /// Approves or declines a claim (PLAYER-4). Admins only.
   Future<void> resolvePlayerClaim(
@@ -64,6 +65,7 @@ abstract interface class PlayerRepository {
     GroupId groupId, {
     required String name,
     required PlayerRelation relation,
+    GuardianTitle title = GuardianTitle.guardian,
     String? jerseyNumber,
     String? dateOfBirth,
   });
@@ -99,6 +101,14 @@ abstract interface class PlayerRepository {
   /// Removes a link from a player (PLAYER-2). Admins, or the linked
   /// member themselves.
   Future<void> removeGuardian(GroupId groupId, PlayerId playerId, UserId uid);
+
+  /// Changes what the signed-in guardian is called on [playerId]'s card
+  /// (#95). Only their own guardian link.
+  Future<void> setGuardianTitle(
+    GroupId groupId,
+    PlayerId playerId,
+    GuardianTitle title,
+  );
 
   /// A player's details (PLAYER-12), or null when there are none. Only the
   /// team's admins and the members linked to the player may ask.

@@ -30,6 +30,10 @@ abstract class Player with _$Player {
     String? proposedBy,
     PlayerRelation? proposedRelation,
 
+    /// What a guardian who added it picked to be called (#95), for the
+    /// admins' request: "as Emma's parent".
+    @Default(GuardianTitle.guardian) GuardianTitle proposedTitle,
+
     /// When it was added to the roster, so its RSVP history starts there
     /// (PLAYER-11). Null on records read without it.
     DateTime? addedAt,
@@ -58,6 +62,11 @@ abstract class GuardianLink with _$GuardianLink {
     required GroupId groupId,
     required UserId uid,
     @Default(PlayerRelation.guardian) PlayerRelation relation,
+
+    /// What a guardian is called on the player card (#95): "Guardian", or
+    /// "Parent" when they picked it. Purely a label: a parent is a
+    /// guardian everywhere else. Meaningless on the player's own link.
+    @Default(GuardianTitle.guardian) GuardianTitle title,
   }) = _GuardianLink;
 
   const new _();
@@ -135,6 +144,10 @@ abstract class GuardianRequest with _$GuardianRequest {
     required UserId uid,
     required GuardianRequestStatus status,
     @Default(PlayerRelation.guardian) PlayerRelation relation,
+
+    /// What a guardian picked to be called (#95), for the admins' request
+    /// and the link once it's approved.
+    @Default(GuardianTitle.guardian) GuardianTitle title,
 
     /// When it was asked, so admins see the oldest first (#23). Null on
     /// records read without it.

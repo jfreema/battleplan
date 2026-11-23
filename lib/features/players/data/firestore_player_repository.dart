@@ -54,6 +54,7 @@ class FirestorePlayerRepository implements PlayerRepository {
       groupId: groupId,
       uid: UserId(d.data()['uid'] as String),
       relation: relationFromFirestore(d.data()['relation']),
+      title: titleFromFirestore(d.data()['guardianTitle']),
     ),
   );
 
@@ -161,6 +162,7 @@ class FirestorePlayerRepository implements PlayerRepository {
                           .data()['status']] ??
                       GuardianRequestStatus.pending,
                   relation: relationFromFirestore(d.data()['relation']),
+                  title: titleFromFirestore(d.data()['guardianTitle']),
                   createdAt: switch (d.data()['createdAt']) {
                     final Timestamp t => t.toDate(),
                     _ => null,
@@ -173,12 +175,14 @@ class FirestorePlayerRepository implements PlayerRepository {
   Future<ClaimOutcome> claimPlayer(
     GroupId groupId,
     PlayerId playerId,
-    PlayerRelation relation,
-  ) async {
+    PlayerRelation relation, {
+    GuardianTitle title = GuardianTitle.guardian,
+  }) async {
     final d = await _call('claimPlayer', {
       'groupId': groupId.value,
       'playerId': playerId.value,
       'relation': relation.value,
+      if (relation == PlayerRelation.guardian) 'title': title.value,
     });
     return d['status'] == 'linked'
         ? ClaimOutcome.linked
@@ -203,6 +207,7 @@ class FirestorePlayerRepository implements PlayerRepository {
     GroupId groupId, {
     required String name,
     required PlayerRelation relation,
+    GuardianTitle title = GuardianTitle.guardian,
     String? jerseyNumber,
     String? dateOfBirth,
   }) async {
@@ -214,6 +219,7 @@ class FirestorePlayerRepository implements PlayerRepository {
       'jerseyNumber': blankToNull(jerseyNumber),
       'dateOfBirth': ?blankToNull(dateOfBirth),
       'relation': relation.value,
+      if (relation == PlayerRelation.guardian) 'title': title.value,
     });
     return PlayerStatus.tryParse(d['status'] as String?) ??
         PlayerStatus.pending;
@@ -270,6 +276,17 @@ class FirestorePlayerRepository implements PlayerRepository {
         'playerId': playerId.value,
         'uid': uid.value,
       });
+
+  @override
+  Future<void> setGuardianTitle(
+    GroupId groupId,
+    PlayerId playerId,
+    GuardianTitle title,
+  ) => _call('setGuardianTitle', {
+    'groupId': groupId.value,
+    'playerId': playerId.value,
+    'title': title.value,
+  });
 
   DocumentReference<Map<String, dynamic>> _details(PlayerId playerId) =>
       _db.collection(Collections.playerDetails).doc(playerId.value);
@@ -395,6 +412,7 @@ Player playerFromFirestore(
   status: PlayerStatus.tryParse(d['status'] as String?) ?? PlayerStatus.active,
   proposedBy: d['proposedBy'] as String?,
   proposedRelation: PlayerRelation.tryParse(d['proposedRelation'] as String?),
+  proposedTitle: titleFromFirestore(d['proposedGuardianTitle']),
   addedAt: switch (d['createdAt']) {
     final Timestamp t => t.toDate(),
     _ => null,
@@ -404,6 +422,12 @@ Player playerFromFirestore(
 /// A link's or claim's relation; old ones without it are guardians.
 PlayerRelation relationFromFirestore(Object? value) =>
     PlayerRelation.tryParse(value as String?) ?? PlayerRelation.guardian;
+
+/// What a guardian is called (#95); old links and claims without it, and
+/// anything unknown, are "Guardian".
+GuardianTitle titleFromFirestore(Object? value) =>
+    GuardianTitle.tryParse(value is String ? value : null) ??
+    GuardianTitle.guardian;
 
 /// A player's details from their Firestore fields (ARCH §6.2
 /// `playerDetails`). Timestamps still being written read as null.

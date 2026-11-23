@@ -101,5 +101,6 @@ export {
   removePlayer,
   resolvePendingPlayer,
   resolvePlayerClaim,
+  setGuardianTitle,
 } from './players/handlers.js';
 export { onPlayerUpdated } from './players/triggers.js';

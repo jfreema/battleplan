@@ -304,7 +304,11 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
                           for (final l in links)
                             if (l.playerId == r.playerId)
                               if (nameOf(l.uid.value) case final name?)
-                                (name: name, relation: l.relation),
+                                (
+                                  name: name,
+                                  relation: l.relation,
+                                  title: l.title,
+                                ),
                         ],
                       ),
                   ]))

@@ -100,6 +100,19 @@ export function relationOf(link: { relation?: unknown } | undefined): Relation {
   return link?.relation === 'self' ? 'self' : 'guardian';
 }
 
+/**
+ * What a guardian is called on the player card and in the admins' requests
+ * (#95): "Guardian", or "Parent" when they picked it. Purely a label: a
+ * parent is a guardian everywhere else. Links, claims, and pending players
+ * made before it existed are guardians.
+ */
+export type Title = 'guardian' | 'parent';
+
+/** A link's or claim's title, from [field] ('guardianTitle', or 'proposedGuardianTitle' on a pending player). */
+export function titleOf(doc: Record<string, unknown> | undefined, field = 'guardianTitle'): Title {
+  return doc?.[field] === 'parent' ? 'parent' : 'guardian';
+}
+
 /** A player's status; players made before approvals existed are active. */
 export function playerStatusOf(player: { status?: unknown } | undefined): 'active' | 'pending' {
   return player?.status === 'pending' ? 'pending' : 'active';

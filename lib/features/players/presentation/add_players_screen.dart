@@ -143,6 +143,7 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
             widget.groupId,
             name: p.name,
             relation: p.relation,
+            title: p.title,
             jerseyNumber: p.jerseyNumber,
             dateOfBirth: p.dateOfBirth,
           );

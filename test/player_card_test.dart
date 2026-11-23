@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/schemes.dart';
+import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
@@ -77,18 +78,20 @@ void main() {
     WidgetTester tester, {
     MemberRole role = MemberRole.member,
     FakeEventRepository? events,
+    GuardianTitle pamTitle = GuardianTitle.guardian,
   }) async {
     final players = _Unlinking([noah])
-      ..links.addAll(const [
-        GuardianLink(
+      ..links.addAll([
+        const GuardianLink(
           playerId: PlayerId('noah'),
           groupId: team,
           uid: UserId('coach'),
         ),
         GuardianLink(
-          playerId: PlayerId('noah'),
+          playerId: const PlayerId('noah'),
           groupId: team,
-          uid: UserId('pam'),
+          uid: const UserId('pam'),
+          title: pamTitle,
         ),
       ]);
     final now = DateTime.now();
@@ -207,6 +210,8 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text("I'm their parent or guardian"));
       await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Send'));
+      await tester.pumpAndSettle();
       expect(players.calls.last, 'claim noah guardian');
       handle.dispose();
     });
@@ -240,6 +245,85 @@ void main() {
       await tester.pumpAndSettle();
       expect(players.calls, ['removeGuardian noah pam']);
       expect(find.text('Pam is no longer linked to Noah.'), findsOneWidget);
+    });
+  });
+
+  group('Guardian or Parent (#95)', () {
+    testWidgets('my own row is mine to change; the others only say it', (
+      tester,
+    ) async {
+      final players = await open(tester);
+      final mine = find.ancestor(
+        of: find.text('Coach Lee'),
+        matching: find.byType(ListTile),
+      );
+      final pams = find.ancestor(
+        of: find.text('Pam Beesly'),
+        matching: find.byType(ListTile),
+      );
+      expect(
+        find.descendant(
+          of: mine,
+          matching: find.byType(DropdownButton<GuardianTitle>),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: pams,
+          matching: find.byType(DropdownButton<GuardianTitle>),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.descendant(of: pams, matching: find.text('Guardian')),
+        findsOneWidget,
+      );
+      await tester.tap(
+        find.descendant(of: mine, matching: find.text('Guardian')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Parent').last);
+      await tester.pumpAndSettle();
+      expect(players.calls, ['title noah parent']);
+    });
+
+    testWidgets("someone else's Parent reads Parent", (tester) async {
+      await open(tester, pamTitle: GuardianTitle.parent);
+      final pams = find.ancestor(
+        of: find.text('Pam Beesly'),
+        matching: find.byType(ListTile),
+      );
+      expect(
+        find.descendant(of: pams, matching: find.text('Parent')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets("a failed change says so, and the label doesn't move", (
+      tester,
+    ) async {
+      final players = await open(tester)
+        ..titleFailure = const Offline('down');
+      final mine = find.ancestor(
+        of: find.text('Coach Lee'),
+        matching: find.byType(ListTile),
+      );
+      await tester.tap(
+        find.descendant(of: mine, matching: find.text('Guardian')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Parent').last);
+      await tester.pumpAndSettle();
+      expect(
+        find.text("Couldn't change it. Check your connection and try again."),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: mine, matching: find.text('Guardian')),
+        findsOneWidget,
+      );
+      expect(players.calls, isEmpty);
     });
   });
 
