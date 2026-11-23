@@ -358,7 +358,7 @@ void main() {
       handle.dispose();
     });
 
-    testWidgets('reads well: contrast in all seven schemes, and 200% text', (
+    testWidgets('reads well: contrast in every scheme, and 200% text', (
       tester,
     ) async {
       for (final scheme in bootCampSchemes) {

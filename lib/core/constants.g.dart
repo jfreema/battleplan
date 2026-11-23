@@ -254,6 +254,8 @@ enum TeamScheme {
   wildcat('wildcat'),
   purplegold('purplegold'),
   scoreboard('scoreboard'),
+  graphite('graphite'),
+  tealwave('tealwave'),
   custom1('custom1'),
   custom2('custom2'),
   custom3('custom3'),

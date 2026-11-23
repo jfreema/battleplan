@@ -728,9 +728,13 @@ void main() {
     });
 
     testWidgets('a pick of a scheme that left is drawn and checked as the '
-        'closest of the three, and never rewritten (#85)', (tester) async {
+        'closest of the eleven, and never rewritten (#85)', (tester) async {
+      // Scoreboard left in #85; it's drawn as Black.
       final members = FakeMemberRepository([
-        testMembership('a', 'coach').copyWith(colorScheme: TeamScheme.navy),
+        testMembership(
+          'a',
+          'coach',
+        ).copyWith(colorScheme: TeamScheme.scoreboard),
       ]);
       await pumpApp(
         tester,
@@ -748,7 +752,7 @@ void main() {
         isSemantics(isSelected: true, isButton: true, hasTapAction: true),
       );
       expect(members.calls.where((c) => c.startsWith('scheme')), isEmpty);
-      expect(members.memberships.single.colorScheme, TeamScheme.navy);
+      expect(members.memberships.single.colorScheme, TeamScheme.scoreboard);
     });
 
     testWidgets("Admin settings sets the team's default for everyone", (

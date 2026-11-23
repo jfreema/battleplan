@@ -53,9 +53,9 @@ describe('unreadableParts', () => {
       expect.arrayContaining(['text on cards', 'text on pop-ups']),
     );
     expect(unreadableParts('candypop', theme({ cardText: '#FFFFFF' }))).toContain('text on cards');
-    // Navy is drawn as Black: cream text.
-    expect(unreadableParts('navy', theme({ page: '#F4EAD0' }))).toContain('text on page');
-    // Scoreboard too: cream text on a page nearly cream.
+    // Navy is drawn as Navy Steel since #89: near-white text.
+    expect(unreadableParts('navy', theme({ page: '#F0F4FC' }))).toContain('text on page');
+    // Scoreboard is drawn as Black: cream text on a page nearly cream.
     expect(unreadableParts('scoreboard', theme({ page: '#EFE6CC' }))).toContain('text on page');
   });
 
@@ -94,8 +94,10 @@ describe('unreadableParts', () => {
 // Boot Camp Mix's theme editor (#88): every token of the seven schemes, the
 // same pairs as the app's campPairs.
 describe('unreadableCampParts', () => {
-  it('knows the seven schemes, and each passes as it ships', () => {
-    expect(campSchemeValues.sort()).toEqual(['army', 'candypop', 'dark', 'light', 'purplegold', 'sky', 'wildcat']);
+  it('knows every Boot Camp Mix scheme, and each passes as it ships', () => {
+    expect([...campSchemeValues].sort()).toEqual([
+      'army', 'candypop', 'dark', 'darkarmy', 'graphite', 'light', 'navy', 'purplegold', 'sky', 'tealwave', 'wildcat',
+    ]);
     for (const scheme of campSchemeValues) expect(unreadableCampParts(scheme, {})).toEqual([]);
   });
 
@@ -133,14 +135,14 @@ describe('unreadableCampParts', () => {
   });
 
   it('refuses an unknown scheme', () => {
-    expect(unreadableCampParts('navy', {})).toEqual(['scheme']);
+    expect(unreadableCampParts('scoreboard', {})).toEqual(['scheme']);
   });
 
   it('takes colors by token only, as #RRGGBB, upper-cased', () => {
     expect(SaveCampThemeInput.parse({ scheme: 'dark', colors: { red: '#f45b5b' } }).colors).toEqual({ red: '#F45B5B' });
     expect(() => SaveCampThemeInput.parse({ scheme: 'dark', colors: { accent: '#F45B5B' } })).toThrow();
     expect(() => SaveCampThemeInput.parse({ scheme: 'dark', colors: { red: 'red' } })).toThrow();
-    expect(() => SaveCampThemeInput.parse({ scheme: 'navy', colors: {} })).toThrow();
+    expect(() => SaveCampThemeInput.parse({ scheme: 'scoreboard', colors: {} })).toThrow();
   });
 });
 

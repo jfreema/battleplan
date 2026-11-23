@@ -172,7 +172,10 @@ void main() {
       expect(roles.palette.red, const Color(_coral));
       expect(SchemeRoles.of(TeamScheme.dark), same(roles));
       // A pick stored as an old scheme draws in its Boot Camp Mix one.
-      expect(SchemeRoles.of(TeamScheme.navy).palette.red, const Color(_coral));
+      expect(
+        SchemeRoles.of(TeamScheme.scoreboard).palette.red,
+        const Color(_coral),
+      );
       // The other schemes, and the panel's colors, as they ship.
       expect(SchemeRoles.of(TeamScheme.light), same(SchemeRoles.light));
       expect(

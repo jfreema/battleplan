@@ -350,7 +350,7 @@ void main() {
     });
   });
 
-  testWidgets('reads well: 48 px targets, contrast in all seven schemes, and '
+  testWidgets('reads well: 48 px targets, contrast in every scheme, and '
       '200% text', (tester) async {
     for (final scheme in bootCampSchemes) {
       await scenes.pumpTeam(

@@ -262,7 +262,7 @@ void main() {
     });
 
     test('a pick the app no longer offers reads as the closest of the '
-        'seven, and is never rewritten (#85, #86)', () async {
+        'eleven, and is never rewritten (#85, #86, #89)', () async {
       final users = FakeUserRepository()..colorScheme = TeamScheme.dark;
       final c = await container(
         users: users,
@@ -274,7 +274,11 @@ void main() {
           ).copyWith(colorScheme: TeamScheme.candypop),
         }),
         memberships: [
-          testMembership('a', 'coach').copyWith(colorScheme: TeamScheme.navy),
+          // Scoreboard left in #85.
+          testMembership(
+            'a',
+            'coach',
+          ).copyWith(colorScheme: TeamScheme.scoreboard),
           testMembership('b', 'coach'),
         ],
       );

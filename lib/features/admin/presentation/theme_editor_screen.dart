@@ -155,7 +155,7 @@ CampPalette _paletteOf(TeamScheme scheme, CampColors? colors) => colors == null
     ? SchemeRoles.builtIn(scheme).palette
     : editedPalette(scheme, colors);
 
-/// Themes (#88): the seven schemes, each with a strip of its colors as
+/// Themes (#88): every Boot Camp Mix scheme, each with a strip of its colors as
 /// they're drawn, and how many are changed. A scheme whose saved colors
 /// the app won't draw says so.
 class AdminThemesScreen extends ConsumerWidget {
@@ -241,7 +241,7 @@ class _PaletteStrip extends StatelessWidget {
 class AdminThemeEditorScreen extends ConsumerStatefulWidget {
   const new({required this.scheme, super.key});
 
-  /// One of the seven Boot Camp Mix schemes.
+  /// One of the Boot Camp Mix schemes ([bootCampSchemes]).
   final TeamScheme scheme;
 
   @override
@@ -498,7 +498,7 @@ class ColorDot extends StatelessWidget {
   );
 }
 
-/// Chooses a color (#88): by its code, or from the seven schemes' own
+/// Chooses a color (#88): by its code, or from every scheme's own
 /// colors and the team colors, each named. Returns the one picked, or null.
 Future<Color?> showCampColorChooser(
   BuildContext context, {

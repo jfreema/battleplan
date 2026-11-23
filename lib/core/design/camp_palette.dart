@@ -3,8 +3,9 @@ import 'package:material_ui/material_ui.dart';
 
 /// One Boot Camp Mix color scheme's tokens (#85, owner's pick 2026-11-22:
 /// "let's replace the existing themes with these 3 themes"; SPEC §7.4):
-/// Army green, Black, and Light, and since #86 Sky Blue, Candy Pop,
-/// Central Wildcat, and Geaux Tigahs. Every color the look draws comes from
+/// Army green, Black, and Light, since #86 Sky Blue, Candy Pop, Central
+/// Wildcat, and Geaux Tigahs, and since #89 Graphite, Teal Wave, Navy
+/// Steel, and Forest. Every color the look draws comes from
 /// here; `SchemeRoles` and `GumdropColors` are built from it.
 @immutable
 final class CampPalette {
@@ -431,5 +432,142 @@ final class CampPalette {
     headerHalftone: Color(0x29FFFFFF),
     headerLettering: Color(0xFFFFFFFF),
     ballChain: Color(0xFFFDD023),
+  );
+
+  /// Graphite (#89, owner's request 2026-11-23: "add Slate & Coral theme but
+  /// call it "Graphite""; the mockup's style 47): a slate page, panels a
+  /// shade lighter, coral trim and balloons, and games, send and alerts a
+  /// deeper coral, since a true red clashed with it.
+  static const graphite = CampPalette(
+    ink: Color(0xFF070A0D),
+    shadow: Color(0xFF070A0D),
+    page: Color(0xFF2B323B),
+    pageDots: Color(0x0FF1F4F7),
+    panel: Color(0xFF3A434E),
+    tabBar: Color(0xFF1E242B),
+    text: Color(0xFFF1F4F7),
+    muted: Color(0xFFAEB8C4),
+    panelText: Color(0xFFF1F4F7),
+    panelMuted: Color(0xFFAEB8C4),
+    mustard: Color(0xFFFF7F66),
+    balloon: Color(0xFFFF7F66),
+    red: Color(0xFFF26A50),
+    blue: Color(0xFF5AA7F0),
+    green: Color(0xFF8DC63F),
+    orange: Color(0xFFF5A93A),
+    purple: Color(0xFFB49AF0),
+    unansweredTag: Color(0xFF4F5966),
+    answerRow: Color(0xFF2E2A2D),
+    toolsRow: Color(0xFF2F3740),
+    disabledIcon: Color(0xFF6F7A87),
+    camoGround: Color(0xFF333B45),
+    camoBig: Color(0xFF232A32),
+    camoMid: Color(0xFF4A5562),
+    camoSmall: Color(0xFF12161B),
+    headerHalftone: Color(0x1FFFFFFF),
+    headerLettering: Color(0xFFF1F4F7),
+    ballChain: Color(0xFFFF7F66),
+  );
+
+  /// Teal Wave (#89, "Also add the Teal Wave theme."; style 43): a deep
+  /// teal page, aqua trim, your balloons coral, teal camouflage.
+  static const tealWave = CampPalette(
+    ink: Color(0xFF021214),
+    shadow: Color(0xFF021214),
+    page: Color(0xFF0B3B40),
+    pageDots: Color(0x12F0FBFA),
+    panel: Color(0xFF135058),
+    tabBar: Color(0xFF062A2E),
+    text: Color(0xFFF0FBFA),
+    muted: Color(0xFFA9D3D0),
+    panelText: Color(0xFFF0FBFA),
+    panelMuted: Color(0xFFA9D3D0),
+    mustard: Color(0xFF5CE1D3),
+    balloon: Color(0xFFFF8D75),
+    red: Color(0xFFFF6B57),
+    blue: Color(0xFF5AA7F0),
+    green: Color(0xFF8DD85A),
+    orange: Color(0xFFFFB347),
+    purple: Color(0xFFB99AF0),
+    unansweredTag: Color(0xFF3D6B70),
+    answerRow: Color(0xFF0A3035),
+    toolsRow: Color(0xFF10464D),
+    disabledIcon: Color(0xFF5F8E91),
+    camoGround: Color(0xFF0E4A50),
+    camoBig: Color(0xFF083338),
+    camoMid: Color(0xFF1F6E73),
+    camoSmall: Color(0xFF03191C),
+    headerHalftone: Color(0x24F0FBFA),
+    headerLettering: Color(0xFFF0FBFA),
+    ballChain: Color(0xFF5FE0D6),
+  );
+
+  /// Navy Steel (#89, "Add Navy Steel theme to the app, as well"; style 39):
+  /// a deep navy page, steel-gray panels, white lettering, trim and
+  /// balloons, steel camouflage.
+  static const navySteel = CampPalette(
+    ink: Color(0xFF02060F),
+    shadow: Color(0xFF02060F),
+    page: Color(0xFF101D3A),
+    pageDots: Color(0x12F2F6FF),
+    panel: Color(0xFF2B3850),
+    tabBar: Color(0xFF08101F),
+    text: Color(0xFFF2F6FF),
+    muted: Color(0xFFAFBACB),
+    panelText: Color(0xFFF2F6FF),
+    panelMuted: Color(0xFFAFBACB),
+    mustard: Color(0xFFF2F5FA),
+    balloon: Color(0xFFF2F5FA),
+    red: Color(0xFFE2463A),
+    blue: Color(0xFF5AA0E0),
+    green: Color(0xFF7CC84E),
+    orange: Color(0xFFF5943A),
+    purple: Color(0xFFA98BEB),
+    unansweredTag: Color(0xFF4A5670),
+    answerRow: Color(0xFF1A2742),
+    toolsRow: Color(0xFF22304A),
+    disabledIcon: Color(0xFF6B7790),
+    camoGround: Color(0xFF1C2840),
+    camoBig: Color(0xFF121A2C),
+    camoMid: Color(0xFF3A4760),
+    camoSmall: Color(0xFF060A14),
+    headerHalftone: Color(0x21F2F6FF),
+    headerLettering: Color(0xFFF2F6FF),
+    ballChain: Color(0xFF8E9AB4),
+  );
+
+  /// Forest (#89, "add the Forest & White theme, but call it "Forest" and
+  /// make the forest green a tiny bit darker"; style 48, Forest & White's
+  /// greens about 10% darker): a forest-green page, white lettering, trim and
+  /// balloons, forest camouflage.
+  static const forest = CampPalette(
+    ink: Color(0xFF050D09),
+    shadow: Color(0xFF050D09),
+    page: Color(0xFF0F2E1F),
+    pageDots: Color(0x0FFFFFFF),
+    panel: Color(0xFF183E2C),
+    tabBar: Color(0xFF081F14),
+    text: Color(0xFFFFFFFF),
+    muted: Color(0xFFB5CFC0),
+    panelText: Color(0xFFFFFFFF),
+    panelMuted: Color(0xFFB5CFC0),
+    mustard: Color(0xFFFFFFFF),
+    balloon: Color(0xFFFFFFFF),
+    red: Color(0xFFE5483A),
+    blue: Color(0xFF5BA8E0),
+    green: Color(0xFF8BDB5A),
+    orange: Color(0xFFF5A03A),
+    purple: Color(0xFFB794E8),
+    unansweredTag: Color(0xFF375A48),
+    answerRow: Color(0xFF0C2619),
+    toolsRow: Color(0xFF14382A),
+    disabledIcon: Color(0xFF6A897A),
+    camoGround: Color(0xFF133524),
+    camoBig: Color(0xFF0B2418),
+    camoMid: Color(0xFF28543D),
+    camoSmall: Color(0xFF05110B),
+    headerHalftone: Color(0x21FFFFFF),
+    headerLettering: Color(0xFFFFFFFF),
+    ballChain: Color(0xFFCFE3D6),
   );
 }

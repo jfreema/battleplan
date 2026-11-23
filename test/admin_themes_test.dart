@@ -1,7 +1,7 @@
 // The theme editor, back for Boot Camp Mix (#88, owner's request
 // 2026-11-22: "can you put the theme editor back in? only available to
 // super admins, of course."; SPEC ADMIN-10): Themes in the Super Admin
-// Panel lists the seven schemes; each opens to every color it's drawn
+// Panel lists every scheme; each opens to every color it's drawn
 // from, the games, send and alerts color first, with a preview; colors
 // nearly the same as what they sit on can't be saved; what's saved is
 // drawn everywhere but the panel itself.
@@ -76,8 +76,8 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('Themes is in the Super Admin Panel, with the seven schemes '
-      'and how many of their colors are changed', (tester) async {
+  testWidgets('Themes is in the Super Admin Panel, with every scheme and '
+      'how many of its colors are changed', (tester) async {
     await open(
       tester,
       path: '/admin',
@@ -99,7 +99,7 @@ void main() {
       expect(find.byKey(ValueKey('theme-${scheme.value}')), findsOneWidget);
     }
     expect(find.text('2 colors changed'), findsOneWidget);
-    expect(find.text('As it ships'), findsNWidgets(6));
+    expect(find.text('As it ships'), findsNWidgets(bootCampSchemes.length - 1));
     await tester.tap(find.byKey(const ValueKey('theme-dark')));
     await tester.pumpAndSettle();
     expect(location(tester), '/admin/themes/dark');
@@ -111,10 +111,10 @@ void main() {
     expect(location(tester), isNot(startsWith('/admin')));
   });
 
-  testWidgets("a scheme that isn't one of the seven goes to the list", (
+  testWidgets("a scheme that isn't a Boot Camp Mix one goes to the list", (
     tester,
   ) async {
-    await open(tester, path: '/admin/themes/navy');
+    await open(tester, path: '/admin/themes/scoreboard');
     expect(location(tester), '/admin/themes');
   });
 

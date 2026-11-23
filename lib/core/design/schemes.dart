@@ -546,6 +546,18 @@ class SchemeRoles {
   /// Geaux Tigahs (#86): purple and gold.
   static final purplegold = SchemeRoles.camp(CampPalette.purpleGold);
 
+  /// Graphite (#89): slate and coral.
+  static final graphite = SchemeRoles.camp(CampPalette.graphite);
+
+  /// Teal Wave (#89): deep teal and aqua.
+  static final tealwave = SchemeRoles.camp(CampPalette.tealWave);
+
+  /// Navy Steel (#89), in Open Field's Navy's stored value (D81).
+  static final navy = SchemeRoles.camp(CampPalette.navySteel);
+
+  /// Forest (#89), in Open Field's Forest green's stored value (D81).
+  static final darkarmy = SchemeRoles.camp(CampPalette.forest);
+
   /// The roles of [scheme]'s Boot Camp Mix scheme ([TeamSchemeLook.look]),
   /// whatever was stored.
   static SchemeRoles builtIn(TeamScheme scheme) => switch (scheme.look) {
@@ -555,6 +567,10 @@ class SchemeRoles {
     TeamScheme.candypop => candypop,
     TeamScheme.wildcat => wildcat,
     TeamScheme.purplegold => purplegold,
+    TeamScheme.graphite => graphite,
+    TeamScheme.tealwave => tealwave,
+    TeamScheme.navy => navy,
+    TeamScheme.darkarmy => darkarmy,
     _ => dark,
   };
 
@@ -630,15 +646,16 @@ abstract final class ThemeCatalog {
     return _edited.putIfAbsent(look, () => SchemeRoles.edited(look, colors));
   }
 
-  /// The schemes the pickers offer: Boot Camp Mix's seven (#85, #86). The
+  /// The schemes the pickers offer: Boot Camp Mix's eleven (#85, #86, #89). The
   /// other built-in schemes and saved themes are no longer offered; a pick
   /// of one shows in its closest ([TeamSchemeLook.look]).
   static const List<TeamScheme> available = bootCampSchemes;
 }
 
 /// The Boot Camp Mix schemes, in picker order (#85, owner's pick
-/// 2026-11-22: "let's replace the existing themes with these 3 themes"; and
-/// #86, the same day: "add 4 new themes to the UI").
+/// 2026-11-22: "let's replace the existing themes with these 3 themes";
+/// #86, the same day: "add 4 new themes to the UI"; and #89, the next:
+/// Graphite, Teal Wave, Navy Steel, and Forest).
 const List<TeamScheme> bootCampSchemes = [
   TeamScheme.army,
   TeamScheme.dark,
@@ -647,26 +664,33 @@ const List<TeamScheme> bootCampSchemes = [
   TeamScheme.candypop,
   TeamScheme.wildcat,
   TeamScheme.purplegold,
+  TeamScheme.graphite,
+  TeamScheme.tealwave,
+  TeamScheme.navy,
+  TeamScheme.darkarmy,
 ];
 
 /// What each scheme is called, which Boot Camp Mix scheme it's drawn in,
 /// and whether its page is dark.
 extension TeamSchemeLook on TeamScheme {
-  /// The Boot Camp Mix scheme this is drawn in (#85, #86): itself for the
-  /// seven; for a scheme the app no longer offers, the closest. Stored picks
-  /// are never rewritten, so an older app still shows its own. Forest green
-  /// goes to Army green; Navy and Scoreboard to Black; Sky Blue Pop to Sky
-  /// Blue; a saved theme to Black or Light by how dark its page is.
+  /// The Boot Camp Mix scheme this is drawn in (#85, #86, #89): itself for
+  /// the eleven; for a scheme the app no longer offers, the closest. Stored
+  /// picks are never rewritten, so an older app still shows its own. Since
+  /// #89 Open Field's Navy is Navy Steel and its Forest green is Forest
+  /// (D81); Scoreboard goes to Black; Sky Blue Pop to Sky Blue; a saved
+  /// theme to Black or Light by how dark its page is.
   TeamScheme get look => switch (this) {
-    TeamScheme.army || TeamScheme.darkarmy => TeamScheme.army,
+    TeamScheme.army => TeamScheme.army,
     TeamScheme.light => TeamScheme.light,
     TeamScheme.sky || TeamScheme.skyblue => TeamScheme.sky,
     TeamScheme.candypop => TeamScheme.candypop,
     TeamScheme.wildcat => TeamScheme.wildcat,
     TeamScheme.purplegold => TeamScheme.purplegold,
-    TeamScheme.dark ||
-    TeamScheme.navy ||
-    TeamScheme.scoreboard => TeamScheme.dark,
+    TeamScheme.graphite => TeamScheme.graphite,
+    TeamScheme.tealwave => TeamScheme.tealwave,
+    TeamScheme.navy => TeamScheme.navy,
+    TeamScheme.darkarmy => TeamScheme.darkarmy,
+    TeamScheme.dark || TeamScheme.scoreboard => TeamScheme.dark,
     _ => _savedLook,
   };
 
@@ -697,6 +721,10 @@ extension TeamSchemeLook on TeamScheme {
     TeamScheme.candypop => l10n.schemeCandypop,
     TeamScheme.wildcat => l10n.schemeWildcat,
     TeamScheme.purplegold => l10n.schemePurplegold,
+    TeamScheme.graphite => l10n.schemeGraphite,
+    TeamScheme.tealwave => l10n.schemeTealwave,
+    TeamScheme.navy => l10n.schemeNavy,
+    TeamScheme.darkarmy => l10n.schemeDarkarmy,
     _ => l10n.schemeDark,
   };
 
@@ -708,6 +736,10 @@ extension TeamSchemeLook on TeamScheme {
     TeamScheme.candypop => l10n.schemeCandypopShort,
     TeamScheme.wildcat => l10n.schemeWildcatShort,
     TeamScheme.purplegold => l10n.schemePurplegoldShort,
+    TeamScheme.graphite => l10n.schemeGraphiteShort,
+    TeamScheme.tealwave => l10n.schemeTealwaveShort,
+    TeamScheme.navy => l10n.schemeNavyShort,
+    TeamScheme.darkarmy => l10n.schemeDarkarmyShort,
     _ => l10n.schemeDarkShort,
   };
 }

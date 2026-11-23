@@ -1143,7 +1143,7 @@ describe("Boot Camp Mix's theme editor (#88)", () => {
       details: { reason: 'unreadable-theme' },
     });
     for (const bad of [
-      { scheme: 'navy', colors: { red: '#F45B5B' } },
+      { scheme: 'scoreboard', colors: { red: '#F45B5B' } },
       { scheme: 'dark', colors: { accent: '#F45B5B' } },
       { scheme: 'dark', colors: { red: 'coral' } },
     ]) {

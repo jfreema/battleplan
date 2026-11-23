@@ -368,7 +368,7 @@ void main() {
   });
 
   testWidgets('reads well: the notice heard once, 48 px targets, contrast '
-      'in all seven schemes, and 200% text', (tester) async {
+      'in every scheme, and 200% text', (tester) async {
     for (final scheme in bootCampSchemes) {
       final events = _FlakyEvents([practice('1', 1)])
         ..fails = 1

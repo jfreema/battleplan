@@ -312,7 +312,7 @@ void main() {
     handle.dispose();
   });
 
-  testWidgets('reads well: 48 px targets and contrast in all seven schemes, '
+  testWidgets('reads well: 48 px targets and contrast in every scheme, '
       'and 200% text at 320', (tester) async {
     for (final scheme in bootCampSchemes) {
       await open(tester, FakeAuthRepository(user: pat), scheme: scheme);

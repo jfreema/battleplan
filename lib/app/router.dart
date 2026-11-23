@@ -621,7 +621,7 @@ GoRouter router(Ref ref) {
             builder: (_, _) =>
                 _AdminPanel(() => admin_panel.PlatformSettingsScreen()),
           ),
-          // The theme editor (#82; Boot Camp Mix's since #88): the seven
+          // The theme editor (#82; Boot Camp Mix's since #88): the
           // schemes, then one's colors. Any other scheme's address, from
           // the first editor's bookmarks, goes to the list.
           GoRoute(

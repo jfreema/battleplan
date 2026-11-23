@@ -243,7 +243,7 @@ void main() {
     });
   });
 
-  testWidgets('reads well: answers keep their contrast in all seven schemes, '
+  testWidgets('reads well: answers keep their contrast in every scheme, '
       'and 200% text', (tester) async {
     for (final scheme in bootCampSchemes) {
       await scenes.pumpTeam(

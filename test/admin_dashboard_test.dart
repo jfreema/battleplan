@@ -118,7 +118,7 @@ void main() {
     );
   });
 
-  testWidgets('reads well: contrast and targets in all seven schemes, and '
+  testWidgets('reads well: contrast and targets in every scheme, and '
       '200% text, the number under its label', (tester) async {
     for (final scheme in bootCampSchemes) {
       await open(tester, scheme: scheme, reports: 2);

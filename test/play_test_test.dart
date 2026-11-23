@@ -134,7 +134,7 @@ void main() {
     expect(find.textContaining('Google Play'), findsNothing);
   });
 
-  testWidgets('reads well: the tag in all seven schemes, and 200% text', (
+  testWidgets('reads well: the tag in every scheme, and 200% text', (
     tester,
   ) async {
     for (final scheme in bootCampSchemes) {
