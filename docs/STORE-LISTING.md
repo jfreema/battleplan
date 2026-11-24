@@ -34,7 +34,7 @@ Don't pick the Kids category or "made for kids": accounts are for adults, and pl
 
 ## Version information
 
-**What's New in This Version** (1.2, approved by Apple by 2026-11-10; then 1.3, live since 2026-11-11, and 1.4.1, live since 2026-11-13, ROADMAP tasks 375 and 382, each with its What's New below; then 1.4.2, approved by Apple by 2026-11-19 (build 492), which closed it to new builds; then 1.4.3, approved by Apple by 2026-11-21, which closed it too (task 431); then 1.4.4, live by 2026-11-23 (task 452); the next is 1.4.5, made in App Store Connect on 2026-11-23 with the Boot Camp Mix screenshots already on it, task 463; 4,000 characters). Version 1.1 went out on 2026-11-05, built on 2026-11-04 from `3d84c33` in Gumdrop Army; its What's New and description are in `git show 85053f7:docs/STORE-LISTING.md`.
+**What's New in This Version** (1.2, approved by Apple by 2026-11-10; then 1.3, live since 2026-11-11, and 1.4.1, live since 2026-11-13, ROADMAP tasks 375 and 382, each with its What's New below; then 1.4.2, approved by Apple by 2026-11-19 (build 492), which closed it to new builds; then 1.4.3, approved by Apple by 2026-11-21, which closed it too (task 431); then 1.4.4, live by 2026-11-23 (task 452); then 1.4.5, submitted for review on 2026-11-24 with build 570, task 463; 4,000 characters). Version 1.1 went out on 2026-11-05, built on 2026-11-04 from `3d84c33` in Gumdrop Army; its What's New and description are in `git show 85053f7:docs/STORE-LISTING.md`.
 
 ```
 A whole new look, Open Field, with five color schemes: Army green, the default, plus Light, Dark, Navy, and Light blue. Everyone picks the scheme they see for each team, and a default for the rest.
@@ -45,12 +45,13 @@ Also new:
 • On a team, RSVPs are for players, each on their own row: parents answer for each of their kids, and adult players answer for themselves
 ```
 
-**What's New in 1.4.5** (ROADMAP task 463; saved on version 1.4.5 in App Store Connect on 2026-11-23, with the description's color schemes line changed to match and its Plays line naming volleyball; waiting for a build). Everything made since the 1.4.4 build (544, `3dfa0dc`): Boot Camp Mix and its fourteen schemes (tasks 454, 455, 458, 459, and Sugar Rush in 468), the candy finish (468) and Nunito for reading text (467), the Plays board as the mockup draws it and the volleyball court (456), and the iPad's full-width headers (461), then one vote per player (466) and Guardian or Parent (465), which need their callables on prod (Release to prod) before 1.4.5 is released; the theme editor's changes (453, 457, 460) are for super admins only. App Store Connect has the text without the bullets for 465 to 468 and with thirteen schemes until it's saved again, and the 1.4.5 screenshots there show Boot Camp Mix before the candy finish and Nunito.
+**What's New in 1.4.5** (ROADMAP task 463; submitted for review on 2026-11-24 with build 570 from `be7bc08` and this text, the description below (fourteen schemes, volleyball, and Can't go), and the screenshots retaken in the candy finish (task 469) in all three sets; released automatically once Apple approves it). Everything made since the 1.4.4 build (544, `3dfa0dc`): Boot Camp Mix and its fourteen schemes (tasks 454, 455, 458, 459, and Sugar Rush in 468), the candy finish (468) and Nunito for reading text (467), the Sticker Pair app icon (470), the Plays board as the mockup draws it and the volleyball court (456), and the iPad's full-width headers (461), then one vote per player (466) and Guardian or Parent (465), whose callables went live on prod with Release to prod before 1.4.5 was submitted; the theme editor's changes (453, 457, 460, 471) are for super admins only.
 
 ```
 A whole new look, Boot Camp Mix: camouflage headers, bold stencil lettering, glossy candy buttons, and fourteen color schemes. Black is the default, with Army green, Light, Sky Blue, Navy Steel, Forest, Graphite, Teal Wave, Tropic Blue, Desert Tan, Sugar Rush, Royal & Gold, Central Wildcats, and Geaux Tigahs. Pick the one you see for each team.
 
 Also new:
+• A new app icon: two candy dog tags on a ball chain
 • Easier-to-read text in chats and on cards
 • Polls can be one vote per player: parents and guardians vote for their players, and the results show each player
 • Parents can be listed as Parent instead of Guardian on their player's card
@@ -104,7 +105,7 @@ TEAM CHAT
 
 SCHEDULE AND RSVPS
 • Games, practices, and events with opponents, places, and reminders
-• Going, Maybe, or Not going in one tap, for yourself or for each of your players, right from the schedule
+• Going, Maybe, or Can't go in one tap, for yourself or for each of your players, right from the schedule
 • Assignments like snacks, drinks, and scorekeeper that families volunteer for
 • Coaches see how many players are coming
 • Coaches can email everyone who hasn't answered, and they can answer right from the email

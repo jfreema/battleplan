@@ -348,8 +348,8 @@ void main() {
     expect(headers(), isNot(contains(HeaderStyle.topo)));
   });
 
-  testWidgets("a scheme's sprinkles turned off leave its headers plain, but "
-      'the Super Admin Panel keeps them (#98)', (tester) async {
+  testWidgets("a scheme's sprinkles turned off leave its headers plain, the "
+      "Super Admin Panel's too (#100)", (tester) async {
     await open(
       tester,
       path: '/g/a/chat',
@@ -367,8 +367,17 @@ void main() {
     await tester.pumpAndSettle();
     expect(camouflage(), isTrue);
     expect(find.byType(SprinkleLayer), findsNothing);
+    // The panel keeps the colors as they ship, but follows the switch
+    // (owner's ask 2026-11-24).
     GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/admin');
     await tester.pumpAndSettle();
+    expect(camouflage(), isTrue);
+    expect(find.byType(SprinkleLayer), findsNothing);
+  });
+
+  testWidgets("the Super Admin Panel's headers have sprinkles while the "
+      "scheme's are on (#100)", (tester) async {
+    await open(tester, path: '/admin');
     expect(find.byType(SprinkleLayer), findsWidgets);
   });
 }

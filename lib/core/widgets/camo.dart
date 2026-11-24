@@ -11,8 +11,8 @@ import 'package:material_ui/material_ui.dart';
 /// scheme's camouflage, three layers of soft blotches on its ground color
 /// with a halftone fading in from the top right, candy sprinkles over it
 /// (#98, [SprinkleLayer], off the clock, the title, and the buttons) unless
-/// the theme editor turned them off for the scheme, and a 3 px ink line
-/// under it. The pattern is our own, drawn here, never a
+/// the theme editor turned them off for the scheme (in the Super Admin
+/// Panel too), and a 3 px ink line under it. The pattern is our own, drawn here, never a
 /// real one.
 ///
 /// The team header, Teams, Profile, and every pushed screen's top bar sit
@@ -30,9 +30,11 @@ class CampHeader extends StatelessWidget {
     final c = GumdropColors.of(context);
     final p = c.roles.palette;
     final status = top ? MediaQuery.paddingOf(context).top : 0.0;
-    // The theme editor can turn a scheme's sprinkles off; the Super Admin
-    // Panel always has them, as it ships.
-    final sprinkles = c.shipped || ThemeCatalog.sprinklesOf(c.scheme);
+    // The theme editor can turn a scheme's sprinkles off, the Super Admin
+    // Panel's headers too (owner's ask 2026-11-24: "id like the admin
+    // panel's header to follow the sprinkles switch like the rest of the
+    // app"): they can't make anything hard to read, unlike its colors.
+    final sprinkles = ThemeCatalog.sprinklesOf(c.scheme);
     // The ink line over the pattern, which fills to the bottom edge.
     return SprinkleScope(
       child: DecoratedBox(
