@@ -106,11 +106,15 @@ class CampAppBar extends StatelessWidget implements PreferredSizeWidget {
     // Candy sprinkles over the camouflage, off the status bar's ends, the
     // back button, the title, and the buttons (#98). A title that's text
     // keeps them off here; one that's a back row (BackChevron) or more
-    // keeps them off its own pieces, not the whole middle it fills.
-    final sprinkles = SprinkleLayer(
-      palette: p,
-      statusBar: MediaQuery.paddingOf(context).top,
-    );
+    // keeps them off its own pieces, not the whole middle it fills. None
+    // where the theme editor turned them off; the Super Admin Panel always
+    // has them, as it ships.
+    final sprinkles = c.shipped || ThemeCatalog.sprinklesOf(c.scheme)
+        ? SprinkleLayer(
+            palette: p,
+            statusBar: MediaQuery.paddingOf(context).top,
+          )
+        : null;
     final lead = leading;
     final name = title;
     AppBar barOf({required bool painted}) => AppBar(
@@ -133,7 +137,7 @@ class CampAppBar extends StatelessWidget implements PreferredSizeWidget {
               fit: StackFit.expand,
               children: [
                 CustomPaint(painter: ground),
-                sprinkles,
+                ?sprinkles,
                 ?flexibleSpace,
               ],
             )
@@ -188,7 +192,7 @@ class CampAppBar extends StatelessWidget implements PreferredSizeWidget {
                   painter: ground,
                   child: Stack(
                     children: [
-                      Positioned.fill(child: sprinkles),
+                      if (sprinkles != null) Positioned.fill(child: sprinkles),
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: margin),
                         child: barOf(painted: false),

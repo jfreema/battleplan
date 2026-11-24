@@ -1167,6 +1167,24 @@ describe("Boot Camp Mix's theme editor (#88)", () => {
     });
   });
 
+  it('saves sprinkles turned off, alone or with the rest, and drops them turned back on (#98)', async () => {
+    await asRoot(admin.adminSaveCampTheme, { scheme: 'navy', colors: {}, sprinkles: false });
+    expect((await campThemes()).navy).toEqual({ sprinkles: false });
+    await asRoot(admin.adminSaveCampTheme, { scheme: 'navy', colors: { red: '#F45B5B' }, header: 'topo', sprinkles: false });
+    expect((await campThemes()).navy).toEqual({ red: '#F45B5B', header: 'topo', sprinkles: false });
+    await asRoot(admin.adminSaveCampTheme, { scheme: 'navy', colors: { red: '#F45B5B' }, header: 'topo', sprinkles: true });
+    expect((await campThemes()).navy).toEqual({ red: '#F45B5B', header: 'topo' });
+    // Sprinkles on and nothing else changed is the scheme as it ships.
+    await asRoot(admin.adminSaveCampTheme, { scheme: 'navy', colors: {}, sprinkles: false });
+    await asRoot(admin.adminSaveCampTheme, { scheme: 'navy', colors: {}, header: 'camo', sprinkles: true });
+    expect((await campThemes()).navy).toBeUndefined();
+    const latest = (await audits('saveCampTheme')).at(-2)!;
+    expect(latest).toMatchObject({ targetId: 'navy', after: { sprinkles: false } });
+    await expect(asRoot(admin.adminSaveCampTheme, { scheme: 'navy', colors: {}, sprinkles: 'no' })).rejects.toMatchObject({
+      code: 'invalid-argument',
+    });
+  });
+
   it('puts a scheme back as it ships, from a reset or a save of no colors, and audits it', async () => {
     await asRoot(admin.adminSaveCampTheme, { scheme: 'dark', colors: { red: '#F45B5B' } });
     await asRoot(admin.adminSaveCampTheme, { scheme: 'light', colors: { red: '#F45B5B' } });

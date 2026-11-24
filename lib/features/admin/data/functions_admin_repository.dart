@@ -502,6 +502,7 @@ class FunctionsAdminRepository implements AdminRepository {
         'scheme': scheme.value,
         'colors': campColorsToConfig(theme.colors),
         'header': theme.header.value,
+        'sprinkles': theme.sprinkles,
       });
 
   @override

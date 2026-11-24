@@ -670,6 +670,11 @@ abstract final class ThemeCatalog {
   static HeaderStyle headerStyleOf(TeamScheme scheme) =>
       _camp[scheme.look]?.header ?? HeaderStyle.camo;
 
+  /// Whether [scheme]'s headers have the candy sprinkles (#98): unless the
+  /// theme editor turned them off for it.
+  static bool sprinklesOf(TeamScheme scheme) =>
+      _camp[scheme.look]?.sprinkles ?? true;
+
   /// The schemes the pickers offer: Boot Camp Mix's fourteen (#85, #86, #89,
   /// #90, #98). The other built-in schemes and saved themes are no longer
   /// offered; a pick of one shows in its closest ([TeamSchemeLook.look]).

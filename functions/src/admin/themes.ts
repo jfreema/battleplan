@@ -255,8 +255,12 @@ export const campSchemeValues = Object.keys(CAMP_PALETTES) as [string, ...string
 /** A scheme's changed colors, by token, as '#RRGGBB'. */
 export type CampColors = Partial<Record<CampColor, string>>;
 
-/** A scheme's entry in config/app.campThemes: its colors, and its header background (#91) unless camouflage. */
-export type CampThemeEntry = CampColors & { header?: string };
+/**
+ * A scheme's entry in config/app.campThemes: its colors, its header
+ * background (#91) unless camouflage, and `sprinkles: false` when its
+ * headers have no candy sprinkles (#98's; on unless turned off).
+ */
+export type CampThemeEntry = CampColors & { header?: string; sprinkles?: false };
 
 export const SaveCampThemeInput = z.object({
   scheme: z.enum(campSchemeValues),
@@ -269,17 +273,20 @@ export const SaveCampThemeInput = z.object({
   ),
   // The header's background (#91); camouflage, as every scheme ships, when absent.
   header: z.enum(headerStyleValues).optional(),
+  // Whether the headers have the candy sprinkles (#98); on, as every scheme ships, when absent.
+  sprinkles: z.boolean().optional(),
 });
 export type SaveCampThemeInput = z.infer<typeof SaveCampThemeInput>;
 
 export const ResetCampThemeInput = z.object({ scheme: z.enum(campSchemeValues) });
 
 /**
- * Saves the colors changed in a Boot Camp Mix scheme, and its header
- * background (#91), in place of what was saved for it, or refuses with
- * `unreadable-theme` when a color would be nearly the same as what it sits
- * on. No colors and the camouflage puts it back as it ships. Returns the
- * entry before and after, for the audit.
+ * Saves the colors changed in a Boot Camp Mix scheme, its header
+ * background (#91), and whether its headers have sprinkles, in place of
+ * what was saved for it, or refuses with `unreadable-theme` when a color
+ * would be nearly the same as what it sits on. No colors, the camouflage
+ * and the sprinkles on puts it back as it ships. Returns the entry before
+ * and after, for the audit.
  */
 export async function saveCampTheme(input: SaveCampThemeInput): Promise<{
   before: CampThemeEntry | null;
@@ -288,6 +295,8 @@ export async function saveCampTheme(input: SaveCampThemeInput): Promise<{
   const { scheme } = input;
   const colors = input.colors as CampColors;
   const header = input.header !== undefined && input.header !== 'camo' ? input.header : undefined;
+  // Only turned off is kept: on is how every scheme ships.
+  const noSprinkles = input.sprinkles === false;
   const unreadable = unreadableCampParts(scheme, colors);
   if (unreadable.length > 0) {
     throw new HttpsError('failed-precondition', 'Some of those colors are nearly the same as what they sit on.', {
@@ -295,11 +304,15 @@ export async function saveCampTheme(input: SaveCampThemeInput): Promise<{
       parts: unreadable,
     });
   }
-  if (Object.keys(colors).length === 0 && header === undefined) {
+  if (Object.keys(colors).length === 0 && header === undefined && !noSprinkles) {
     const { before } = await resetCampTheme(scheme);
     return { before, after: null };
   }
-  const entry: CampThemeEntry = header === undefined ? colors : { ...colors, header };
+  const entry: CampThemeEntry = {
+    ...colors,
+    ...(header === undefined ? {} : { header }),
+    ...(noSprinkles ? { sprinkles: false as const } : {}),
+  };
   const ref = db().collection(Collections.config).doc('app');
   return db().runTransaction(async (tx) => {
     const before = (((await tx.get(ref)).get('campThemes') ?? {}) as Record<string, CampThemeEntry | undefined>)[scheme] ?? null;

@@ -11,32 +11,52 @@ import 'package:freezed_annotation/freezed_annotation.dart' show immutable;
 typedef CampColors = Map<CampColor, int>;
 
 /// A Boot Camp Mix scheme as the theme editor changed it: its [colors]
-/// (#88), and its [header] background (#91, owner's request 2026-11-23:
+/// (#88), its [header] background (#91, owner's request 2026-11-23:
 /// "Add a few alternate backgrounds for the headers [in] the theme editor
 /// that allows further customization to themes"), the camouflage unless
-/// set.
+/// set, and whether its headers have the candy [sprinkles] (#98's, on
+/// unless turned off; owner's question 2026-11-24: "WHy are there
+/// sprinkles on the navy steel theme? how do i get rid of that? or add it
+/// if i want it back?").
 @immutable
 final class CampTheme {
-  const new({this.colors = const {}, this.header = HeaderStyle.camo});
+  const new({
+    this.colors = const {},
+    this.header = HeaderStyle.camo,
+    this.sprinkles = true,
+  });
 
   final CampColors colors;
   final HeaderStyle header;
 
-  /// Whether it changes nothing: the scheme as it ships.
-  bool get isEmpty => colors.isEmpty && header == HeaderStyle.camo;
+  /// Whether the headers are strewn with candy sprinkles, as every scheme
+  /// ships.
+  final bool sprinkles;
 
-  CampTheme copyWith({CampColors? colors, HeaderStyle? header}) =>
-      CampTheme(colors: colors ?? this.colors, header: header ?? this.header);
+  /// Whether it changes nothing: the scheme as it ships.
+  bool get isEmpty => colors.isEmpty && header == HeaderStyle.camo && sprinkles;
+
+  CampTheme copyWith({
+    CampColors? colors,
+    HeaderStyle? header,
+    bool? sprinkles,
+  }) => CampTheme(
+    colors: colors ?? this.colors,
+    header: header ?? this.header,
+    sprinkles: sprinkles ?? this.sprinkles,
+  );
 
   @override
   bool operator ==(Object other) =>
       other is CampTheme &&
       other.header == header &&
+      other.sprinkles == sprinkles &&
       campColorsEqual(other.colors, colors);
 
   @override
   int get hashCode => Object.hash(
     header,
+    sprinkles,
     Object.hashAllUnordered([
       for (final MapEntry(:key, :value) in colors.entries)
         Object.hash(key, value),
@@ -49,12 +69,13 @@ final class CampTheme {
       for (final MapEntry(:key, :value) in colors.entries)
         key.value: hexOfColor(value),
     };
-    return 'CampTheme(${header.value}, $hex)';
+    return 'CampTheme(${header.value}, ${sprinkles ? 'sprinkles' : 'no sprinkles'}, $hex)';
   }
 }
 
 /// `config/app.campThemes` as the app reads it: under each scheme's value,
-/// its tokens as `#RRGGBB`, and `header` for its header background.
+/// its tokens as `#RRGGBB`, `header` for its header background, and
+/// `sprinkles: false` when its headers have none (anything else is on).
 /// Unknown schemes, tokens, styles, and malformed colors are skipped, so
 /// one bad entry can't break the rest. The old editor's `config/app.themes`
 /// is left alone: its fields were the schemes before Boot Camp Mix (#85).
@@ -76,6 +97,7 @@ Map<TeamScheme, CampTheme> campThemesFromConfig(Object? raw) {
       header:
           (header is String ? HeaderStyle.tryParse(header) : null) ??
           HeaderStyle.camo,
+      sprinkles: value['sprinkles'] != false,
     );
     if (!theme.isEmpty) out[scheme] = theme;
   }

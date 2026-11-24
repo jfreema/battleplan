@@ -169,11 +169,12 @@ String headerStyleLabel(AppLocalizations l10n, HeaderStyle style) =>
       HeaderStyle.halftone => l10n.headerHalftone,
     };
 
-/// What's changed in [theme], in a line: its header background and how
-/// many colors.
+/// What's changed in [theme], in a line: its header background, its
+/// sprinkles turned off, and how many colors.
 String _changes(AppLocalizations l10n, CampTheme theme) => [
   if (theme.header != HeaderStyle.camo)
     l10n.adminThemeHeaderNamed(headerStyleLabel(l10n, theme.header)),
+  if (!theme.sprinkles) l10n.adminThemeNoSprinkles,
   if (theme.colors.isNotEmpty) l10n.adminThemeChangedCount(theme.colors.length),
 ].join(' · ');
 
@@ -273,9 +274,11 @@ class AdminThemeEditorScreen extends ConsumerStatefulWidget {
 
 class _AdminThemeEditorScreenState
     extends ConsumerState<AdminThemeEditorScreen> {
-  /// What's changed here: the saved colors and header to start with.
+  /// What's changed here: the saved colors, header, and sprinkles to start
+  /// with.
   late CampColors _colors = Map.of(_start.colors);
   late HeaderStyle _header = _start.header;
+  late bool _sprinkles = _start.sprinkles;
   bool _saving = false;
 
   CampTheme get _start =>
@@ -286,7 +289,8 @@ class _AdminThemeEditorScreenState
   CampTheme get _saved =>
       ref.watch(allCampThemesProvider)[widget.scheme] ?? const CampTheme();
 
-  CampTheme get _edits => CampTheme(colors: _colors, header: _header);
+  CampTheme get _edits =>
+      CampTheme(colors: _colors, header: _header, sprinkles: _sprinkles);
 
   bool get _dirty => _edits != _saved;
 
@@ -324,7 +328,11 @@ class _AdminThemeEditorScreenState
     final l10n = AppLocalizations.of(context);
     final name = widget.scheme.label(l10n);
     final repository = ref.read(adminRepositoryProvider);
-    final edits = CampTheme(colors: Map.of(_colors), header: _header);
+    final edits = CampTheme(
+      colors: Map.of(_colors),
+      header: _header,
+      sprinkles: _sprinkles,
+    );
     setState(() => _saving = true);
     await runAdminAction(
       context,
@@ -360,6 +368,7 @@ class _AdminThemeEditorScreenState
       if (done) {
         _colors = {};
         _header = HeaderStyle.camo;
+        _sprinkles = true;
       }
     });
   }
@@ -379,6 +388,7 @@ class _AdminThemeEditorScreenState
       setState(() {
         _colors = Map.of(_saved.colors);
         _header = _saved.header;
+        _sprinkles = _saved.sprinkles;
       });
       context.go('/admin/themes');
     }
@@ -414,7 +424,11 @@ class _AdminThemeEditorScreenState
               title: l10n.adminThemePreview,
               children: [
                 Center(
-                  child: CampThemePreview(palette: palette, header: _header),
+                  child: CampThemePreview(
+                    palette: palette,
+                    header: _header,
+                    sprinkles: _sprinkles,
+                  ),
                 ),
               ],
             ),
@@ -437,6 +451,15 @@ class _AdminThemeEditorScreenState
                               setState(() => _header = HeaderStyle.camo),
                         ),
                   onTap: () => unawaited(_chooseHeader(palette)),
+                ),
+                // The candy sprinkles over it (#98), on as it ships.
+                SwitchListTile(
+                  key: const ValueKey('sprinkles'),
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l10n.adminThemeSprinkles),
+                  subtitle: Text(l10n.adminThemeSprinklesHelp),
+                  value: _sprinkles,
+                  onChanged: (on) => setState(() => _sprinkles = on),
                 ),
               ],
             ),
@@ -852,12 +875,20 @@ Future<HeaderStyle?> showHeaderChooser(
 /// and the tab bar with its current tab on the trim. Plain widgets painted
 /// from the palette, so it shows colors that aren't saved yet.
 class CampThemePreview extends StatelessWidget {
-  const new({required this.palette, this.header = HeaderStyle.camo, super.key});
+  const new({
+    required this.palette,
+    this.header = HeaderStyle.camo,
+    this.sprinkles = true,
+    super.key,
+  });
 
   final CampPalette palette;
 
   /// The header's background (#91).
   final HeaderStyle header;
+
+  /// Whether the header has its candy sprinkles (#98).
+  final bool sprinkles;
 
   /// Ink or white, whichever reads better on [face].
   Color _on(Color face) =>
@@ -932,7 +963,8 @@ class CampThemePreview extends StatelessWidget {
                   painter: CamoPainter(p, style: header),
                   child: Stack(
                     children: [
-                      Positioned.fill(child: SprinkleLayer(palette: p)),
+                      if (sprinkles)
+                        Positioned.fill(child: SprinkleLayer(palette: p)),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Row(

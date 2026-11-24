@@ -242,6 +242,43 @@ void main() {
     });
   });
 
+  group('sprinkles, turned off for a scheme (#98)', () {
+    test('are on unless saved as off, and off alone is a change', () {
+      final themes = campThemesFromConfig({
+        'navy': {'sprinkles': false},
+        'dark': {'red': '#F45B5B', 'header': 'topo', 'sprinkles': false},
+        // On, or anything but false, is as it ships.
+        'light': {'sprinkles': true},
+        'army': {'sprinkles': 'no'},
+      });
+      expect(themes, {
+        TeamScheme.navy: const CampTheme(sprinkles: false),
+        TeamScheme.dark: const CampTheme(
+          colors: {CampColor.red: _coral},
+          header: HeaderStyle.topo,
+          sprinkles: false,
+        ),
+      });
+      expect(const CampTheme(sprinkles: false).isEmpty, isFalse);
+      expect(const CampTheme(sprinkles: false), isNot(const CampTheme()));
+      expect(
+        const CampTheme().copyWith(sprinkles: false),
+        const CampTheme(sprinkles: false),
+      );
+    });
+
+    test("a scheme's headers follow it; the others keep theirs", () {
+      expect(ThemeCatalog.sprinklesOf(TeamScheme.navy), isTrue);
+      ThemeCatalog.installCamp({
+        TeamScheme.navy: const CampTheme(sprinkles: false),
+      });
+      expect(ThemeCatalog.sprinklesOf(TeamScheme.navy), isFalse);
+      expect(ThemeCatalog.sprinklesOf(TeamScheme.dark), isTrue);
+      // Sprinkles alone change no color.
+      expect(SchemeRoles.of(TeamScheme.navy), same(SchemeRoles.navy));
+    });
+  });
+
   group('header backgrounds (#91)', () {
     test("are read and kept with the scheme's colors, the camouflage unless "
         'set', () {

@@ -11,6 +11,7 @@ import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/widgets/back_chevron.dart';
 import 'package:battleplan/core/widgets/camo.dart';
+import 'package:battleplan/core/widgets/candy_sprinkles.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/admin/presentation/theme_editor_screen.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
@@ -225,6 +226,42 @@ void main() {
     );
   });
 
+  testWidgets('sprinkles turn off and on, in the preview, and save with the '
+      'rest (#98)', (tester) async {
+    final admin = await open(tester, path: '/admin/themes/navy');
+    expect(find.text('Sprinkles'), findsOneWidget);
+    CampThemePreview preview() =>
+        tester.widget<CampThemePreview>(find.byType(CampThemePreview));
+    Finder layers() => find.descendant(
+      of: find.byType(CampThemePreview),
+      matching: find.byType(SprinkleLayer),
+    );
+    expect(preview().sprinkles, isTrue);
+    expect(layers(), findsOneWidget);
+    expect(save(tester).onPressed, isNull);
+    await tester.tap(find.byKey(const ValueKey('sprinkles')));
+    await tester.pumpAndSettle();
+    expect(preview().sprinkles, isFalse);
+    expect(layers(), findsNothing);
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pumpAndSettle();
+    expect(admin.savedCampThemes.single.$2, const CampTheme(sprinkles: false));
+    // The list says so.
+    GoRouter.of(tester.element(find.byType(Scaffold).first))
+        .go('/admin/themes');
+    await tester.pumpAndSettle();
+    expect(find.text('No sprinkles'), findsOneWidget);
+    // Turned back on, it's the scheme as it ships.
+    GoRouter.of(tester.element(find.byType(Scaffold).first))
+        .go('/admin/themes/navy');
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('sprinkles')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pumpAndSettle();
+    expect(admin.resetCampThemes, [TeamScheme.navy]);
+  });
+
   testWidgets('a bad code says how to write one', (tester) async {
     await open(tester, path: '/admin/themes/light');
     await tester.tap(find.byKey(const ValueKey('color-red')));
@@ -309,5 +346,29 @@ void main() {
     final panel = GumdropColors.of(tester.element(find.byType(Scaffold).last));
     expect(panel.roles.palette.red, SchemeRoles.dark.palette.red);
     expect(headers(), isNot(contains(HeaderStyle.topo)));
+  });
+
+  testWidgets("a scheme's sprinkles turned off leave its headers plain, but "
+      'the Super Admin Panel keeps them (#98)', (tester) async {
+    await open(
+      tester,
+      path: '/g/a/chat',
+      config: const AppConfig(
+        campThemes: {TeamScheme.dark: CampTheme(sprinkles: false)},
+      ),
+    );
+    // The camouflage is there, with nothing strewn over it.
+    bool camouflage() => tester
+        .widgetList<CustomPaint>(find.byType(CustomPaint))
+        .any((p) => p.painter is CamoPainter);
+    expect(camouflage(), isTrue);
+    expect(find.byType(SprinkleLayer), findsNothing);
+    GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/teams');
+    await tester.pumpAndSettle();
+    expect(camouflage(), isTrue);
+    expect(find.byType(SprinkleLayer), findsNothing);
+    GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/admin');
+    await tester.pumpAndSettle();
+    expect(find.byType(SprinkleLayer), findsWidgets);
   });
 }

@@ -10,8 +10,9 @@ import 'package:material_ui/material_ui.dart';
 /// Boot Camp Mix's camouflage header (#85, SPEC §7.4): [child] on the
 /// scheme's camouflage, three layers of soft blotches on its ground color
 /// with a halftone fading in from the top right, candy sprinkles over it
-/// (#98, [SprinkleLayer], off the clock, the title, and the buttons), and
-/// a 3 px ink line under it. The pattern is our own, drawn here, never a
+/// (#98, [SprinkleLayer], off the clock, the title, and the buttons) unless
+/// the theme editor turned them off for the scheme, and a 3 px ink line
+/// under it. The pattern is our own, drawn here, never a
 /// real one.
 ///
 /// The team header, Teams, Profile, and every pushed screen's top bar sit
@@ -29,6 +30,9 @@ class CampHeader extends StatelessWidget {
     final c = GumdropColors.of(context);
     final p = c.roles.palette;
     final status = top ? MediaQuery.paddingOf(context).top : 0.0;
+    // The theme editor can turn a scheme's sprinkles off; the Super Admin
+    // Panel always has them, as it ships.
+    final sprinkles = c.shipped || ThemeCatalog.sprinklesOf(c.scheme);
     // The ink line over the pattern, which fills to the bottom edge.
     return SprinkleScope(
       child: DecoratedBox(
@@ -48,9 +52,10 @@ class CampHeader extends StatelessWidget {
           child: Stack(
             children: [
               // The sprinkles over it, under the lettering (#98).
-              Positioned.fill(
-                child: SprinkleLayer(palette: p, statusBar: status),
-              ),
+              if (sprinkles)
+                Positioned.fill(
+                  child: SprinkleLayer(palette: p, statusBar: status),
+                ),
               Padding(
                 padding: EdgeInsets.only(top: status, bottom: 3),
                 child: MediaQuery.removePadding(
