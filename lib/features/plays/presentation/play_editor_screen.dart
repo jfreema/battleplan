@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/camp_round_border.dart';
+import 'package:battleplan/core/design/candy.dart';
 import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
@@ -1034,8 +1035,8 @@ class _PhoneBar extends StatelessWidget implements PreferredSizeWidget {
             ]);
           }
           // Boot Camp Mix (#85): Saved and Add step as push buttons, the
-          // icons as round buttons in an ink outline, on a hard shadow as
-          // the mockup has them (#87).
+          // icons as round buttons in an ink outline as the mockup has them
+          // (#87), glossy balls on a lip (#98).
           final c = GumdropColors.of(context);
           final round = IconButtonThemeData(
             style: ButtonStyle(
@@ -1049,7 +1050,10 @@ class _PhoneBar extends StatelessWidget implements PreferredSizeWidget {
               shape: WidgetStatePropertyAll(
                 CampRoundBorder(
                   side: BorderSide(color: c.ink, width: 2.5),
-                  shadow: c.pageShadow,
+                  lip: c.raisedLip,
+                  ink: c.ink,
+                  highlight: Candy.highlightOn(c.surface),
+                  shine: Candy.ballShineOn(c.surface),
                 ),
               ),
               fixedSize: const WidgetStatePropertyAll(Size.square(36)),
@@ -1158,8 +1162,8 @@ class _Tools extends StatelessWidget {
     ];
     final side = compact ? kMinInteractiveDimension : 52.0;
     // Boot Camp Mix (#85): round buttons in the panel color in an ink
-    // outline on a hard shadow (#87), on the tools row's own color; the
-    // tool in hand is mustard with ink on it, turned -4°.
+    // outline (#87), glossy balls on a lip (#98), on the tools row's own
+    // color; the tool in hand is mustard with ink on it, turned -4°.
     final c = GumdropColors.of(context);
     final mustard = c.roles.palette.mustard;
     final toolStyle = ButtonStyle(
@@ -1173,12 +1177,16 @@ class _Tools extends StatelessWidget {
       iconColor: WidgetStateProperty.resolveWith(
         (s) => s.contains(WidgetState.selected) ? c.ink : c.card.textOnPage,
       ),
-      shape: WidgetStatePropertyAll(
-        CampRoundBorder(
+      shape: WidgetStateProperty.resolveWith((s) {
+        final face = s.contains(WidgetState.selected) ? mustard : c.surface;
+        return CampRoundBorder(
           side: BorderSide(color: c.ink, width: 2.5),
-          shadow: c.pageShadow,
-        ),
-      ),
+          lip: Candy.lipOf(face),
+          ink: c.ink,
+          highlight: Candy.highlightOn(face),
+          shine: Candy.ballShineOn(face),
+        );
+      }),
     );
     final buttons = [
       for (final (t, icon, label) in items)

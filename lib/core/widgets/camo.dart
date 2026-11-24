@@ -3,13 +3,16 @@ import 'dart:math' as math;
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/schemes.dart';
+import 'package:battleplan/core/widgets/candy_sprinkles.dart';
 import 'package:battleplan/core/widgets/header_patterns.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Boot Camp Mix's camouflage header (#85, SPEC §7.4): [child] on the
 /// scheme's camouflage, three layers of soft blotches on its ground color
-/// with a halftone fading in from the top right, and a 3 px ink line
-/// under it. The pattern is our own, drawn here, never a real one.
+/// with a halftone fading in from the top right, candy sprinkles over it
+/// (#98, [SprinkleLayer], off the clock, the title, and the buttons), and
+/// a 3 px ink line under it. The pattern is our own, drawn here, never a
+/// real one.
 ///
 /// The team header, Teams, Profile, and every pushed screen's top bar sit
 /// on it; with [top] it reaches up under the status bar.
@@ -25,30 +28,38 @@ class CampHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
     final p = c.roles.palette;
+    final status = top ? MediaQuery.paddingOf(context).top : 0.0;
     // The ink line over the pattern, which fills to the bottom edge.
-    return DecoratedBox(
-      position: DecorationPosition.foreground,
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: p.ink, width: 3)),
-      ),
-      child: CustomPaint(
-        // The theme editor's header background, if it set one (#91); the
-        // Super Admin Panel's is always the camouflage, as it ships.
-        painter: CamoPainter(
-          p,
-          style: c.shipped
-              ? HeaderStyle.camo
-              : ThemeCatalog.headerStyleOf(c.scheme),
+    return SprinkleScope(
+      child: DecoratedBox(
+        position: DecorationPosition.foreground,
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: p.ink, width: 3)),
         ),
-        child: Padding(
-          padding: EdgeInsets.only(
-            top: top ? MediaQuery.paddingOf(context).top : 0,
-            bottom: 3,
+        child: CustomPaint(
+          // The theme editor's header background, if it set one (#91); the
+          // Super Admin Panel's is always the camouflage, as it ships.
+          painter: CamoPainter(
+            p,
+            style: c.shipped
+                ? HeaderStyle.camo
+                : ThemeCatalog.headerStyleOf(c.scheme),
           ),
-          child: MediaQuery.removePadding(
-            context: context,
-            removeTop: top,
-            child: CampHeaderTheme(child: child),
+          child: Stack(
+            children: [
+              // The sprinkles over it, under the lettering (#98).
+              Positioned.fill(
+                child: SprinkleLayer(palette: p, statusBar: status),
+              ),
+              Padding(
+                padding: EdgeInsets.only(top: status, bottom: 3),
+                child: MediaQuery.removePadding(
+                  context: context,
+                  removeTop: top,
+                  child: CampHeaderTheme(child: child),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -229,19 +240,83 @@ class DotGridPainter extends CustomPainter {
       old.color != color || old.spacing != spacing || old.radius != radius;
 }
 
-/// [child] on the page's 8 px dot grid (#85), drawn behind it.
+/// [child] on the page's 8 px dot grid (#85), drawn behind it; on Sugar
+/// Rush its candy dots (#98, [CandyDotsPainter]).
 class PageDots extends StatelessWidget {
   const new({required this.child, super.key});
 
   final Widget child;
 
   @override
-  Widget build(BuildContext context) => CustomPaint(
-    painter: DotGridPainter(
-      color: GumdropColors.of(context).roles.palette.pageDots,
-    ),
-    child: child,
-  );
+  Widget build(BuildContext context) {
+    final palette = GumdropColors.of(context).roles.palette;
+    return CustomPaint(
+      painter: palette.touches.candyDots
+          ? const CandyDotsPainter()
+          : DotGridPainter(color: palette.pageDots),
+      child: child,
+    );
+  }
+}
+
+/// Sugar Rush's page dots (#98): four candy colors on an 18 px grid, each
+/// 1.7 across the middle: pink at its corner, sky 9 to the right, lemon 9
+/// down, and mint 9 across from it.
+class CandyDotsPainter extends CustomPainter {
+  const new();
+
+  static const List<(Offset, Color)> _dots = [
+    (Offset.zero, Color(0x3DFF5FA8)),
+    (Offset(9, 0), Color(0x3D35B0FF)),
+    (Offset(0, 9), Color(0x52FFC400)),
+    (Offset(9, 9), Color(0x3D46C85F)),
+  ];
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const step = 18.0;
+    canvas
+      ..save()
+      ..clipRect(Offset.zero & size);
+    for (final (at, color) in _dots) {
+      final paint = Paint()..color = color;
+      for (var y = at.dy + 4.5; y < size.height; y += step) {
+        for (var x = at.dx + 4.5; x < size.width; x += step) {
+          canvas.drawCircle(Offset(x, y), 1.7, paint);
+        }
+      }
+    }
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(CandyDotsPainter old) => false;
+}
+
+/// Candy stripes over a colored block (#98, Sugar Rush's date pennants and
+/// chat game header): white at 20%, 7 wide every 18, rising at 45°.
+class CandyStripesPainter extends CustomPainter {
+  const new();
+
+  /// The stripes over [size], from the canvas's origin.
+  static void paintStripes(Canvas canvas, Size size) {
+    final reach = size.width + size.height;
+    final paint = Paint()..color = const Color(0x33FFFFFF);
+    canvas
+      ..save()
+      ..clipRect(Offset.zero & size)
+      ..rotate(math.pi / 4);
+    for (var x = -reach; x < reach; x += 18) {
+      canvas.drawRect(Rect.fromLTWH(x, -reach, 7, reach * 2), paint);
+    }
+    canvas.restore();
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) => paintStripes(canvas, size);
+
+  @override
+  bool shouldRepaint(CandyStripesPainter old) => false;
 }
 
 /// [child] lettered for the camouflage (#86): where the scheme's header

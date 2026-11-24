@@ -5,8 +5,8 @@ import 'package:material_ui/material_ui.dart';
 /// "let's replace the existing themes with these 3 themes"; SPEC §7.4):
 /// Army green, Black, and Light, since #86 Sky Blue, Candy Pop (Royal &
 /// Gold since #90), Central Wildcat, and Geaux Tigahs, since #89 Graphite,
-/// Teal Wave, Navy Steel, and Forest, and since #90 Tropic Blue and Desert
-/// Tan. Every color the look draws comes from
+/// Teal Wave, Navy Steel, and Forest, since #90 Tropic Blue and Desert
+/// Tan, and since #98 Sugar Rush. Every color the look draws comes from
 /// here; `SchemeRoles` and `GumdropColors` are built from it.
 @immutable
 final class CampPalette {
@@ -39,7 +39,12 @@ final class CampPalette {
     required this.headerHalftone,
     required this.headerLettering,
     required this.ballChain,
+    this.touches = CandyTouches.none,
   });
+
+  /// The scheme's own candy touches past its colors: Sugar Rush's (#98),
+  /// none in the others.
+  final CandyTouches touches;
 
   /// Every outline, and the lettering on any bright block.
   final Color ink;
@@ -193,6 +198,7 @@ final class CampPalette {
       headerHalftone: headerHalftone,
       headerLettering: pick(CampColor.headerLettering),
       ballChain: pick(CampColor.ballChain),
+      touches: touches,
     );
   }
 
@@ -647,4 +653,122 @@ final class CampPalette {
     headerLettering: Color(0xFF24231B),
     ballChain: Color(0xFF24231B),
   );
+
+  /// Sugar Rush (#98, owner's go 2026-11-23: "also add the Sugar Rush theme
+  /// as another theme option."; mockup 53): a vanilla page, white panels,
+  /// deep grape ink and lettering, bubblegum trim and balloons, candy
+  /// brights, and a cotton-candy camouflage lettered in grape, with its own
+  /// candy touches ([CandyTouches.sugarRush]). A light scheme.
+  static const sugarRush = CampPalette(
+    ink: Color(0xFF2B1A4A),
+    shadow: Color(0xFF2B1A4A),
+    page: Color(0xFFFFF4EA),
+    pageDots: Color(0x24FF5FA8),
+    panel: Color(0xFFFFFFFF),
+    tabBar: Color(0xFFFFFFFF),
+    text: Color(0xFF2B1A4A),
+    muted: Color(0xFF6E5F87),
+    panelText: Color(0xFF2B1A4A),
+    panelMuted: Color(0xFF6E5F87),
+    mustard: Color(0xFFFF8CC6),
+    balloon: Color(0xFFFF8CC6),
+    red: Color(0xFFF2473D),
+    blue: Color(0xFF35B0FF),
+    green: Color(0xFF5ED36A),
+    orange: Color(0xFFFF9A2E),
+    purple: Color(0xFFB58BFF),
+    unansweredTag: Color(0xFFEDE6F5),
+    answerRow: Color(0xFFFFF0F7),
+    toolsRow: Color(0xFFF5E1EE),
+    disabledIcon: Color(0xFFB6A9C9),
+    camoGround: Color(0xFFFFC4DD),
+    camoBig: Color(0xFFFF9FCB),
+    camoMid: Color(0xFFA9DCFF),
+    camoSmall: Color(0xFFFFE27D),
+    headerHalftone: Color(0x8CFFFFFF),
+    headerLettering: Color(0xFF2B1A4A),
+    ballChain: Color(0xFF2B1A4A),
+    touches: CandyTouches.sugarRush,
+  );
+}
+
+/// A scheme's own candy touches past its colors (#98): Sugar Rush's, none
+/// in the others. They come with the scheme, fixed: the theme editor has
+/// no roles for them, and keeps them whatever colors it sets.
+@immutable
+final class CandyTouches {
+  const new({
+    this.titleDrop,
+    this.burst,
+    this.panelLip,
+    this.panelRadius,
+    this.pills = false,
+    this.stripes = false,
+    this.candyDots = false,
+    this.sprinkles,
+    this.sprinkleCount,
+    this.twinkles,
+  });
+
+  /// None: the other schemes'.
+  static const none = CandyTouches();
+
+  /// Sugar Rush's (mockup 53): a bubblegum drop under outlined titles,
+  /// lemon starbursts, panels with corners of 20 on a lavender lip, pill
+  /// buttons, candy-striped pennants and game headers, four-color page
+  /// dots, and its own sprinkles and twinkles.
+  static const sugarRush = CandyTouches(
+    titleDrop: Color(0xFFFF5FA8),
+    burst: Color(0xFFFFD43A),
+    panelLip: Color(0xFFE3D7F7),
+    panelRadius: 20,
+    pills: true,
+    stripes: true,
+    candyDots: true,
+    sprinkles: [
+      Color(0xFFF2473D),
+      Color(0xFF35B0FF),
+      Color(0xFF5ED36A),
+      Color(0xFFB58BFF),
+      Color(0xFFFF9A2E),
+      Color(0xFFFFFFFF),
+    ],
+    sprinkleCount: 50,
+    twinkles: (first: Color(0xFFFFD43A), second: Color(0xFF8FD8FF)),
+  );
+
+  /// The drop under outlined titles (the team's name, a page's title), in
+  /// place of the scheme's shadow.
+  final Color? titleDrop;
+
+  /// The starbursts' color, in place of the scheme's mustard.
+  final Color? burst;
+
+  /// Panels sit on a lip of this color, 7 deep with the ink carried round
+  /// under it, in place of their hard offset shadow; unpicked push
+  /// buttons take it for their lips too.
+  final Color? panelLip;
+
+  /// The panels' corners, in place of 15.
+  final double? panelRadius;
+
+  /// Whether push buttons are pills.
+  final bool pills;
+
+  /// Whether the date pennants and the chat's game header have candy
+  /// stripes over the event's color: white at 20%, 7 wide every 18, at
+  /// 135°.
+  final bool stripes;
+
+  /// Whether the page's dots are four candy colors on an 18 px grid.
+  final bool candyDots;
+
+  /// The header sprinkles' colors in turn, in place of the six candies,
+  /// and how many to a 400 × 140 tile (40 elsewhere).
+  final List<Color>? sprinkles;
+  final int? sprinkleCount;
+
+  /// The twinkles' two colors, in place of the light schemes' mustard and
+  /// pink.
+  final ({Color first, Color second})? twinkles;
 }

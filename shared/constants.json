@@ -73,6 +73,7 @@
       "tealwave",
       "tropicblue",
       "deserttan",
+      "sugarrush",
       "custom1",
       "custom2",
       "custom3",
@@ -548,7 +549,7 @@
     }
   },
   "schemeInk": {
-    "$comment": "Each stored scheme's text and what it sits on, as the app draws it (since Boot Camp Mix, #85, #86, #89 and #90, the closest of its thirteen schemes), for the theme editor's server check (#83). test/scheme_ink_test.dart checks they match SchemeRoles.",
+    "$comment": "Each stored scheme's text and what it sits on, as the app draws it (since Boot Camp Mix, #85, #86, #89, #90 and #98, the closest of its fourteen schemes), for the theme editor's server check (#83). test/scheme_ink_test.dart checks they match SchemeRoles.",
     "army": {
       "page": "#474C2B",
       "text": "#F4EAD0",
@@ -713,6 +714,17 @@
       "cardField": "#F4ECD8",
       "popup": "#F4ECD8",
       "candyInk": "#24231B"
+    },
+    "sugarrush": {
+      "page": "#FFF4EA",
+      "text": "#2B1A4A",
+      "tabbar": "#FFFFFF",
+      "field": "#FFFFFF",
+      "card": "#FFFFFF",
+      "cardText": "#2B1A4A",
+      "cardField": "#FFFFFF",
+      "popup": "#FFFFFF",
+      "candyInk": "#2B1A4A"
     }
   },
   "campPalettes": {
@@ -1080,6 +1092,34 @@
       "camoMid": "#C9B88C",
       "camoSmall": "#5C5236",
       "ballChain": "#24231B"
+    },
+    "sugarrush": {
+      "page": "#FFF4EA",
+      "panel": "#FFFFFF",
+      "tabBar": "#FFFFFF",
+      "ink": "#2B1A4A",
+      "shadow": "#2B1A4A",
+      "text": "#2B1A4A",
+      "muted": "#6E5F87",
+      "panelText": "#2B1A4A",
+      "panelMuted": "#6E5F87",
+      "headerLettering": "#2B1A4A",
+      "mustard": "#FF8CC6",
+      "balloon": "#FF8CC6",
+      "red": "#F2473D",
+      "blue": "#35B0FF",
+      "green": "#5ED36A",
+      "orange": "#FF9A2E",
+      "purple": "#B58BFF",
+      "unansweredTag": "#EDE6F5",
+      "answerRow": "#FFF0F7",
+      "toolsRow": "#F5E1EE",
+      "disabledIcon": "#B6A9C9",
+      "camoGround": "#FFC4DD",
+      "camoBig": "#FF9FCB",
+      "camoMid": "#A9DCFF",
+      "camoSmall": "#FFE27D",
+      "ballChain": "#2B1A4A"
     }
   }
 }

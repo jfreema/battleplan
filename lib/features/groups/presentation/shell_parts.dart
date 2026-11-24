@@ -1,5 +1,6 @@
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
+import 'package:battleplan/core/widgets/candy_box.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/core/widgets/team_switcher_button.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -377,7 +378,7 @@ class _Tab extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // The current tab's icon on a mustard tile, turned a
-                    // little, on its hard shadow (#85).
+                    // little, on its lip (#85, #98).
                     if (selected)
                       _TabTile(
                         child: IconTheme.merge(
@@ -393,7 +394,8 @@ class _Tab extends StatelessWidget {
                           child: tab.icon,
                         ),
                       ),
-                    const SizedBox(height: 4),
+                    // Clear of the tile's lip, under every tab alike (#98).
+                    const SizedBox(height: 4 + _TabTile.depth),
                     // Whole, never cut off ("Docume…"), and at the bar's or
                     // rail's one size, apart from its neighbors (#64).
                     Padding(
@@ -437,29 +439,29 @@ class _Tab extends StatelessWidget {
   }
 }
 
-/// The current tab's mustard tile (#85): 48 by 32, corners of 10, a
-/// 2.5 px ink outline on a 2 px hard shadow, turned 3 degrees left.
+/// The current tab's mustard tile (#85): 48 by 32, a 2.5 px ink outline,
+/// turned 3 degrees left. A lemon drop (#98): corners of 14, on a lip of a
+/// darker mustard [depth] px deep, with a shine at its top left.
 class _TabTile extends StatelessWidget {
   const new({required this.child});
 
   final Widget child;
+
+  /// The lip under it, which the labels under the tabs clear.
+  static const double depth = 5;
 
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
     return Transform.rotate(
       angle: -3 * 3.141592653589793 / 180,
-      child: Container(
+      child: CandyBox(
+        color: c.accentMark,
+        radius: 14,
+        depth: depth,
+        shine: const Rect.fromLTWH(7, 3.5, 11, 4),
         width: 48,
         height: 32,
-        decoration: BoxDecoration(
-          color: c.accentMark,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: c.ink, width: 2.5),
-          boxShadow: [
-            BoxShadow(color: c.pageShadow, offset: const Offset(2, 2)),
-          ],
-        ),
         alignment: Alignment.center,
         child: child,
       ),

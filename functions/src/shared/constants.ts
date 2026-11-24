@@ -189,7 +189,7 @@ export type UserStatus = (typeof userStatusValues)[number];
 export const themePreferenceValues = ['system', 'light', 'dark', 'candy', 'arena', 'olive'] as const;
 export type ThemePreference = (typeof themePreferenceValues)[number];
 
-export const teamSchemeValues = ['army', 'darkarmy', 'light', 'dark', 'navy', 'sky', 'skyblue', 'candypop', 'wildcat', 'purplegold', 'scoreboard', 'graphite', 'tealwave', 'tropicblue', 'deserttan', 'custom1', 'custom2', 'custom3', 'custom4', 'custom5', 'custom6', 'custom7', 'custom8', 'custom9', 'custom10', 'custom11', 'custom12'] as const;
+export const teamSchemeValues = ['army', 'darkarmy', 'light', 'dark', 'navy', 'sky', 'skyblue', 'candypop', 'wildcat', 'purplegold', 'scoreboard', 'graphite', 'tealwave', 'tropicblue', 'deserttan', 'sugarrush', 'custom1', 'custom2', 'custom3', 'custom4', 'custom5', 'custom6', 'custom7', 'custom8', 'custom9', 'custom10', 'custom11', 'custom12'] as const;
 export type TeamScheme = (typeof teamSchemeValues)[number];
 
 export const avatarColorValues = ['blueRaspberry', 'lemon', 'mint', 'grape', 'bubblegum', 'tangerine', 'cherry'] as const;
@@ -287,6 +287,7 @@ export const SCHEME_INK: Readonly<Record<string, SchemeInk>> = {
   tealwave: { page: '#0B3B40', text: '#F0FBFA', tabbar: '#062A2E', field: '#135058', card: '#135058', cardText: '#F0FBFA', cardField: '#135058', popup: '#135058', candyInk: '#021214' },
   tropicblue: { page: '#0A7EAC', text: '#FFFFFF', tabbar: '#062A45', field: '#0A6E99', card: '#FFFFFF', cardText: '#062033', cardField: '#FFFFFF', popup: '#0A6E99', candyInk: '#062033' },
   deserttan: { page: '#E4D6B4', text: '#24231B', tabbar: '#F4ECD8', field: '#F4ECD8', card: '#F4ECD8', cardText: '#24231B', cardField: '#F4ECD8', popup: '#F4ECD8', candyInk: '#24231B' },
+  sugarrush: { page: '#FFF4EA', text: '#2B1A4A', tabbar: '#FFFFFF', field: '#FFFFFF', card: '#FFFFFF', cardText: '#2B1A4A', cardField: '#FFFFFF', popup: '#FFFFFF', candyInk: '#2B1A4A' },
 };
 
 export type SchemeInk = { page: string; text: string; tabbar: string; field: string; card: string; cardText: string; cardField: string; popup: string; candyInk: string };
@@ -306,6 +307,7 @@ export const CAMP_PALETTES: Readonly<Record<string, Readonly<Record<CampColor, s
   darkarmy: { page: '#0F2E1F', panel: '#183E2C', tabBar: '#081F14', ink: '#050D09', shadow: '#050D09', text: '#FFFFFF', muted: '#B5CFC0', panelText: '#FFFFFF', panelMuted: '#B5CFC0', headerLettering: '#FFFFFF', mustard: '#FFFFFF', balloon: '#FFFFFF', red: '#E5483A', blue: '#5BA8E0', green: '#8BDB5A', orange: '#F5A03A', purple: '#B794E8', unansweredTag: '#375A48', answerRow: '#0C2619', toolsRow: '#14382A', disabledIcon: '#6A897A', camoGround: '#133524', camoBig: '#0B2418', camoMid: '#28543D', camoSmall: '#05110B', ballChain: '#CFE3D6' },
   tropicblue: { page: '#0A7EAC', panel: '#FFFFFF', tabBar: '#062A45', ink: '#062033', shadow: '#062033', text: '#FFFFFF', muted: '#D8F1FF', panelText: '#062033', panelMuted: '#3D5F7A', headerLettering: '#FFFFFF', mustard: '#FFD23F', balloon: '#FFD23F', red: '#FF5A4E', blue: '#4FCBF7', green: '#4FD38A', orange: '#FF9A2E', purple: '#B58BFF', unansweredTag: '#CDE7F2', answerRow: '#FFF1B0', toolsRow: '#0B76A3', disabledIcon: '#9CC3D6', camoGround: '#0A6E99', camoBig: '#075478', camoMid: '#1E9CC8', camoSmall: '#04324A', ballChain: '#FFD23F' },
   deserttan: { page: '#E4D6B4', panel: '#F4ECD8', tabBar: '#F4ECD8', ink: '#24231B', shadow: '#24231B', text: '#24231B', muted: '#615A45', panelText: '#24231B', panelMuted: '#615A45', headerLettering: '#24231B', mustard: '#A3A95A', balloon: '#A3A95A', red: '#C9452E', blue: '#4A86A8', green: '#6DB33F', orange: '#E08A2E', purple: '#8C68AD', unansweredTag: '#D3C6A6', answerRow: '#E6E2C0', toolsRow: '#D8C9A5', disabledIcon: '#A39A80', camoGround: '#A8956A', camoBig: '#8A7A52', camoMid: '#C9B88C', camoSmall: '#5C5236', ballChain: '#24231B' },
+  sugarrush: { page: '#FFF4EA', panel: '#FFFFFF', tabBar: '#FFFFFF', ink: '#2B1A4A', shadow: '#2B1A4A', text: '#2B1A4A', muted: '#6E5F87', panelText: '#2B1A4A', panelMuted: '#6E5F87', headerLettering: '#2B1A4A', mustard: '#FF8CC6', balloon: '#FF8CC6', red: '#F2473D', blue: '#35B0FF', green: '#5ED36A', orange: '#FF9A2E', purple: '#B58BFF', unansweredTag: '#EDE6F5', answerRow: '#FFF0F7', toolsRow: '#F5E1EE', disabledIcon: '#B6A9C9', camoGround: '#FFC4DD', camoBig: '#FF9FCB', camoMid: '#A9DCFF', camoSmall: '#FFE27D', ballChain: '#2B1A4A' },
 };
 
 /** How each notification kind behaves (NOTIF-2): pushes at "Important only", its global switch, center, channel. */

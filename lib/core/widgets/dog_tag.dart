@@ -1,12 +1,16 @@
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/candy.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/candy_box.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// A person's dog tag (#85, SPEC §7.4): their initials in ink stencil on
 /// their color (or their photo), on a rounded tag in a 3 px ink outline,
-/// with a punched hole and a hard shadow, turned a little.
+/// with a punched hole, turned a little. A candy drop (#98): on a 5 px lip
+/// of its own darker shade, with a white shine along its top (down its
+/// left side on a hanging tag).
 ///
 /// [DogTag.chat] is the one beside their messages, 42 × 30 with the hole
 /// at its left, turned -7°; [DogTag.hanging] hangs from a ball chain on
@@ -78,7 +82,6 @@ class DogTag extends StatelessWidget {
     final ink = c.ink;
     final url = imageUrl;
     final background = fill ?? Avatar.fillOf(c, color, colorKey ?? name);
-    final radius = BorderRadius.circular(holeOnTop ? 10 : 9);
     final initials = Text(
       Avatar.initialsOf(name),
       maxLines: 1,
@@ -100,52 +103,48 @@ class DogTag extends StatelessWidget {
       excludeSemantics: true,
       child: Transform.rotate(
         angle: turn * 3.141592653589793 / 180,
-        child: Container(
+        child: CandyBox(
+          color: background,
+          radius: holeOnTop ? 12 : 10,
+          outline: 3,
+          depth: 5,
+          // Along the top of a chat tag, down the left of a hanging one.
+          shine: holeOnTop
+              ? const Rect.fromLTWH(4, 12, 4.5, 17)
+              : const Rect.fromLTWH(12, 3, 15, 4),
+          shineColor: Candy.tagFaceShine,
           width: width,
           height: height,
-          decoration: BoxDecoration(
-            color: background,
-            borderRadius: radius,
-            border: Border.all(color: ink, width: 3),
-            boxShadow: [
-              BoxShadow(color: c.pageShadow, offset: const Offset(2, 2)),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: radius,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                if (url != null)
-                  Image.network(
-                    url,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => const SizedBox.shrink(),
-                  ),
-                if (url == null)
-                  Padding(
-                    // Clear of the hole.
-                    padding: holeOnTop
-                        ? const EdgeInsets.only(top: 8)
-                        : const EdgeInsets.only(left: 6),
-                    child: Center(child: initials),
-                  ),
-                // The punched hole.
-                Align(
-                  alignment: holeOnTop
-                      ? const Alignment(0, -0.78)
-                      : const Alignment(-0.74, 0),
-                  child: Container(
-                    width: holeOnTop ? 6 : 5,
-                    height: holeOnTop ? 6 : 5,
-                    decoration: BoxDecoration(
-                      color: ink,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
+          clipChild: true,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (url != null)
+                Image.network(
+                  url,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
                 ),
-              ],
-            ),
+              if (url == null)
+                Padding(
+                  // Clear of the hole.
+                  padding: holeOnTop
+                      ? const EdgeInsets.only(top: 8)
+                      : const EdgeInsets.only(left: 6),
+                  child: Center(child: initials),
+                ),
+              // The punched hole.
+              Align(
+                alignment: holeOnTop
+                    ? const Alignment(0, -0.78)
+                    : const Alignment(-0.74, 0),
+                child: Container(
+                  width: holeOnTop ? 6 : 5,
+                  height: holeOnTop ? 6 : 5,
+                  decoration: BoxDecoration(color: ink, shape: BoxShape.circle),
+                ),
+              ),
+            ],
           ),
         ),
       ),

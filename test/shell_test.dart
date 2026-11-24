@@ -11,6 +11,7 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/haptics.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/back_chevron.dart';
+import 'package:battleplan/core/widgets/candy_box.dart';
 import 'package:battleplan/core/widgets/team_badge.dart';
 import 'package:battleplan/core/widgets/team_switcher_button.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
@@ -728,7 +729,7 @@ void main() {
     });
 
     testWidgets('a pick of a scheme that left is drawn and checked as the '
-        'closest of the thirteen, and never rewritten (#85)', (tester) async {
+        'closest of the fourteen, and never rewritten (#85)', (tester) async {
       // Scoreboard left in #85; it's drawn as Black.
       final members = FakeMemberRepository([
         testMembership(
@@ -902,8 +903,17 @@ void main() {
             )
             .first,
       );
-      // The ring is the team's ink, around the red count (#85).
-      expect(badge.backgroundColor, SchemeRoles.light.palette.ink);
+      // The red count draws its own ring and lip, in the team's ink (#85,
+      // #98).
+      expect(badge.backgroundColor, Colors.transparent);
+      final pill = find.descendant(
+        of: find.byType(OpenFieldTabBar),
+        matching: find.byType(CandyBox),
+      );
+      expect(
+        GumdropColors.of(tester.element(pill.first)).ink,
+        SchemeRoles.light.palette.ink,
+      );
       expect(
         schemeOf(tester, find.text('Turn on notifications?')),
         TeamScheme.light,
@@ -1094,12 +1104,7 @@ void main() {
           find
               .ancestor(
                 of: find.text('Upcoming'),
-                matching: find.byWidgetPredicate(
-                  (w) =>
-                      w is Container &&
-                      w.decoration is BoxDecoration &&
-                      (w.decoration! as BoxDecoration).border != null,
-                ),
+                matching: find.byType(CandyBox),
               )
               .first,
         ),

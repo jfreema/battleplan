@@ -1,10 +1,14 @@
+import 'package:battleplan/core/design/candy.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
+import 'package:battleplan/core/widgets/candy_box.dart';
+import 'package:battleplan/core/widgets/candy_sprinkles.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// The unread count on a button or tab (SPEC §7.3): Boot Camp Mix's red
 /// (#85), a pill at least 19 px across with a black stencil number, in a
-/// 2.5 px ink outline. [child] is the icon it's on;
+/// 2.5 px ink outline, a candy drop on a 4 px lip of a darker red with a
+/// shine at its top left (#98). [child] is the icon it's on;
 /// [offset] places the pill from the icon's top-right corner (Material
 /// [Badge.offset]). A Material [Badge], so tests and screen readers find it
 /// as before.
@@ -23,30 +27,32 @@ Widget unreadBadge(
       .clamp(maxScaleFactor: maxBadgeTextScale);
   return Badge(
     isLabelVisible: visible,
-    // The ink outline.
-    backgroundColor: c.ink,
+    // The pill draws its own outline and lip.
+    backgroundColor: Colors.transparent,
     // At least; it grows with the pill.
     largeSize: 24,
-    padding: const EdgeInsets.all(2.5),
+    padding: EdgeInsets.zero,
     offset: offset,
-    label: Container(
-      constraints: const BoxConstraints(minWidth: 19, minHeight: 19),
+    // Unread is red in Boot Camp Mix (#85), as the bell's dot is.
+    label: CandyBox(
+      color: c.cherry.face,
+      lip: c.cherry.lip,
+      radius: 12,
+      shine: const Rect.fromLTWH(5, 3, 7, 3),
       padding: const EdgeInsets.symmetric(horizontal: 5),
-      alignment: Alignment.center,
-      // Unread is red in Boot Camp Mix (#85), as the bell's dot is.
-      decoration: ShapeDecoration(
-        color: c.cherry.face,
-        shape: const StadiumBorder(),
-      ),
-      child: Text(
-        label,
-        textScaler: scaler,
-        style: GumdropStyle.of(context).label(
-          TextStyle(
-            fontSize: 12,
-            height: 19 / 12,
-            fontWeight: FontWeight.w900,
-            color: c.inkOn(c.cherry),
+      child: Container(
+        constraints: const BoxConstraints(minWidth: 19, minHeight: 19),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          textScaler: scaler,
+          style: GumdropStyle.of(context).label(
+            TextStyle(
+              fontSize: 12,
+              height: 19 / 12,
+              fontWeight: FontWeight.w900,
+              color: c.inkOn(c.cherry),
+            ),
           ),
         ),
       ),
@@ -59,9 +65,10 @@ Widget unreadBadge(
 const double maxBadgeTextScale = 1.6;
 
 /// A header icon button (SPEC §7.3): Boot Camp Mix's round icon button
-/// (#85), a 36 px circle in the panel color with a 2.5 px ink outline on a
-/// 2 px hard shadow, its 20 px icon in the text color, in a 48 × 48 tap
-/// area, with an optional unread count at its top right.
+/// (#85), a 36 px circle in the panel color with a 2.5 px ink outline, its
+/// 20 px icon in the text color, in a 48 × 48 tap area, with an optional
+/// unread count at its top right. A glossy ball (#98): on a 4 px lip of
+/// the panel color's darker shade, with a tilted oval shine.
 class GumdropIconButton extends StatelessWidget {
   const new({
     required this.icon,
@@ -90,15 +97,16 @@ class GumdropIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
-    final face = Container(
+    final fill = red ? c.cherry.face : c.surface;
+    final face = CandyBox(
+      color: fill,
+      lip: red ? c.cherry.lip : c.raisedLip,
+      radius: 18,
+      shine: const Rect.fromLTWH(6, 5, 9, 5),
+      shineColor: Candy.ballShineOn(fill),
+      ball: true,
       width: 36,
       height: 36,
-      decoration: BoxDecoration(
-        color: red ? c.cherry.face : c.surface,
-        shape: BoxShape.circle,
-        border: Border.all(color: c.ink, width: 2.5),
-        boxShadow: [BoxShadow(color: c.pageShadow, offset: const Offset(2, 2))],
-      ),
       alignment: Alignment.center,
       child: Icon(
         icon,
@@ -129,22 +137,25 @@ class GumdropIconButton extends StatelessWidget {
               ),
             ],
           );
-    return IconButton(
-      tooltip: tooltip,
-      color: c.textOnPage,
-      constraints: const BoxConstraints.tightFor(width: 48, height: 48),
-      padding: EdgeInsets.zero,
-      onPressed: onPressed,
-      icon: badgeLabel == null
-          ? glyph
-          // The pill's corner lands 4 px in from the box's right, 5 below
-          // its top.
-          : unreadBadge(
-              context,
-              label: badgeLabel!,
-              offset: const Offset(8, -7),
-              child: glyph,
-            ),
+    // The header's sprinkles keep off it (#98).
+    return SprinkleKeepOut(
+      child: IconButton(
+        tooltip: tooltip,
+        color: c.textOnPage,
+        constraints: const BoxConstraints.tightFor(width: 48, height: 48),
+        padding: EdgeInsets.zero,
+        onPressed: onPressed,
+        icon: badgeLabel == null
+            ? glyph
+            // The pill's corner lands 4 px in from the box's right, 5 below
+            // its top.
+            : unreadBadge(
+                context,
+                label: badgeLabel!,
+                offset: const Offset(8, -7),
+                child: glyph,
+              ),
+      ),
     );
   }
 }

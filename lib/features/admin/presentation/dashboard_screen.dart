@@ -1,12 +1,14 @@
 import 'dart:math' as math;
 
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/candy.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/widgets/camp_lettering.dart';
+import 'package:battleplan/core/widgets/candy_box.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/core/widgets/load_error.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
@@ -93,7 +95,7 @@ class AdminDashboardScreen extends ConsumerWidget {
                   // Mustard.
                   accent: (c) => GumdropAccent(
                     face: c.roles.palette.mustard,
-                    lip: c.pageShadow,
+                    lip: Candy.lipOf(c.roles.palette.mustard),
                     text: c.textOnPage,
                   ),
                 ),
@@ -282,73 +284,73 @@ class _Stat extends StatelessWidget {
       button: target != null,
       label: '$label: $value. $note.',
       excludeSemantics: true,
-      child: Material(
-        color: Colors.transparent,
-        child: Ink(
-          decoration: style.cardDecoration(
-            c.surface,
-            0,
-            side: BorderSide(color: c.ink, width: 3),
-            shadow: page.pageShadow,
-          ),
-          child: FocusRingInk(
-            onTap: target == null ? null : () => context.go(target),
-            child: GumdropSurface(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
+      // The shadow outside the Material, which would clip it (#98).
+      child: DecoratedBox(
+        decoration: style.cardShadow(page.pageShadow, ink: c.ink),
+        child: Material(
+          color: Colors.transparent,
+          child: Ink(
+            decoration: style.cardDecoration(
+              c.surface,
+              0,
+              side: BorderSide(color: c.ink, width: 3),
+              lip: 0,
+            ),
+            child: FocusRingInk(
+              onTap: target == null ? null : () => context.go(target),
+              child: GumdropSurface(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
+                  child: Row(
+                    children: [
+                      // A candy drop on its lip (#98).
+                      CandyBox(
                         color: color.face,
-                        borderRadius: BorderRadius.circular(11),
-                        border: Border.all(color: c.ink, width: 2.5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: page.pageShadow,
-                            offset: const Offset(2, 2),
-                          ),
-                        ],
+                        lip: color.lip,
+                        radius: 11,
+                        depth: 5,
+                        shine: const Rect.fromLTWH(6, 4, 11, 3.5),
+                        width: 44,
+                        height: 44,
+                        alignment: Alignment.center,
+                        child: Icon(icon, size: 22, color: c.inkOn(color)),
                       ),
-                      child: Icon(icon, size: 22, color: c.inkOn(color)),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(child: words),
-                    if (!stacked) ...[
                       const SizedBox(width: 12),
-                      // Smaller rather than past the panel's edge.
-                      ConstrainedBox(
-                        // At most a third of the screen, 170 on the widest.
-                        constraints: BoxConstraints(
-                          maxWidth: math.min(
-                            170,
-                            MediaQuery.sizeOf(context).width / 3,
+                      Expanded(child: words),
+                      if (!stacked) ...[
+                        const SizedBox(width: 12),
+                        // Smaller rather than past the panel's edge.
+                        ConstrainedBox(
+                          // At most a third of the screen, 170 on the widest.
+                          constraints: BoxConstraints(
+                            maxWidth: math.min(
+                              170,
+                              MediaQuery.sizeOf(context).width / 3,
+                            ),
+                          ),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: AlignmentDirectional.centerEnd,
+                            child: total,
                           ),
                         ),
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          alignment: AlignmentDirectional.centerEnd,
-                          child: total,
-                        ),
+                      ],
+                      const SizedBox(width: 8),
+                      // Room kept where there's no list, so the numbers line
+                      // up.
+                      SizedBox(
+                        width: 20,
+                        child: target == null
+                            ? null
+                            : Icon(
+                                AppIcons.chevronRight,
+                                size: 20,
+                                weight: 700,
+                                color: c.textMuted,
+                              ),
                       ),
                     ],
-                    const SizedBox(width: 8),
-                    // Room kept where there's no list, so the numbers line
-                    // up.
-                    SizedBox(
-                      width: 20,
-                      child: target == null
-                          ? null
-                          : Icon(
-                              AppIcons.chevronRight,
-                              size: 20,
-                              weight: 700,
-                              color: c.textMuted,
-                            ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),

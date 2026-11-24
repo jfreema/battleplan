@@ -18,7 +18,8 @@ enum BalloonTail {
 /// 19) in a [side] outline with a pointed tail on one side, drawn outside
 /// the box, in the gap beside it. The tail on [BalloonTail.left] starts 11
 /// from the top; on [BalloonTail.right], 9 from the bottom, as the design
-/// has them.
+/// has them. My own balloon has the candy finish's white [highlight] along
+/// the top of its face (#98).
 @immutable
 class BalloonBorder extends OutlinedBorder {
   const new({
@@ -26,10 +27,15 @@ class BalloonBorder extends OutlinedBorder {
     this.radius = 19,
     this.tailLength = 9.5,
     this.tailSpan = 16,
+    this.highlight,
     super.side,
   });
 
   final BalloonTail tail;
+
+  /// A 2.5 px band along the top of the face, inside the outline, or null
+  /// for none.
+  final Color? highlight;
 
   /// The box's corner.
   final double radius;
@@ -77,6 +83,18 @@ class BalloonBorder extends OutlinedBorder {
 
   @override
   void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) {
+    final top = highlight;
+    if (top != null && top.a > 0) {
+      final inner = _shape(rect.deflate(side.width));
+      canvas.drawPath(
+        Path.combine(
+          PathOperation.difference,
+          inner,
+          inner.shift(const Offset(0, 2.5)),
+        ),
+        Paint()..color = top,
+      );
+    }
     if (side.style == BorderStyle.none || side.width == 0) return;
     // The stroke inside the box, so the outline's outer edge is the box's.
     canvas.drawPath(
@@ -91,6 +109,7 @@ class BalloonBorder extends OutlinedBorder {
     radius: radius * t,
     tailLength: tailLength * t,
     tailSpan: tailSpan * t,
+    highlight: highlight,
     side: side.scale(t),
   );
 
@@ -101,6 +120,7 @@ class BalloonBorder extends OutlinedBorder {
         radius: radius,
         tailLength: tailLength,
         tailSpan: tailSpan,
+        highlight: highlight,
         side: side ?? this.side,
       );
 
@@ -111,8 +131,10 @@ class BalloonBorder extends OutlinedBorder {
       other.radius == radius &&
       other.tailLength == tailLength &&
       other.tailSpan == tailSpan &&
+      other.highlight == highlight &&
       other.side == side;
 
   @override
-  int get hashCode => Object.hash(tail, radius, tailLength, tailSpan, side);
+  int get hashCode =>
+      Object.hash(tail, radius, tailLength, tailSpan, highlight, side);
 }

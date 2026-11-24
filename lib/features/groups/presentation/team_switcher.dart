@@ -25,10 +25,18 @@ String? teamLogoUrl(WidgetRef ref, Group? group) {
 
 /// [group]'s logo, or its initials on its color (SPEC §5.2, §7.1).
 class GroupBadge extends ConsumerWidget {
-  const new({required this.group, this.size = 32, super.key});
+  const new({
+    required this.group,
+    this.size = 32,
+    this.candy = false,
+    super.key,
+  });
 
   final Group? group;
   final double size;
+
+  /// The candy finish, on the Teams cards ([TeamBadge.candy], #98).
+  final bool candy;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -38,6 +46,7 @@ class GroupBadge extends ConsumerWidget {
       color: color == null ? null : Color(color),
       imageUrl: teamLogoUrl(ref, group),
       size: size,
+      candy: candy,
     );
   }
 }

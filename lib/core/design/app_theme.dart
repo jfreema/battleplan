@@ -1,5 +1,6 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_colors.dart';
+import 'package:battleplan/core/design/candy.dart';
 import 'package:battleplan/core/design/color_math.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_buttons.dart';
@@ -48,7 +49,8 @@ abstract final class AppTheme {
   static int get cachedThemes => _cache.length;
 
   static ThemeData build(GumdropColors g) {
-    const style = GumdropStyle.openField;
+    // Boot Camp Mix, with Sugar Rush's own panels and pills (#98).
+    final style = GumdropStyle.forPalette(g.roles.palette);
     final background = g.background;
     final text = g.textOnPage;
     final muted = g.textMutedOnPage;
@@ -138,7 +140,7 @@ abstract final class AppTheme {
     );
     final appColors = AppColors.fromGumdrop(g, backgrounds: textBackgrounds);
     final textTheme = _textTheme(g, style, text);
-    final buttons = GumdropButtons(g, focusRing: text);
+    final buttons = GumdropButtons(g, focusRing: text, style: style);
     final inputFill = g.inputFill;
     final inputBorder = g.inputBorder;
     OutlineInputBorder outline(Color color, double width) => OutlineInputBorder(
@@ -296,7 +298,20 @@ abstract final class AppTheme {
         highlightElevation: 0,
         disabledElevation: 0,
         iconSize: 28,
-        shape: GumdropShape(lipColor: g.you.lip, side: style.accentSide(g.ink)),
+        // A glossy ball (or pill) on a 4 px lip of its own darker shade, the
+        // ink carried round under it (#98).
+        shape: GumdropShape(
+          lip: GumdropShape.roundDepth,
+          lipColor: g.you.lip,
+          lipEdge: g.ink,
+          highlight: Candy.highlightHeight,
+          highlightColor: Candy.highlightOn(g.you.face),
+          shine: const Rect.fromLTWH(9, 7.5, 13, 7.5),
+          shineColor: Candy.ballShineOn(g.you.face),
+          ball: true,
+          sink: 2,
+          side: style.accentSide(g.ink),
+        ),
         sizeConstraints: const BoxConstraints.tightFor(width: 56, height: 60),
         smallSizeConstraints: const BoxConstraints.tightFor(
           width: 44,

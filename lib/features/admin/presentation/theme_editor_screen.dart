@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:battleplan/core/camp_theme.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/candy.dart';
 import 'package:battleplan/core/design/color_math.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/schemes.dart';
@@ -11,6 +12,8 @@ import 'package:battleplan/core/design/theme_readability.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/team_color_names.dart';
 import 'package:battleplan/core/widgets/camo.dart';
+import 'package:battleplan/core/widgets/candy_box.dart';
+import 'package:battleplan/core/widgets/candy_sprinkles.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/admin/presentation/admin_widgets.dart';
@@ -895,15 +898,17 @@ class CampThemePreview extends StatelessWidget {
         child: Text(text, style: body(mine ? _on(face) : p.panelText)),
       ),
     );
+    // The candy finish (#98): each answer a gumdrop on its lip.
     Widget answer(String label, Color face) => Expanded(
-      child: Container(
+      child: CandyBox(
+        color: face,
+        ink: p.ink,
+        radius: 10,
+        depth: 4,
+        shine: const Rect.fromLTWH(5, 2, 9, 3),
+        shineColor: Candy.streakOn(face),
         height: 26,
         alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: face,
-          border: Border.fromBorderSide(ink),
-          borderRadius: BorderRadius.circular(8),
-        ),
         child: Text(label.toUpperCase(), style: stencil(11, _on(face))),
       ),
     );
@@ -919,26 +924,38 @@ class CampThemePreview extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // The header: the team's name on the camouflage, the bell's dot.
+            // With its candy sprinkles, off the name and the dot (#98).
             SizedBox(
               height: 52,
-              child: CustomPaint(
-                painter: CamoPainter(p, style: header),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Row(
+              child: SprinkleScope(
+                child: CustomPaint(
+                  painter: CamoPainter(p, style: header),
+                  child: Stack(
                     children: [
-                      Text(
-                        l10n.adminThemePreviewTeam.toUpperCase(),
-                        style: stencil(24, p.headerLettering),
-                      ),
-                      const Spacer(),
-                      Container(
-                        width: 14,
-                        height: 14,
-                        decoration: BoxDecoration(
-                          color: p.red,
-                          shape: BoxShape.circle,
-                          border: Border.fromBorderSide(ink),
+                      Positioned.fill(child: SprinkleLayer(palette: p)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Row(
+                          children: [
+                            SprinkleKeepOut(
+                              child: Text(
+                                l10n.adminThemePreviewTeam.toUpperCase(),
+                                style: stencil(24, p.headerLettering),
+                              ),
+                            ),
+                            const Spacer(),
+                            SprinkleKeepOut(
+                              child: Container(
+                                width: 14,
+                                height: 14,
+                                decoration: BoxDecoration(
+                                  color: p.red,
+                                  shape: BoxShape.circle,
+                                  border: Border.fromBorderSide(ink),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -958,9 +975,14 @@ class CampThemePreview extends StatelessWidget {
                     balloon(l10n.adminThemePreviewTheirs, p.panel, mine: false),
                     balloon(l10n.adminThemePreviewMine, p.balloon, mine: true),
                     Container(
+                      clipBehavior: Clip.antiAlias,
+                      foregroundDecoration: BoxDecoration(
+                        border: Border.fromBorderSide(ink),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       decoration: BoxDecoration(
                         color: p.panel,
-                        border: Border.fromBorderSide(ink),
+                        borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
                             color: p.shadow,
@@ -976,12 +998,16 @@ class CampThemePreview extends StatelessWidget {
                             padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
                             child: Row(
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 5,
-                                    vertical: 1,
-                                  ),
+                                CandyBox(
                                   color: p.mustard,
+                                  ink: p.ink,
+                                  radius: 5,
+                                  outline: 2,
+                                  depth: 3,
+                                  shine: const Rect.fromLTWH(3, 2, 6, 2.5),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 3,
+                                  ),
                                   child: Text(
                                     l10n.adminThemePreviewTag.toUpperCase(),
                                     style: stencil(10, p.ink),
@@ -997,7 +1023,8 @@ class CampThemePreview extends StatelessWidget {
                           ),
                           Container(height: 2.5, color: p.ink),
                           Padding(
-                            padding: const EdgeInsets.all(8),
+                            // Room under the answers for their lips.
+                            padding: const EdgeInsets.fromLTRB(8, 8, 8, 12),
                             child: Row(
                               children: [
                                 answer(l10n.rsvpGoing, p.green),
@@ -1026,14 +1053,16 @@ class CampThemePreview extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 6),
-                        Container(
+                        CandyBox(
+                          color: p.red,
+                          ink: p.ink,
+                          radius: 15,
+                          shine: const Rect.fromLTWH(5, 4, 7, 4),
+                          shineColor: Candy.ballShineOn(p.red),
+                          ball: true,
                           width: 30,
                           height: 30,
-                          decoration: BoxDecoration(
-                            color: p.red,
-                            shape: BoxShape.circle,
-                            border: Border.fromBorderSide(ink),
-                          ),
+                          alignment: Alignment.center,
                           child: Icon(
                             AppIcons.send,
                             size: 16,

@@ -8,6 +8,7 @@ import 'dart:async';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/failure.dart';
+import 'package:battleplan/core/widgets/candy_box.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/groups/domain/invite.dart';
@@ -173,20 +174,17 @@ void main() {
     AdminTotals emails(int sent) =>
         AdminTotals(emailsToday: sent, emailBudget: 90, emailBulkLimit: 63);
 
-    /// The Emails today card's badge color.
+    /// The Emails today card's badge color: a candy drop's face (#98).
     Color badge(WidgetTester tester) {
       final card = find.ancestor(
         of: find.text('Emails today'),
         matching: find.byType(Material),
       );
-      final box = tester
-          .widgetList<Container>(
-            find.descendant(of: card.first, matching: find.byType(Container)),
+      return tester
+          .widget<CandyBox>(
+            find.descendant(of: card.first, matching: find.byType(CandyBox)),
           )
-          .firstWhere(
-            (c) => c.decoration is BoxDecoration && c.constraints != null,
-          );
-      return (box.decoration! as BoxDecoration).color!;
+          .color;
     }
 
     testWidgets("the Dashboard counts today's emails, and where invites "

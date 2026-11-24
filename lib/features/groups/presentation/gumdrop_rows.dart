@@ -2,7 +2,9 @@ import 'dart:math' as math;
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/candy.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/team_color_names.dart';
@@ -10,6 +12,8 @@ import 'package:battleplan/core/widgets/back_chevron.dart';
 import 'package:battleplan/core/widgets/camo.dart';
 import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/core/widgets/camp_lettering.dart';
+import 'package:battleplan/core/widgets/candy_box.dart';
+import 'package:battleplan/core/widgets/candy_sprinkles.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter/foundation.dart' show SynchronousFuture;
@@ -488,11 +492,15 @@ class TopLevelBar extends StatelessWidget {
     required this.title,
     this.actions = const [],
     this.maxWidth,
+    this.twinkles = false,
     super.key,
   });
 
   final String title;
   final List<Widget> actions;
+
+  /// Two twinkles by the title (#98): Teams', the app's front page.
+  final bool twinkles;
 
   /// The width of the page's centered column under the bar, for a page
   /// that keeps to one (Teams and Profile, 560): the title and icons keep
@@ -520,17 +528,30 @@ class TopLevelBar extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 3),
                   child: Align(
                     alignment: AlignmentDirectional.centerStart,
-                    child: OutlinedText(
-                      title,
-                      header: true,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.headlineMedium!
-                          .copyWith(
-                            fontSize: 32.5,
-                            height: 37 / 32.5,
-                            letterSpacing: 32.5 * 0.04,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // The header's sprinkles keep off the title and
+                        // its twinkles (#98).
+                        Flexible(
+                          child: SprinkleKeepOut(
+                            child: OutlinedText(
+                              title,
+                              header: true,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.headlineMedium!
+                                  .copyWith(
+                                    fontSize: 32.5,
+                                    height: 37 / 32.5,
+                                    letterSpacing: 32.5 * 0.04,
+                                  ),
+                            ),
                           ),
+                        ),
+                        if (twinkles)
+                          const SprinkleKeepOut(child: _TitleTwinkles()),
+                      ],
                     ),
                   ),
                 ),
@@ -544,9 +565,44 @@ class TopLevelBar extends StatelessWidget {
   );
 }
 
+/// Two twinkles by a title (#98): a big one level with its top, a small
+/// one under it to the right, lemon and sky (on a light scheme, its mustard
+/// and pink).
+class _TitleTwinkles extends StatelessWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = GumdropColors.of(context);
+    final colors = twinkleColors(
+      c.roles.palette,
+      light: c.brightness == Brightness.light,
+    );
+    return SizedBox(
+      width: 40,
+      height: 44,
+      child: Stack(
+        children: [
+          Positioned(
+            left: 6,
+            top: 0,
+            child: Twinkle(color: colors.first, ink: c.ink, size: 22),
+          ),
+          Positioned(
+            left: 26,
+            top: 30,
+            child: Twinkle(color: colors.second, ink: c.ink, size: 14),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// A list of rows in one ink panel (Boot Camp Mix, #85, SPEC §7.3): the
-/// panel color in a 3 px ink outline on a hard 4/4 shadow, the rows split
-/// by 3 px ink lines, each set in 8 from the left and 9 from the right.
+/// panel color in a 3 px ink outline on a hard 4/4 shadow, corners of 15
+/// (#98), the rows split by 3 px ink lines, each set in 8 from the left and
+/// 9 from the right.
 class PageRows extends StatelessWidget {
   const new({required this.children, super.key});
 
@@ -557,13 +613,19 @@ class PageRows extends StatelessWidget {
     if (children.isEmpty) return const SizedBox.shrink();
     final c = GumdropColors.of(context);
     final line = Container(height: 3, color: c.ink);
+    final style = GumdropStyle.of(context);
+    final corners = BorderRadius.circular(style.panelRadius);
     return DecoratedBox(
       decoration: BoxDecoration(
-        boxShadow: [BoxShadow(color: c.pageShadow, offset: const Offset(4, 4))],
+        borderRadius: corners,
+        boxShadow: style.panelShadows(shadow: c.pageShadow, ink: c.ink),
       ),
       child: Material(
         color: c.surface,
-        shape: Border.all(color: c.ink, width: 3),
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: c.ink, width: 3),
+          borderRadius: corners,
+        ),
         clipBehavior: Clip.antiAlias,
         child: GumdropSurface(
           // Inside the 3 px outline, which the shape draws over its edge.
@@ -611,10 +673,11 @@ class PageListRow extends StatelessWidget {
 }
 
 /// A row in a panel of rows (SPEC §7.3; Boot Camp Mix, #85): at least 52
-/// tall, its [icon] in ink on a 36 px mustard round badge in an ink outline
-/// (or [leading]), the title in Nunito Bold 16.5/21, the subtitle SemiBold
-/// 14/17 muted, and a 20 px chevron when it opens something. [destructive] puts
-/// the badge in the red and the title in the accent text.
+/// tall, its [icon] in ink on a 36 px mustard ball in an ink outline on a
+/// 4 px lip (#98) (or [leading]), the title in Nunito Bold 16.5/21, the
+/// subtitle SemiBold 14/17 muted, and a 20 px chevron when it opens
+/// something. [destructive] puts the badge in the red and the title in the
+/// accent text.
 /// Screen readers hear the row as one item, or as [semanticsLabel] when
 /// it's given (a sentence: "Luke #7, Uniforms, $25 left of $45"); with
 /// [trailingActions], the buttons in [trailing] stay items of their own.
@@ -680,18 +743,27 @@ class PageRow extends StatelessWidget {
         leading ??
         (icon == null
             ? null
-            : Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
+            // A glossy ball on a 4 px lip of its darker shade (#98), up a
+            // little so the ball and its lip sit in the row's middle.
+            : Transform.translate(
+                offset: const Offset(0, -2),
+                child: CandyBox(
                   color: destructive ? c.cherry.face : c.roles.palette.mustard,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: c.ink, width: 2.5),
-                ),
-                child: Icon(
-                  icon,
-                  size: 22,
-                  color: destructive ? c.inkOn(c.cherry) : c.ink,
+                  lip: destructive ? c.cherry.lip : null,
+                  radius: 18,
+                  shine: const Rect.fromLTWH(6, 5, 9, 5),
+                  shineColor: Candy.ballShineOn(
+                    destructive ? c.cherry.face : c.roles.palette.mustard,
+                  ),
+                  ball: true,
+                  width: 36,
+                  height: 36,
+                  alignment: Alignment.center,
+                  child: Icon(
+                    icon,
+                    size: 22,
+                    color: destructive ? c.inkOn(c.cherry) : c.ink,
+                  ),
                 ),
               ));
     final end =
@@ -835,36 +907,37 @@ class SectionLabel extends StatelessWidget {
 
 /// A true card (SPEC §7.3): the team card, a player card, drawn as a Boot
 /// Camp Mix panel (#85): the panel color, a 3 px ink outline on a hard 4/4
-/// shadow, square, and its [child] in the card context. A [Material], so
-/// list tiles, switches, and ink inside draw on it.
+/// shadow, corners of 15 (#98), and its [child] in the card context. A
+/// [Material], so list tiles, switches, and ink inside draw on it.
 class SettingsPanel extends StatelessWidget {
   const new({
     required this.child,
-    this.radius = 0,
+    this.radius,
     this.padding = const EdgeInsets.all(12),
     super.key,
   });
 
   final Widget child;
-  final double radius;
+
+  /// Its corners: the panels' (15, or Sugar Rush's 20) unless given.
+  final double? radius;
   final EdgeInsetsGeometry padding;
 
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
+    final style = GumdropStyle.of(context);
+    final corners = BorderRadius.circular(radius ?? style.panelRadius);
     final rim = BorderSide(color: c.ink, width: 3);
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(radius),
-        boxShadow: [BoxShadow(color: c.pageShadow, offset: const Offset(4, 4))],
+        borderRadius: corners,
+        boxShadow: style.panelShadows(shadow: c.pageShadow, ink: c.ink),
       ),
       child: Material(
         color: c.surface,
         clipBehavior: Clip.antiAlias,
-        shape: RoundedRectangleBorder(
-          side: rim,
-          borderRadius: BorderRadius.circular(radius),
-        ),
+        shape: RoundedRectangleBorder(side: rim, borderRadius: corners),
         child: GumdropSurface(
           child: Padding(padding: padding, child: child),
         ),

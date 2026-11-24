@@ -1,4 +1,5 @@
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/candy.dart';
 import 'package:battleplan/core/design/color_math.dart';
 import 'package:battleplan/core/design/schemes.dart';
 import 'package:material_ui/material_ui.dart';
@@ -182,7 +183,9 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
       raisedBorder: onCard ? r.cardOutline : r.outline,
       raisedBorderWidth: 3,
       raisedHighlight: const Color(0x00000000),
-      raisedLip: p.shadow,
+      // A licorice gumdrop's lip: the panel color's darker shade, or Sugar
+      // Rush's lavender (#98).
+      raisedLip: p.touches.panelLip ?? Candy.lipOf(r.card),
       // Wells (a segmented choice, a number's disc): the panel's track, but
       // on Candy Pop's blue page its deeper blue, where white reads (#86).
       well: onCard || r.cardText == r.text ? r.cardTrack : r.field,
@@ -272,9 +275,6 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
       Theme.of(context).extension<GumdropColors>() ?? _army;
 
   static final GumdropColors _army = forScheme(TeamScheme.army);
-
-  /// The top inset on every candy gumdrop: `inset 0 2px 0`.
-  static const accentHighlight = Color(0x59FFFFFF);
 
   /// The @mention pill inside your own bubble.
   static const mentionBg = Color(0xFFFFFFFF);
@@ -464,11 +464,11 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
   Color inkOn(GumdropAccent accent) => accent.ink ?? ink;
 
   /// Can't go (#85): its picked answer and its count, `CampPalette.cantGo`
-  /// in every scheme, with ink on it, on the warning red's lip; as text,
-  /// the warning red's.
+  /// in every scheme, with ink on it, on a lip of its own darker shade
+  /// (#98); as text, the warning red's.
   GumdropAccent get cantGo => GumdropAccent(
     face: CampPalette.cantGo,
-    lip: cherry.lip,
+    lip: Candy.lipOf(CampPalette.cantGo),
     text: cherry.text,
   );
 

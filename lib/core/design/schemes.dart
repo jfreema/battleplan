@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:battleplan/core/camp_theme.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/camp_palette.dart';
+import 'package:battleplan/core/design/candy.dart';
 import 'package:battleplan/core/design/color_math.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart' show GumdropColors;
 import 'package:battleplan/core/scheme_defaults.dart';
@@ -143,11 +144,15 @@ class SchemeRoles {
       cardMaybeText: on(p.orange, p.panel),
       popup: field,
       candyInk: p.ink,
-      candyLipCoral: p.shadow,
-      candyLipMint: p.shadow,
-      candyLipLemon: p.shadow,
-      candyLipTangerine: p.shadow,
-      titleDrop: p.shadow,
+      // The candy finish (#98): every candy face sits on a lip of a darker
+      // shade of its own color, worked out from it (Candy.lipOf), so the
+      // theme editor has no lips to set. Panels keep their hard shadows.
+      candyLipCoral: Candy.lipOf(p.red),
+      candyLipMint: Candy.lipOf(p.green),
+      candyLipLemon: Candy.lipOf(p.orange),
+      candyLipTangerine: Candy.lipOf(p.red),
+      // Sugar Rush's bubblegum (#98), elsewhere the shadow.
+      titleDrop: p.touches.titleDrop ?? p.shadow,
       avatarRing: p.ink,
       accentText: on(p.red, p.page),
       accentMark: p.mustard,
@@ -164,11 +169,12 @@ class SchemeRoles {
       bubblegumPageText: on(p.purple, p.page),
       blueRaspberryPageText: on(p.blue, p.page),
       blueRaspberryCardText: on(p.blue, p.panel),
-      grapeLip: p.shadow,
-      bubblegumLip: p.shadow,
-      blueRaspberryLip: p.shadow,
-      cherryLip: p.shadow,
+      grapeLip: Candy.lipOf(p.blue),
+      bubblegumLip: Candy.lipOf(p.purple),
+      blueRaspberryLip: Candy.lipOf(p.blue),
+      cherryLip: Candy.lipOf(p.red),
       you: p.balloon,
+      youLip: Candy.lipOf(p.balloon),
     );
   }
 
@@ -565,6 +571,9 @@ class SchemeRoles {
   /// Desert Tan (#90): sand and olive, a light scheme.
   static final deserttan = SchemeRoles.camp(CampPalette.desertTan);
 
+  /// Sugar Rush (#98): vanilla and bubblegum, a light scheme.
+  static final sugarrush = SchemeRoles.camp(CampPalette.sugarRush);
+
   /// The roles of [scheme]'s Boot Camp Mix scheme ([TeamSchemeLook.look]),
   /// whatever was stored.
   static SchemeRoles builtIn(TeamScheme scheme) => switch (scheme.look) {
@@ -580,6 +589,7 @@ class SchemeRoles {
     TeamScheme.darkarmy => darkarmy,
     TeamScheme.tropicblue => tropicblue,
     TeamScheme.deserttan => deserttan,
+    TeamScheme.sugarrush => sugarrush,
     _ => dark,
   };
 
@@ -660,9 +670,9 @@ abstract final class ThemeCatalog {
   static HeaderStyle headerStyleOf(TeamScheme scheme) =>
       _camp[scheme.look]?.header ?? HeaderStyle.camo;
 
-  /// The schemes the pickers offer: Boot Camp Mix's thirteen (#85, #86, #89, #90). The
-  /// other built-in schemes and saved themes are no longer offered; a pick
-  /// of one shows in its closest ([TeamSchemeLook.look]).
+  /// The schemes the pickers offer: Boot Camp Mix's fourteen (#85, #86, #89,
+  /// #90, #98). The other built-in schemes and saved themes are no longer
+  /// offered; a pick of one shows in its closest ([TeamSchemeLook.look]).
   static const List<TeamScheme> available = bootCampSchemes;
 }
 
@@ -685,13 +695,15 @@ const List<TeamScheme> bootCampSchemes = [
   TeamScheme.darkarmy,
   TeamScheme.tropicblue,
   TeamScheme.deserttan,
+  TeamScheme.sugarrush,
 ];
 
 /// What each scheme is called, which Boot Camp Mix scheme it's drawn in,
 /// and whether its page is dark.
 extension TeamSchemeLook on TeamScheme {
-  /// The Boot Camp Mix scheme this is drawn in (#85, #86, #89, #90): itself for
-  /// the thirteen; for a scheme the app no longer offers, the closest. Stored
+  /// The Boot Camp Mix scheme this is drawn in (#85, #86, #89, #90, #98):
+  /// itself for the fourteen; for a scheme the app no longer offers, the
+  /// closest. Stored
   /// picks are never rewritten, so an older app still shows its own. Since
   /// #89 Open Field's Navy is Navy Steel and its Forest green is Forest
   /// (D81); Scoreboard goes to Black; Sky Blue Pop to Sky Blue; a saved
@@ -709,6 +721,7 @@ extension TeamSchemeLook on TeamScheme {
     TeamScheme.darkarmy => TeamScheme.darkarmy,
     TeamScheme.tropicblue => TeamScheme.tropicblue,
     TeamScheme.deserttan => TeamScheme.deserttan,
+    TeamScheme.sugarrush => TeamScheme.sugarrush,
     TeamScheme.dark || TeamScheme.scoreboard => TeamScheme.dark,
     _ => _savedLook,
   };
@@ -746,6 +759,7 @@ extension TeamSchemeLook on TeamScheme {
     TeamScheme.darkarmy => l10n.schemeDarkarmy,
     TeamScheme.tropicblue => l10n.schemeTropicblue,
     TeamScheme.deserttan => l10n.schemeDeserttan,
+    TeamScheme.sugarrush => l10n.schemeSugarrush,
     _ => l10n.schemeDark,
   };
 
@@ -763,6 +777,7 @@ extension TeamSchemeLook on TeamScheme {
     TeamScheme.darkarmy => l10n.schemeDarkarmyShort,
     TeamScheme.tropicblue => l10n.schemeTropicblueShort,
     TeamScheme.deserttan => l10n.schemeDeserttanShort,
+    TeamScheme.sugarrush => l10n.schemeSugarrushShort,
     _ => l10n.schemeDarkShort,
   };
 }

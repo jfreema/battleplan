@@ -1,11 +1,14 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/candy.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/haptics.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/candy_box.dart';
 import 'package:battleplan/features/chat/domain/mentions.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/presentation/quote_block.dart';
@@ -333,19 +336,26 @@ class _ComposerState extends State<Composer> {
       tooltip: l10n.send,
       style: sendStyle,
       onPressed: canSend ? _send : null,
-      icon: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
+      // A glossy red ball on a 4 px lip (#98), up a little so the ball and
+      // its lip sit in the box's middle.
+      icon: Transform.translate(
+        offset: const Offset(0, -2),
+        child: CandyBox(
           color: red,
-          shape: BoxShape.circle,
-          border: Border.all(color: c.ink, width: 2.5),
-        ),
-        child: Icon(
-          AppIcons.arrowUp,
-          weight: 700,
-          size: 20,
-          color: canSend ? Colors.white : Colors.white.withValues(alpha: 0.5),
+          lip: c.cherry.lip,
+          radius: 18,
+          shine: const Rect.fromLTWH(6, 5, 9, 5),
+          shineColor: Candy.ballShineOn(red),
+          ball: true,
+          width: 36,
+          height: 36,
+          alignment: Alignment.center,
+          child: Icon(
+            AppIcons.arrowUp,
+            weight: 700,
+            size: 20,
+            color: canSend ? Colors.white : Colors.white.withValues(alpha: 0.5),
+          ),
         ),
       ),
     );
@@ -358,12 +368,16 @@ class _ComposerState extends State<Composer> {
           children: [
             Expanded(
               child: DecoratedBox(
-                // The hard shadow under the panel.
+                // The hard shadow under the panel (Sugar Rush's 6 px lip,
+                // #98).
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(27),
-                  boxShadow: [
-                    BoxShadow(color: c.pageShadow, offset: const Offset(3, 3)),
-                  ],
+                  boxShadow: GumdropStyle.of(context).panelShadows(
+                    shadow: c.pageShadow,
+                    ink: c.ink,
+                    lip: 3,
+                    depth: 6,
+                  ),
                 ),
                 child: Builder(
                   builder: (context) => TextField(

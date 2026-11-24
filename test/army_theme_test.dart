@@ -4,6 +4,7 @@
 // shadows, and mustard for you.
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_theme.dart';
+import 'package:battleplan/core/design/candy.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/scheme_defaults.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -32,9 +33,9 @@ void main() {
     expect(a.sticker.face, const Color(0xFFF2C230));
     expect(a.lemon.face, const Color(0xFFF5A040));
     expect(a.tangerine.face, const Color(0xFFDB442F));
-    // Every candy sits on an ink shadow in Army green.
+    // Every candy sits on a lip of its own darker shade (#98).
     for (final c in [a.you, a.mint, a.lemon, a.tangerine, a.grape]) {
-      expect(c.lip, const Color(0xFF1A1A18));
+      expect(c.lip, Candy.lipOf(c.face));
     }
   });
 

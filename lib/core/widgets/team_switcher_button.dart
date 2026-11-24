@@ -5,6 +5,7 @@ import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/widgets/camp_lettering.dart';
+import 'package:battleplan/core/widgets/candy_sprinkles.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:material_ui/material_ui.dart';
@@ -138,29 +139,32 @@ class TeamTitle extends StatelessWidget {
       // slim row; it steps aside instead (compared both ways 2026-11-16:
       // the name stays bigger and the row calmer).
       final showEyebrow = above != null && !fit.wraps;
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Boot Camp Mix (#85): the eyebrow on a mustard tag, tucked
-          // just over the name.
-          if (showEyebrow)
-            Padding(
-              padding: const EdgeInsets.only(left: 2, bottom: 1),
-              child: CampTag(above, semanticsLabel: above),
-            )
-          else if (above != null)
-            // Stepped aside for a two-line name, but still read.
-            Semantics(label: above, child: const SizedBox.shrink()),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(child: TeamName(name, fit: fit)),
-              ?trailing,
-            ],
-          ),
-        ],
+      // The header's sprinkles keep off the tag and the name (#98).
+      return SprinkleKeepOut(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Boot Camp Mix (#85): the eyebrow on a mustard tag, tucked
+            // just over the name.
+            if (showEyebrow)
+              Padding(
+                padding: const EdgeInsets.only(left: 2, bottom: 1),
+                child: CampTag(above, semanticsLabel: above),
+              )
+            else if (above != null)
+              // Stepped aside for a two-line name, but still read.
+              Semantics(label: above, child: const SizedBox.shrink()),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(child: TeamName(name, fit: fit)),
+                ?trailing,
+              ],
+            ),
+          ],
+        ),
       );
     },
   );

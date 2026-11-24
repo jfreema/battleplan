@@ -259,6 +259,7 @@ enum TeamScheme {
   tealwave('tealwave'),
   tropicblue('tropicblue'),
   deserttan('deserttan'),
+  sugarrush('sugarrush'),
   custom1('custom1'),
   custom2('custom2'),
   custom3('custom3'),

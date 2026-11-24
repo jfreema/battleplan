@@ -10,6 +10,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/camo.dart';
 import 'package:battleplan/core/widgets/camp_lettering.dart';
+import 'package:battleplan/core/widgets/candy_sprinkles.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
@@ -147,76 +148,95 @@ class EventCard extends ConsumerWidget {
                 border: Border(bottom: BorderSide(color: card.ink, width: 3)),
               ),
               child: CustomPaint(
-                painter: DotGridPainter(
-                  color: const Color(0x2B17131C),
-                  radius: 1.5,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(9, 5, 10, 4),
-                  child: Row(
-                    children: [
-                      Starburst(
-                        points: 12,
-                        inner: 0.8,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              '${DateFormat.E(l10n.localeName).format(day)} · '
-                              '${DateFormat.MMM(l10n.localeName).format(day)}',
-                              maxLines: 1,
-                              textScaler: TextScaler.noScaling,
-                              style: stencil.copyWith(
-                                fontSize: 10.5,
-                                height: 12 / 10.5,
-                                letterSpacing: 10.5 * 0.07,
-                              ),
-                            ),
-                            Text(
-                              '${day.day}',
-                              maxLines: 1,
-                              textScaler: TextScaler.noScaling,
-                              style: stencil.copyWith(
-                                fontSize: 24.5,
-                                height: 1,
-                                letterSpacing: 24.5 * 0.02,
-                              ),
+                // Sugar Rush's candy stripes under the halftone (#98).
+                painter: card.roles.palette.touches.stripes
+                    ? const CandyStripesPainter()
+                    : null,
+                child: CustomPaint(
+                  painter: DotGridPainter(
+                    color: const Color(0x2B17131C),
+                    radius: 1.5,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(9, 5, 10, 4),
+                    child: Row(
+                      children: [
+                        // The date's burst, with two twinkles, inside the
+                        // card's edge (#98).
+                        Twinkled(
+                          spots: const [
+                            TwinkleSpot(size: 20, right: -10, top: -4),
+                            TwinkleSpot(
+                              size: 14,
+                              right: -16,
+                              top: 17,
+                              second: true,
                             ),
                           ],
+                          child: Starburst(
+                            points: 12,
+                            inner: 0.8,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '${DateFormat.E(l10n.localeName).format(day)} · '
+                                  '${DateFormat.MMM(l10n.localeName).format(day)}',
+                                  maxLines: 1,
+                                  textScaler: TextScaler.noScaling,
+                                  style: stencil.copyWith(
+                                    fontSize: 10.5,
+                                    height: 12 / 10.5,
+                                    letterSpacing: 10.5 * 0.07,
+                                  ),
+                                ),
+                                Text(
+                                  '${day.day}',
+                                  maxLines: 1,
+                                  textScaler: TextScaler.noScaling,
+                                  style: stencil.copyWith(
+                                    fontSize: 24.5,
+                                    height: 1,
+                                    letterSpacing: 24.5 * 0.02,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 11),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            CampTag(eventKindLabel(l10n, event)),
-                            const SizedBox(height: 3),
-                            FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: AlignmentDirectional.centerStart,
-                              child: OutlinedText(
-                                event.title,
-                                maxLines: 1,
-                                style: TextStyle(
-                                  fontFamily: AppFonts.stencil,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 31.5,
-                                  height: 37 / 31.5,
-                                  letterSpacing: 31.5 * 0.04,
-                                  decoration: event.isCanceled
-                                      ? TextDecoration.lineThrough
-                                      : null,
-                                  decorationColor: card.ink,
-                                  decorationThickness: 2,
+                        const SizedBox(width: 11),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CampTag(eventKindLabel(l10n, event)),
+                              const SizedBox(height: 3),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: AlignmentDirectional.centerStart,
+                                child: OutlinedText(
+                                  event.title,
+                                  maxLines: 1,
+                                  style: TextStyle(
+                                    fontFamily: AppFonts.stencil,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 31.5,
+                                    height: 37 / 31.5,
+                                    letterSpacing: 31.5 * 0.04,
+                                    decoration: event.isCanceled
+                                        ? TextDecoration.lineThrough
+                                        : null,
+                                    decorationColor: card.ink,
+                                    decorationThickness: 2,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

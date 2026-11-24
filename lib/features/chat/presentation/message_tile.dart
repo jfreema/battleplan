@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/candy.dart';
 import 'package:battleplan/core/design/color_math.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
@@ -769,6 +770,10 @@ class _MessageTileState extends ConsumerState<MessageTile> {
         color: background,
         shape: BalloonBorder(
           tail: tail,
+          // My own balloon's candy highlight (#98).
+          highlight: mine && background != null
+              ? Candy.highlightOn(background)
+              : null,
           side: BorderSide(color: deleted ? c.divider : c.ink, width: 3),
         ),
       ),
@@ -1249,15 +1254,22 @@ class _OpenPlayBadge extends StatelessWidget {
     return DecoratedBox(
       decoration: ShapeDecoration(
         color: c.sticker.face,
+        // A candy drop on its lip (#98).
         shape: GumdropShape(
-          lip: 3,
+          lip: 4,
           lipColor: c.sticker.lip,
+          lipEdge: c.ink,
+          highlight: Candy.highlightHeight,
+          highlightColor: Candy.highlightOn(c.sticker.face),
+          shine: const Rect.fromLTWH(5, 2.5, 9, 3),
+          shineColor: Candy.tagShine,
+          radius: BorderRadius.circular(10),
           side: style.accentSide(c.ink),
         ),
       ),
       child: Padding(
         // The label rides on the face, above the lip.
-        padding: const EdgeInsets.fromLTRB(9, 4, 12, 7),
+        padding: const EdgeInsets.fromLTRB(9, 4, 9, 7),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1431,6 +1443,7 @@ class OutgoingTextTile extends StatelessWidget {
                 color: background,
                 shape: BalloonBorder(
                   tail: BalloonTail.right,
+                  highlight: Candy.highlightOn(background),
                   side: BorderSide(color: c.ink, width: 3),
                 ),
               ),

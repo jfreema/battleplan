@@ -1,9 +1,11 @@
 import 'dart:math' as math;
 
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/widgets/camo.dart';
+import 'package:battleplan/core/widgets/candy_sprinkles.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -72,25 +74,21 @@ class CampAppBar extends StatelessWidget implements PreferredSizeWidget {
     final p = GumdropColors.of(context).roles.palette;
     final camo = backgroundColor == null;
     // Icon buttons among the actions are round buttons (#85): the panel
-    // color in a 2.5 px ink outline, 36 across in a 48 px tap area.
+    // color in a 2.5 px ink outline, 36 across in a 48 px tap area, glossy
+    // balls on a 4 px lip (#98).
     final c = GumdropColors.of(context);
     // On the panel color, so in the panel's lettering (Candy Pop's navy
     // on white, #86).
     final onPanel = c.card.textOnPage;
     final round = IconButtonThemeData(
-      style: ButtonStyle(
-        backgroundColor: WidgetStatePropertyAll(c.surface),
-        foregroundColor: WidgetStatePropertyAll(onPanel),
-        iconColor: WidgetStatePropertyAll(onPanel),
-        shape: WidgetStatePropertyAll(
-          CircleBorder(side: BorderSide(color: c.ink, width: 2.5)),
-        ),
-        fixedSize: const WidgetStatePropertyAll(Size.square(36)),
-        minimumSize: const WidgetStatePropertyAll(Size.square(36)),
-        padding: const WidgetStatePropertyAll(EdgeInsets.zero),
-        iconSize: const WidgetStatePropertyAll(20),
-        tapTargetSize: MaterialTapTargetSize.padded,
-      ),
+      style: GumdropButtons.of(context)
+          .icon(size: 36)
+          .copyWith(
+            foregroundColor: WidgetStatePropertyAll(onPanel),
+            iconColor: WidgetStatePropertyAll(onPanel),
+            iconSize: const WidgetStatePropertyAll(20),
+            tapTargetSize: MaterialTapTargetSize.padded,
+          ),
     );
     // A menu's button (More) takes its icon's color from the menu theme
     // over the button theme, so it's set there too (#87): otherwise it's
@@ -105,17 +103,29 @@ class CampAppBar extends StatelessWidget implements PreferredSizeWidget {
           ? HeaderStyle.camo
           : ThemeCatalog.headerStyleOf(c.scheme),
     );
+    // Candy sprinkles over the camouflage, off the status bar's ends, the
+    // back button, the title, and the buttons (#98). A title that's text
+    // keeps them off here; one that's a back row (BackChevron) or more
+    // keeps them off its own pieces, not the whole middle it fills.
+    final sprinkles = SprinkleLayer(
+      palette: p,
+      statusBar: MediaQuery.paddingOf(context).top,
+    );
+    final lead = leading;
+    final name = title;
     AppBar barOf({required bool painted}) => AppBar(
-      leading: leading,
+      leading: lead == null || !camo ? lead : SprinkleKeepOut(child: lead),
       automaticallyImplyLeading: automaticallyImplyLeading,
-      title: title,
+      title: name is Text && camo ? SprinkleKeepOut(child: name) : name,
       actions: buttons == null || !camo
           ? buttons
           : [
               for (final a in buttons)
-                IconButtonTheme(
-                  data: round,
-                  child: PopupMenuTheme(data: menus, child: a),
+                SprinkleKeepOut(
+                  child: IconButtonTheme(
+                    data: round,
+                    child: PopupMenuTheme(data: menus, child: a),
+                  ),
                 ),
             ],
       flexibleSpace: camo && painted
@@ -123,6 +133,7 @@ class CampAppBar extends StatelessWidget implements PreferredSizeWidget {
               fit: StackFit.expand,
               children: [
                 CustomPaint(painter: ground),
+                sprinkles,
                 ?flexibleSpace,
               ],
             )
@@ -155,31 +166,40 @@ class CampAppBar extends StatelessWidget implements PreferredSizeWidget {
     final column = columnWidth;
     if (!camo) return barOf(painted: true);
     // Lettered for the camouflage (Sky Blue's white, #86).
-    if (column == null) return CampHeaderTheme(child: barOf(painted: true));
-    return CampHeaderTheme(
-      child: LayoutBuilder(
-        builder: (context, box) {
-          final margin = math.max<double>(0, (box.maxWidth - column) / 2);
-          if (margin == 0) return barOf(painted: true);
-          // The ground and its ink line across the whole width, the bar's
-          // contents in the column over it.
-          return DecoratedBox(
-            position: DecorationPosition.foreground,
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: p.ink, width: 3)),
-            ),
-            child: ColoredBox(
-              color: p.camoGround,
-              child: CustomPaint(
-                painter: ground,
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: margin),
-                  child: barOf(painted: false),
+    if (column == null) {
+      return SprinkleScope(child: CampHeaderTheme(child: barOf(painted: true)));
+    }
+    return SprinkleScope(
+      child: CampHeaderTheme(
+        child: LayoutBuilder(
+          builder: (context, box) {
+            final margin = math.max<double>(0, (box.maxWidth - column) / 2);
+            if (margin == 0) return barOf(painted: true);
+            // The ground and its ink line across the whole width, the bar's
+            // contents in the column over it.
+            return DecoratedBox(
+              position: DecorationPosition.foreground,
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: p.ink, width: 3)),
+              ),
+              child: ColoredBox(
+                color: p.camoGround,
+                child: CustomPaint(
+                  painter: ground,
+                  child: Stack(
+                    children: [
+                      Positioned.fill(child: sprinkles),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: margin),
+                        child: barOf(painted: false),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

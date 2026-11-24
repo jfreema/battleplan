@@ -34,6 +34,7 @@ class EventRow extends StatelessWidget {
     this.showTeam = false,
     this.playerCount = 0,
     this.padding = listPadding,
+    this.twinkle = false,
     super.key,
   });
 
@@ -72,6 +73,10 @@ class EventRow extends StatelessWidget {
   /// Around the card: [listPadding], or no gutter on Teams, whose own
   /// lines the cards up with the team cards (SCHED-2).
   final EdgeInsetsGeometry padding;
+
+  /// Whether a Going! stamp on it has a twinkle (#98): the list's first
+  /// card's.
+  final bool twinkle;
 
   @override
   Widget build(BuildContext context) {
@@ -263,7 +268,7 @@ class EventRow extends StatelessWidget {
                       end: 9,
                       top: 8,
                       child: ExcludeSemantics(
-                        child: AnswerStamp(status: stamp),
+                        child: AnswerStamp(status: stamp, twinkle: twinkle),
                       ),
                     ),
                 ],

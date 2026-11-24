@@ -7,6 +7,7 @@ import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/candy_box.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
@@ -281,7 +282,8 @@ class ReactionChips extends StatelessWidget {
 }
 
 /// One reaction chip (#85): the emoji and its count in stencil, on the
-/// panel color or, for [mine], my own color, in a 2.5 px ink pill.
+/// panel color or, for [mine], my own color, in a 2.5 px ink pill; mine
+/// has the candy finish's white highlight along its top (#98).
 class _Chip extends StatelessWidget {
   const new({
     required this.reaction,
@@ -300,33 +302,33 @@ class _Chip extends StatelessWidget {
     final c = GumdropColors.of(context);
     final face = mine ? c.you.face : c.card.surface;
     final text = mine ? c.inkOn(c.you) : c.card.textOnPage;
-    return DecoratedBox(
-      decoration: ShapeDecoration(
-        color: face,
-        shape: StadiumBorder(side: BorderSide(color: ink, width: 2.5)),
-      ),
-      child: Padding(
-        padding: const EdgeInsetsDirectional.fromSTEB(6, 1, 9, 1),
-        child: Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(
-                // ❤️ in the scheme's red, as it always was a red heart.
-                children: [reactionSpan(reaction, heart: c.coral.face)],
-                style: const TextStyle(fontSize: 13),
-              ),
-              const TextSpan(text: ' '),
-              TextSpan(text: '$count'),
-            ],
-          ),
-          style: TextStyle(
-            fontFamily: AppFonts.stencil,
-            fontWeight: FontWeight.w900,
-            fontSize: 13,
-            height: 21 / 13,
-            letterSpacing: 13 * 0.04,
-            color: text,
-          ),
+    return CandyBox(
+      color: face,
+      ink: ink,
+      radius: 999,
+      depth: 0,
+      highlight: mine,
+      padOutline: false,
+      padding: const EdgeInsetsDirectional.fromSTEB(6, 1, 9, 1),
+      child: Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(
+              // ❤️ in the scheme's red, as it always was a red heart.
+              children: [reactionSpan(reaction, heart: c.coral.face)],
+              style: const TextStyle(fontSize: 13),
+            ),
+            const TextSpan(text: ' '),
+            TextSpan(text: '$count'),
+          ],
+        ),
+        style: TextStyle(
+          fontFamily: AppFonts.stencil,
+          fontWeight: FontWeight.w900,
+          fontSize: 13,
+          height: 21 / 13,
+          letterSpacing: 13 * 0.04,
+          color: text,
         ),
       ),
     );

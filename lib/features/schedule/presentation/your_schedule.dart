@@ -75,6 +75,7 @@ class YourScheduleSection extends ConsumerWidget {
               key: ValueKey(e.id.value),
               event: e,
               viewerZone: zone,
+              first: e == shown.first,
               day: dayOf(e, zone),
               showTeam: true,
               openedFrom: l10n.tabTeams,

@@ -7,7 +7,7 @@
    (SPEC §7.4) and its own fonts, Battleplan Stencil and Nunito (SemiBold
    for reading, Bold for bold spans, #97), bundled in fonts/ (SIL OFL, made
    by tools/make_web_fonts.sh), so the site makes no third-party requests. Every page is Black; the landing page shows
-   the thirteen schemes as dog tags. */
+   the fourteen schemes as dog tags. */
 
 @font-face {
   font-family: "Battleplan Stencil";
@@ -371,7 +371,7 @@ section { padding: 64px 0; }
 .burst::after { inset: 5px; background: var(--trim); }
 
 /* ---------- The landing page: Camo HQ (#94). The page built like the app:
-   a camouflage hero with three phones, the thirteen schemes as dog tags on a
+   a camouflage hero with three phones, the fourteen schemes as dog tags on a
    ball chain, then each feature with a numbered dog tag, an outlined title,
    and its screens, some a detail of a screenshot cropped with CSS; the
    Playbook on an Army green camouflage band; the FAQ as one panel; and a red
@@ -432,7 +432,8 @@ section { padding: 64px 0; }
 [data-s="tigahs"] { --p: #461d7c; --k: #fdd023; }
 [data-s="tropic"] { --p: #0a84b4; --k: #ffd23f; }
 [data-s="desert"] { --p: #e4d6b4; --k: #a3a95a; }
-@media (min-width: 900px) { .lp-tags { grid-template-columns: repeat(13, minmax(0, 1fr)); } }
+[data-s="sugarrush"] { --p: #fff4ea; --k: #ff8cc6; }
+@media (min-width: 900px) { .lp-tags { grid-template-columns: repeat(14, minmax(0, 1fr)); } }
 
 /* A step: its dog tag and caption tag, an outlined title, a line or two, a link. */
 .home section.lp-step { padding: 64px 0; }

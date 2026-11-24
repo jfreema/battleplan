@@ -1,15 +1,20 @@
+import 'package:battleplan/core/design/candy.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_shape.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Button styles in the gumdrop recipe (design §3.1), for any Material
-/// button's `style:`. Since Boot Camp Mix (#85) they're push buttons: a
-/// 3 px ink outline, corners of 11, on a hard shadow down and to the
-/// right; round icon buttons have a 2.5 px outline on a 2 px shadow. The theme already gives FilledButton the accent style
-/// in the "you" color, and OutlinedButton, TextButton, and ElevatedButton the
-/// secondary style; use these for another accent (a cherry Delete, a mint
-/// Going), another size, or a gumdrop icon button:
+/// button's `style:`. Since the candy finish (#98, SPEC §7.4) they're
+/// glossy gumdrops: a 3 px ink outline, corners of 17 (14 on small ones),
+/// on a lip of a darker shade of the face 7 px deep with the ink carried
+/// round under it, a white highlight along the top and a shine streak at
+/// the top left; round icon buttons are glossy balls in a 2.5 px outline on
+/// a 4 px lip. The theme already gives FilledButton the accent style in
+/// the "you" color, and OutlinedButton, TextButton, and ElevatedButton the
+/// secondary style (a licorice gumdrop in the panel color); use these for
+/// another accent (a cherry Delete, a mint Going), another size, or a
+/// gumdrop icon button:
 ///
 /// ```dart
 /// final buttons = GumdropButtons.of(context);
@@ -17,8 +22,8 @@ import 'package:material_ui/material_ui.dart';
 /// IconButton(style: buttons.icon(size: 38), ...);
 /// ```
 ///
-/// Pressed, the face sinks onto its lip; disabled, it sits flat in the
-/// well's color.
+/// Pressed, the face sinks 3 px onto its lip; disabled, it sits down
+/// flat in the well's color, with no lip.
 @immutable
 class GumdropButtons {
   const new(
@@ -46,9 +51,9 @@ class GumdropButtons {
   /// face.
   final Color focusRing;
 
-  /// A candy-colored push button: [accent]'s face, a 3 px ink outline on a
-  /// hard shadow in its lip color, and ink lettering. [height] includes the
-  /// shadow ([GumdropShape.lipFor]).
+  /// A candy-colored push button: [accent]'s face, a 3 px ink outline on
+  /// its lip, and ink lettering. [height] includes the lip
+  /// ([GumdropShape.depthFor]).
   ButtonStyle accent(
     GumdropAccent accent, {
     double height = 48,
@@ -57,12 +62,11 @@ class GumdropButtons {
     EdgeInsetsGeometry padding = const EdgeInsets.symmetric(horizontal: 18),
     TextStyle? textStyle,
     Size? minimumSize,
+    double? depth,
   }) => _style(
     face: accent.face,
     lip: accent.lip,
     foreground: colors.inkOn(accent),
-    highlight: 2,
-    highlightColor: GumdropColors.accentHighlight,
     side: style.accentSide(colors.ink),
     height: height,
     width: width,
@@ -70,10 +74,12 @@ class GumdropButtons {
     padding: padding,
     textStyle: textStyle,
     minimumSize: minimumSize,
+    depth: depth,
   );
 
-  /// The secondary button: a push button in the panel color, outlined in
-  /// ink on its hard shadow, lettered in the text color (#85).
+  /// The secondary button: a licorice gumdrop, the panel color on a lip of
+  /// a darker shade of it, outlined in ink, lettered in the panel's text
+  /// color (#85, #98).
   ButtonStyle secondary({
     double height = 48,
     double? width,
@@ -81,14 +87,13 @@ class GumdropButtons {
     EdgeInsetsGeometry padding = const EdgeInsets.symmetric(horizontal: 18),
     TextStyle? textStyle,
     Size? minimumSize,
+    double? depth,
   }) => _style(
     face: colors.raisedFace,
     lip: colors.raisedLip,
     // The panel's lettering, on the panel color (Candy Pop's navy on
     // white, #86).
     foreground: colors.roles.cardText,
-    highlight: 1.5,
-    highlightColor: colors.raisedHighlight,
     side: colors.raisedBorderWidth == 0
         ? BorderSide.none
         : BorderSide(
@@ -101,6 +106,7 @@ class GumdropButtons {
     padding: padding,
     textStyle: textStyle,
     minimumSize: minimumSize,
+    depth: depth,
   );
 
   /// A quiet text link for small actions (Terms of Use, Load more, Use a
@@ -158,18 +164,25 @@ class GumdropButtons {
   }
 
   /// A round icon button [size] px across (38 in headers, 46 in the
-  /// composer), secondary, or in [accent]: a 2.5 px ink outline on a hard
-  /// shadow (#85). Its tap target stays 48.
+  /// composer), secondary, or in [accent]: a glossy ball in a 2.5 px ink
+  /// outline on a 4 px lip, its shine a tilted oval (#98). Its tap target
+  /// stays 48.
   ButtonStyle icon({double size = 38, GumdropAccent? accent}) {
-    final lip = GumdropShape.lipFor(size);
-    final box = Size(size + lip, size + lip);
+    const lip = GumdropShape.roundDepth;
+    final box = Size(size, size + lip);
     final style = accent == null
-        ? secondary(height: box.height, width: size, padding: EdgeInsets.zero)
+        ? secondary(
+            height: box.height,
+            width: size,
+            padding: EdgeInsets.zero,
+            depth: lip,
+          )
         : this.accent(
             accent,
             height: box.height,
             width: size,
             padding: EdgeInsets.zero,
+            depth: lip,
           );
     return style.copyWith(
       fixedSize: WidgetStatePropertyAll(box),
@@ -189,8 +202,6 @@ class GumdropButtons {
     required Color face,
     required Color lip,
     required Color foreground,
-    required double highlight,
-    required Color highlightColor,
     required BorderSide side,
     required double height,
     required EdgeInsetsGeometry padding,
@@ -198,15 +209,41 @@ class GumdropButtons {
     BorderRadius? radius,
     TextStyle? textStyle,
     Size? minimumSize,
+    double? depth,
   }) {
-    final lipHeight = GumdropShape.lipFor(height - 4);
-    // Push buttons have corners of 11; round ones (no radius, square box)
-    // stay round (#85).
+    // The lip (#98): 7 under the usual 48 px button, 6 under small ones, 8
+    // under big ones, 4 under round ones; pressed, the face sinks onto it.
+    final lipHeight = depth ?? GumdropShape.depthFor(height);
+    final sink = GumdropShape.sinkFor(lipHeight);
+    final faceHeight = height - lipHeight;
+    // Round ones (no radius, a square face) are balls; push buttons have
+    // corners of 17, 14 on small ones (#98).
+    final round = width != null && width <= faceHeight + 0.5;
+    // Pills on Sugar Rush (#98).
     final corners =
         radius ??
-        (width != null && width <= height ? null : BorderRadius.circular(11));
-    bool down(Set<WidgetState> s) =>
-        s.contains(WidgetState.pressed) || s.contains(WidgetState.disabled);
+        (round || style.pills
+            ? null
+            : BorderRadius.circular(faceHeight <= 38 ? 14 : 17));
+    // The shine: a tilted oval near a ball's top left (9 x 5 at 6, 5 on a
+    // 36 px ball), a streak on a push button, sized to it (16 x 4.5 at 10, 4
+    // on a 41 px face).
+    final shine = round
+        ? Rect.fromLTWH(
+            faceHeight * 0.17,
+            faceHeight * 0.14,
+            faceHeight * 0.25,
+            faceHeight * 0.14,
+          )
+        : faceHeight < 34
+        ? const Rect.fromLTWH(9, 3, 12, 3.5)
+        : faceHeight < 39
+        ? const Rect.fromLTWH(8, 3.5, 13, 4.5)
+        : faceHeight < 46
+        ? const Rect.fromLTWH(10, 4, 16, 4.5)
+        : const Rect.fromLTWH(12, 5, 20, 5);
+    bool pressed(Set<WidgetState> s) => s.contains(WidgetState.pressed);
+    bool disabled(Set<WidgetState> s) => s.contains(WidgetState.disabled);
     final disabledFace = colors.well;
     final disabledForeground = colors.textMuted;
     return ButtonStyle(
@@ -234,14 +271,29 @@ class GumdropButtons {
       shadowColor: const WidgetStatePropertyAll(Colors.transparent),
       surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
       shape: WidgetStateProperty.resolveWith(
-        (s) => GumdropShape(
-          lip: lipHeight,
-          lipColor: lip,
-          highlight: s.contains(WidgetState.disabled) ? 0 : highlight,
-          highlightColor: highlightColor,
-          radius: corners,
-          pressed: down(s) ? 1 : 0,
-        ),
+        (s) => disabled(s)
+            // Sat down flat, with no lip, in the well's color.
+            ? GumdropShape(
+                lip: lipHeight,
+                radius: corners,
+                pressed: 1,
+                sink: lipHeight,
+              )
+            : GumdropShape(
+                lip: lipHeight,
+                lipColor: lip,
+                lipEdge: colors.ink,
+                highlight: Candy.highlightHeight,
+                highlightColor: Candy.highlightOn(face),
+                shine: shine,
+                shineColor: round
+                    ? Candy.ballShineOn(face)
+                    : Candy.streakOn(face),
+                ball: round,
+                radius: corners,
+                pressed: pressed(s) ? 1 : 0,
+                sink: sink,
+              ),
       ),
       side: WidgetStateProperty.resolveWith(
         (s) => s.contains(WidgetState.focused)
@@ -250,18 +302,18 @@ class GumdropButtons {
             ? BorderSide.none
             : side,
       ),
-      // The label rides on the face: up and left of the shadow at rest,
-      // onto it when pressed.
-      padding: WidgetStateProperty.resolveWith(
-        (s) => padding.add(
-          EdgeInsets.only(
-            top: down(s) ? lipHeight : 0,
-            bottom: down(s) ? 0 : lipHeight,
-            left: down(s) ? lipHeight : 0,
-            right: down(s) ? 0 : lipHeight,
-          ),
-        ),
-      ),
+      // The label rides on the face: above the lip at rest, sunk with the
+      // face when pressed, and down on it when disabled.
+      padding: WidgetStateProperty.resolveWith((s) {
+        final down = disabled(s)
+            ? lipHeight
+            : pressed(s)
+            ? sink
+            : 0.0;
+        return padding.add(
+          EdgeInsets.only(top: down, bottom: lipHeight - down),
+        );
+      }),
       minimumSize: WidgetStatePropertyAll(
         minimumSize ?? Size(width ?? 48, height),
       ),

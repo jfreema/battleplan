@@ -1,3 +1,4 @@
+import 'package:battleplan/core/design/camp_palette.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -6,9 +7,10 @@ import 'package:material_ui/material_ui.dart';
 /// color scheme shares it.
 ///
 /// Boot Camp Mix (#85, owner's pick 2026-11-22): stencil titles and labels,
-/// a 3 px ink outline on every panel and push button, square panels on a
-/// hard shadow down and to the right, and no drop under plain headings
-/// (the big titles are outlined instead, `OutlinedText`).
+/// a 3 px ink outline on every panel and push button, panels on a hard
+/// shadow down and to the right, and no drop under plain headings (the big
+/// titles are outlined instead, `OutlinedText`). The candy finish (#98)
+/// rounds the panels' corners to 15.
 @immutable
 class GumdropStyle extends ThemeExtension<GumdropStyle> {
   const new({
@@ -16,11 +18,25 @@ class GumdropStyle extends ThemeExtension<GumdropStyle> {
     this.labelFont = AppFonts.label,
     this.accentOutline = 0,
     this.panelRadius = 0,
+    this.panelLip,
+    this.pills = false,
   });
 
+  /// The style of [palette]'s scheme: [bootCamp], with Sugar Rush's own
+  /// panels and pill buttons (#98, `CandyTouches`).
+  static GumdropStyle forPalette(CampPalette palette) {
+    final touches = palette.touches;
+    if (identical(touches, CandyTouches.none)) return bootCamp;
+    return bootCamp.copyWith(
+      panelRadius: touches.panelRadius,
+      panelLip: touches.panelLip,
+      pills: touches.pills,
+    );
+  }
+
   /// Boot Camp Mix (#85): stencil titles and labels, 3 px ink outlines,
-  /// square panels.
-  static const bootCamp = GumdropStyle(accentOutline: 3);
+  /// and panels with corners of 15 (the candy finish, #98).
+  static const bootCamp = GumdropStyle(accentOutline: 3, panelRadius: 15);
 
   /// The name the look had before Boot Camp Mix; the same as [bootCamp].
   static const GumdropStyle openField = bootCamp;
@@ -38,8 +54,34 @@ class GumdropStyle extends ThemeExtension<GumdropStyle> {
   /// How thick an outline candy buttons have, in ink.
   final double accentOutline;
 
-  /// A panel's corners: square (#85).
+  /// A panel's corners: 15 (#98; square in #85), 20 on Sugar Rush.
   final double panelRadius;
+
+  /// The lip panels sit on in place of their hard shadow (Sugar Rush's
+  /// lavender, #98), or null for the shadow.
+  final Color? panelLip;
+
+  /// Whether push buttons are pills (Sugar Rush's, #98).
+  final bool pills;
+
+  /// What a panel stands on: a hard shadow [lip] px down and to the right
+  /// in [shadow], or, with a [panelLip], a lip [depth] deep in it with
+  /// [ink] carried round under it (the mockup's two box shadows, #98).
+  List<BoxShadow> panelShadows({
+    required Color shadow,
+    required Color ink,
+    double lip = 4,
+    double depth = 7,
+  }) {
+    final band = panelLip;
+    if (band == null) {
+      return [BoxShadow(color: shadow, offset: Offset(lip, lip))];
+    }
+    return [
+      BoxShadow(color: ink, offset: Offset(0, depth)),
+      BoxShadow(color: band, offset: Offset(0, depth), spreadRadius: -3),
+    ];
+  }
 
   /// The outline of a candy button: [ink], [accentOutline] px.
   BorderSide accentSide(Color ink) => accentOutline == 0
@@ -67,17 +109,18 @@ class GumdropStyle extends ThemeExtension<GumdropStyle> {
   /// plain headings have no drop (#85).
   List<Shadow> headingShadow(Color color, {bool big = false}) => const [];
 
-  /// A panel's outline: square, with [side] as its rim.
+  /// A panel's outline: [panelRadius] corners, with [side] as its rim.
   ShapeBorder cardShape(double radius, {BorderSide side = BorderSide.none}) =>
       RoundedRectangleBorder(
         side: side,
         borderRadius: BorderRadius.circular(panelRadius),
       );
 
-  /// A panel filled with [color], as a decoration: square, with a rim
-  /// ([side]), on a hard shadow [lip] px down and to the right in [shadow]
-  /// (the rim's color unless given). [radius] is the corner the panel had
-  /// before Boot Camp Mix, which squares it (#85).
+  /// A panel filled with [color], as a decoration: [panelRadius] corners,
+  /// with a rim ([side]), on a hard shadow [lip] px down and to the right
+  /// in [shadow] (the rim's color unless given). [radius] is the corner the
+  /// panel had before Boot Camp Mix, which every panel now shares (#85,
+  /// #98).
   Decoration cardDecoration(
     Color color,
     double radius, {
@@ -91,10 +134,24 @@ class GumdropStyle extends ThemeExtension<GumdropStyle> {
       borderRadius: BorderRadius.circular(panelRadius),
       border: rimmed ? Border.fromBorderSide(side) : null,
       boxShadow: rimmed && lip > 0
-          ? [BoxShadow(color: shadow ?? side.color, offset: Offset(lip, lip))]
+          ? panelShadows(
+              shadow: shadow ?? side.color,
+              ink: side.color,
+              lip: lip,
+            )
           : null,
     );
   }
+
+  /// A panel's hard shadow alone, [lip] px down and to the right in
+  /// [shadow], with [panelRadius] corners: for a panel whose face is an
+  /// [Ink] on a [Material], which would clip a shadow drawn with it at its
+  /// edges (square corners showed once panels were rounded, #98).
+  Decoration cardShadow(Color shadow, {Color? ink, double lip = 4}) =>
+      BoxDecoration(
+        borderRadius: BorderRadius.circular(panelRadius),
+        boxShadow: panelShadows(shadow: shadow, ink: ink ?? shadow, lip: lip),
+      );
 
   @override
   GumdropStyle copyWith({
@@ -102,11 +159,15 @@ class GumdropStyle extends ThemeExtension<GumdropStyle> {
     String? labelFont,
     double? accentOutline,
     double? panelRadius,
+    Color? panelLip,
+    bool? pills,
   }) => GumdropStyle(
     displayFont: displayFont ?? this.displayFont,
     labelFont: labelFont ?? this.labelFont,
     accentOutline: accentOutline ?? this.accentOutline,
     panelRadius: panelRadius ?? this.panelRadius,
+    panelLip: panelLip ?? this.panelLip,
+    pills: pills ?? this.pills,
   );
 
   @override

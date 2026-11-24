@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/candy.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
@@ -16,6 +17,8 @@ import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/back_chevron.dart';
 import 'package:battleplan/core/widgets/camp_app_bar.dart';
 import 'package:battleplan/core/widgets/camp_lettering.dart';
+import 'package:battleplan/core/widgets/candy_box.dart';
+import 'package:battleplan/core/widgets/candy_sprinkles.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/dog_tag.dart';
@@ -530,19 +533,26 @@ class _Hero extends StatelessWidget {
               else if (event.endedBefore(DateTime.now()))
                 const _EndedBadge()
               else if (soon != null)
-                Starburst(
-                  width: 104,
-                  height: 47,
-                  turn: 7,
-                  child: Text(
-                    '${soon.toUpperCase()}!',
-                    semanticsLabel: soon,
-                    maxLines: 1,
-                    textScaler: TextScaler.noScaling,
-                    style: stencil.copyWith(
-                      fontSize: 14.5,
-                      height: 1,
-                      letterSpacing: 14.5 * 0.05,
+                // The countdown, with two twinkles (#98).
+                Twinkled(
+                  spots: const [
+                    TwinkleSpot(size: 22, right: -13, top: -11),
+                    TwinkleSpot(size: 14, left: -12, top: 27, second: true),
+                  ],
+                  child: Starburst(
+                    width: 104,
+                    height: 47,
+                    turn: 7,
+                    child: Text(
+                      '${soon.toUpperCase()}!',
+                      semanticsLabel: soon,
+                      maxLines: 1,
+                      textScaler: TextScaler.noScaling,
+                      style: stencil.copyWith(
+                        fontSize: 14.5,
+                        height: 1,
+                        letterSpacing: 14.5 * 0.05,
+                      ),
                     ),
                   ),
                 ),
@@ -553,22 +563,21 @@ class _Hero extends StatelessWidget {
         if (crestName != null)
           Row(
             children: [
+              // The crest, a glossy ball on a 5 px lip of its darker shade
+              // (#98).
               ExcludeSemantics(
-                child: Container(
+                child: CandyBox(
+                  color: c.tangerine.face,
+                  lip: c.tangerine.lip,
+                  radius: 25,
+                  outline: 3,
+                  depth: 5,
+                  shine: const Rect.fromLTWH(8, 7, 13, 7),
+                  shineColor: Candy.ballShineOn(c.tangerine.face),
+                  ball: true,
                   width: 50,
                   height: 50,
                   alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: c.tangerine.face,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: c.ink, width: 3),
-                    boxShadow: [
-                      BoxShadow(
-                        color: c.pageShadow,
-                        offset: const Offset(3, 3),
-                      ),
-                    ],
-                  ),
                   child: Text(
                     crestName.characters.first.toUpperCase(),
                     textScaler: TextScaler.noScaling,
@@ -587,7 +596,8 @@ class _Hero extends StatelessWidget {
         else
           title,
         const SizedBox(height: 7),
-        // When, in an ink-outlined box, turned a little.
+        // When, in an ink-outlined box with corners of 11 (#98) on a hard
+        // shadow, turned a little.
         Transform.rotate(
           angle: -1.2 * 3.141592653589793 / 180,
           alignment: Alignment.centerLeft,
@@ -595,10 +605,15 @@ class _Hero extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(12, 5, 11, 2),
             decoration: BoxDecoration(
               color: c.surface,
+              borderRadius: BorderRadius.circular(11),
               border: Border.all(color: c.ink, width: 3),
-              boxShadow: [
-                BoxShadow(color: c.pageShadow, offset: const Offset(3, 3)),
-              ],
+              // Sugar Rush's sits on a 5 px lip (#98).
+              boxShadow: GumdropStyle.of(context).panelShadows(
+                shadow: c.pageShadow,
+                ink: c.ink,
+                lip: 3,
+                depth: 5,
+              ),
             ),
             child: Text(
               [
@@ -954,6 +969,7 @@ class _RsvpSection extends ConsumerWidget {
                 Expanded(
                   child: _Count(
                     count: tally[s] ?? 0,
+                    twinkle: s == RsvpStatus.going,
                     label: s == null ? l10n.rsvpNoReply : statusLabel(l10n, s),
                     // Boot Camp Mix (#85): the answer's own color, in
                     // an ink outline.
@@ -1286,11 +1302,19 @@ Future<void> _restoreRsvp(
 /// One count on the event screen (SPEC §7.3; #85): the number in big stencil in
 /// its answer's color, and its label in small capitals under it.
 class _Count extends StatelessWidget {
-  const new({required this.count, required this.label, required this.color});
+  const new({
+    required this.count,
+    required this.label,
+    required this.color,
+    this.twinkle = false,
+  });
 
   final int count;
   final String label;
   final Color color;
+
+  /// Whether a twinkle marks it when it's more than none: Going's (#98).
+  final bool twinkle;
 
   @override
   Widget build(BuildContext context) {
@@ -1299,16 +1323,23 @@ class _Count extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          OutlinedText(
-            '$count',
-            fill: color,
-            stroke: 5,
-            style: const TextStyle(
-              fontFamily: AppFonts.stencil,
-              fontWeight: FontWeight.w900,
-              fontSize: 44,
-              height: 42 / 44,
-              letterSpacing: 44 * 0.03,
+          // Somebody's going: a twinkle by the count (#98).
+          Twinkled(
+            spots: [
+              if (twinkle && count > 0)
+                const TwinkleSpot(size: 18, right: -22, top: -6, second: true),
+            ],
+            child: OutlinedText(
+              '$count',
+              fill: color,
+              stroke: 5,
+              style: const TextStyle(
+                fontFamily: AppFonts.stencil,
+                fontWeight: FontWeight.w900,
+                fontSize: 44,
+                height: 42 / 44,
+                letterSpacing: 44 * 0.03,
+              ),
             ),
           ),
           const SizedBox(height: 3),
@@ -1523,24 +1554,29 @@ class _AttendeeRow extends StatelessWidget {
               ),
               if (s != null) ...[
                 const SizedBox(width: 12),
-                // The answer as a badge in its color, with its icon.
-                Container(
-                  margin: const EdgeInsets.only(top: 16),
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
+                // The answer as a badge in its color, with its icon: a
+                // glossy ball, with no lip (#98).
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: CandyBox(
                     color: switch (s) {
                       RsvpStatus.notGoing => CampPalette.cantGo,
                       final s => statusAccent(context, s).face,
                     },
-                    shape: BoxShape.circle,
-                    border: Border.all(color: c.ink, width: 2.5),
-                  ),
-                  child: Icon(
-                    statusIcon(s),
-                    size: 15,
-                    weight: 700,
-                    color: c.ink,
+                    radius: 13,
+                    depth: 0,
+                    shine: const Rect.fromLTWH(3, 3, 6, 3.5),
+                    shineColor: const Color(0xBFFFFFFF),
+                    ball: true,
+                    width: 26,
+                    height: 26,
+                    alignment: Alignment.center,
+                    child: Icon(
+                      statusIcon(s),
+                      size: 15,
+                      weight: 700,
+                      color: c.ink,
+                    ),
                   ),
                 ),
               ],
@@ -1553,7 +1589,8 @@ class _AttendeeRow extends StatelessWidget {
 }
 
 /// An answer's label over its people (#85): its name and count in stencil
-/// in [color] on an ink block, with a dot in [color], turned -1.2°.
+/// in [color] on an ink block with corners of 8 (#98), with a dot in
+/// [color], turned -1.2°.
 class _GroupLabel extends StatelessWidget {
   const new({required this.text, required this.color});
 
@@ -1571,7 +1608,10 @@ class _GroupLabel extends StatelessWidget {
         child: Transform.rotate(
           angle: -1.2 * 3.141592653589793 / 180,
           child: Container(
-            color: c.ink,
+            decoration: BoxDecoration(
+              color: c.ink,
+              borderRadius: BorderRadius.circular(8),
+            ),
             padding: const EdgeInsets.fromLTRB(9, 2, 10, 0),
             child: Row(
               mainAxisSize: MainAxisSize.min,

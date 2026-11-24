@@ -1,11 +1,14 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/candy.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/widgets/camo.dart';
 import 'package:battleplan/core/widgets/camp_lettering.dart';
+import 'package:battleplan/core/widgets/candy_box.dart';
+import 'package:battleplan/core/widgets/candy_sprinkles.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_format.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -16,8 +19,8 @@ import 'package:material_ui/material_ui.dart';
 /// block, the going bar, answer discs, stat tiles, and the RSVP gumdrops.
 
 /// A tappable Boot Camp Mix panel (#85, SPEC §7.3): the panel color, a 3 px
-/// ink outline on a hard 4/4 shadow, square, and its [child] in the card's
-/// colors ([GumdropSurface]). [edge], when given, is a 5 px stripe down its
+/// ink outline on a hard 4/4 shadow, corners of 15 (#98), and its [child]
+/// in the card's colors ([GumdropSurface]). [edge], when given, is a 5 px stripe down its
 /// left side (the event type's color). A [footer] sits under it on the
 /// card, outside what a tap opens: buttons of its own, like the answers.
 /// The keyboard focus rings the whole card (SPEC §7.6).
@@ -27,7 +30,7 @@ class TapCard extends StatefulWidget {
     this.onTap,
     this.footer,
     this.edge,
-    this.radius = 0,
+    this.radius,
     this.padding = const EdgeInsets.fromLTRB(15, 8, 12, 4),
     this.footerBand,
     super.key,
@@ -37,7 +40,9 @@ class TapCard extends StatefulWidget {
   final VoidCallback? onTap;
   final Widget? footer;
   final Color? edge;
-  final double radius;
+
+  /// Its corners: the panels' (15, or Sugar Rush's 20) unless given.
+  final double? radius;
   final EdgeInsetsGeometry padding;
 
   /// The footer as its own band (#85): this color under a 3 px ink rule,
@@ -54,10 +59,11 @@ class _TapCardState extends State<TapCard> {
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
+    final style = GumdropStyle.of(context);
     final rim = BorderSide(color: c.surfaceBorder, width: c.surfaceBorderWidth);
     final resolved = widget.padding.resolve(Directionality.of(context));
     final edge = widget.edge;
-    final radius = BorderRadius.circular(widget.radius);
+    final radius = BorderRadius.circular(widget.radius ?? style.panelRadius);
     Widget ink(EdgeInsets padding) => InkWell(
       onTap: widget.onTap,
       // The ring around the card shows the focus instead.
@@ -94,12 +100,10 @@ class _TapCardState extends State<TapCard> {
     };
     return GumdropSurface(
       child: DecoratedBox(
-        // The hard shadow, down and to the right.
+        // The hard shadow, down and to the right (or Sugar Rush's lip).
         decoration: BoxDecoration(
           borderRadius: radius,
-          boxShadow: [
-            BoxShadow(color: c.pageShadow, offset: const Offset(4, 4)),
-          ],
+          boxShadow: style.panelShadows(shadow: c.pageShadow, ink: c.ink),
         ),
         // Outside the card, whose rim would cover a ring drawn on it.
         child: FocusRing(
@@ -162,7 +166,11 @@ class DatePennant extends StatelessWidget {
       label: semanticLabel ?? dayLabel(l10n, day),
       excludeSemantics: true,
       child: CustomPaint(
-        painter: _PennantPainter(color: color, ink: c.ink),
+        painter: _PennantPainter(
+          color: color,
+          ink: c.ink,
+          stripes: c.roles.palette.touches.stripes,
+        ),
         child: SizedBox(
           width: width,
           child: Padding(
@@ -208,13 +216,17 @@ class DatePennant extends StatelessWidget {
   }
 }
 
-/// The pennant: an ink shape with the color 4 px inside its point, and the
-/// halftone over the color.
+/// The pennant: an ink shape with the color 4 px inside its point, the
+/// halftone over the color, and a glossy candy face (#98): a soft white
+/// oval, 10 by 26, near its top left.
 class _PennantPainter extends CustomPainter {
-  new({required this.color, required this.ink});
+  new({required this.color, required this.ink, this.stripes = false});
 
   final Color color;
   final Color ink;
+
+  /// Sugar Rush's candy stripes over the color (#98).
+  final bool stripes;
 
   Path _shape(Size size, double right) {
     const point = 15.0;
@@ -239,21 +251,32 @@ class _PennantPainter extends CustomPainter {
       color: const Color(0x2B1B1D13),
       radius: 1.5,
     ).paint(canvas, size);
-    canvas.restore();
+    if (stripes) CandyStripesPainter.paintStripes(canvas, size);
+    canvas
+      ..drawOval(
+        Rect.fromCenter(center: const Offset(13, 26), width: 10, height: 26),
+        Paint()..color = const Color(0x8CFFFFFF),
+      )
+      ..restore();
   }
 
   @override
   bool shouldRepaint(_PennantPainter old) =>
-      old.color != color || old.ink != ink;
+      old.color != color || old.ink != ink || old.stripes != stripes;
 }
 
 /// My answer stamped on a schedule panel (#85): "GOING!" with a check on
 /// green, "MAYBE" on orange, or "CAN'T GO" on salmon, in ink stencil in a
-/// 2.5 px ink outline on a 2/2 shadow, turned -5°.
+/// 2.5 px ink outline, turned -5°. A candy drop (#98): corners of 10, on a
+/// lip of its own darker shade 5 px deep, with a shine at its top left.
 class AnswerStamp extends StatelessWidget {
-  const new({required this.status, super.key});
+  const new({required this.status, this.twinkle = false, super.key});
 
   final RsvpStatus status;
+
+  /// A twinkle on a Going! stamp's top right corner (#98): the first
+  /// card's, so a list has one.
+  final bool twinkle;
 
   @override
   Widget build(BuildContext context) {
@@ -264,51 +287,51 @@ class AnswerStamp extends StatelessWidget {
       RsvpStatus.going => '${statusLabel(l10n, status)}!',
       _ => statusLabel(l10n, status),
     };
+    final stamp = CandyBox(
+      color: accent.face,
+      lip: accent.lip,
+      radius: 10,
+      depth: 5,
+      shine: const Rect.fromLTWH(6, 3, 11, 3.5),
+      padding: const EdgeInsets.fromLTRB(6, 5, 8, 3),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (status == RsvpStatus.going) ...[
+            Icon(AppIcons.going, size: 15, weight: 700, color: c.inkOn(accent)),
+            const SizedBox(width: 3),
+          ],
+          Text(
+            label,
+            maxLines: 1,
+            textScaler: TextScaler.noScaling,
+            style: TextStyle(
+              fontFamily: AppFonts.stencil,
+              fontWeight: FontWeight.w900,
+              fontSize: 15,
+              height: 1,
+              letterSpacing: 15 * 0.05,
+              color: c.inkOn(accent),
+            ),
+          ),
+        ],
+      ),
+    );
     return Transform.rotate(
       angle: -5 * 3.141592653589793 / 180,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(6, 5, 8, 3),
-        decoration: BoxDecoration(
-          color: accent.face,
-          border: Border.all(color: c.ink, width: 2.5),
-          boxShadow: [
-            BoxShadow(color: c.pageShadow, offset: const Offset(2, 2)),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (status == RsvpStatus.going) ...[
-              Icon(
-                AppIcons.going,
-                size: 15,
-                weight: 700,
-                color: c.inkOn(accent),
-              ),
-              const SizedBox(width: 3),
-            ],
-            Text(
-              label,
-              maxLines: 1,
-              textScaler: TextScaler.noScaling,
-              style: TextStyle(
-                fontFamily: AppFonts.stencil,
-                fontWeight: FontWeight.w900,
-                fontSize: 15,
-                height: 1,
-                letterSpacing: 15 * 0.05,
-                color: c.inkOn(accent),
-              ),
-            ),
-          ],
-        ),
-      ),
+      child: twinkle && status == RsvpStatus.going
+          ? Twinkled(
+              spots: const [TwinkleSpot(size: 17, right: -8, top: -7)],
+              child: stamp,
+            )
+          : stamp,
     );
   }
 }
 
 /// A month's label in the schedule (#85): its name in mustard stencil on
-/// an ink block, a mustard star before it, turned -1.2°.
+/// an ink block with corners of 8 (#98), a mustard star before it, turned
+/// -1.2°.
 class MonthLabel extends StatelessWidget {
   const new({required this.month, super.key});
 
@@ -326,7 +349,10 @@ class MonthLabel extends StatelessWidget {
         child: Transform.rotate(
           angle: -1.2 * 3.141592653589793 / 180,
           child: Container(
-            color: c.ink,
+            decoration: BoxDecoration(
+              color: c.ink,
+              borderRadius: BorderRadius.circular(8),
+            ),
             padding: const EdgeInsets.fromLTRB(9, 2, 10, 0),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -395,9 +421,10 @@ class _StarPainter extends CustomPainter {
 
 /// The RSVP choice: Going, Maybe, and Can't go in equal parts, built on
 /// [SegmentedButton] so it keeps its selection semantics and keyboard
-/// behavior: push buttons (#85), 50 tall on the event's page, and on the
-/// schedule and chat cards ([compact], SPEC §7.3) 36 tall in a 48 px tap
-/// height, the picked one in its answer's color pressed onto its shadow.
+/// behavior: candy push buttons (#85, #98), 50 tall on an 8 px lip on the
+/// event's page, and on the schedule and chat cards ([compact], SPEC §7.3)
+/// 36 tall on a 6 px lip in a 48 px tap height, the picked one in its
+/// answer's color sunk onto its lip.
 ///
 /// Locked ([onChanged] null: past the deadline, once the event starts, an
 /// archived team, a super admin viewing), it's one flat tag with the answer
@@ -429,7 +456,7 @@ class RsvpChoice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final height = compact ? 48.0 : 53.0;
+    final height = compact ? 48.0 : 58.0;
     final gap = compact ? 9.0 : _gap;
     final enabled = onChanged != null;
     if (!enabled) {
@@ -595,13 +622,14 @@ class _LockedAnswer extends StatelessWidget {
   }
 }
 
-/// One RSVP push button (Boot Camp Mix, #85, SPEC §7.3): the panel color
-/// in an ink outline on a hard shadow down and to the right; picked, its
-/// answer's color (green, orange, or Can't go's salmon) with the answer's
-/// icon, pressed onto its shadow. The label is stencil capitals, ink on a
-/// picked one. On the event's page ([page]) 50 tall, corner 13, a 3 px
-/// outline on a 3 px shadow; on the cards 36 tall, corner 10, 2.5 on 2.5,
-/// in a 48 px tap height.
+/// One RSVP push button (Boot Camp Mix, #85, SPEC §7.3), a candy gumdrop
+/// (#98): a licorice one, the panel color on a lip of its darker shade,
+/// in an ink outline; picked, its answer's color (green, orange, or Can't
+/// go's salmon) on its own lip with the answer's icon, sunk onto its lip.
+/// The label is stencil capitals, ink on a picked one. On the event's page
+/// ([page]) 50 tall, corners of 20, a 3 px outline on an 8 px lip, sinking
+/// 4; on the cards 36 tall, corners of 14, 2.5 on 6, sinking 3, in a 48 px
+/// tap height. Picked, the lip under it is 4 deep.
 class _RsvpPush extends StatelessWidget {
   const new({
     required this.status,
@@ -629,8 +657,16 @@ class _RsvpPush extends StatelessWidget {
     final accent = statusAccent(context, status);
     final face = page ? 50.0 : 36.0;
     final border = page ? 3.0 : 2.5;
-    final shadow = page ? 3.0 : 2.5;
-    final radius = BorderRadius.circular(page ? 13 : 10);
+    final depth = page ? 8.0 : 6.0;
+    final sink = page ? 4.0 : 3.0;
+    // Pills on Sugar Rush (#98).
+    final corners = GumdropStyle.of(context).pills
+        ? face / 2
+        : page
+        ? 20.0
+        : 14.0;
+    final radius = BorderRadius.circular(corners);
+    final fill = selected ? accent.face : c.surface;
     // On the panel color, so in the panel's lettering, on a card or on the
     // event's page (Candy Pop's navy on white, #86).
     final panel = c.card;
@@ -646,21 +682,17 @@ class _RsvpPush extends StatelessWidget {
     };
     final button = ButtonFocusRing(
       radius: radius,
-      child: Container(
+      child: CandyBox(
+        color: fill,
+        lip: selected ? accent.lip : c.raisedLip,
+        radius: corners,
+        outline: border,
+        depth: selected ? 4 : depth,
+        shine: page
+            ? const Rect.fromLTWH(12, 5, 20, 5)
+            : const Rect.fromLTWH(9, 3, 12, 3.5),
+        shineColor: Candy.streakOn(fill),
         height: face,
-        decoration: BoxDecoration(
-          color: selected ? accent.face : c.surface,
-          borderRadius: radius,
-          border: Border.all(color: c.ink, width: border),
-          boxShadow: selected
-              ? null
-              : [
-                  BoxShadow(
-                    color: c.pageShadow,
-                    offset: Offset(shadow, shadow),
-                  ),
-                ],
-        ),
         padding: const EdgeInsets.symmetric(horizontal: 6),
         child: Center(
           child: FittedBox(
@@ -694,12 +726,14 @@ class _RsvpPush extends StatelessWidget {
       width: double.infinity,
       height: height,
       child: Padding(
-        // Room for the shadow at the right and bottom of every button.
-        padding: EdgeInsets.only(right: shadow, bottom: page ? shadow : 0),
+        // Room for the lip under every button.
+        padding: page
+            ? EdgeInsets.only(bottom: depth)
+            : const EdgeInsets.only(top: 3, bottom: 9),
         child: Align(
           child: Transform.translate(
-            // Picked, pressed onto its shadow.
-            offset: selected ? Offset(shadow, shadow) : Offset.zero,
+            // Picked, sunk onto its lip.
+            offset: selected ? Offset(0, sink) : Offset.zero,
             child: button,
           ),
         ),

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
+import 'package:battleplan/core/widgets/candy_sprinkles.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -100,70 +101,76 @@ class BackChevron extends StatelessWidget {
       weight: 700,
       color: c.textOnPage,
     );
-    return Semantics(
-      // Its own node: in the team header nothing above starts one, so
-      // without it the whole screen became one "Back" button.
-      container: true,
-      button: true,
-      label: said,
-      excludeSemantics: true,
-      onTap: press,
-      child: Tooltip(
-        message: text == null || semanticLabel != null ? said : back,
-        child: FocusRingInk(
-          onTap: press,
-          radius: BorderRadius.circular(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
-            child: Padding(
-              padding: EdgeInsets.only(left: 10, right: text == null ? 10 : 8),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (showDot)
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        icon,
-                        // 9 px of coral in a 2 px ring of the page.
-                        Positioned(
-                          top: 2,
-                          right: -1,
-                          child: Container(
-                            width: 13,
-                            height: 13,
-                            decoration: BoxDecoration(
-                              color: c.badgeRing,
-                              shape: BoxShape.circle,
-                            ),
-                            alignment: Alignment.center,
+    // The header's sprinkles keep off it (#98).
+    return SprinkleKeepOut(
+      child: Semantics(
+        // Its own node: in the team header nothing above starts one, so
+        // without it the whole screen became one "Back" button.
+        container: true,
+        button: true,
+        label: said,
+        excludeSemantics: true,
+        onTap: press,
+        child: Tooltip(
+          message: text == null || semanticLabel != null ? said : back,
+          child: FocusRingInk(
+            onTap: press,
+            radius: BorderRadius.circular(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 10,
+                  right: text == null ? 10 : 8,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (showDot)
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          icon,
+                          // 9 px of coral in a 2 px ring of the page.
+                          Positioned(
+                            top: 2,
+                            right: -1,
                             child: Container(
-                              width: 9,
-                              height: 9,
-                              // Coral, as unread is (SPEC §7.2).
+                              width: 13,
+                              height: 13,
                               decoration: BoxDecoration(
-                                color: c.you.face,
+                                color: c.badgeRing,
                                 shape: BoxShape.circle,
+                              ),
+                              alignment: Alignment.center,
+                              child: Container(
+                                width: 9,
+                                height: 9,
+                                // Coral, as unread is (SPEC §7.2).
+                                decoration: BoxDecoration(
+                                  color: c.you.face,
+                                  shape: BoxShape.circle,
+                                ),
                               ),
                             ),
                           ),
+                        ],
+                      )
+                    else
+                      icon,
+                    if (text != null) ...[
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          text,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: labelStyle(context),
                         ),
-                      ],
-                    )
-                  else
-                    icon,
-                  if (text != null) ...[
-                    const SizedBox(width: 6),
-                    Flexible(
-                      child: Text(
-                        text,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: labelStyle(context),
                       ),
-                    ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),

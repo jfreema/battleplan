@@ -8,6 +8,7 @@ import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/camo.dart';
+import 'package:battleplan/core/widgets/candy_box.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
@@ -367,17 +368,16 @@ class _ViewLabel extends StatelessWidget {
       ),
     );
     if (!current) return text;
+    // A lemon drop (#98): corners of 11, on a lip of a darker mustard 5 px
+    // deep, with a shine at its top left.
     return Transform.rotate(
       angle: -2 * 3.141592653589793 / 180,
-      child: Container(
+      child: CandyBox(
+        color: c.roles.palette.mustard,
+        radius: 11,
+        depth: 5,
+        shine: const Rect.fromLTWH(7, 3.5, 12, 3.5),
         padding: const EdgeInsets.fromLTRB(11, 6, 10, 3),
-        decoration: BoxDecoration(
-          color: c.roles.palette.mustard,
-          border: Border.all(color: c.ink, width: 2.5),
-          boxShadow: [
-            BoxShadow(color: c.pageShadow, offset: const Offset(2, 2)),
-          ],
-        ),
         child: text,
       ),
     );
@@ -622,6 +622,7 @@ class EventList extends ConsumerWidget {
           key: ValueKey(e.id.value),
           event: e,
           viewerZone: zone,
+          first: i == 0,
           // Every card has its date pennant (SCHED-1, #85).
           day: days[i],
           showTeam: team == null,
@@ -699,6 +700,7 @@ class ScheduleEventRow extends ConsumerWidget {
     this.showTeam = false,
     this.openedFrom,
     this.padding = EventRow.listPadding,
+    this.first = false,
     super.key,
   });
 
@@ -706,6 +708,9 @@ class ScheduleEventRow extends ConsumerWidget {
   final String viewerZone;
   final DateTime? day;
   final bool showTeam;
+
+  /// The list's first card, whose Going! stamp has a twinkle (#98).
+  final bool first;
 
   /// What the event's back row says: where the card is, when that isn't a
   /// team's Schedule tab ("Teams", "Your schedule").
@@ -783,6 +788,7 @@ class ScheduleEventRow extends ConsumerWidget {
       showTeam: showTeam,
       playerCount: players,
       padding: padding,
+      twinkle: first,
       hint: hint,
       onTap: () =>
           openEvent(context, event, from: openedFrom ?? l10n.tabSchedule),

@@ -12,6 +12,7 @@ import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/candy_box.dart';
 import 'package:battleplan/core/widgets/gumdrop_icon_button.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/dues/domain/due.dart';
@@ -112,14 +113,13 @@ void main() {
           ),
         ),
       );
-      final pill = tester
-          .widgetList<Container>(
-            find.ancestor(of: find.text('3'), matching: find.byType(Container)),
-          )
-          .map((c) => c.decoration)
-          .whereType<ShapeDecoration>()
-          .first;
-      expect(pill.color, GumdropColors.forScheme(TeamScheme.dark).cherry.face);
+      // A red candy drop on its lip (#98).
+      final pill = tester.widget<CandyBox>(
+        find.ancestor(of: find.text('3'), matching: find.byType(CandyBox)),
+      );
+      final red = GumdropColors.forScheme(TeamScheme.dark).cherry;
+      expect(pill.color, red.face);
+      expect(pill.lip, red.lip);
     });
 
     testWidgets("Material's badges, the theme's", (tester) async {
@@ -169,15 +169,14 @@ void main() {
       );
       final c = GumdropColors.forScheme(TeamScheme.dark);
       expect(_textColor(tester, 'TEAM CHAT'), c.ink);
-      final tag = tester.widget<DecoratedBox>(
-        find
-            .ancestor(
-              of: find.text('TEAM CHAT'),
-              matching: find.byType(DecoratedBox),
-            )
-            .first,
+      // A lemon drop on its lip (#98).
+      final tag = tester.widget<CandyBox>(
+        find.ancestor(
+          of: find.text('TEAM CHAT'),
+          matching: find.byType(CandyBox),
+        ),
       );
-      expect((tag.decoration as BoxDecoration).color, c.roles.palette.mustard);
+      expect(tag.color, c.roles.palette.mustard);
     });
 
     testWidgets('the pin in the chat is lemon', (tester) async {

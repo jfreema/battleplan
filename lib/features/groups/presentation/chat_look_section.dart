@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/candy.dart';
 import 'package:battleplan/core/design/color_math.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
@@ -381,10 +382,17 @@ class _ColorTile extends StatelessWidget {
               Container(
                 width: 44,
                 height: 48,
+                // A glossy candy on its lip (#98).
                 decoration: ShapeDecoration(
                   color: accent.face,
                   shape: GumdropShape(
+                    lip: 4,
                     lipColor: accent.lip,
+                    highlight: Candy.highlightHeight,
+                    highlightColor: Candy.highlightOn(accent.face),
+                    shine: const Rect.fromLTWH(7, 6, 11, 6),
+                    shineColor: Candy.ballShineOn(accent.face),
+                    ball: true,
                     side: teamSwatch
                         ? BorderSide(color: c.swatchInsetRing, width: 2)
                         : BorderSide.none,

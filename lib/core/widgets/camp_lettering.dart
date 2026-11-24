@@ -1,8 +1,11 @@
 import 'dart:math' as math;
 
 import 'package:battleplan/core/design/camp_palette.dart';
+import 'package:battleplan/core/design/candy.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/widgets/candy_box.dart';
+import 'package:battleplan/core/widgets/candy_sprinkles.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Boot Camp Mix's big titles (#85, SPEC §7.4): [text] in white stencil
@@ -72,55 +75,63 @@ class OutlinedText extends StatelessWidget {
       style.copyWith(fontFamily: style.fontFamily ?? AppFonts.display),
     );
     final lines = maxLines ?? inherited.maxLines;
-    return Semantics(
-      label: semanticsLabel ?? text,
-      identifier: semanticsIdentifier,
-      header: header ? true : null,
-      namesRoute: namesRoute ? true : null,
-      excludeSemantics: true,
-      child: Stack(
-        children: [
-          // The stroke, under the fill: a RichText, so the title is one
-          // Text to find, and a style built anew, since a stroke can't have
-          // a color too.
-          RichText(
-            text: TextSpan(
-              text: text,
-              style: TextStyle(
-                fontFamily: base.fontFamily,
-                fontWeight: base.fontWeight,
-                fontSize: base.fontSize,
-                height: base.height,
-                letterSpacing: base.letterSpacing,
-                foreground: Paint()
-                  ..style = PaintingStyle.stroke
-                  ..strokeWidth = stroke
-                  ..strokeJoin = StrokeJoin.round
-                  ..color = c.ink,
-                shadows: [
-                  if (shadow > 0)
-                    Shadow(color: c.pageShadow, offset: Offset(shadow, shadow)),
-                ],
+    // A header's sprinkles keep off it (#98).
+    return SprinkleKeepOut(
+      child: Semantics(
+        label: semanticsLabel ?? text,
+        identifier: semanticsIdentifier,
+        header: header ? true : null,
+        namesRoute: namesRoute ? true : null,
+        excludeSemantics: true,
+        child: Stack(
+          children: [
+            // The stroke, under the fill: a RichText, so the title is one
+            // Text to find, and a style built anew, since a stroke can't have
+            // a color too.
+            RichText(
+              text: TextSpan(
+                text: text,
+                style: TextStyle(
+                  fontFamily: base.fontFamily,
+                  fontWeight: base.fontWeight,
+                  fontSize: base.fontSize,
+                  height: base.height,
+                  letterSpacing: base.letterSpacing,
+                  foreground: Paint()
+                    ..style = PaintingStyle.stroke
+                    ..strokeWidth = stroke
+                    ..strokeJoin = StrokeJoin.round
+                    ..color = c.ink,
+                  shadows: [
+                    // The scheme's title drop: its shadow, or Sugar Rush's
+                    // bubblegum (#98).
+                    if (shadow > 0)
+                      Shadow(
+                        color: c.roles.titleDrop,
+                        offset: Offset(shadow, shadow),
+                      ),
+                  ],
+                ),
               ),
+              textScaler: scaler,
+              maxLines: lines,
+              overflow: overflow ?? inherited.overflow,
+              textAlign: textAlign ?? inherited.textAlign ?? TextAlign.start,
+              textWidthBasis: textWidthBasis ?? inherited.textWidthBasis,
+              softWrap: inherited.softWrap,
             ),
-            textScaler: scaler,
-            maxLines: lines,
-            overflow: overflow ?? inherited.overflow,
-            textAlign: textAlign ?? inherited.textAlign ?? TextAlign.start,
-            textWidthBasis: textWidthBasis ?? inherited.textWidthBasis,
-            softWrap: inherited.softWrap,
-          ),
-          Text(
-            text,
-            style: base.copyWith(color: fill, shadows: const []),
-            textScaler: scaler,
-            maxLines: lines,
-            overflow: overflow ?? inherited.overflow,
-            textAlign: textAlign ?? inherited.textAlign,
-            textWidthBasis: textWidthBasis ?? inherited.textWidthBasis,
-            softWrap: inherited.softWrap,
-          ),
-        ],
+            Text(
+              text,
+              style: base.copyWith(color: fill, shadows: const []),
+              textScaler: scaler,
+              maxLines: lines,
+              overflow: overflow ?? inherited.overflow,
+              textAlign: textAlign ?? inherited.textAlign,
+              textWidthBasis: textWidthBasis ?? inherited.textWidthBasis,
+              softWrap: inherited.softWrap,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -128,7 +139,10 @@ class OutlinedText extends StatelessWidget {
 
 /// A mustard tag (#85): [text] in small ink stencil on mustard, in a 2 px
 /// ink outline, turned a little: the eyebrow over the team's name ("TEAM
-/// CHAT"), an event's kind ("GAME · HOME"), and the like.
+/// CHAT"), an event's kind ("GAME · HOME"), and the like. A lemon drop
+/// (#98): corners of 7, on a lip of a darker mustard 4 px deep (5 under
+/// the event page's bigger one), with a shine at its top left. The lip
+/// takes no room: leave it a few pixels under the tag.
 class CampTag extends StatelessWidget {
   const new(
     this.text, {
@@ -150,28 +164,37 @@ class CampTag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
-    return Transform.rotate(
-      angle: turn * 3.141592653589793 / 180,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
+    final big = size >= 13;
+    // A header's sprinkles keep off it (#98).
+    return SprinkleKeepOut(
+      child: Transform.rotate(
+        angle: turn * 3.141592653589793 / 180,
+        child: CandyBox(
           color: c.roles.palette.mustard,
-          border: Border.all(color: c.ink, width: 2),
-        ),
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(size * 0.7, 1, size * 0.75, 0),
-          child: Text(
-            text.toUpperCase(),
-            semanticsLabel: semanticsLabel ?? text,
-            maxLines: 1,
-            softWrap: false,
-            overflow: TextOverflow.fade,
-            style: TextStyle(
-              fontFamily: AppFonts.stencil,
-              fontWeight: FontWeight.w900,
-              fontSize: size,
-              height: 15 / 11,
-              letterSpacing: size * 0.09,
-              color: c.ink,
+          outline: 2,
+          // The outline over the padding's edge, as before, so the tag keeps
+          // its size.
+          padOutline: false,
+          depth: big ? 5 : 4,
+          shine: big
+              ? const Rect.fromLTWH(5, 3, 11, 3.5)
+              : const Rect.fromLTWH(4, 2.5, 8, 3),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(size * 0.7, 1, size * 0.75, 0),
+            child: Text(
+              text.toUpperCase(),
+              semanticsLabel: semanticsLabel ?? text,
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.fade,
+              style: TextStyle(
+                fontFamily: AppFonts.stencil,
+                fontWeight: FontWeight.w900,
+                fontSize: size,
+                height: 15 / 11,
+                letterSpacing: size * 0.09,
+                color: c.ink,
+              ),
             ),
           ),
         ),
@@ -183,6 +206,9 @@ class CampTag extends StatelessWidget {
 /// A starburst (#85, SPEC §7.4): a mustard star of [points] points in a
 /// 3 px ink edge, its inner corners [inner] of the way out, with [child]
 /// (ink lettering) on it: "IN 5 DAYS!", or an event's date in the chat.
+/// The candy finish (#98) stacks it on a copy of itself 9% of its height
+/// lower, in a darker mustard edged in ink, like a gumdrop on its lip, and
+/// puts a white oval shine at its top left.
 class Starburst extends StatelessWidget {
   const new({
     required this.child,
@@ -212,7 +238,10 @@ class Starburst extends StatelessWidget {
       angle: turn * 3.141592653589793 / 180,
       child: CustomPaint(
         painter: _StarburstPainter(
-          fill: c.roles.palette.mustard,
+          fill: c.roles.palette.touches.burst ?? c.roles.palette.mustard,
+          lip: Candy.lipOf(
+            c.roles.palette.touches.burst ?? c.roles.palette.mustard,
+          ),
           edge: c.ink,
           points: points,
           inner: inner,
@@ -235,12 +264,16 @@ class Starburst extends StatelessWidget {
 class _StarburstPainter extends CustomPainter {
   new({
     required this.fill,
+    required this.lip,
     required this.edge,
     required this.points,
     required this.inner,
   });
 
   final Color fill;
+
+  /// The copy under it (#98).
+  final Color lip;
   final Color edge;
   final int points;
   final double inner;
@@ -259,21 +292,35 @@ class _StarburstPainter extends CustomPainter {
       i == 0 ? path.moveTo(p.dx, p.dy) : path.lineTo(p.dx, p.dy);
     }
     path.close();
+    final stroke = Paint()
+      ..color = edge
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3
+      ..strokeJoin = StrokeJoin.round;
+    // Its lip: the burst again, 9% of its height lower, darker (#98).
+    final under = path.shift(Offset(0, size.height * 0.09));
     canvas
+      ..drawPath(under, Paint()..color = lip)
+      ..drawPath(under, stroke)
       ..drawPath(path, Paint()..color = fill)
-      ..drawPath(
-        path,
-        Paint()
-          ..color = edge
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 3
-          ..strokeJoin = StrokeJoin.round,
-      );
+      ..drawPath(path, stroke)
+      // The shine: a white oval at (31, 30) of a 100 x 100 box stretched to
+      // the burst's, 20 x 11, turned -24 degrees, at 72%.
+      ..save()
+      ..scale(size.width / 100, size.height / 100)
+      ..translate(31, 30)
+      ..rotate(-24 * math.pi / 180)
+      ..drawOval(
+        Rect.fromCenter(center: Offset.zero, width: 20, height: 11),
+        Paint()..color = Candy.ballShineOn(fill),
+      )
+      ..restore();
   }
 
   @override
   bool shouldRepaint(_StarburstPainter old) =>
       old.fill != fill ||
+      old.lip != lip ||
       old.edge != edge ||
       old.points != points ||
       old.inner != inner;
