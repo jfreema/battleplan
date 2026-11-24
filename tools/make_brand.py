@@ -1,0 +1,495 @@
+#!/usr/bin/env python3
+"""Draws the Battleplan mark, the Sticker Pair (SPEC §7.1), in every form it ships.
+
+The Sticker Pair is two candy dog tags on a white ball chain, each a die-cut
+sticker with a thick white border in a navy edge: a yellow tag in front with
+the white stencil B, and a coral one swung out behind it, with two twinkles,
+on Candy Pop's royal blue under a dot grid (the owner's pick, 2026-11-24:
+"Go ahead and replace the current icon and logo with 2E.").
+
+Run from anywhere; it writes, all on the 1024 grid:
+
+  assets/brand/icon.svg        the app icon: the art on its square blue tile
+  assets/brand/maskable.svg    the web app's maskable icon: the art smaller,
+                               inside the 80% circle any mask keeps
+  assets/brand/foreground.svg  Android's adaptive icon foreground, no tile
+                               (the icon tool insets it 16%; its background
+                               is pubspec.yaml's adaptive_icon_background)
+  assets/brand/monochrome.svg  Android's themed icon: the pair as one shape
+  assets/brand/mark.svg        the splash screens' mark, no tile, inside the
+                               circle Android 12 keeps, on a short chain
+  website/favicon.svg          the website's header mark: the art on the
+                               rounded tile (also the web app's 32 px PNG)
+  website/favicon-small.svg    the browser-tab icon, simplified for 16 px:
+  web/favicon-small.svg        the two tags and the B, no chain or tile
+  web/index.html               the web app's loading mark, inline: the
+                               header mark's art
+  lib/core/widgets/brand_mark.dart  BrandMark, the rounded-tile mark painted
+                               in Flutter from the same shapes
+
+tools/brand_icons.sh then renders the SVGs and makes every icon and splash
+size from them. Only the standard library is needed: the B is Battleplan
+Stencil's own outline (assets/fonts/battleplan_stencil), copied in below.
+"""
+import math
+import pathlib
+import re
+import shutil
+import subprocess
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+# ---- colors: Candy Pop's (CampPalette.candyPop before #90) plus the app's coral ----
+INK = '#0B1640'          # every edge, the B's outline and the hard shadows
+BLUE = '#1748D4'         # the tile
+DOT = '#FFFFFF'          # the tile's dot grid, at DOT_ALPHA
+DOT_ALPHA = 0.14
+WHITE = '#FFFFFF'        # sticker borders, the B, the chain's beads
+YELLOW, YELLOW_RIM = '#FFD43A', '#E0A800'
+CORAL, CORAL_RIM = '#FF7F66', '#D9533B'
+SHINE_ALPHA = 0.75
+
+# ---- the B: Battleplan Stencil's glyph, in font units (2000 per em, cap 1600, advance 985) ----
+B_GLYPH = ('M80 0V1600H380V0ZM480 0V264H490Q553 264 586.5 297.5Q620 331 620 394Q620 421 620.0 447.0Q620 473 620 500'
+           'Q620 599 589.5 640.5Q559 682 490 682H480V946H490Q553 946 586.5 989.5Q620 1033 620 1112Q620 1141 620.0 1169.5'
+           'Q620 1198 620 1226Q620 1279 586.5 1307.5Q553 1336 490 1336H480V1600H490Q714 1600 817.0 1509.5Q920 1419 920 1210'
+           'Q920 1182 920.0 1156.0Q920 1130 918 1104Q912 995 869.5 930.5Q827 866 738 836V788Q830 758 873.0 692.5'
+           'Q916 627 920 514Q922 481 922.0 453.0Q922 425 920 390Q911 182 812.5 91.0Q714 0 490 0Z')
+B_CAP, B_ADVANCE = 1600, 985
+
+
+def _tokens(d):
+    out, num = [], ''
+    for ch in d:
+        if ch.isalpha():
+            if num: out.append(float(num)); num = ''
+            out.append(ch)
+        elif ch in ' ,':
+            if num: out.append(float(num)); num = ''
+        elif ch == '-' and num:
+            out.append(float(num)); num = ch
+        else:
+            num += ch
+    if num: out.append(float(num))
+    return out
+
+
+def b_path(cap, cx, cy):
+    """The B at cap height `cap`, centred on (cx, cy), as an absolute M/L/Q/Z path."""
+    k = cap / B_CAP
+    X = lambda x: cx + (x - B_ADVANCE / 2) * k
+    Y = lambda y: cy + cap / 2 - y * k
+    t, i, d, x, y = _tokens(B_GLYPH), 0, [], 0.0, 0.0
+    while i < len(t):
+        c = t[i]; i += 1
+        if c in 'ML':
+            x, y = t[i], t[i + 1]; i += 2; d.append('%s%.1f %.1f' % (c, X(x), Y(y)))
+        elif c == 'H':
+            x = t[i]; i += 1; d.append('L%.1f %.1f' % (X(x), Y(y)))
+        elif c == 'V':
+            y = t[i]; i += 1; d.append('L%.1f %.1f' % (X(x), Y(y)))
+        elif c == 'Q':
+            x1, y1, x, y = t[i:i + 4]; i += 4
+            d.append('Q%.1f %.1f %.1f %.1f' % (X(x1), Y(y1), X(x), Y(y)))
+        elif c == 'Z':
+            d.append('Z')
+    return ''.join(d)
+
+
+def twinkle_path(cx, cy, r):
+    """A four-point twinkle with pinched sides."""
+    k = r * .28
+    return ('M%g %gQ%g %g %g %gQ%g %g %g %gQ%g %g %g %gQ%g %g %g %gZ' % (
+        cx, cy - r, cx + k, cy - k, cx + r, cy, cx + k, cy + k, cx, cy + r, cx - k, cy + k, cx - r, cy, cx - k, cy - k, cx, cy - r))
+
+
+# ---- a tiny display list, so the SVGs and the Dart painter draw the same thing ----
+# Shapes: ('rrect', x, y, w, h, r) · ('circle', cx, cy, r) · ('path', d)
+# Ops:    ('draw', shape, fill, stroke, width, alpha) · ('push', transforms) · ('pop',)
+#         ('clip', shape) · ('dots', step, r, color, alpha) · ('rect', color)
+# Transforms: ('t', dx, dy) · ('r', degrees, cx, cy) · ('s', k, cx, cy)
+
+def draw(shape, fill=None, stroke=None, width=0, alpha=1.0):
+    return ('draw', shape, fill, stroke, width, alpha)
+
+
+def sticker(shape, face, rim, edge, border):
+    """A die-cut sticker: a navy edge, a thick white border, then the candy face with a darker rim."""
+    return [draw(shape, WHITE, INK, edge), draw(shape, WHITE, WHITE, border), draw(shape, face, rim, 9)]
+
+
+def shine(x, y, h):
+    """The candy shine: a white capsule and a dot."""
+    return [draw(('rrect', x, y, 40, h, 20), WHITE, alpha=SHINE_ALPHA),
+            draw(('circle', x + 20, y + h + 46, 20), WHITE, alpha=SHINE_ALPHA)]
+
+
+def outlined_b(cap, cx, cy, width, shadow):
+    d = b_path(cap, cx, cy)
+    ops = []
+    if shadow:
+        ops += [('push', [('t', shadow, shadow)]), draw(('path', d), INK, INK, width), ('pop',)]
+    return ops + [draw(('path', d), INK, INK, width), draw(('path', d), WHITE)]
+
+
+def chain(p0, p2, ctrl, r=16, sw=8, step=33):
+    """Ball chain beads along a quadratic curve, spaced about `step` apart."""
+    seg = 200
+    pts = [((1 - t) ** 2 * p0[0] + 2 * (1 - t) * t * ctrl[0] + t * t * p2[0],
+            (1 - t) ** 2 * p0[1] + 2 * (1 - t) * t * ctrl[1] + t * t * p2[1]) for t in [i / seg for i in range(seg + 1)]]
+    length = sum(math.dist(pts[i], pts[i + 1]) for i in range(seg))
+    n = max(2, round(length / step))
+    out = []
+    for i in range(n + 1):
+        t = i / n
+        x = (1 - t) ** 2 * p0[0] + 2 * (1 - t) * t * ctrl[0] + t * t * p2[0]
+        y = (1 - t) ** 2 * p0[1] + 2 * (1 - t) * t * ctrl[1] + t * t * p2[1]
+        out.append(draw(('circle', round(x, 1), round(y, 1), r), WHITE, INK, sw))
+    return out
+
+
+PIVOT = (512, 250)       # where the chain runs through both tags' holes, in the art's own grid
+SHIFT = (28, 50)         # the art sits a little right and low on the tile
+
+
+def to_local(g, k):
+    """A point on the tile, in the art's own grid when the art is scaled by k about the centre."""
+    return ((g[0] - 512) / k + 512 - SHIFT[0], (g[1] - 512) / k + 512 - SHIFT[1])
+
+
+def pair(k=1.0, ends=((40, -50), (984, -50)), twinkles=True):
+    """The Sticker Pair at scale k about the tile's centre, its chain running to `ends` (tile points)."""
+    ops = [('push', [('s', k, 512, 512), ('t', SHIFT[0], SHIFT[1])])]
+    for e in ends:
+        le = to_local(e, k)
+        ctrl = (PIVOT[0] + .44 * (le[0] - PIVOT[0]), PIVOT[1] + 70)
+        ops += chain(le, PIVOT, ctrl)
+    back = ('rrect', 337, 212, 350, 530, 114)
+    ops += [('push', [('t', 20, 24), ('r', 30, *PIVOT)]), draw(back, INK, INK, 88), ('pop',)]
+    ops += [('push', [('r', 30, *PIVOT)])] + sticker(back, CORAL, CORAL_RIM, 88, 48)
+    ops += [draw(('circle', 512, 250, 24), INK)] + shine(376, 310, 120) + [('pop',)]
+    front = ('rrect', 317, 212, 390, 580, 128)
+    ops += [('push', [('t', 24, 28), ('r', -10, *PIVOT)]), draw(front, INK, INK, 96), ('pop',)]
+    ops += [('push', [('r', -10, *PIVOT)])] + sticker(front, YELLOW, YELLOW_RIM, 96, 54)
+    ops += [draw(('circle', 512, 250, 28), INK)] + shine(355, 330, 130)
+    ops += outlined_b(290, 528, 540, 38, 13) + [('pop',)]
+    ops += [draw(('circle', 512, 250, 18), WHITE, INK, 8)]
+    ops += [('pop',)]
+    if twinkles:
+        ops += [('push', [('s', k, 512, 512)]),
+                draw(('path', twinkle_path(878, 440, 70)), WHITE, INK, 14),
+                draw(('path', twinkle_path(168, 860, 46)), YELLOW, INK, 12), ('pop',)]
+    return ops
+
+
+def tile(rounded):
+    r = 224 if rounded else 0
+    shape = ('rrect', 0, 0, 1024, 1024, r)
+    return [('clip', shape), draw(shape, BLUE), ('dots', 64, 8, DOT, DOT_ALPHA)]
+
+
+def favicon_small():
+    """For 16 px: just the two tags and the B, with heavy edges and no chain, shine or tile."""
+    back = ('rrect', 300, 170, 440, 680, 150)
+    front = ('rrect', 282, 150, 480, 760, 160)
+    ops = [('push', [('r', 22, 512, 200)])] + sticker(back, CORAL, CORAL_RIM, 110, 50) + [('pop',)]
+    ops += [('push', [('r', -8, 512, 200)])] + sticker(front, YELLOW, YELLOW_RIM, 120, 56)
+    ops += outlined_b(430, 522, 560, 64, 0) + [('pop',)]
+    return ops
+
+
+def monochrome():
+    """Android's themed icon: one color. The back tag, the front tag cut free of it, the B and holes cut out."""
+    k = .86
+    back = ('rrect', 337, 212, 350, 530, 114)
+    front = ('rrect', 317, 212, 390, 580, 128)
+    cut = '#000000'   # drawn into a mask: black is cut away, white is kept
+    m = [('push', [('s', k, 512, 512), ('t', SHIFT[0], SHIFT[1])])]
+    for e in ((40, -50), (984, -50)):
+        le = to_local(e, k)
+        ctrl = (PIVOT[0] + .44 * (le[0] - PIVOT[0]), PIVOT[1] + 70)
+        m += [o[:2] + (WHITE, None, 0, 1.0) for o in chain(le, PIVOT, ctrl)]
+    m += [('push', [('r', 30, *PIVOT)]), draw(back, WHITE, WHITE, 88), draw(('circle', 512, 250, 24), cut), ('pop',)]
+    m += [('push', [('r', -10, *PIVOT)]), draw(front, cut, cut, 150), draw(front, WHITE, WHITE, 96),
+          draw(('path', b_path(290, 528, 540)), cut), draw(('circle', 512, 250, 28), cut), ('pop',)]
+    m += [draw(('circle', 512, 250, 18), cut)]
+    return m + [('pop',)]
+
+
+# ---- SVG ----
+def _svg_transform(ts):
+    out = []
+    for t in ts:
+        if t[0] == 't': out.append('translate(%g %g)' % t[1:])
+        elif t[0] == 'r': out.append('rotate(%g %g %g)' % t[1:])
+        elif t[0] == 's': out.append('translate(%g %g) scale(%g) translate(%g %g)' % (t[2], t[3], t[1], -t[2], -t[3]))
+    return ' '.join(out)
+
+
+def _svg_shape(s, attrs):
+    if s[0] == 'rrect':
+        _, x, y, w, h, r = s
+        return '<rect x="%g" y="%g" width="%g" height="%g" rx="%g"%s/>' % (x, y, w, h, r, attrs)
+    if s[0] == 'circle':
+        return '<circle cx="%g" cy="%g" r="%g"%s/>' % (s[1], s[2], s[3], attrs)
+    return '<path d="%s"%s/>' % (s[1], attrs)
+
+
+def to_svg(ops, prefix, comment):
+    body, defs, opened = [], [], 0
+    for op in ops:
+        kind = op[0]
+        if kind == 'push':
+            body.append('<g transform="%s">' % _svg_transform(op[1]))
+        elif kind == 'pop':
+            body.append('</g>')
+        elif kind == 'clip':
+            cid = '%s-clip' % prefix
+            defs.append('<clipPath id="%s">%s</clipPath>' % (cid, _svg_shape(op[1], '')))
+            body.append('<g clip-path="url(#%s)">' % cid); opened += 1
+        elif kind == 'dots':
+            _, step, r, col, a = op
+            pid = '%s-dots' % prefix
+            defs.append('<pattern id="%s" width="%g" height="%g" patternUnits="userSpaceOnUse"><circle cx="%g" cy="%g" r="%g" fill="%s" fill-opacity="%g"/></pattern>'
+                        % (pid, step, step, step / 2, step / 2, r, col, a))
+            body.append('<rect width="1024" height="1024" fill="url(#%s)"/>' % pid)
+        elif kind == 'draw':
+            _, shape, fill, stroke, width, alpha = op
+            a = ' fill="%s"' % (fill or 'none')
+            if alpha != 1.0: a += ' fill-opacity="%g"' % alpha
+            if stroke: a += ' stroke="%s" stroke-width="%g" stroke-linejoin="round"' % (stroke, width)
+            body.append(_svg_shape(shape, a))
+    body += ['</g>'] * opened
+    return ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">\n'
+            '<!-- %s Made by tools/make_brand.py. -->\n' % comment
+            + ('<defs>%s</defs>\n' % ''.join(defs) if defs else '') + '\n'.join(body) + '\n</svg>\n')
+
+
+def mono_svg():
+    """The themed icon as a white shape: the monochrome ops drawn into a mask over a white square."""
+    inner = to_svg(monochrome(), 'bp-mono', '').split('\n')
+    shapes = '\n'.join(l for l in inner if l and not l.startswith(('<svg', '<!--', '</svg', '<defs')))
+    return ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">\n'
+            '<!-- Battleplan\'s themed Android icon: the Sticker Pair as one shape. Made by tools/make_brand.py. -->\n'
+            '<defs><mask id="bp-mono-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">\n'
+            + shapes + '\n</mask></defs>\n<rect width="1024" height="1024" fill="#FFFFFF" mask="url(#bp-mono-mask)"/>\n</svg>\n')
+
+
+# ---- Dart ----
+def _hex(c, a=1.0):
+    c = c.lstrip('#')
+    return '0x%02X%s' % (round(a * 255), c.upper())
+
+
+def to_dart(ops):
+    """The painter's body: one cascade on the canvas, one step per op, in the SVG's order.
+    Runs of chain beads become one beads() call."""
+    lines, paths, beads = [], {}, []
+
+    def flush():
+        if beads:
+            r, sw = beads[0][2], beads[0][3]
+            pts = ', '.join('Offset(%g, %g)' % (b[0], b[1]) for b in beads)
+            lines.append('..beads(const [%s], %g, %g)' % (pts, r, sw))
+            beads.clear()
+
+    for op in ops:
+        kind = op[0]
+        if kind == 'draw' and op[1][0] == 'circle' and op[2] == WHITE and op[3] == INK and op[5] == 1.0 and op[1][3] == 16:
+            beads.append((op[1][1], op[1][2], op[1][3], op[4]))
+            continue
+        flush()
+        if kind == 'push':
+            lines.append('..save()')
+            for t in op[1]:
+                if t[0] == 't': lines.append('..translate(%g, %g)' % t[1:])
+                elif t[0] == 'r': lines.append('..rotateAbout(%g, %g, %g)' % t[1:])
+                elif t[0] == 's': lines.append('..scaleAbout(%g, %g, %g)' % t[1:])
+        elif kind == 'pop':
+            lines.append('..restore()')
+        elif kind == 'clip':
+            _, x, y, w, h, r = op[1]
+            lines.append('..clipRRect(_rrect(%g, %g, %g, %g, %g))' % (x, y, w, h, r))
+        elif kind == 'dots':
+            _, step, r, col, a = op
+            lines.append('..dots(%g, %g, const Color(%s))' % (step, r, _hex(col, a)))
+        elif kind == 'draw':
+            _, shape, fill, stroke, width, alpha = op
+            if shape[0] == 'path':
+                name = paths.setdefault(shape[1], '_p%d' % len(paths))
+                call = '..drawPath(%s, %%s)' % name
+            elif shape[0] == 'rrect':
+                call = '..drawRRect(_rrect(%g, %g, %g, %g, %g), %%s)' % shape[1:]
+            else:
+                call = '..drawCircle(const Offset(%g, %g), %g, %%s)' % shape[1:]
+            if stroke:
+                lines.append(call % ('_stroke(const Color(%s), %g)' % (_hex(stroke), width)))
+            if fill:
+                lines.append(call % ('_fill(const Color(%s))' % _hex(fill, alpha)))
+    flush()
+    return lines, paths
+
+
+DART_HEAD = """// Made by tools/make_brand.py from the same shapes as website/favicon.svg;
+// change the mark there and run it again rather than editing this file.
+
+import 'dart:math' as math;
+
+import 'package:material_ui/material_ui.dart';
+
+/// The Battleplan mark (SPEC §7.1), the Sticker Pair: two candy dog tags on a
+/// white ball chain, each a die-cut sticker with a white border in a navy
+/// edge, the yellow one in front with the white stencil B and a coral one
+/// swung out behind it, with two twinkles, on Candy Pop's royal blue tile
+/// under a dot grid. The same art as `website/favicon.svg` and
+/// `assets/brand/*.svg`, painted from their shapes so it's sharp at any size
+/// and needs no image to load. Decorative: screen readers skip it, as the
+/// app's name is always written next to it.
+class BrandMark extends StatelessWidget {
+  const new({this.size = 72, super.key});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) =>
+      CustomPaint(size: Size.square(size), painter: const _MarkPainter());
+}
+
+class _MarkPainter extends CustomPainter {
+  const new();
+
+  // The art is drawn in the SVGs' 1024 coordinates.
+  static const _tile = 1024.0;
+"""
+
+DART_TAIL = """
+  @override
+  bool shouldRepaint(_MarkPainter oldDelegate) => false;
+}
+
+/// A rounded rectangle from the SVG's x, y, width, height and corner radius.
+RRect _rrect(double x, double y, double w, double h, double r) =>
+    RRect.fromLTRBR(x, y, x + w, y + h, Radius.circular(r));
+
+Paint _fill(Color color) => Paint()..color = color;
+
+/// An outline centred on the shape's edge, with round joins like the SVGs'.
+Paint _stroke(Color color, double width) => Paint()
+  ..color = color
+  ..style = PaintingStyle.stroke
+  ..strokeWidth = width
+  ..strokeJoin = StrokeJoin.round;
+
+/// The SVGs' transforms and repeated parts, so the painter is one cascade.
+extension on Canvas {
+  /// SVG's rotate(degrees cx cy).
+  void rotateAbout(double degrees, double cx, double cy) => this
+    ..translate(cx, cy)
+    ..rotate(degrees * math.pi / 180)
+    ..translate(-cx, -cy);
+
+  /// Scales by k about (cx, cy).
+  void scaleAbout(double k, double cx, double cy) => this
+    ..translate(cx, cy)
+    ..scale(k)
+    ..translate(-cx, -cy);
+
+  /// The tile's dot grid: a dot in the middle of every step-sized cell.
+  void dots(double step, double r, Color color) {
+    final paint = _fill(color);
+    for (var y = step / 2; y < _MarkPainter._tile; y += step) {
+      for (var x = step / 2; x < _MarkPainter._tile; x += step) {
+        drawCircle(Offset(x, y), r, paint);
+      }
+    }
+  }
+
+  /// The ball chain: white beads in a navy edge.
+  void beads(List<Offset> centres, double r, double edge) {
+    final fill = _fill(const Color(0xFFFFFFFF));
+    final stroke = _stroke(const Color(0xFF0B1640), edge);
+    for (final c in centres) {
+      this
+        ..drawCircle(c, r, fill)
+        ..drawCircle(c, r, stroke);
+    }
+  }
+}
+
+/// A path from SVG path data with absolute M, L, Q and Z commands only, which
+/// is all the mark uses.
+Path _svgPath(String d) {
+  final path = Path();
+  final tokens = RegExp('[MLQZ]|-?[0-9.]+').allMatches(d).map((m) => m[0]!);
+  final it = tokens.iterator;
+  double next() {
+    it.moveNext();
+    return double.parse(it.current);
+  }
+
+  while (it.moveNext()) {
+    switch (it.current) {
+      case 'M':
+        path.moveTo(next(), next());
+      case 'L':
+        path.lineTo(next(), next());
+      case 'Q':
+        path.quadraticBezierTo(next(), next(), next(), next());
+      case 'Z':
+        path.close();
+    }
+  }
+  return path;
+}
+"""
+
+
+def write_dart(ops):
+    lines, paths = to_dart(ops)
+    out = [DART_HEAD]
+    for d, name in paths.items():
+        out.append("  static final Path %s = _svgPath(\n    '%s',\n  );\n" % (name, d))
+    out.append("""
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas
+      ..save()
+      ..scale(size.width / _tile, size.height / _tile)""")
+    out += ['      %s' % l for l in lines]
+    out.append('      ..restore();\n  }\n')
+    out.append(DART_TAIL)
+    dart = ROOT / 'lib/core/widgets/brand_mark.dart'
+    dart.write_text('\n'.join(out))
+    # CI checks the formatting; format it the way dart format would, when Dart is here.
+    if shutil.which('dart'):
+        subprocess.run(['dart', 'format', str(dart)], check=False, capture_output=True)
+
+
+def main():
+    files = {
+        'assets/brand/icon.svg': (tile(False) + pair(), 'bp-icon', "Battleplan's app icon, the Sticker Pair on its square tile."),
+        'assets/brand/maskable.svg': (tile(False) + pair(.8, ((-60, -160), (1084, -160))), 'bp-mask',
+                                      "Battleplan's maskable web icon: the Sticker Pair inside the 80% circle."),
+        'assets/brand/foreground.svg': (pair(.86, ((60, -40), (964, -40))), 'bp-fg',
+                                        "Battleplan's adaptive Android icon foreground, on no tile."),
+        'assets/brand/mark.svg': (pair(.6, ((285, 310), (762, 310))), 'bp-mark',
+                                  "Battleplan's splash mark: the Sticker Pair on a short chain, inside Android 12's circle."),
+        'website/favicon.svg': (tile(True) + pair(), 'bp-fav', "Battleplan's mark, the Sticker Pair, on its rounded tile."),
+        'website/favicon-small.svg': (favicon_small(), 'bp-small', "Battleplan's browser-tab icon, drawn for 16 px."),
+        'web/favicon-small.svg': (favicon_small(), 'bp-small', "Battleplan's browser-tab icon, drawn for 16 px."),
+    }
+    for path, (ops, prefix, comment) in files.items():
+        (ROOT / path).write_text(to_svg(ops, prefix, comment))
+    (ROOT / 'assets/brand/monochrome.svg').write_text(mono_svg())
+    # The web app's loading screen draws the header mark inline, so it shows before anything loads.
+    inline = to_svg(tile(True) + pair(), 'bp-splash', '').split('\n', 2)[2].rstrip('\n')
+    inline = '<svg class="mark" viewBox="0 0 1024 1024" aria-hidden="true">' + inline
+    index = ROOT / 'web/index.html'
+    html, n = re.subn(r'<svg class="mark".*?</svg>', lambda m: inline, index.read_text(), count=1, flags=re.S)
+    assert n == 1, 'web/index.html has no <svg class="mark"> to replace'
+    index.write_text(html)
+    write_dart(tile(True) + pair())
+
+
+if __name__ == '__main__':
+    main()

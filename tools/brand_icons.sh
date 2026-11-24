@@ -1,20 +1,26 @@
 #!/usr/bin/env bash
 # Regenerates every icon and splash screen from the brand mark (SPEC §7.1:
-# the Stencil Crest, an upright team-patch shield with a cream stencil B, on
-# an Army green tile).
+# the Sticker Pair, two die-cut sticker dog tags on a white ball chain, the
+# yellow one in front with a white stencil B and the coral one behind, on a
+# Candy Pop royal blue tile).
 #
-#   assets/brand/icon.svg  the full icon: the crest on its Army green tile, square
-#   assets/brand/mark.svg  the mark alone on transparent, inside the splash
-#                          screens' safe zones (Android 12 crops a circle)
+# The SVGs below, and lib/core/widgets/brand_mark.dart and the loading
+# screen's mark in web/index.html, are written by tools/make_brand.py
+# (python3 tools/make_brand.py): change the mark there, run it, then run this.
+#
+#   assets/brand/icon.svg  the full icon: the tags on their blue tile, square
+#   assets/brand/mark.svg  the mark alone on transparent, on a short chain,
+#                          inside the splash screens' safe zones (Android 12
+#                          crops a circle)
 #   assets/brand/foreground.svg  the mark larger, for Android's adaptive icon
 #                          (the tool insets it into the safe zone)
-#   assets/brand/monochrome.svg  the shield as one shape, for Android's themed
-#                          icon
+#   assets/brand/monochrome.svg  the tags, chain and B as one shape, for
+#                          Android's themed icon
 #   assets/brand/maskable.svg  the web app's maskable icon: the mark inside
 #                          the 80% circle any mask keeps
 #   website/favicon.svg    the website's header mark: the rounded tile, also
 #                          the web app's 32 px favicon PNG
-#   website/favicon-small.svg  the browser-tab icon, drawn on the 16 px grid
+#   website/favicon-small.svg  the browser-tab icon, drawn for 16 px
 #                          (also web/favicon-small.svg; not rendered here)
 #
 # Renders each to 1024 px PNGs with headless Chrome (set CHROME to another
