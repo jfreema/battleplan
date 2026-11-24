@@ -22,14 +22,19 @@ Run from anywhere; it writes, all on the 1024 grid:
                                around it, its chain running off the top (the
                                website's header mark, the Play feature
                                graphic's and the link preview's)
+  website/wordmark.svg         the name beside or under the logo: "Battleplan"
+                               in Lilita One's bubbly letters, white on a
+                               navy drop, as Candy Pop's header titles were
   website/favicon.svg          the art on the rounded tile, an app icon on a
                                page (the landing page; the web app's and the
                                website's 32 px favicon PNGs)
   website/favicon-small.svg    the browser-tab icon, simplified for 16 px:
   web/favicon-small.svg        the two tags and the B, no chain or tile
   web/index.html               the web app's loading mark, inline: the logo
-  lib/core/widgets/brand_mark.dart  BrandMark, the logo painted in Flutter
-                               from the same shapes (the sign-in screen's)
+                               and the name under it
+  lib/core/widgets/brand_mark.dart  BrandMark and BrandWordmark, the logo and
+                               the name painted in Flutter from the same
+                               shapes (the sign-in screen's)
 
 Only the app icons sit on the blue tile: Apple refuses an app icon with any
 transparency, and Android draws every icon on a solid background layer.
@@ -63,6 +68,22 @@ B_GLYPH = ('M80 0V1600H380V0ZM480 0V264H490Q553 264 586.5 297.5Q620 331 620 394Q
            'Q920 1182 920.0 1156.0Q920 1130 918 1104Q912 995 869.5 930.5Q827 866 738 836V788Q830 758 873.0 692.5'
            'Q916 627 920 514Q922 481 922.0 453.0Q922 425 920 390Q911 182 812.5 91.0Q714 0 490 0Z')
 B_CAP, B_ADVANCE = 1600, 985
+
+# ---- the name: Lilita One's letters for "Battleplan" (SIL Open Font License 1.1, Juan Montoreano), ----
+# the bubbly title font of the Candy Pop scheme's header before Boot Camp Mix (#85): font units, 1000 per
+# em, y down from the baseline, each with its advance (Lilita One has no kerning between these letters).
+LILITA = {
+    'B': (594, 'M541 -519Q541 -415 451 -361Q500 -343 533 -299Q566 -255 566 -174Q566 -94 506 -47Q447 0 336 0L100 0Q83 0 72 -12Q61 -23 61 -42L61 -682Q61 -693 64 -696Q68 -700 79 -700L307 -700Q541 -700 541 -519ZM253 -538L253 -407L258 -407Q354 -407 354 -471Q354 -506 336 -522Q317 -538 274 -538ZM253 -289L253 -159L271 -159Q314 -159 334 -175Q354 -191 354 -226Q354 -261 336 -275Q317 -289 274 -289Z'),
+    'a': (517, 'M108 -363Q80 -413 80 -444Q80 -476 97 -485Q154 -510 254 -510Q353 -510 394 -464Q435 -417 435 -326L435 -168L469 -168Q486 -168 496 -148Q505 -128 505 -93Q505 -58 488 -24Q470 10 440 10Q386 10 353 -19Q338 -31 330 -48Q284 10 187 10Q114 10 64 -42Q14 -94 14 -165Q14 -328 209 -328L264 -328L264 -338Q264 -364 256 -372Q247 -379 216 -379Q178 -379 108 -363ZM188 -179Q188 -157 200 -146Q212 -134 230 -134Q249 -134 264 -149L264 -226L236 -226Q188 -226 188 -179Z'),
+    't': (368, 'M275 -6Q275 6 191 6Q91 2 91 -7L91 -361L40 -361Q20 -361 20 -430Q20 -448 24 -474Q27 -500 38 -500L91 -500L91 -588Q91 -608 176 -608Q260 -608 260 -592L260 -528L261 -500L346 -500Q363 -500 363 -430Q363 -360 346 -360L275 -360Z'),
+    'l': (272, 'M227 -8Q227 1 125 1Q45 0 45 -7L45 -688Q45 -703 142 -703Q227 -700 227 -693Z'),
+    'e': (486, 'M423 -27Q360 10 261 10Q162 10 94 -58Q26 -125 26 -244Q26 -364 92 -437Q157 -510 257 -510Q357 -510 412 -459Q466 -408 466 -335Q466 -173 280 -173L211 -173Q211 -143 228 -132Q244 -120 276 -120Q346 -120 409 -152Q410 -153 418 -138Q442 -95 442 -66Q442 -36 423 -27ZM298 -316Q298 -358 257 -358Q238 -358 224 -346Q211 -335 211 -313L211 -282L265 -282Q298 -282 298 -316Z'),
+    'p': (555, 'M260 182Q260 189 174 189Q89 189 89 182L89 -333L55 -333Q31 -333 22 -377Q19 -391 19 -413Q19 -435 33 -465Q53 -509 97 -509Q126 -509 150 -496Q175 -482 184 -470Q194 -459 194 -457Q261 -509 339 -509Q417 -509 473 -448Q529 -388 529 -262Q529 -135 473 -66Q417 4 331 4Q292 4 260 0ZM301 -334Q284 -334 268 -323L268 -146Q285 -144 296 -144Q306 -144 312 -144Q353 -148 353 -249Q353 -334 301 -334Z'),
+    'n': (551, 'M254 -6Q254 1 182 1Q82 -2 82 -10L82 -334L56 -334Q30 -334 22 -378Q20 -391 20 -404Q20 -435 32 -466Q50 -510 88 -510Q126 -510 156 -492Q186 -474 196 -456Q259 -510 346 -510Q433 -510 472 -463Q511 -416 511 -309L511 -9Q511 3 426 3Q340 3 340 -9L340 -298Q340 -348 305 -348Q295 -348 277 -340Q259 -331 254 -327Z'),
+}
+WORD = 'Battleplan'
+WORD_DROP = 70     # the hard drop straight down, 0.07 em, as Candy Pop's header titles had it
+WORD_EDGE = 90     # the navy edge (stroke width) the name takes on a light page
 
 
 def _tokens(d):
@@ -228,6 +249,37 @@ def monochrome():
     return m + [('pop',)]
 
 
+def word_path():
+    """"Battleplan" as one path, its pen starting at 0 on the baseline."""
+    out, pen = [], 0
+    for ch in WORD:
+        advance, d = LILITA[ch]
+        nums = 0
+        for tok in _tokens(d):
+            if isinstance(tok, str):
+                out.append(tok); nums = 0
+            else:
+                out.append(('%g' % (tok + pen)) if nums % 2 == 0 else ('%g' % tok))
+                out.append(' '); nums += 1
+        pen += advance
+    return ''.join(out).replace(' M', 'M').replace(' L', 'L').replace(' Q', 'Q').replace(' Z', 'Z').strip()
+
+
+def word_box():
+    """The name's box (x, y, w, h): its letters, the drop under them, and room for the edge."""
+    pad = WORD_EDGE // 2
+    pen = sum(LILITA[ch][0] for ch in WORD[:-1])
+    left = 61                                  # the B's left side
+    right = pen + 511                          # the last n's right side
+    return (left - pad, -703 - pad, right - left + 2 * pad, 703 + 189 + WORD_DROP + 2 * pad)
+
+
+def wordmark():
+    """The name as the logo writes it: white letters on a navy hard drop (no edge: for dark grounds)."""
+    d = word_path()
+    return [('push', [('t', 0, WORD_DROP)]), draw(('path', d), INK), ('pop',)] + [draw(('path', d), WHITE)]
+
+
 # ---- SVG ----
 def _svg_transform(ts):
     out = []
@@ -247,7 +299,7 @@ def _svg_shape(s, attrs):
     return '<path d="%s"%s/>' % (s[1], attrs)
 
 
-def to_svg(ops, prefix, comment):
+def to_svg(ops, prefix, comment, box=(0, 0, 1024, 1024)):
     body, defs, opened = [], [], 0
     for op in ops:
         kind = op[0]
@@ -272,8 +324,8 @@ def to_svg(ops, prefix, comment):
             if stroke: a += ' stroke="%s" stroke-width="%g" stroke-linejoin="round"' % (stroke, width)
             body.append(_svg_shape(shape, a))
     body += ['</g>'] * opened
-    return ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">\n'
-            '<!-- %s Made by tools/make_brand.py. -->\n' % comment
+    return ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="%g %g %g %g" width="%g" height="%g">\n' % (box + box[2:])
+            + '<!-- %s Made by tools/make_brand.py. -->\n' % comment
             + ('<defs>%s</defs>\n' % ''.join(defs) if defs else '') + '\n'.join(body) + '\n</svg>\n')
 
 
@@ -456,6 +508,76 @@ Path _svgPath(String d) {
 """
 
 
+WORD_DART = """
+/// The app's name as the logo writes it (SPEC §7.1): "Battleplan" in Lilita
+/// One's bubbly letters, white on a navy hard drop straight down, the look of
+/// the Candy Pop scheme's header titles. [outlined] gives the letters a navy
+/// edge as well, for a light page. Painted from the same outlines as
+/// `website/wordmark.svg`; screen readers hear [label].
+class BrandWordmark extends StatelessWidget {
+  const new({
+    required this.label,
+    this.height = 44,
+    this.outlined = false,
+    super.key,
+  });
+
+  final String label;
+
+  /// The box's height: the letters' cap height is two thirds of it.
+  final double height;
+
+  final bool outlined;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label: label,
+    child: CustomPaint(
+      size: Size(height * _WordmarkPainter.aspect, height),
+      painter: _WordmarkPainter(outlined: outlined),
+    ),
+  );
+}
+
+class _WordmarkPainter extends CustomPainter {
+  const new({required this.outlined});
+
+  final bool outlined;
+
+  /// The box round the letters, their drop and their edge, in font units.
+  static const _box = Rect.fromLTWH(%(x)g, %(y)g, %(w)g, %(h)g);
+
+  static double get aspect => _box.width / _box.height;
+
+  static final Path _letters = _svgPath(
+    '%(d)s',
+  );
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final drop = _letters.shift(const Offset(0, %(drop)g));
+    canvas
+      ..save()
+      ..scale(size.width / _box.width, size.height / _box.height)
+      ..translate(-_box.left, -_box.top);
+    if (outlined) {
+      canvas
+        ..drawPath(drop, _stroke(const Color(%(ink)s), %(edge)g))
+        ..drawPath(_letters, _stroke(const Color(%(ink)s), %(edge)g));
+    }
+    canvas
+      ..drawPath(drop, _fill(const Color(%(ink)s)))
+      ..drawPath(_letters, _fill(const Color(%(white)s)))
+      ..restore();
+  }
+
+  @override
+  bool shouldRepaint(_WordmarkPainter oldDelegate) =>
+      oldDelegate.outlined != outlined;
+}
+"""
+
+
 def write_dart(ops):
     lines, paths = to_dart(ops)
     out = [DART_HEAD]
@@ -475,6 +597,9 @@ def write_dart(ops):
         start = tail.index("  /// The tile's dot grid")
         tail = tail[:start] + tail[tail.index('  /// The ball chain'):]
     out.append(tail)
+    x, y, w, h = word_box()
+    out.append(WORD_DART % dict(x=x, y=y, w=w, h=h, d=word_path(), drop=WORD_DROP, edge=WORD_EDGE,
+                                ink=_hex(INK), white=_hex(WHITE)))
     dart = ROOT / 'lib/core/widgets/brand_mark.dart'
     dart.write_text('\n'.join(out))
     # CI checks the formatting; format it the way dart format would, when Dart is here.
@@ -492,19 +617,25 @@ def main():
         'assets/brand/mark.svg': (pair(.6, ((285, 310), (762, 310))), 'bp-mark',
                                   "Battleplan's splash mark: the Sticker Pair on a short chain, inside Android 12's circle."),
         'website/logo.svg': (logo(), 'bp-logo', "Battleplan's logo, the Sticker Pair, on no tile."),
+        'website/wordmark.svg': (wordmark(), 'bp-word', "Battleplan's name as the logo writes it, in Lilita One (OFL).", word_box()),
         'website/favicon.svg': (tile(True) + pair(), 'bp-fav', "Battleplan's mark, the Sticker Pair, on its rounded tile."),
         'website/favicon-small.svg': (favicon_small(), 'bp-small', "Battleplan's browser-tab icon, drawn for 16 px."),
         'web/favicon-small.svg': (favicon_small(), 'bp-small', "Battleplan's browser-tab icon, drawn for 16 px."),
     }
-    for path, (ops, prefix, comment) in files.items():
-        (ROOT / path).write_text(to_svg(ops, prefix, comment))
+    for path, (ops, prefix, comment, *box) in files.items():
+        (ROOT / path).write_text(to_svg(ops, prefix, comment, *box))
     (ROOT / 'assets/brand/monochrome.svg').write_text(mono_svg())
     # The web app's loading screen draws the logo inline, so it shows before anything loads.
     inline = to_svg(logo(), 'bp-splash', '').split('\n', 2)[2].rstrip('\n')
     inline = '<svg class="mark" viewBox="0 0 1024 1024" aria-hidden="true">' + inline
+    # ...and the name under it, as the logo writes it.
+    x, y, w, h = word_box()
+    name = to_svg(wordmark(), 'bp-splash-word', '', word_box()).split('\n', 2)[2].rstrip('\n')
+    inline += '<svg class="name" viewBox="%g %g %g %g" aria-hidden="true">' % (x, y, w, h) + name
     index = ROOT / 'web/index.html'
-    html, n = re.subn(r'<svg class="mark".*?</svg>', lambda m: inline, index.read_text(), count=1, flags=re.S)
-    assert n == 1, 'web/index.html has no <svg class="mark"> to replace'
+    html, n = re.subn(r'<svg class="mark".*?</svg>(?:<svg class="name".*?</svg>|Battleplan)', lambda m: inline,
+                      index.read_text(), count=1, flags=re.S)
+    assert n == 1, 'web/index.html has no <svg class="mark"> and name to replace'
     index.write_text(html)
     write_dart(logo())
 

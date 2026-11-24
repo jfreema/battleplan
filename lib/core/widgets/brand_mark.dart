@@ -273,3 +273,70 @@ Path _svgPath(String d) {
   }
   return path;
 }
+
+/// The app's name as the logo writes it (SPEC §7.1): "Battleplan" in Lilita
+/// One's bubbly letters, white on a navy hard drop straight down, the look of
+/// the Candy Pop scheme's header titles. [outlined] gives the letters a navy
+/// edge as well, for a light page. Painted from the same outlines as
+/// `website/wordmark.svg`; screen readers hear [label].
+class BrandWordmark extends StatelessWidget {
+  const new({
+    required this.label,
+    this.height = 44,
+    this.outlined = false,
+    super.key,
+  });
+
+  final String label;
+
+  /// The box's height: the letters' cap height is two thirds of it.
+  final double height;
+
+  final bool outlined;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label: label,
+    child: CustomPaint(
+      size: Size(height * _WordmarkPainter.aspect, height),
+      painter: _WordmarkPainter(outlined: outlined),
+    ),
+  );
+}
+
+class _WordmarkPainter extends CustomPainter {
+  const new({required this.outlined});
+
+  final bool outlined;
+
+  /// The box round the letters, their drop and their edge, in font units.
+  static const _box = Rect.fromLTWH(16, -748, 4489, 1052);
+
+  static double get aspect => _box.width / _box.height;
+
+  static final Path _letters = _svgPath(
+    'M541 -519Q541 -415 451 -361Q500 -343 533 -299Q566 -255 566 -174Q566 -94 506 -47Q447 0 336 0L100 0Q83 0 72 -12Q61 -23 61 -42L61 -682Q61 -693 64 -696Q68 -700 79 -700L307 -700Q541 -700 541 -519ZM253 -538L253 -407L258 -407Q354 -407 354 -471Q354 -506 336 -522Q317 -538 274 -538ZM253 -289L253 -159L271 -159Q314 -159 334 -175Q354 -191 354 -226Q354 -261 336 -275Q317 -289 274 -289ZM702 -363Q674 -413 674 -444Q674 -476 691 -485Q748 -510 848 -510Q947 -510 988 -464Q1029 -417 1029 -326L1029 -168L1063 -168Q1080 -168 1090 -148Q1099 -128 1099 -93Q1099 -58 1082 -24Q1064 10 1034 10Q980 10 947 -19Q932 -31 924 -48Q878 10 781 10Q708 10 658 -42Q608 -94 608 -165Q608 -328 803 -328L858 -328L858 -338Q858 -364 850 -372Q841 -379 810 -379Q772 -379 702 -363ZM782 -179Q782 -157 794 -146Q806 -134 824 -134Q843 -134 858 -149L858 -226L830 -226Q782 -226 782 -179ZM1386 -6Q1386 6 1302 6Q1202 2 1202 -7L1202 -361L1151 -361Q1131 -361 1131 -430Q1131 -448 1135 -474Q1138 -500 1149 -500L1202 -500L1202 -588Q1202 -608 1287 -608Q1371 -608 1371 -592L1371 -528L1372 -500L1457 -500Q1474 -500 1474 -430Q1474 -360 1457 -360L1386 -360ZM1754 -6Q1754 6 1670 6Q1570 2 1570 -7L1570 -361L1519 -361Q1499 -361 1499 -430Q1499 -448 1503 -474Q1506 -500 1517 -500L1570 -500L1570 -588Q1570 -608 1655 -608Q1739 -608 1739 -592L1739 -528L1740 -500L1825 -500Q1842 -500 1842 -430Q1842 -360 1825 -360L1754 -360ZM2074 -8Q2074 1 1972 1Q1892 0 1892 -7L1892 -688Q1892 -703 1989 -703Q2074 -700 2074 -693ZM2542 -27Q2479 10 2380 10Q2281 10 2213 -58Q2145 -125 2145 -244Q2145 -364 2211 -437Q2276 -510 2376 -510Q2476 -510 2531 -459Q2585 -408 2585 -335Q2585 -173 2399 -173L2330 -173Q2330 -143 2347 -132Q2363 -120 2395 -120Q2465 -120 2528 -152Q2529 -153 2537 -138Q2561 -95 2561 -66Q2561 -36 2542 -27ZM2417 -316Q2417 -358 2376 -358Q2357 -358 2343 -346Q2330 -335 2330 -313L2330 -282L2384 -282Q2417 -282 2417 -316ZM2865 182Q2865 189 2779 189Q2694 189 2694 182L2694 -333L2660 -333Q2636 -333 2627 -377Q2624 -391 2624 -413Q2624 -435 2638 -465Q2658 -509 2702 -509Q2731 -509 2755 -496Q2780 -482 2789 -470Q2799 -459 2799 -457Q2866 -509 2944 -509Q3022 -509 3078 -448Q3134 -388 3134 -262Q3134 -135 3078 -66Q3022 4 2936 4Q2897 4 2865 0ZM2906 -334Q2889 -334 2873 -323L2873 -146Q2890 -144 2901 -144Q2911 -144 2917 -144Q2958 -148 2958 -249Q2958 -334 2906 -334ZM3387 -8Q3387 1 3285 1Q3205 0 3205 -7L3205 -688Q3205 -703 3302 -703Q3387 -700 3387 -693ZM3540 -363Q3512 -413 3512 -444Q3512 -476 3529 -485Q3586 -510 3686 -510Q3785 -510 3826 -464Q3867 -417 3867 -326L3867 -168L3901 -168Q3918 -168 3928 -148Q3937 -128 3937 -93Q3937 -58 3920 -24Q3902 10 3872 10Q3818 10 3785 -19Q3770 -31 3762 -48Q3716 10 3619 10Q3546 10 3496 -42Q3446 -94 3446 -165Q3446 -328 3641 -328L3696 -328L3696 -338Q3696 -364 3688 -372Q3679 -379 3648 -379Q3610 -379 3540 -363ZM3620 -179Q3620 -157 3632 -146Q3644 -134 3662 -134Q3681 -134 3696 -149L3696 -226L3668 -226Q3620 -226 3620 -179ZM4203 -6Q4203 1 4131 1Q4031 -2 4031 -10L4031 -334L4005 -334Q3979 -334 3971 -378Q3969 -391 3969 -404Q3969 -435 3981 -466Q3999 -510 4037 -510Q4075 -510 4105 -492Q4135 -474 4145 -456Q4208 -510 4295 -510Q4382 -510 4421 -463Q4460 -416 4460 -309L4460 -9Q4460 3 4375 3Q4289 3 4289 -9L4289 -298Q4289 -348 4254 -348Q4244 -348 4226 -340Q4208 -331 4203 -327Z',
+  );
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final drop = _letters.shift(const Offset(0, 70));
+    canvas
+      ..save()
+      ..scale(size.width / _box.width, size.height / _box.height)
+      ..translate(-_box.left, -_box.top);
+    if (outlined) {
+      canvas
+        ..drawPath(drop, _stroke(const Color(0xFF0B1640), 90))
+        ..drawPath(_letters, _stroke(const Color(0xFF0B1640), 90));
+    }
+    canvas
+      ..drawPath(drop, _fill(const Color(0xFF0B1640)))
+      ..drawPath(_letters, _fill(const Color(0xFFFFFFFF)))
+      ..restore();
+  }
+
+  @override
+  bool shouldRepaint(_WordmarkPainter oldDelegate) =>
+      oldDelegate.outlined != outlined;
+}

@@ -21,6 +21,7 @@
 #   website/favicon.svg    the mark on its rounded tile: the landing page's app
 #                          icon, and the web app's and website's 32 px PNGs
 #   website/logo.svg       the logo, on no tile: the website's header mark
+#   website/wordmark.svg   the name beside it, in Lilita One's letters
 #                          (also the sign-in screen's and the web loading
 #                          screen's; not rendered here)
 #   website/favicon-small.svg  the browser-tab icon, drawn for 16 px

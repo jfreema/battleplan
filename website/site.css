@@ -144,13 +144,11 @@ h1 .eyebrow { text-wrap: wrap; }
   border-bottom: 3px solid var(--ink);
 }
 .site-header .wrap { display: flex; align-items: center; gap: 10px; min-height: 66px; }
-.brand {
-  display: inline-flex; align-items: center; gap: 10px; min-height: 44px;
-  color: var(--title); text-decoration: none;
-  font: 900 1.65rem/1 var(--stencil); letter-spacing: 0.04em; text-transform: uppercase;
-  -webkit-text-stroke: 0.16em var(--ink); paint-order: stroke fill; text-shadow: 0.07em 0.07em 0 var(--drop);
-}
+/* The logo and the name as it writes it (wordmark.svg: Lilita One's bubbly
+   letters, white on a navy drop, as the Candy Pop header had its titles). */
+.brand { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; text-decoration: none; }
 .brand img { width: 44px; height: 44px; }
+.brand img.name { width: auto; height: 34px; }
 .site-nav { margin-left: auto; display: flex; align-items: center; gap: 2px; }
 .site-nav a:not(.btn) {
   display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px;
@@ -161,7 +159,7 @@ h1 .eyebrow { text-wrap: wrap; }
 .site-nav .btn { margin-left: 8px; --face: var(--trim); }
 @media (max-width: 600px) {
   .site-nav a.hide-sm { display: none; }
-  .brand { font-size: 1.4rem; }
+  .brand img.name { height: 30px; }
 }
 @media (max-width: 400px) {
   .site-nav a.hide-xs { display: none; }

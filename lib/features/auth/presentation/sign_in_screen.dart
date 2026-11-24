@@ -66,10 +66,13 @@ class SignInScreen extends ConsumerWidget {
                 children: [
                   const AppLogo(),
                   const SizedBox(height: Space.lg),
-                  Text(
-                    l10n.appName,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.headlineMedium,
+                  // The name as the logo writes it (SPEC §7.1), with a navy
+                  // edge on a light page so the white letters still show.
+                  Center(
+                    child: BrandWordmark(
+                      label: l10n.appName,
+                      outlined: theme.brightness == Brightness.light,
+                    ),
                   ),
                   const SizedBox(height: Space.sm),
                   Text(
