@@ -1,4 +1,4 @@
-// Made by tools/make_brand.py from the same shapes as website/favicon.svg;
+// Made by tools/make_brand.py from the same shapes as website/logo.svg;
 // change the mark there and run it again rather than editing this file.
 
 import 'dart:math' as math;
@@ -8,8 +8,8 @@ import 'package:material_ui/material_ui.dart';
 /// The Battleplan mark (SPEC §7.1), the Sticker Pair: two candy dog tags on a
 /// white ball chain, each a die-cut sticker with a white border in a navy
 /// edge, the yellow one in front with the white stencil B and a coral one
-/// swung out behind it, with two twinkles, on Candy Pop's royal blue tile
-/// under a dot grid. The same art as `website/favicon.svg` and
+/// swung out behind it, with two twinkles, on no tile: the page shows around
+/// it, and the chain runs off the top. The same art as `website/logo.svg` and
 /// `assets/brand/*.svg`, painted from their shapes so it's sharp at any size
 /// and needs no image to load. Decorative: screen readers skip it, as the
 /// app's name is always written next to it.
@@ -46,9 +46,7 @@ class _MarkPainter extends CustomPainter {
     canvas
       ..save()
       ..scale(size.width / _tile, size.height / _tile)
-      ..clipRRect(_rrect(0, 0, 1024, 1024, 224))
-      ..drawRRect(_rrect(0, 0, 1024, 1024, 224), _fill(const Color(0xFF1748D4)))
-      ..dots(64, 8, const Color(0x24FFFFFF))
+      ..clipRRect(_rrect(0, 0, 1024, 1024, 0))
       ..save()
       ..scaleAbout(1, 512, 512)
       ..translate(28, 50)
@@ -237,16 +235,6 @@ extension on Canvas {
     ..translate(cx, cy)
     ..scale(k)
     ..translate(-cx, -cy);
-
-  /// The tile's dot grid: a dot in the middle of every step-sized cell.
-  void dots(double step, double r, Color color) {
-    final paint = _fill(color);
-    for (var y = step / 2; y < _MarkPainter._tile; y += step) {
-      for (var x = step / 2; x < _MarkPainter._tile; x += step) {
-        drawCircle(Offset(x, y), r, paint);
-      }
-    }
-  }
 
   /// The ball chain: white beads in a navy edge.
   void beads(List<Offset> centres, double r, double edge) {

@@ -18,14 +18,21 @@ Run from anywhere; it writes, all on the 1024 grid:
   assets/brand/monochrome.svg  Android's themed icon: the pair as one shape
   assets/brand/mark.svg        the splash screens' mark, no tile, inside the
                                circle Android 12 keeps, on a short chain
-  website/favicon.svg          the website's header mark: the art on the
-                               rounded tile (also the web app's 32 px PNG)
+  website/logo.svg             the logo: the art on no tile, see-through
+                               around it, its chain running off the top (the
+                               website's header mark, the Play feature
+                               graphic's and the link preview's)
+  website/favicon.svg          the art on the rounded tile, an app icon on a
+                               page (the landing page; the web app's and the
+                               website's 32 px favicon PNGs)
   website/favicon-small.svg    the browser-tab icon, simplified for 16 px:
   web/favicon-small.svg        the two tags and the B, no chain or tile
-  web/index.html               the web app's loading mark, inline: the
-                               header mark's art
-  lib/core/widgets/brand_mark.dart  BrandMark, the rounded-tile mark painted
-                               in Flutter from the same shapes
+  web/index.html               the web app's loading mark, inline: the logo
+  lib/core/widgets/brand_mark.dart  BrandMark, the logo painted in Flutter
+                               from the same shapes (the sign-in screen's)
+
+Only the app icons sit on the blue tile: Apple refuses an app icon with any
+transparency, and Android draws every icon on a solid background layer.
 
 tools/brand_icons.sh then renders the SVGs and makes every icon and splash
 size from them. Only the standard library is needed: the B is Battleplan
@@ -188,6 +195,11 @@ def tile(rounded):
     return [('clip', shape), draw(shape, BLUE), ('dots', 64, 8, DOT, DOT_ALPHA)]
 
 
+def logo():
+    """The logo: the pair on no tile, clipped to its square so the chain runs off the top edge."""
+    return [('clip', ('rrect', 0, 0, 1024, 1024, 0))] + pair()
+
+
 def favicon_small():
     """For 16 px: just the two tags and the B, with heavy edges and no chain, shine or tile."""
     back = ('rrect', 300, 170, 440, 680, 150)
@@ -330,7 +342,7 @@ def to_dart(ops):
     return lines, paths
 
 
-DART_HEAD = """// Made by tools/make_brand.py from the same shapes as website/favicon.svg;
+DART_HEAD = """// Made by tools/make_brand.py from the same shapes as website/logo.svg;
 // change the mark there and run it again rather than editing this file.
 
 import 'dart:math' as math;
@@ -340,8 +352,8 @@ import 'package:material_ui/material_ui.dart';
 /// The Battleplan mark (SPEC §7.1), the Sticker Pair: two candy dog tags on a
 /// white ball chain, each a die-cut sticker with a white border in a navy
 /// edge, the yellow one in front with the white stencil B and a coral one
-/// swung out behind it, with two twinkles, on Candy Pop's royal blue tile
-/// under a dot grid. The same art as `website/favicon.svg` and
+/// swung out behind it, with two twinkles, on no tile: the page shows around
+/// it, and the chain runs off the top. The same art as `website/logo.svg` and
 /// `assets/brand/*.svg`, painted from their shapes so it's sharp at any size
 /// and needs no image to load. Decorative: screen readers skip it, as the
 /// app's name is always written next to it.
@@ -457,7 +469,12 @@ def write_dart(ops):
       ..scale(size.width / _tile, size.height / _tile)""")
     out += ['      %s' % l for l in lines]
     out.append('      ..restore();\n  }\n')
-    out.append(DART_TAIL)
+    tail = DART_TAIL
+    if not any(op[0] == 'dots' for op in ops):
+        # No tile, so no dot grid: leave its helper out, as the analyzer refuses unused code.
+        start = tail.index("  /// The tile's dot grid")
+        tail = tail[:start] + tail[tail.index('  /// The ball chain'):]
+    out.append(tail)
     dart = ROOT / 'lib/core/widgets/brand_mark.dart'
     dart.write_text('\n'.join(out))
     # CI checks the formatting; format it the way dart format would, when Dart is here.
@@ -474,6 +491,7 @@ def main():
                                         "Battleplan's adaptive Android icon foreground, on no tile."),
         'assets/brand/mark.svg': (pair(.6, ((285, 310), (762, 310))), 'bp-mark',
                                   "Battleplan's splash mark: the Sticker Pair on a short chain, inside Android 12's circle."),
+        'website/logo.svg': (logo(), 'bp-logo', "Battleplan's logo, the Sticker Pair, on no tile."),
         'website/favicon.svg': (tile(True) + pair(), 'bp-fav', "Battleplan's mark, the Sticker Pair, on its rounded tile."),
         'website/favicon-small.svg': (favicon_small(), 'bp-small', "Battleplan's browser-tab icon, drawn for 16 px."),
         'web/favicon-small.svg': (favicon_small(), 'bp-small', "Battleplan's browser-tab icon, drawn for 16 px."),
@@ -481,14 +499,14 @@ def main():
     for path, (ops, prefix, comment) in files.items():
         (ROOT / path).write_text(to_svg(ops, prefix, comment))
     (ROOT / 'assets/brand/monochrome.svg').write_text(mono_svg())
-    # The web app's loading screen draws the header mark inline, so it shows before anything loads.
-    inline = to_svg(tile(True) + pair(), 'bp-splash', '').split('\n', 2)[2].rstrip('\n')
+    # The web app's loading screen draws the logo inline, so it shows before anything loads.
+    inline = to_svg(logo(), 'bp-splash', '').split('\n', 2)[2].rstrip('\n')
     inline = '<svg class="mark" viewBox="0 0 1024 1024" aria-hidden="true">' + inline
     index = ROOT / 'web/index.html'
     html, n = re.subn(r'<svg class="mark".*?</svg>', lambda m: inline, index.read_text(), count=1, flags=re.S)
     assert n == 1, 'web/index.html has no <svg class="mark"> to replace'
     index.write_text(html)
-    write_dart(tile(True) + pair())
+    write_dart(logo())
 
 
 if __name__ == '__main__':

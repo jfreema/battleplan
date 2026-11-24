@@ -150,7 +150,7 @@ h1 .eyebrow { text-wrap: wrap; }
   font: 900 1.65rem/1 var(--stencil); letter-spacing: 0.04em; text-transform: uppercase;
   -webkit-text-stroke: 0.16em var(--ink); paint-order: stroke fill; text-shadow: 0.07em 0.07em 0 var(--drop);
 }
-.brand img { width: 36px; height: 36px; }
+.brand img { width: 44px; height: 44px; }
 .site-nav { margin-left: auto; display: flex; align-items: center; gap: 2px; }
 .site-nav a:not(.btn) {
   display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px;

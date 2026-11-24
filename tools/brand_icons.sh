@@ -18,8 +18,11 @@
 #                          Android's themed icon
 #   assets/brand/maskable.svg  the web app's maskable icon: the mark inside
 #                          the 80% circle any mask keeps
-#   website/favicon.svg    the website's header mark: the rounded tile, also
-#                          the web app's 32 px favicon PNG
+#   website/favicon.svg    the mark on its rounded tile: the landing page's app
+#                          icon, and the web app's and website's 32 px PNGs
+#   website/logo.svg       the logo, on no tile: the website's header mark
+#                          (also the sign-in screen's and the web loading
+#                          screen's; not rendered here)
 #   website/favicon-small.svg  the browser-tab icon, drawn for 16 px
 #                          (also web/favicon-small.svg; not rendered here)
 #
