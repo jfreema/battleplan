@@ -9,7 +9,7 @@ import { onCall } from '../shared/callable.js';
 import { Collections, Limits } from '../shared/constants.js';
 import { groupMemberId } from '../shared/ids.js';
 import { consumeRateLimit, consumeRateLimits } from '../shared/rate_limit.js';
-import { postSystemMessage } from '../chat/service.js';
+import { joinedLine, postSystemMessage } from '../chat/service.js';
 import { refreshMemberCount } from '../teams/service.js';
 import { normalizeCode } from './codes.js';
 import { requireAuth } from '../shared/guards.js';
@@ -198,8 +198,12 @@ export const redeemInvite = onCall(async (request) => {
       throw new HttpsError('failed-precondition', 'too-many-teams');
     }
     await refreshMemberCount(result.groupId);
-    const name = (profile?.displayName as string | undefined) ?? 'Someone';
-    await postSystemMessage(result.groupId, 'joined', `${name} joined`, uid);
+    // Their name, or their Google or Apple name while their profile has
+    // none yet (#101); "Someone" only when there's neither, until they
+    // name themselves (nameJoinLines).
+    const tokenName = request.auth?.token.name;
+    const name = String(profile?.displayName ?? '').trim() || (typeof tokenName === 'string' ? tokenName : '');
+    await postSystemMessage(result.groupId, 'joined', joinedLine(name), uid);
   }
   return result;
 });

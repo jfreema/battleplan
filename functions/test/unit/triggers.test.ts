@@ -3,6 +3,7 @@ import { snapshotChanged } from '../../src/accounts/triggers.js';
 import {
   announcementPushBody,
   isAnnouncement,
+  isNamelessJoinLine,
   joinedLine,
   lastMessagePreviewOf,
   mentionedUids,
@@ -30,6 +31,15 @@ describe('groups trigger early exit and system lines (CHAT-10)', () => {
   it('words a joined line', () => {
     expect(joinedLine('Maria R.')).toBe('Maria R. joined');
     expect(joinedLine('')).toBe('Someone joined');
+  });
+
+  it('knows a join line that names nobody (#101)', () => {
+    expect(isNamelessJoinLine('Someone joined')).toBe(true);
+    expect(isNamelessJoinLine(' joined')).toBe(true);
+    expect(isNamelessJoinLine('New member joined')).toBe(true);
+    expect(isNamelessJoinLine('Maria R. joined')).toBe(false);
+    expect(isNamelessJoinLine('Someone left')).toBe(false);
+    expect(isNamelessJoinLine(undefined)).toBe(false);
   });
 });
 

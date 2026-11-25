@@ -115,6 +115,42 @@ export function joinedLine(name: unknown): string {
 }
 
 /**
+ * Whether a join line names nobody (#101): "Someone joined", written when
+ * the person had no name yet, or a bare " joined" from before joinedLine
+ * was used everywhere.
+ */
+export function isNamelessJoinLine(text: unknown): boolean {
+  const t = typeof text === 'string' ? text.trim() : '';
+  return t === 'joined' || t === 'Someone joined' || t === 'New member joined';
+}
+
+/**
+ * #101 (owner's report 2026-11-25: the chat "said “someone joined” instead
+ * of being specific about who joined"): once [uid] has a name, the join
+ * lines that said "Someone joined", because they had none yet when they
+ * joined, say "[displayName] joined", and a team whose newest line that was
+ * shows it in its preview. Lines that already name someone stay as they
+ * were. Returns how many lines changed.
+ */
+export async function nameJoinLines(uid: string, displayName: string): Promise<number> {
+  const name = displayName.trim();
+  if (!name || name === DELETED_USER_NAME || name === 'New member') return 0;
+  // Everything this person's system lines are about: a few per team.
+  const snap = await db().collection(Collections.messages).where('systemEvent.actorId', '==', uid).limit(400).get();
+  const lines = snap.docs.filter(
+    (d) => d.get('type') === 'system' && d.get('systemEvent.kind') === 'joined' && isNamelessJoinLine(d.get('text')),
+  );
+  if (!lines.length) return 0;
+  const batch = db().batch();
+  lines.forEach((d) => batch.update(d.ref, { text: joinedLine(name) }));
+  await batch.commit();
+  for (const groupId of new Set(lines.map((d) => String(d.get('groupId'))))) {
+    await rebuildLastMessagePreview(groupId);
+  }
+  return lines.length;
+}
+
+/**
  * The line for a team rename (CHAT-10): 'Alex renamed the team to
  * "Thunder 12U"', or without a name when it isn't known (a super admin's
  * change, say). Null when the name didn't change, so the groups trigger

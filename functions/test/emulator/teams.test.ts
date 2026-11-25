@@ -1347,6 +1347,56 @@ describe('the icon color on memberships (SET-8)', () => {
   });
 });
 
+describe('the chat says who joined (CHAT-10, #101)', () => {
+  const joinLines = async (uid: string) =>
+    (await db().collection(Collections.messages).where('systemEvent.actorId', '==', uid).get()).docs
+      .filter((d) => d.get('systemEvent.kind') === 'joined')
+      .map((d) => d.get('text'));
+  const userUpdated = (before: object, after: object) =>
+    (onUserUpdated as unknown as { run: (e: object) => Promise<void> }).run({
+      data: {
+        before: { data: () => before },
+        after: { data: () => after, ref: db().collection(Collections.users).doc('lee') },
+      },
+      params: { uid: 'lee' },
+    });
+
+  it('joining with the link names them, by their Google or Apple name while their profile has none', async () => {
+    await db().collection(Collections.users).doc('lee').update({ displayName: '' });
+    const link = await run<{ code: string }>(invites.getTeamInvite, 'ada', { groupId: 'open' });
+    await run(invites.redeemInvite, 'lee', { code: link.code }, { ...VERIFIED, name: 'Lee K.' });
+    expect(await joinLines('lee')).toEqual(['Lee K. joined']);
+  });
+
+  it('"Someone joined" names them once they have a name, and the preview shows it', async () => {
+    await db().collection(Collections.users).doc('lee').update({ displayName: '' });
+    const messages = db().collection(Collections.messages);
+    // Older lines: someone else's, and one of theirs that isn't a join.
+    const older = Timestamp.fromMillis(Date.now() - 60_000);
+    await messages.doc('samJoined').set({
+      groupId: 'open', type: 'system', text: 'Sam Rivera joined', createdAt: older,
+      systemEvent: { kind: 'joined', actorId: 'sam', targetId: null },
+    });
+    await messages.doc('leeAdmin').set({
+      groupId: 'open', type: 'system', text: 'Someone is now an admin', createdAt: older,
+      systemEvent: { kind: 'madeAdmin', actorId: 'lee', targetId: null },
+    });
+    const link = await run<{ code: string }>(invites.getTeamInvite, 'ada', { groupId: 'open' });
+    await run(invites.redeemInvite, 'lee', { code: link.code });
+    expect(await joinLines('lee')).toEqual(['Someone joined']);
+    await db().collection(Collections.users).doc('lee').update({ displayName: 'Lee Kim' });
+    await userUpdated({ displayName: '', photoPath: null }, { displayName: 'Lee Kim', photoPath: null });
+    expect(await joinLines('lee')).toEqual(['Lee Kim joined']);
+    expect((await messages.doc('samJoined').get()).get('text')).toBe('Sam Rivera joined');
+    expect((await messages.doc('leeAdmin').get()).get('text')).toBe('Someone is now an admin');
+    expect((await groups().doc('open').get()).get('lastMessagePreview')).toMatchObject({ text: 'Lee Kim joined' });
+    // A later change of name leaves a line that names them alone.
+    await db().collection(Collections.users).doc('lee').update({ displayName: 'Lee K.' });
+    await userUpdated({ displayName: 'Lee Kim', photoPath: null }, { displayName: 'Lee K.', photoPath: null });
+    expect(await joinLines('lee')).toEqual(['Lee Kim joined']);
+  });
+});
+
 describe("where team notifications start for people who join (TEAM-5, NOTIF-3)", () => {
   const levelOf = async (g: string, uid: string) => (await members().doc(`${g}_${uid}`).get()).get('notificationLevel');
   const nia = async () =>

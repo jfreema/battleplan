@@ -1,13 +1,15 @@
 // The one-time change to reminders for teams made before Nov 1 (#48),
 // against the Firestore emulator: only the teams still on the old default
 // change, once, with a record to undo it and one audit entry. And the
-// one-time move of shared contacts off memberships (#45). Run with:
+// one-time move of shared contacts off memberships (#45), and the
+// one-time naming of "Someone joined" lines (#101). Run with:
 //   npm --prefix functions run emulators:test
 import { Timestamp } from 'firebase-admin/firestore';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import {
   REMINDERS_OFF_BEFORE,
   moveSharedContacts,
+  nameOldJoinLines,
   turnOffOldReminderDefaults,
   undoReminderDefaultsOff,
 } from '../../src/teams/migrations.js';
@@ -137,5 +139,52 @@ describe('shared contacts move off memberships (#45)', () => {
     await members().doc('old_pat').update({ contactPhone: '555 0123' });
     expect(await moveSharedContacts()).toBeNull();
     expect((await contacts().doc('old_pat').get()).exists).toBe(false);
+  });
+});
+
+describe('"Someone joined" lines say who joined (#101)', () => {
+  const messages = () => db().collection(Collections.messages);
+  const textOf = async (id: string) => (await messages().doc(id).get()).get('text');
+  const line = (groupId: string, kind: string, actorId: string, text: string, minutesAgo: number) => ({
+    groupId, type: 'system', authorId: 'system', authorName: '', text,
+    systemEvent: { kind, actorId, targetId: null },
+    createdAt: Timestamp.fromMillis(Date.now() - minutesAgo * 60_000),
+  });
+  beforeEach(async () => {
+    const users = db().collection(Collections.users);
+    await users.doc('nia').set({ displayName: 'Nia Park' });
+    await users.doc('kai').set({ displayName: '' });
+    await users.doc('dan').set({ displayName: 'Deleted user' });
+    await messages().doc('nia1').set(line('old', 'joined', 'nia', 'Someone joined', 1));
+    await messages().doc('kai1').set(line('old', 'joined', 'kai', 'Someone joined', 2));
+    await messages().doc('nia2').set(line('new', 'joined', 'nia', ' joined', 5));
+    // Nobody to name: no profile, or a deleted account.
+    await messages().doc('gone1').set(line('new', 'joined', 'gone', 'Someone joined', 6));
+    await messages().doc('dan1').set(line('new', 'joined', 'dan', 'Someone joined', 7));
+    // Already named, or not a join line.
+    await messages().doc('sam1').set(line('old', 'joined', 'sam', 'Sam Rivera joined', 9));
+    await messages().doc('nia3').set(line('old', 'left', 'nia', 'Someone left', 10));
+  });
+
+  it('names the ones whose people have names now, once, and writes one audit entry', async () => {
+    expect(await nameOldJoinLines(new Date('2026-11-26T10:00:00Z'))).toBe(2);
+    expect(await textOf('nia1')).toBe('Nia Park joined');
+    expect(await textOf('nia2')).toBe('Nia Park joined');
+    for (const [id, text] of [['kai1', 'Someone joined'], ['gone1', 'Someone joined'], ['dan1', 'Someone joined'],
+      ['sam1', 'Sam Rivera joined'], ['nia3', 'Someone left']]) {
+      expect(await textOf(id)).toBe(text);
+    }
+    // The team whose newest line it was shows the name in its preview.
+    expect((await db().collection(Collections.groups).doc('old').get()).get('lastMessagePreview')).toMatchObject({
+      text: 'Nia Park joined',
+    });
+    expect((await marker()).joinLinesNamed).toMatchObject({ count: 2 });
+    const entries = await db().collection(Collections.auditLogs).where('action', '==', 'joinLinesNamed').get();
+    expect(entries.size).toBe(1);
+    expect(entries.docs[0].get('actorId')).toBe('Battleplan');
+    // A second night does nothing.
+    await db().collection(Collections.users).doc('kai').set({ displayName: 'Kai Lee' });
+    expect(await nameOldJoinLines()).toBeNull();
+    expect(await textOf('kai1')).toBe('Someone joined');
   });
 });

@@ -3,6 +3,7 @@
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 import { audit } from '../audit/service.js';
+import { DELETED_USER_NAME, isNamelessJoinLine, joinedLine, rebuildLastMessagePreview } from '../chat/service.js';
 import { db } from '../shared/admin.js';
 import { Collections } from '../shared/constants.js';
 
@@ -172,4 +173,70 @@ export async function moveSharedContacts(now = new Date()): Promise<number | nul
   });
   logger.info('shared_contacts_moved', { members: all.length });
   return all.length;
+}
+
+/**
+ * #101: join lines already in teams' chats that say "Someone joined",
+ * because the person had no name yet when they joined, say who joined,
+ * from the name on their profile now. Lines for someone who still has no
+ * name, or whose account is gone, stay as they are; from now on a line is
+ * named when its person names themselves (nameJoinLines). It runs once,
+ * recorded in `ops/migrations.joinLinesNamed`; one audit entry says how
+ * many changed. Returns how many lines it named, or null when it had run
+ * before.
+ */
+export async function nameOldJoinLines(now = new Date()): Promise<number | null> {
+  if ((await migrations().get()).get('joinLinesNamed') != null) return null;
+  const claimed = await db().runTransaction(async (tx) => {
+    const snap = await tx.get(migrations());
+    if (snap.get('joinLinesNamed') != null) return false;
+    tx.set(migrations(), { joinLinesNamed: { startedAt: Timestamp.fromDate(now) } }, { merge: true });
+    return true;
+  });
+  if (!claimed) return null;
+  // Every join line, a page at a time, keeping the ones that name nobody.
+  const nameless: FirebaseFirestore.QueryDocumentSnapshot[] = [];
+  const joins = db().collection(Collections.messages).where('systemEvent.kind', '==', 'joined');
+  let last: FirebaseFirestore.QueryDocumentSnapshot | undefined;
+  for (;;) {
+    const page = await (last ? joins.startAfter(last) : joins).limit(500).get();
+    nameless.push(...page.docs.filter((d) => d.get('type') === 'system' && isNamelessJoinLine(d.get('text'))));
+    if (page.size < 500) break;
+    last = page.docs[page.docs.length - 1];
+  }
+  // Their names now, each person read once.
+  const uids = [...new Set(nameless.map((d) => String(d.get('systemEvent.actorId') ?? '')).filter(Boolean))];
+  const names = new Map<string, string>();
+  for (let i = 0; i < uids.length; i += 100) {
+    const profiles = await db().getAll(...uids.slice(i, i + 100).map((uid) => db().collection(Collections.users).doc(uid)));
+    for (const p of profiles) {
+      const name = String(p.get('displayName') ?? '').trim();
+      if (p.exists && name && name !== DELETED_USER_NAME && name !== 'New member') names.set(p.id, name);
+    }
+  }
+  const named = nameless.filter((d) => names.has(String(d.get('systemEvent.actorId'))));
+  for (let i = 0; i < named.length; i += 400) {
+    const batch = db().batch();
+    named.slice(i, i + 400).forEach((d) => batch.update(d.ref, { text: joinedLine(names.get(String(d.get('systemEvent.actorId')))) }));
+    await batch.commit();
+  }
+  // A team whose newest line was one of them shows the name in its preview.
+  for (const groupId of new Set(named.map((d) => String(d.get('groupId'))))) {
+    await rebuildLastMessagePreview(groupId);
+  }
+  await migrations().set({ joinLinesNamed: { ranAt: Timestamp.fromDate(now), count: named.length } }, { merge: true });
+  await audit({
+    actorId: SYSTEM_ACTOR,
+    action: 'joinLinesNamed',
+    targetType: 'platform',
+    targetId: 'joinLinesNamed',
+    after: {
+      lines: named.length,
+      note:
+        `${named.length} "Someone joined" ${named.length === 1 ? 'line in a chat says' : 'lines in chats say'} ` +
+        'who joined (#101), now that those people have names.',
+    },
+  });
+  logger.info('join_lines_named', { lines: named.length, nameless: nameless.length });
+  return named.length;
 }

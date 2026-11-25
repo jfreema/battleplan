@@ -5,7 +5,7 @@ import { HttpsError } from 'firebase-functions/v2/https';
 import { createHash, randomUUID } from 'node:crypto';
 import { findOrProvisionUser, sendSetupEmail } from '../accounts/service.js';
 import { tryDeleteCalendarLinksOf } from '../calendar/service.js';
-import { joinedLine, postSystemMessage } from '../chat/service.js';
+import { joinedLine, nameJoinLines, postSystemMessage } from '../chat/service.js';
 import { renameDueCharges } from '../dues/service.js';
 import { emailRoom } from '../email/budget.js';
 import { sendEmail } from '../email/service.js';
@@ -150,6 +150,8 @@ export async function updateMemberSnapshots(
   );
   await updateDirectPeople(uid, { name: displayName.trim(), photoPath, avatarColor });
   await renameDueCharges('member', uid, displayName);
+  // Join lines from before they had a name say who joined (#101).
+  await nameJoinLines(uid, displayName);
 }
 
 export interface NewGroup {
