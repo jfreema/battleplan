@@ -14,7 +14,7 @@ The iPhone and iPad app is on the App Store (https://apps.apple.com/app/id682388
 - Your schedule: on the Teams screen, what's coming up across every team and group someone is on, in one list.
 - Groups: for anything that isn't a team, with the same chat, schedule, RSVPs, documents, and dues, and everyone answers for themselves. A group's owner can make it a team later.
 - New seasons: a team's owner starts next season as a new team with the people they choose; the old season is archived with its chat, photos, and schedule.
-- Polls: one choice or several, named or anonymous, with an optional closing time. A team's poll can count one vote per player, shared by the player's guardians.
+- Polls: one choice or several, named or anonymous, with an optional closing time. A team's poll can be set to count only one vote per player, so multiple parents count as one vote.
 - Dues: admins track who has paid for uniforms, fees, and tournaments, for every player on a team or every member of a group, in full or a part at a time, and see who owes what by due and by person. Battleplan never processes payments: people pay the team directly with Venmo, Cash App, or Apple Cash. Only admins see what others owe.
 - Documents: files and links, like the lineup, league rules, and waivers, with pinning.
 - Coach's whiteboard (Plays): draw plays on a baseball and softball diamond, basketball court, soccer pitch, football field, volleyball court, or blank board, add up to 10 steps, and play them back. Anyone on the team can post a saved play to the team chat or save it as an animated GIF.
