@@ -16,7 +16,7 @@ import {
   unreadableParts,
   type ThemeColors,
 } from '../../src/admin/themes.js';
-import { CAMP_PALETTES, SCHEME_INK } from '../../src/shared/constants.js';
+import { CAMP_PALETTES, PLAIN_HEADER_SCHEMES, SCHEME_INK } from '../../src/shared/constants.js';
 
 const none: ThemeColors = { accent: null, page: null, card: null, text: null, cardText: null };
 const theme = (colors: Partial<ThemeColors>): ThemeColors => ({ ...none, ...colors });
@@ -136,6 +136,19 @@ describe('unreadableCampParts', () => {
     );
     // With one lettering, they're the panels, whatever the camouflage is.
     expect(unreadableCampParts('sky', { camoGround: '#0B1531' })).toEqual([]);
+  });
+
+  it("checks the header's lettering against the page where the scheme's own header is plain (Royal & Yellow, #117)", () => {
+    expect(PLAIN_HEADER_SCHEMES).toEqual(['candypop']);
+    // Royal & Yellow's header is its page under its dots, so a page turned
+    // white would leave its white header lettering on white.
+    expect(unreadableCampParts('candypop', { page: '#FFFFFF', text: '#101010' })).toContain('headerLettering on page');
+    expect(unreadableCampParts('candypop', { page: '#FFFFFF', text: '#101010', headerLettering: '#101010' })).not.toContain(
+      'headerLettering on page',
+    );
+    // Elsewhere the header's lettering is on the camouflage, whatever the
+    // page is: Sky Blue's is white too.
+    expect(unreadableCampParts('sky', { page: '#FFFFFF' })).not.toContain('headerLettering on page');
   });
 
   it("refuses the tags' trim nearly the ink of their lettering, or the tab bar of the current tab", () => {

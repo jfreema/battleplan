@@ -543,9 +543,10 @@ class SchemeRoles {
   /// lettering, a navy and sky camouflage.
   static final sky = SchemeRoles.camp(CampPalette.sky);
 
-  /// Royal & Gold (#90), in Candy Pop's place and its stored value (D82):
+  /// Royal & Yellow (Royal & Gold until #117; #90), in Candy Pop's place and
+  /// its stored value (D82):
   /// royal blue and gold. The identifier keeps the stored value's name.
-  static final candypop = SchemeRoles.camp(CampPalette.royalGold);
+  static final candypop = SchemeRoles.camp(CampPalette.royalYellow);
 
   /// Central Wildcats (#86): maroon and silver, with black ink.
   static final wildcat = SchemeRoles.camp(CampPalette.wildcat);
@@ -677,7 +678,8 @@ abstract final class ThemeCatalog {
 /// The Boot Camp Mix schemes, in picker order (#85, owner's pick
 /// 2026-11-22: "let's replace the existing themes with these 3 themes";
 /// #86, the same day: "add 4 new themes to the UI"; #89, the next:
-/// Graphite, Navy Steel, and Forest; #90: Royal & Gold in Candy Pop's
+/// Graphite, Navy Steel, and Forest; #90: Royal & Gold (Royal & Yellow
+/// since #117) in Candy Pop's
 /// place, and Desert Tan; and #98: Sugar Rush). Twelve since #105 took
 /// Teal Wave out (owner, 2026-11-27: "You can get rid of Teal Wave") and
 /// #106 took Tropic Blue out the same day ("Remove the tropic blue theme

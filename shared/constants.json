@@ -742,7 +742,7 @@
       "headerLettering": "#F4EAD0",
       "mustard": "#F2C230",
       "balloon": "#F2C230",
-      "red": "#DB442F",
+      "red": "#F26A50",
       "blue": "#5FA3C8",
       "green": "#9AD04A",
       "orange": "#F5A040",
@@ -770,7 +770,7 @@
       "headerLettering": "#F4EAD0",
       "mustard": "#F2C230",
       "balloon": "#93CFF5",
-      "red": "#DB442F",
+      "red": "#F26A50",
       "blue": "#4F93B9",
       "green": "#8DC63F",
       "orange": "#F2983A",
@@ -826,7 +826,7 @@
       "headerLettering": "#FFFFFF",
       "mustard": "#F5C731",
       "balloon": "#F5C731",
-      "red": "#E2463A",
+      "red": "#F26A50",
       "blue": "#4C90E2",
       "green": "#7CC84E",
       "orange": "#F5943A",
@@ -852,9 +852,9 @@
       "panelText": "#FFFFFF",
       "panelMuted": "#C9D3F2",
       "headerLettering": "#FFFFFF",
-      "mustard": "#F5C431",
-      "balloon": "#F5C431",
-      "red": "#E8473A",
+      "mustard": "#FFE240",
+      "balloon": "#FFE240",
+      "red": "#F26A50",
       "blue": "#6FC0FF",
       "green": "#86D04F",
       "orange": "#F79A3C",
@@ -867,7 +867,7 @@
       "camoBig": "#112468",
       "camoMid": "#2F52B8",
       "camoSmall": "#070F33",
-      "ballChain": "#F5C431"
+      "ballChain": "#FFE240"
     },
     "wildcat": {
       "page": "#5E1224",
@@ -1065,5 +1065,9 @@
       "camoSmall": "#FFE27D",
       "ballChain": "#2B1A4A"
     }
+  },
+  "campPlainHeaders": {
+    "$comment": "The Boot Camp Mix schemes whose own header has no camouflage, the page's color under its dots (#117: Royal & Yellow), so the server checks their header lettering against the page too. test/scheme_ink_test.dart checks they match CandyTouches.plainHeader.",
+    "schemes": ["candypop"]
   }
 }

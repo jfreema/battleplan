@@ -28,11 +28,12 @@ void main() {
     expect(AppTheme.of(TeamScheme.army).scaffoldBackgroundColor, a.page);
   });
 
-  test('mustard is you and the sticker; orange is Maybe; red is games', () {
+  test('mustard is you and the sticker; orange is Maybe; coral, where it had '
+      'red (#117), is games', () {
     expect(a.you.face, const Color(0xFFF2C230));
     expect(a.sticker.face, const Color(0xFFF2C230));
     expect(a.lemon.face, const Color(0xFFF5A040));
-    expect(a.tangerine.face, const Color(0xFFDB442F));
+    expect(a.tangerine.face, const Color(0xFFF26A50));
     // Every candy sits on a lip of its own darker shade (#98).
     for (final c in [a.you, a.mint, a.lemon, a.tangerine, a.grape]) {
       expect(c.lip, Candy.lipOf(c.face));

@@ -10,7 +10,13 @@ hand):
     website/scheme.js turns on when a scheme is tapped (and on later
     visits); and
   * website/images/camo-<value>.svg, the heroes' camouflage in the scheme's
-    four camouflage colors: camo-black.svg with its four colors swapped.
+    four camouflage colors: camo-black.svg with its four colors swapped. A
+    scheme whose headers are plain in the app (CandyTouches.plainHeader:
+    Royal & Yellow, #117) gets none: its heroes are the page's color under
+    the page's dots, with no halftone.
+
+It also checks the hand-written :root against the app's Black palette, and
+stops if a color there has fallen out of step.
 
 The tokens follow the app's roles: the page, the tab bar (the site's band),
 panels, lettering, the trim, the bright faces, and their candy lips worked
@@ -41,7 +47,7 @@ SCHEMES = [
     ("army", "army", "Army green"),
     ("light", "light", "Light"),
     ("skyblue", "sky", "Sky Blue"),
-    ("candypop", "royalGold", "Royal & Gold"),
+    ("candypop", "royalYellow", "Royal & Yellow"),
     ("graphite", "graphite", "Graphite"),
     ("navy", "navySteel", "Navy Steel"),
     ("darkarmy", "forest", "Forest"),
@@ -55,7 +61,8 @@ BLACK_CAMO = ["#23241F", "#161713", "#3A3C33", "#070706"]
 
 
 def palettes():
-    """Each palette's colors, as (a, r, g, b) in 0..255, by field."""
+    """Each palette's colors, as (a, r, g, b) in 0..255, by field, and under
+    "plainHeader" whether its headers have no camouflage."""
     src = PALETTES.read_text()
     out = {}
     for m in re.finditer(r"static const (\w+) = CampPalette\((.*?)\n  \);", src, re.S):
@@ -63,6 +70,12 @@ def palettes():
             f: tuple(int(v[i:i + 2], 16) for i in (0, 2, 4, 6))
             for f, v in re.findall(r"(\w+): Color\(0x([0-9A-Fa-f]{8})\)", m.group(2))
         }
+        touches = re.search(r"touches: CandyTouches\.(\w+)", m.group(2))
+        plain = False
+        if touches:
+            t = re.search(r"static const %s = CandyTouches\((.*?)\);" % touches.group(1), src, re.S)
+            plain = bool(t and re.search(r"plainHeader:\s*true", t.group(1)))
+        out[m.group(1)]["plainHeader"] = plain
     return out
 
 
@@ -144,6 +157,7 @@ def lip(face):
 
 def block(value, name, p):
     light_page = lum(p["page"]) > 0.18
+    plain = p["plainHeader"]
     field = p["answerRow"]
     lines = [
         f'html[data-scheme="{value}"] {{',
@@ -167,10 +181,10 @@ def block(value, name, p):
         f"  --strong: {hex6(p['text'])};",
         f"  --card-text: {hex6(p['panelText'])};",
         f"  --name-filter: {'invert(1) hue-rotate(180deg)' if lum(p['tabBar']) > 0.18 else 'none'};",
-        f"  --halftone: {rgba(p['headerHalftone'])};",
+        f"  --halftone: {'transparent' if plain else rgba(p['headerHalftone'])};",
         f"  --hero-text: {hex6(p['headerLettering'])};",
-        f"  --hero-ground: {hex6(p['camoGround'])};",
-        f"  --camo: url(\"/images/camo-{value}.svg\");",
+        f"  --hero-ground: {hex6(p['page'] if plain else p['camoGround'])};",
+        "  --camo: none;" if plain else f"  --camo: url(\"/images/camo-{value}.svg\");",
         f"  --red: {hex6(p['red'])};",
         f"  --green: {hex6(p['green'])};",
         f"  --orange: {hex6(p['orange'])};",
@@ -185,19 +199,52 @@ def block(value, name, p):
         f"  --page-lip: {hex6(lip(p['page']))};",
         "}",
     ]
+    if plain:
+        # Plain headers: the page's dots on the page's color, as body has.
+        lines.append(
+            f'html[data-scheme="{value}"] :is(.hero, .feature-hero) '
+            "{ background: radial-gradient(circle, var(--dots) 1.15px, transparent 1.45px) 0 0 / 8px 8px, var(--page); }"
+        )
     return "\n".join(lines)
+
+
+def check_root(black):
+    """The hand-written :root is Black: its colors must be the palette's."""
+    css = CSS.read_text()
+    root = css[css.index(":root {"):css.index("}", css.index(":root {"))]
+    want = {
+        "--page": hex6(black["page"]), "--band": hex6(black["tabBar"]), "--text": hex6(black["text"]),
+        "--card": hex6(black["panel"]), "--trim": hex6(black["mustard"]), "--drop": hex6(black["shadow"]),
+        "--red": hex6(black["red"]), "--green": hex6(black["green"]), "--orange": hex6(black["orange"]),
+        "--blue": hex6(black["blue"]), "--purple": hex6(black["purple"]),
+        "--red-lip": hex6(lip(black["red"])), "--green-lip": hex6(lip(black["green"])),
+        "--trim-lip": hex6(lip(black["mustard"])), "--orange-lip": hex6(lip(black["orange"])),
+        "--purple-lip": hex6(lip(black["purple"])),
+    }
+    wrong = []
+    for token, value in want.items():
+        m = re.search(r"%s: (#[0-9a-fA-F]{6});" % re.escape(token), root)
+        if not m or m.group(1).lower() != value:
+            wrong.append(f"{token} is {m.group(1) if m else 'missing'}, the app's Black has {value}")
+    if wrong:
+        raise SystemExit("website/site.css :root is out of step with the app's Black scheme:\n  " + "\n  ".join(wrong))
 
 
 def main():
     pal = palettes()
     blocks = [block(v, n, pal[k]) for v, k, n in SCHEMES]
     camo = CAMO.read_text()
+    check_root(pal["black"])
     for value, key, _ in SCHEMES:
         p = pal[key]
+        target = ROOT / f"website/images/camo-{value}.svg"
+        if p["plainHeader"]:
+            target.unlink(missing_ok=True)
+            continue
         svg = camo
         for old, field in zip(BLACK_CAMO, ["camoGround", "camoBig", "camoMid", "camoSmall"]):
             svg = svg.replace(f'fill="{old}"', f'fill="{hex6(p[field]).upper()}"')
-        (ROOT / f"website/images/camo-{value}.svg").write_text(svg)
+        target.write_text(svg)
     css = CSS.read_text()
     generated = (
         BEGIN + "\n/* Every scheme but Black (:root above), from the app's palettes in\n"

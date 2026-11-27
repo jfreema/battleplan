@@ -99,7 +99,7 @@ Your schedule: what's next on every team, on the Teams screen.
 Free for every team, with no ads. Chat with the team, schedule games and practices, see who's coming for every player, and keep files and plays in one place.
 ```
 
-**Description** (4,000 characters; for 1.2, so it names Open Field's color schemes and Dues, which 1.1 doesn't have):
+**Description** (4,000 characters; for 1.2, so it names Open Field's color schemes and Dues, which 1.1 doesn't have; the scheme list says Royal & Yellow since #117, 2026-11-27, which App Store Connect's 1.4.6, in review, doesn't have yet: its text says Royal & Gold, and the new name goes in with the next version, as do screenshots in the new coral, since the 27 store pictures show Black with the red it had):
 
 ```
 Battleplan is team chat and scheduling for sports teams, free for every team and with no ads. Coaches, players, and parents get the whole team in one app: the chat, the schedule, who's coming, and the team's files.
@@ -134,7 +134,7 @@ MORE FOR COACHES
 • Groups for anything that isn't a team, with the same chat, schedule, and RSVPs
 
 MAKE IT YOURS
-• Twelve color schemes, from Black and Army green to Sky Blue, Navy Steel, Royal & Gold, and Sugar Rush
+• Twelve color schemes, from Black and Army green to Sky Blue, Navy Steel, Royal & Yellow, and Sugar Rush
 • Pick the scheme you see for each team, and a default
 • Pick your icon: a photo, or your initials on a color
 • Coaches pick the chat's message color and background

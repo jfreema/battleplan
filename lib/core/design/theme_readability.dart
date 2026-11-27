@@ -116,8 +116,10 @@ typedef CampPair = ({CampColor fg, CampColor bg, Color fgColor, Color bgColor});
 /// Pop's are the camouflage's deeper blue, where its page's white reads),
 /// the panels' text on them, the header's lettering on the camouflage, the
 /// tags' ink lettering on the trim, the current tab's trim tile on the tab
-/// bar, games, send and alerts on the page and on panels, and your messages
-/// on the page. What the app makes read by itself (second lines, colored
+/// bar, games, send and alerts on the page and on panels, your messages on
+/// the page, and, where the scheme's own header is plain (Royal & Yellow,
+/// #117), the header's lettering on the page, which is what it sits on
+/// there. What the app makes read by itself (second lines, colored
 /// words, the lettering on a colored block) isn't checked; the server checks
 /// the same pairs (`unreadableCampParts` in functions/src/admin/themes.ts).
 List<CampPair> campPairs(CampPalette p) {
@@ -135,6 +137,9 @@ List<CampPair> campPairs(CampPalette p) {
     pair(CampColor.red, CampColor.page),
     pair(CampColor.red, CampColor.panel),
     pair(CampColor.balloon, CampColor.page),
+    // A scheme whose own header is plain (Royal & Yellow, #117): the
+    // header's lettering sits on the page there.
+    if (p.touches.plainHeader) pair(CampColor.headerLettering, CampColor.page),
   ];
 }
 

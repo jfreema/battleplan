@@ -10,6 +10,7 @@ import 'package:battleplan/core/design/app_theme.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/design/theme_readability.dart';
+import 'package:battleplan/core/widgets/camo.dart';
 import 'package:battleplan/core/widgets/header_patterns.dart';
 import 'package:battleplan/features/admin/data/functions_admin_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -128,6 +129,39 @@ void main() {
         (CampColor.red, CampColor.page),
         (CampColor.red, CampColor.panel),
       ]);
+    });
+
+    test("the header's lettering on the page, where the scheme's own header "
+        'is plain (Royal & Yellow, #117)', () {
+      const royal = CampPalette.royalYellow;
+      expect(
+        campPairs(royal).map((p) => (p.fg, p.bg)),
+        contains((CampColor.headerLettering, CampColor.page)),
+      );
+      // A page turned white under dark text leaves its white header
+      // lettering on white.
+      final problems = campThemeProblems(
+        royal,
+        royal.withColors(const {
+          CampColor.page: Color(0xFFFFFFFF),
+          CampColor.text: Color(0xFF101010),
+        }),
+      );
+      expect(
+        problems.map((p) => (p.fg, p.bg)),
+        contains((CampColor.headerLettering, CampColor.page)),
+      );
+      // Elsewhere the header's lettering is on the camouflage, whatever the
+      // page is: Sky Blue's is white too.
+      for (final scheme in bootCampSchemes) {
+        if (scheme == TeamScheme.candypop) continue;
+        expect(
+          campPairs(SchemeRoles.builtIn(scheme).palette)
+              .map((p) => (p.fg, p.bg)),
+          isNot(contains((CampColor.headerLettering, CampColor.page))),
+          reason: scheme.value,
+        );
+      }
     });
 
     test("text on its page, tab bar, text boxes and panels, the header's "
@@ -322,6 +356,50 @@ void main() {
       expect(ThemeCatalog.headerStyleOf(TeamScheme.light), HeaderStyle.camo);
       // A header alone changes no color.
       expect(SchemeRoles.of(TeamScheme.dark), same(SchemeRoles.dark));
+    });
+
+    test("a scheme with plain headers (Royal & Yellow, #117) has the page's "
+        'color under its dots there, with no camouflage; another pattern the '
+        'editor picks is still drawn', () async {
+      Future<Map<int, int>> colors(CampPalette p, HeaderStyle style) async {
+        final recorder = ui.PictureRecorder();
+        CamoPainter(
+          p,
+          style: style,
+        ).paint(Canvas(recorder), const Size(400, 140));
+        final image = await recorder.endRecording().toImage(400, 140);
+        final bytes = (await image.toByteData())!;
+        final counts = <int, int>{};
+        for (var i = 0; i < bytes.lengthInBytes; i += 4) {
+          final argb =
+              bytes.getUint8(i + 3) << 24 |
+              bytes.getUint8(i) << 16 |
+              bytes.getUint8(i + 1) << 8 |
+              bytes.getUint8(i + 2);
+          counts[argb] = (counts[argb] ?? 0) + 1;
+        }
+        image.dispose();
+        return counts;
+      }
+
+      const royal = CampPalette.royalYellow;
+      final plain = await colors(royal, HeaderStyle.camo);
+      // Mostly the page's royal, and none of the camouflage's blotches.
+      expect(plain[royal.page.toARGB32()]! / (400 * 140), greaterThan(0.8));
+      for (final c in [royal.camoBig, royal.camoMid, royal.camoSmall]) {
+        expect(plain[c.toARGB32()], isNull);
+      }
+      // The dots are there: something other than the page's color.
+      expect(plain.length, greaterThan(1));
+      // A camouflage scheme has its ground and blotches, and no page color.
+      const army = CampPalette.army;
+      final camo = await colors(army, HeaderStyle.camo);
+      expect(camo[army.camoBig.toARGB32()], isNotNull);
+      expect(camo[army.page.toARGB32()], isNull);
+      // Royal & Yellow with another pattern: its camouflage colors.
+      final stripes = await colors(royal, HeaderStyle.stripes);
+      expect(stripes[royal.page.toARGB32()], isNull);
+      expect(stripes[royal.camoGround.toARGB32()], isNotNull);
     });
 
     for (final style in HeaderStyle.values.skip(1)) {

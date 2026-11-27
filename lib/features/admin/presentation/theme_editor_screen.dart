@@ -158,16 +158,21 @@ CampPalette _paletteOf(TeamScheme scheme, CampTheme? theme) => theme == null
     ? SchemeRoles.builtIn(scheme).palette
     : editedPalette(scheme, theme.colors);
 
-/// What the editor calls a header background (#91).
-String headerStyleLabel(AppLocalizations l10n, HeaderStyle style) =>
-    switch (style) {
-      HeaderStyle.camo => l10n.headerCamo,
-      HeaderStyle.digital => l10n.headerDigital,
-      HeaderStyle.topo => l10n.headerTopo,
-      HeaderStyle.playbook => l10n.headerPlaybook,
-      HeaderStyle.stripes => l10n.headerStripes,
-      HeaderStyle.halftone => l10n.headerHalftone,
-    };
+/// What the editor calls a header background (#91). [plain] is whether the
+/// scheme's own header has no camouflage (Royal & Yellow's, #117): its first
+/// choice is then "Plain", which is what [CamoPainter] draws for it.
+String headerStyleLabel(
+  AppLocalizations l10n,
+  HeaderStyle style, {
+  bool plain = false,
+}) => switch (style) {
+  HeaderStyle.camo => plain ? l10n.headerPlain : l10n.headerCamo,
+  HeaderStyle.digital => l10n.headerDigital,
+  HeaderStyle.topo => l10n.headerTopo,
+  HeaderStyle.playbook => l10n.headerPlaybook,
+  HeaderStyle.stripes => l10n.headerStripes,
+  HeaderStyle.halftone => l10n.headerHalftone,
+};
 
 /// What's changed in [theme], in a line: its header background, its
 /// sprinkles turned off, and how many colors.
@@ -440,7 +445,13 @@ class _AdminThemeEditorScreenState
                   key: const ValueKey('header-style'),
                   contentPadding: EdgeInsets.zero,
                   leading: _HeaderSwatch(palette: palette, style: _header),
-                  title: Text(headerStyleLabel(l10n, _header)),
+                  title: Text(
+                    headerStyleLabel(
+                      l10n,
+                      _header,
+                      plain: palette.touches.plainHeader,
+                    ),
+                  ),
                   subtitle: Text(l10n.adminThemeHeaderHelp),
                   trailing: _header == HeaderStyle.camo
                       ? const Icon(AppIcons.chevronRight)
@@ -829,7 +840,11 @@ Future<HeaderStyle?> showHeaderChooser(
                   Semantics(
                     button: true,
                     selected: style == current,
-                    label: headerStyleLabel(l10n, style),
+                    label: headerStyleLabel(
+                      l10n,
+                      style,
+                      plain: palette.touches.plainHeader,
+                    ),
                     child: InkWell(
                       key: ValueKey('header-${style.value}'),
                       onTap: () => Navigator.of(context).pop(style),
@@ -853,7 +868,13 @@ Future<HeaderStyle?> showHeaderChooser(
                               ),
                             ),
                             const SizedBox(height: Space.xs),
-                            Text(headerStyleLabel(l10n, style)),
+                            Text(
+                              headerStyleLabel(
+                                l10n,
+                                style,
+                                plain: palette.touches.plainHeader,
+                              ),
+                            ),
                           ],
                         ),
                       ),

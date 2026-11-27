@@ -23,7 +23,7 @@ Keep it true to the app: change this page when a feature it names changes. Don't
 Free team chat, schedule, and RSVPs for sports teams. No ads, ever.
 ```
 
-**Full description** (4,000 characters at most; this one is about 2,200):
+**Full description** (4,000 characters at most; this one is about 2,200; the scheme list says Royal & Yellow since #117, 2026-11-27, so the Play Console's copy, which says Royal & Gold, takes it with the next upload, as the phone screenshots take the new coral):
 
 ```
 Battleplan is team chat and scheduling for sports teams, free for every team and with no ads. Coaches, players, and parents get the whole team in one app: the chat, the schedule, who's coming, and the team's files.
@@ -55,7 +55,7 @@ MORE FOR COACHES
 • Bring your team's messages, photos, files, and schedule over from the app or calendar you use now
 
 MAKE IT YOURS
-• Twelve color schemes, from Black and Army green to Sky Blue, Navy Steel, Royal & Gold, and Sugar Rush
+• Twelve color schemes, from Black and Army green to Sky Blue, Navy Steel, Royal & Yellow, and Sugar Rush
 • Pick the scheme you see for each team, and a default
 • Pick your icon: a photo, or your initials on a color
 • Coaches pick the chat's message color and background

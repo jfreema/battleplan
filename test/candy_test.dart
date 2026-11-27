@@ -253,7 +253,7 @@ void main() {
       expect(p.ink, const Color(0xFF2B1A4A));
     });
 
-    test('has its own touches, which no other scheme has', () {
+    test('has its own candy touches, which no other scheme has', () {
       final t = CampPalette.sugarRush.touches;
       expect(t.titleDrop, const Color(0xFFFF5FA8));
       expect(t.burst, const Color(0xFFFFD43A));
@@ -265,15 +265,24 @@ void main() {
       expect(t.sprinkles, hasLength(6));
       for (final scheme in bootCampSchemes) {
         if (scheme == TeamScheme.sugarrush) continue;
+        // Royal & Yellow's one touch is its plain headers (#117); the rest
+        // have none.
+        final touches = SchemeRoles.builtIn(scheme).palette.touches;
         expect(
           identical(
-            SchemeRoles.builtIn(scheme).palette.touches,
-            CandyTouches.none,
+            touches,
+            scheme == TeamScheme.candypop
+                ? CandyTouches.royalYellow
+                : CandyTouches.none,
           ),
           isTrue,
           reason: scheme.value,
         );
+        expect(touches.titleDrop, isNull);
+        expect(touches.candyDots, isFalse);
+        expect(touches.pills, isFalse);
       }
+      expect(t.plainHeader, isFalse);
       // The theme editor's colors keep them.
       final edited = CampPalette.sugarRush.withColors({
         CampColor.page: const Color(0xFFFFFFFF),

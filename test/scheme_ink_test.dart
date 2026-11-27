@@ -53,4 +53,19 @@ void main() {
       }, reason: '${scheme.value}: run the change through campPalettes too');
     }
   });
+
+  // The server also checks the header's lettering against the page in the
+  // schemes whose own header is plain (#117): campPlainHeaders, which must
+  // be the schemes whose palette says so.
+  test('campPlainHeaders is the schemes whose own header is plain', () {
+    final json = jsonDecode(
+      File('shared/constants.json').readAsStringSync(),
+    ) as Map<String, dynamic>;
+    final plain = json['campPlainHeaders'] as Map<String, dynamic>;
+    expect(plain['schemes'], [
+      for (final s in bootCampSchemes)
+        if (SchemeRoles.builtIn(s).palette.touches.plainHeader) s.value,
+    ]);
+    expect(plain['schemes'], ['candypop']);
+  });
 }

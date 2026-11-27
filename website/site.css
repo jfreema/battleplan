@@ -91,8 +91,9 @@
   --hero-ground: #23241f;
   --camo: url("/images/camo-black.svg");
 
-  /* Bright faces, as in the app's Black scheme. */
-  --red: #db442f;
+  /* Bright faces, as in the app's Black scheme: its red is Graphite's
+     coral since #117. */
+  --red: #f26a50;
   --green: #8dc63f;
   --orange: #f2983a;
   --blue: #4f93b9;
@@ -106,7 +107,7 @@
      than 0.2). A face that isn't listed here carries its lip beside it. */
   --green-lip: #5c7e2e;
   --trim-lip: #a78418;
-  --red-lip: #8c3023;
+  --red-lip: #b8351c;
   --orange-lip: #ad6519;
   --purple-lip: #65468b;
   --card-lip: #111110;
@@ -839,14 +840,14 @@ html[data-scheme="army"] {
   --hero-text: #f4ead0;
   --hero-ground: #3f4722;
   --camo: url("/images/camo-army.svg");
-  --red: #db442f;
+  --red: #f26a50;
   --green: #9ad04a;
   --orange: #f5a040;
   --blue: #5fa3c8;
   --purple: #ad8cd6;
   --green-lip: #668c2f;
   --trim-lip: #a78418;
-  --red-lip: #8c3023;
+  --red-lip: #b8351c;
   --orange-lip: #b46b18;
   --purple-lip: #7046a4;
   --card-lip: #383a28;
@@ -915,21 +916,21 @@ html[data-scheme="skyblue"] {
   --hero-text: #ffffff;
   --hero-ground: #2f5596;
   --camo: url("/images/camo-skyblue.svg");
-  --red: #e2463a;
+  --red: #f26a50;
   --green: #7cc84e;
   --orange: #f5943a;
   --blue: #4c90e2;
   --purple: #a98beb;
   --green-lip: #528533;
   --trim-lip: #ac8916;
-  --red-lip: #992b23;
+  --red-lip: #b8351c;
   --orange-lip: #b16117;
   --purple-lip: #6031c5;
   --card-lip: #a8a8a8;
   --page-lip: #4890d5;
 }
 html[data-scheme="candypop"] {
-  /* Royal & Gold */
+  /* Royal & Yellow */
   color-scheme: dark;
   --page: #17307f;
   --band: #0e1e54;
@@ -944,28 +945,29 @@ html[data-scheme="candypop"] {
   --card-muted: #c9d3f2;
   --drop: #050b24;
   --ink: #050b24;
-  --trim: #f5c431;
-  --trim-text: #f5c431;
+  --trim: #ffe240;
+  --trim-text: #ffe240;
   --strong: #ffffff;
   --card-text: #ffffff;
   --name-filter: none;
-  --halftone: rgba(255, 255, 255, 0.141);
+  --halftone: transparent;
   --hero-text: #ffffff;
-  --hero-ground: #1b3690;
-  --camo: url("/images/camo-candypop.svg");
-  --red: #e8473a;
+  --hero-ground: #17307f;
+  --camo: none;
+  --red: #f26a50;
   --green: #86d04f;
   --orange: #f79a3c;
   --blue: #6fc0ff;
   --purple: #c3a6ff;
   --green-lip: #588d30;
-  --trim-lip: #ac8616;
-  --red-lip: #a0291f;
+  --trim-lip: #c3a810;
+  --red-lip: #b8351c;
   --orange-lip: #b56616;
   --purple-lip: #6928ee;
   --card-lip: #1d2d62;
   --page-lip: #14224f;
 }
+html[data-scheme="candypop"] :is(.hero, .feature-hero) { background: radial-gradient(circle, var(--dots) 1.15px, transparent 1.45px) 0 0 / 8px 8px, var(--page); }
 html[data-scheme="graphite"] {
   /* Graphite */
   color-scheme: dark;

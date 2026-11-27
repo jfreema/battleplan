@@ -19,8 +19,8 @@ import 'package:material_ui/material_ui.dart';
 import 'helpers/two_letterings.dart';
 
 /// The design's tokens (#85, #86, #89), by name, in [bootCampSchemes]'
-/// order: Army green, Black, Light, Sky Blue, Royal & Gold (in Candy Pop's
-/// place since #90), Central Wildcats, Geaux Tigahs, Graphite, Navy Steel,
+/// order: Army green, Black, Light, Sky Blue, Royal & Yellow (Royal & Gold
+/// until #117, in Candy Pop's place since #90), Central Wildcats, Geaux Tigahs, Graphite, Navy Steel,
 /// Forest, Desert Tan, and Sugar Rush (Teal Wave left in #105, Tropic Blue
 /// in #106).
 const _tokens = <String, List<int>>{
@@ -86,19 +86,19 @@ const _tokens = <String, List<int>>{
   ],
   'mustard': [
     0xFFF2C230, 0xFFF2C230, 0xFFEFBE2B, //
-    0xFFF5C731, 0xFFF5C431, 0xFFC9CED6, 0xFFFDD023,
+    0xFFF5C731, 0xFFFFE240, 0xFFC9CED6, 0xFFFDD023,
     0xFFFF7F66, 0xFFF2F5FA, 0xFFFFFFFF,
     0xFFA3A95A, 0xFFFF8CC6,
   ],
   'balloon': [
     0xFFF2C230, 0xFF93CFF5, 0xFFEFBE2B, //
-    0xFFF5C731, 0xFFF5C431, 0xFFC9CED6, 0xFFFDD023,
+    0xFFF5C731, 0xFFFFE240, 0xFFC9CED6, 0xFFFDD023,
     0xFFFF7F66, 0xFFF2F5FA, 0xFFFFFFFF,
     0xFFA3A95A, 0xFFFF8CC6,
   ],
   'red': [
-    0xFFDB442F, 0xFFDB442F, 0xFFD4432C, //
-    0xFFE2463A, 0xFFE8473A, 0xFFEE4B37, 0xFFE8473A,
+    0xFFF26A50, 0xFFF26A50, 0xFFD4432C, //
+    0xFFF26A50, 0xFFF26A50, 0xFFEE4B37, 0xFFE8473A,
     0xFFF26A50, 0xFFE2463A, 0xFFE5483A,
     0xFFC9452E, 0xFFF2473D,
   ],
@@ -188,7 +188,7 @@ const _tokens = <String, List<int>>{
   ],
   'ballChain': [
     0xFF1A1A18, 0xFF77786E, 0xFF1A1A18, //
-    0xFF0B1531, 0xFFF5C431, 0xFFC0C5CC, 0xFFFDD023,
+    0xFF0B1531, 0xFFFFE240, 0xFFC0C5CC, 0xFFFDD023,
     0xFFFF7F66, 0xFF8E9AB4, 0xFFCFE3D6,
     0xFF24231B, 0xFF2B1A4A,
   ],
@@ -609,7 +609,62 @@ void main() {
           greaterThanOrEqualTo(4.5),
           reason: scheme.value,
         );
+        // A plain header is the page's color (#117).
+        if (p.touches.plainHeader) {
+          expect(
+            ColorMath.contrast(p.headerLettering, p.page),
+            greaterThanOrEqualTo(4.5),
+            reason: scheme.value,
+          );
+        }
       }
+    });
+
+    test("coral, Graphite's, is in place of red in Black, Army green, Sky "
+        'Blue and Royal & Yellow (#117); the other schemes keep their red', () {
+      const coral = Color(0xFFF26A50);
+      expect(CampPalette.graphite.red, coral);
+      for (final p in [
+        CampPalette.black,
+        CampPalette.army,
+        CampPalette.sky,
+        CampPalette.royalYellow,
+      ]) {
+        expect(p.red, coral);
+      }
+      for (final p in [
+        CampPalette.light,
+        CampPalette.wildcat,
+        CampPalette.purpleGold,
+        CampPalette.navySteel,
+        CampPalette.forest,
+        CampPalette.desertTan,
+        CampPalette.sugarRush,
+      ]) {
+        expect(p.red, isNot(coral));
+      }
+    });
+
+    test('Royal & Yellow has a candy lemon yellow where it had gold, and is '
+        'the one scheme with plain headers (#117)', () {
+      const p = CampPalette.royalYellow;
+      const lemon = Color(0xFFFFE240);
+      expect(p.mustard, lemon);
+      expect(p.balloon, lemon);
+      expect(p.ballChain, lemon);
+      expect(SchemeRoles.of(TeamScheme.candypop).palette, same(p));
+      expect(
+        [
+          for (final scheme in bootCampSchemes)
+            if (SchemeRoles.builtIn(scheme).palette.touches.plainHeader) scheme,
+        ],
+        [TeamScheme.candypop],
+      );
+      // The editor's colors keep it.
+      expect(
+        p.withColors({CampColor.red: const Color(0xFF123456)}).touches,
+        same(p.touches),
+      );
     });
   });
 

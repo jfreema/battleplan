@@ -226,6 +226,28 @@ void main() {
     );
   });
 
+  testWidgets("Royal & Yellow's own header is named Plain, where the others' "
+      'is Camouflage (#117)', (tester) async {
+    await open(tester, path: '/admin/themes/candypop');
+    // The row's own words: the Camouflage section of colors is still there.
+    Finder inRow(String text) => find.descendant(
+      of: find.byKey(const ValueKey('header-style')),
+      matching: find.text(text),
+    );
+    expect(inRow('Plain'), findsOneWidget);
+    expect(inRow('Camouflage'), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('header-style')));
+    await tester.pumpAndSettle();
+    // The chooser's first tile.
+    Finder inTile(String text) => find.descendant(
+      of: find.byKey(const ValueKey('header-camo')),
+      matching: find.text(text),
+    );
+    expect(inTile('Plain'), findsOneWidget);
+    expect(inTile('Camouflage'), findsNothing);
+    expect(find.text('Digital'), findsOneWidget);
+  });
+
   testWidgets('sprinkles turn off and on, in the preview, and save with the '
       'rest (#98)', (tester) async {
     final admin = await open(tester, path: '/admin/themes/navy');

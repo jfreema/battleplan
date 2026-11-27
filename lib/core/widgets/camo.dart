@@ -129,6 +129,14 @@ class CamoPainter extends CustomPainter {
       canvas.restore();
       return;
     }
+    // A scheme with plain headers (Royal & Yellow, #117): the page's color
+    // under the page's dots, with no blotches and no halftone.
+    if (palette.touches.plainHeader) {
+      canvas.drawRect(Offset.zero & size, Paint()..color = palette.page);
+      DotGridPainter(color: palette.pageDots).paint(canvas, size);
+      canvas.restore();
+      return;
+    }
     // The ground under the blotches, so it's whole wherever it's drawn
     // (the theme editor's swatches, #91, as well as the header).
     canvas.drawRect(Offset.zero & size, Paint()..color = palette.camoGround);

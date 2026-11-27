@@ -16,6 +16,7 @@ import { db } from '../shared/admin.js';
 import { forEachPage } from '../shared/batch.js';
 import {
   CAMP_PALETTES,
+  PLAIN_HEADER_SCHEMES,
   type CampColor,
   Collections,
   SCHEME_INK,
@@ -346,8 +347,10 @@ export async function resetCampTheme(scheme: string): Promise<{ before: CampThem
  * text boxes (Candy Pop's are the camouflage's ground, where its page's
  * white reads), the panels' text on them, the header's lettering on the
  * camouflage, the tags' ink lettering on the trim, the current tab's trim
- * on the tab bar, games, send and alerts on the page and on panels, and
- * your messages on the page. Never refused for what the scheme ships with.
+ * on the tab bar, games, send and alerts on the page and on panels, your
+ * messages on the page, and, in a scheme whose own header is plain (Royal &
+ * Yellow, #117), the header's lettering on the page, which is what it sits
+ * on there. Never refused for what the scheme ships with.
  */
 export function unreadableCampParts(scheme: string, colors: CampColors): string[] {
   const base = CAMP_PALETTES[scheme];
@@ -364,6 +367,7 @@ export function unreadableCampParts(scheme: string, colors: CampColors): string[
     ['red', 'page'],
     ['red', 'panel'],
     ['balloon', 'page'],
+    ...(PLAIN_HEADER_SCHEMES.includes(scheme) ? ([['headerLettering', 'page']] as [CampColor, CampColor][]) : []),
   ];
   const before = pairs(base);
   return pairs(themed)

@@ -220,7 +220,8 @@ final class CampPalette {
     panelMuted: Color(0xFFD3CCAE),
     mustard: Color(0xFFF2C230),
     balloon: Color(0xFFF2C230),
-    red: Color(0xFFDB442F),
+    // Graphite's coral, in place of red (#117).
+    red: Color(0xFFF26A50),
     blue: Color(0xFF5FA3C8),
     green: Color(0xFF9AD04A),
     orange: Color(0xFFF5A040),
@@ -253,7 +254,8 @@ final class CampPalette {
     panelMuted: Color(0xFFB5B1A2),
     mustard: Color(0xFFF2C230),
     balloon: Color(0xFF93CFF5),
-    red: Color(0xFFDB442F),
+    // Graphite's coral, in place of red (#117).
+    red: Color(0xFFF26A50),
     blue: Color(0xFF4F93B9),
     green: Color(0xFF8DC63F),
     orange: Color(0xFFF2983A),
@@ -324,7 +326,8 @@ final class CampPalette {
     panelMuted: Color(0xFF34476E),
     mustard: Color(0xFFF5C731),
     balloon: Color(0xFFF5C731),
-    red: Color(0xFFE2463A),
+    // Graphite's coral, in place of red (#117).
+    red: Color(0xFFF26A50),
     blue: Color(0xFF4C90E2),
     green: Color(0xFF7CC84E),
     orange: Color(0xFFF5943A),
@@ -342,12 +345,17 @@ final class CampPalette {
     ballChain: Color(0xFF0B1531),
   );
 
-  /// Royal & Gold (#90, owner's request 2026-11-23: "replace the candy pop
-  /// theme with the Royal and Gold theme"; the mockups' style 45), in Candy
-  /// Pop's place and its stored value: a royal-blue page, panels a shade
-  /// lighter, white lettering, gold trim and balloons, practices in sky blue
-  /// so they show on the royal, and a royal camouflage.
-  static const royalGold = CampPalette(
+  /// Royal & Yellow (Royal & Gold from #90, owner's request 2026-11-23:
+  /// "replace the candy pop theme with the Royal and Gold theme", the
+  /// mockups' style 45; renamed in #117, 2026-11-27: "change the royal and
+  /// gold theme to royal and yellow - make the gold a little bit more of a
+  /// candy/lemon yellow color."), in Candy Pop's place and its stored value:
+  /// a royal-blue page, panels a shade lighter, white lettering, candy lemon
+  /// yellow trim and balloons, practices in sky blue so they show on the
+  /// royal, coral where it had red, and headers with no camouflage: the
+  /// page's royal under its dots ([CandyTouches.plainHeader]). The four
+  /// camouflage colors stay for the theme editor's other header patterns.
+  static const royalYellow = CampPalette(
     ink: Color(0xFF050B24),
     shadow: Color(0xFF050B24),
     page: Color(0xFF17307F),
@@ -358,9 +366,10 @@ final class CampPalette {
     muted: Color(0xFFC9D3F2),
     panelText: Color(0xFFFFFFFF),
     panelMuted: Color(0xFFC9D3F2),
-    mustard: Color(0xFFF5C431),
-    balloon: Color(0xFFF5C431),
-    red: Color(0xFFE8473A),
+    mustard: Color(0xFFFFE240),
+    balloon: Color(0xFFFFE240),
+    // Graphite's coral, in place of red (#117).
+    red: Color(0xFFF26A50),
     blue: Color(0xFF6FC0FF),
     green: Color(0xFF86D04F),
     orange: Color(0xFFF79A3C),
@@ -375,7 +384,8 @@ final class CampPalette {
     camoSmall: Color(0xFF070F33),
     headerHalftone: Color(0x24FFFFFF),
     headerLettering: Color(0xFFFFFFFF),
-    ballChain: Color(0xFFF5C431),
+    ballChain: Color(0xFFFFE240),
+    touches: CandyTouches.royalYellow,
   );
 
   /// Central Wildcats (#86, owner's request: "Central Wildcats
@@ -641,10 +651,14 @@ final class CandyTouches {
     this.sprinkles,
     this.sprinkleCount,
     this.twinkles,
+    this.plainHeader = false,
   });
 
   /// None: the other schemes'.
   static const none = CandyTouches();
+
+  /// Royal & Yellow's (#117): plain headers.
+  static const royalYellow = CandyTouches(plainHeader: true);
 
   /// Sugar Rush's (mockup 53): a bubblegum drop under outlined titles,
   /// lemon starbursts, panels with corners of 20 on a lavender lip, pill
@@ -704,4 +718,11 @@ final class CandyTouches {
   /// The twinkles' two colors, in place of the light schemes' mustard and
   /// pink.
   final ({Color first, Color second})? twinkles;
+
+  /// Whether the headers have no camouflage: the page's color under the
+  /// page's dots, as the rest of the screen is (#117, owner's request for
+  /// Royal & Yellow: "instead of having a camo background on the headers,
+  /// just use the lighter royal blue with the texture"). Another header
+  /// pattern the theme editor picks is still drawn.
+  final bool plainHeader;
 }

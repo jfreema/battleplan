@@ -270,6 +270,26 @@ void _tsSchemeInk(StringBuffer b, Map<String, dynamic> json) {
     );
 }
 
+/// The Boot Camp Mix schemes whose own header is plain (#117), for the theme
+/// editor's server check. The app reads `CandyTouches.plainHeader`, which a
+/// test checks against this.
+void _tsCampPlainHeaders(StringBuffer b, Map<String, dynamic> json) {
+  final plain = json['campPlainHeaders'] as Map<String, dynamic>?;
+  if (plain == null) return;
+  final schemes = (plain['schemes'] as List)
+      .cast<String>()
+      .map((s) => "'$s'")
+      .join(', ');
+  b
+    ..writeln()
+    ..writeln(
+      "/** The Boot Camp Mix schemes whose own header has no camouflage, the page's color under its dots (#117): their header lettering is checked against the page too. */",
+    )
+    ..writeln(
+      'export const PLAIN_HEADER_SCHEMES: readonly string[] = [$schemes];',
+    );
+}
+
 /// Each Boot Camp Mix scheme's colors the theme editor can change, as they
 /// ship (#88), for its server check. The app reads its own `CampPalette`,
 /// which a test checks against this.
@@ -352,6 +372,7 @@ String _ts(Map<String, dynamic> json) {
   });
   _tsSchemeInk(b, json);
   _tsCampPalettes(b, json);
+  _tsCampPlainHeaders(b, json);
   final kinds = json['notifyKinds'] as Map<String, dynamic>?;
   if (kinds != null) {
     b
