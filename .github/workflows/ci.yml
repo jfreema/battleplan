@@ -18,6 +18,15 @@ env:
 # Every job has a timeout-minutes several times its usual length. Left to
 # GitHub's own limit a job that hangs runs six hours, and in a private
 # repository those are billed minutes.
+#
+# The App job, the Web build and the Functions job can run on the owner's
+# Mac instead, at no charge (ROADMAP task 486, DEVELOPMENT.md "Building on
+# your Mac"): when the repository variable CI_ON_MAC is on, the repository is
+# private, and the run isn't for a pull request, they ask for the runner
+# tools/setup_mac_runner.sh set up (label battleplan). What changed and the
+# deploys stay on GitHub's machines, so the sign-in to Google never happens
+# on the Mac. The jobs take turns there, and wait while it's asleep. So
+# their steps work on both: no GNU-only commands, and the platform's PDFium.
 jobs:
   # Which jobs this push needs, from the files that changed since the last
   # commit CI passed on (tools/ci_changes.sh, ARCH §9): a website edit skips
@@ -62,15 +71,16 @@ jobs:
     name: App (format, analyze, test)
     needs: changes
     if: needs.changes.outputs.app != 'false'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_ON_MAC == 'on' && github.event.repository.private && github.event_name != 'pull_request' && fromJSON('["self-hosted", "macOS", "battleplan"]') || 'ubuntu-latest' }}
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+      # On the Mac, Flutter stays in the runner's folder between runs.
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
-          cache: true
+          cache: ${{ runner.environment == 'github-hosted' }}
       # Keeps pdfium_dart's PDFium download between runs: GitHub's release
       # downloads sometimes answer 504 for minutes (2026-11-09).
       - uses: actions/cache@v4
@@ -81,7 +91,9 @@ jobs:
       - name: PDFium for the build, ahead of pdfium_dart's own download
         env:
           GH_TOKEN: ${{ github.token }}
-        run: tools/fill_pdfium.sh linux-x64 || echo "::warning::Couldn't fetch PDFium ahead; the build tries itself."
+          # This machine's: linux-x64 on GitHub's, mac-arm64 on the Mac.
+          PDFIUM_TARGET: ${{ runner.os == 'macOS' && (runner.arch == 'ARM64' && 'mac-arm64' || 'mac-x64') || 'linux-x64' }}
+        run: tools/fill_pdfium.sh "$PDFIUM_TARGET" || echo "::warning::Couldn't fetch PDFium ahead; the build tries itself."
       - run: flutter pub get
       - name: Shared constants are up to date
         run: dart run tools/gen_constants.dart --check
@@ -104,12 +116,13 @@ jobs:
       # and when a long one came last (accessibility_test.dart is a quarter
       # of the whole run) the other cores sat idle until it finished. The
       # files are the ones `flutter test` finds by itself: every *_test.dart
-      # under test/.
+      # under test/. getconf and wc, not nproc and find -printf, which the
+      # Mac doesn't have.
       - name: Tests
         run: |
           # shellcheck disable=SC2046
-          flutter test --coverage --exclude-tags golden --concurrency "$(nproc)" \
-            $(find test -name '*_test.dart' -printf '%s %p\n' | sort -rn | cut -d' ' -f2-)
+          flutter test --coverage --exclude-tags golden --concurrency "$(getconf _NPROCESSORS_ONLN)" \
+            $(find test -name '*_test.dart' -exec wc -c {} + | awk '$2 != "total" {print $1, $2}' | sort -rn | cut -d' ' -f2-)
       # At least 80% of the domain and data layers (SPEC §8.1).
       - name: Coverage of domain and data layers
         run: dart run tools/check_coverage.dart coverage/lcov.info --min=80
@@ -121,18 +134,19 @@ jobs:
     name: Web build
     needs: changes
     if: needs.changes.outputs.web != 'false'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_ON_MAC == 'on' && github.event.repository.private && github.event_name != 'pull_request' && fromJSON('["self-hosted", "macOS", "battleplan"]') || 'ubuntu-latest' }}
     timeout-minutes: 30
     steps:
       # The whole history: the build number counts the commits (ARCH §9).
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      # On the Mac, Flutter stays in the runner's folder between runs.
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
-          cache: true
+          cache: ${{ runner.environment == 'github-hosted' }}
       # Keeps pdfium_dart's PDFium download between runs: GitHub's release
       # downloads sometimes answer 504 for minutes (2026-11-09).
       - uses: actions/cache@v4
@@ -143,7 +157,9 @@ jobs:
       - name: PDFium for the build, ahead of pdfium_dart's own download
         env:
           GH_TOKEN: ${{ github.token }}
-        run: tools/fill_pdfium.sh linux-x64 || echo "::warning::Couldn't fetch PDFium ahead; the build tries itself."
+          # This machine's: linux-x64 on GitHub's, mac-arm64 on the Mac.
+          PDFIUM_TARGET: ${{ runner.os == 'macOS' && (runner.arch == 'ARM64' && 'mac-arm64' || 'mac-x64') || 'linux-x64' }}
+        run: tools/fill_pdfium.sh "$PDFIUM_TARGET" || echo "::warning::Couldn't fetch PDFium ahead; the build tries itself."
       - name: Hosting build (website + web app under /app)
         run: tools/build_hosting.sh dev
         env:
@@ -163,7 +179,7 @@ jobs:
     name: Functions and security rules
     needs: changes
     if: needs.changes.outputs.functions != 'false'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_ON_MAC == 'on' && github.event.repository.private && github.event_name != 'pull_request' && fromJSON('["self-hosted", "macOS", "battleplan"]') || 'ubuntu-latest' }}
     timeout-minutes: 30
     defaults:
       run:

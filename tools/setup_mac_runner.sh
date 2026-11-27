@@ -2,10 +2,16 @@
 # Sets this Mac up as a machine GitHub Actions runs Battleplan's jobs on (a
 # "self-hosted runner"), so Release iOS builds here at no charge rather than
 # on GitHub's macOS machine, which a private repository pays about $1.10 a
-# run for (ROADMAP task 485, DEVELOPMENT.md "Building on your Mac").
+# run for (ROADMAP task 485), and, with --ci, CI's App job, Web build and
+# Functions job run here too (task 486; DEVELOPMENT.md "Building on your
+# Mac").
 #
 #   tools/setup_mac_runner.sh           set up, and Release iOS builds here
-#   tools/setup_mac_runner.sh --off     Release iOS back on GitHub's machine
+#   tools/setup_mac_runner.sh --ci      set up, and CI's tests and builds
+#                                       run here as well as Release iOS
+#   tools/setup_mac_runner.sh --ci-off  CI back on GitHub's machines, for
+#                                       days the Mac will be off or away
+#   tools/setup_mac_runner.sh --off     everything back on GitHub's machines
 #                                       (the runner stays installed)
 #   tools/setup_mac_runner.sh --on      here again (the same as setting up:
 #                                       each step it finds done is skipped)
@@ -31,7 +37,7 @@
 # 4. Registered with the repository under the label "battleplan", the one
 #    release-ios.yml asks for, as a login item (launchd): it runs whenever
 #    you're logged in, screen locked or not, and not while the Mac sleeps.
-# 5. IOS_ON_MAC=on.
+# 5. IOS_ON_MAC=on, and with --ci CI_ON_MAC=on.
 #
 # The runner keeps its PATH from this Terminal (its env.sh), so run it from a
 # Terminal where `pod` works. A job here runs as you, with your keychain:
@@ -63,13 +69,28 @@ switch() { # on|off
   fi
 }
 
+switch_ci() { # on|off
+  gh variable set CI_ON_MAC --repo "$repo" --body "$1" >/dev/null
+  if [ "$1" = on ]; then
+    echo "CI_ON_MAC is on: CI's App job, Web build and Functions job run on this Mac (not for pull requests)."
+  else
+    echo "CI_ON_MAC is off: CI runs on GitHub's machines."
+  fi
+}
+
 case "$mode" in
-  setup | --on) ;;
+  setup | --on | --ci) ;;
+  --ci-off)
+    switch_ci off
+    exit 0
+    ;;
   --off)
+    switch_ci off
     switch off
     exit 0
     ;;
   --remove)
+    switch_ci off
     switch off
     if [ -d "$dir" ]; then
       (
@@ -83,7 +104,7 @@ case "$mode" in
     echo "The runner is unregistered and $dir is gone."
     exit 0
     ;;
-  *) die "unknown option '$mode' (use --on, --off or --remove, or nothing to set up)" ;;
+  *) die "unknown option '$mode' (use --ci, --ci-off, --on, --off or --remove, or nothing to set up)" ;;
 esac
 
 # 1. Private.
@@ -138,7 +159,10 @@ fi
 ./svc.sh start
 echo "The runner is registered with $repo as \"$label\" and starts whenever you log in."
 
-# 5. Release iOS here.
+# 5. Release iOS here, and CI if asked.
 switch on
+if [ "$mode" = --ci ]; then
+  switch_ci on
+fi
 echo "Done. The first Release iOS here takes longer (it installs Flutter in $dir)."
 echo "If macOS asks whether codesign may use a key in your keychain, click Always Allow."
