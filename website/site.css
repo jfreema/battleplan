@@ -73,6 +73,23 @@
   --title: #ffffff;
   --trim: #f2c230;
   --halftone: rgba(244, 234, 208, 0.12);
+  /* Mustard as words: the trim, made to read on the page and the band
+     where a light scheme needs it darker (#111). */
+  --trim-text: #f2c230;
+  /* Words set apart with no outline around them (a bold span, a question,
+     a card's title): white here, the scheme's lettering elsewhere. */
+  --strong: #ffffff;
+  /* Lettering on a panel (a licorice button's): the page's, wherever the
+     page's is changed around it, as on a hero. */
+  --card-text: #f4ead0;
+  /* The name in the header is white on a navy drop: on a light band it's
+     turned to black on a pale one. */
+  --name-filter: none;
+  /* The heroes: the header's lettering on the camouflage, its ground, and
+     the camouflage itself. */
+  --hero-text: #f4ead0;
+  --hero-ground: #23241f;
+  --camo: url("/images/camo-black.svg");
 
   /* Bright faces, as in the app's Black scheme. */
   --red: #db442f;
@@ -116,10 +133,10 @@ body {
 }
 
 img { max-width: 100%; height: auto; display: block; }
-strong { font-weight: 700; color: var(--title); }
+strong { font-weight: 700; color: var(--strong); }
 [id] { scroll-margin-top: 84px; }
 
-a { color: inherit; text-decoration-color: var(--trim); text-decoration-thickness: 2px; text-underline-offset: 0.2em; }
+a { color: inherit; text-decoration-color: var(--trim-text); text-decoration-thickness: 2px; text-underline-offset: 0.2em; }
 a:hover { text-decoration-thickness: 3px; }
 
 :focus-visible { outline: 3px solid var(--trim); outline-offset: 3px; border-radius: 6px; }
@@ -190,7 +207,7 @@ h1 .eyebrow { text-wrap: wrap; }
    letters, white on a navy drop, as the Candy Pop header had its titles). */
 .brand { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; text-decoration: none; }
 .brand img { width: 44px; height: 44px; }
-.brand img.name { width: auto; height: 34px; }
+.brand img.name { width: auto; height: 34px; filter: var(--name-filter); }
 .site-nav { margin-left: auto; display: flex; align-items: center; gap: 2px; }
 .site-nav a:not(.btn) {
   display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px;
@@ -237,7 +254,7 @@ h1 .eyebrow { text-wrap: wrap; }
 .btn:hover { filter: brightness(1.07); text-decoration: none; }
 .btn:active { --sink: 3px; }
 /* A dark face (the app's licorice): a fainter line and streak. */
-.btn-secondary { --face: var(--card); --lip: var(--card-lip); --fg: var(--text); --shine: 0.09; --gloss: 0.17; }
+.btn-secondary { --face: var(--card); --lip: var(--card-lip); --fg: var(--card-text); --shine: 0.09; --gloss: 0.17; }
 .btn-sm { --depth: 6px; min-height: 44px; padding: 0 16px; font-size: 0.95rem; border-radius: 14px; }
 .btn-sm::after { left: 9px; top: 4px; width: 13px; height: 4px; }
 .btn-lg { min-height: 56px; padding: 0 28px; font-size: 1.15rem; }
@@ -272,8 +289,8 @@ h1 .eyebrow { text-wrap: wrap; }
   position: absolute; left: 50%; bottom: -16px; transform: translateX(-50%) rotate(-2deg);
   padding: 6px 11px 5px; white-space: nowrap;
   font: 900 0.8rem/1.2 var(--stencil); letter-spacing: 0.09em; text-transform: uppercase;
-  border: 2.5px solid #000; border-radius: 8px;
-  box-shadow: inset 0 2.5px 0 rgba(255, 255, 255, var(--shine)), 0 5px 0 -2.5px var(--lip), 0 5px 0 0 #000;
+  border: 2.5px solid var(--ink); border-radius: 8px;
+  box-shadow: inset 0 2.5px 0 rgba(255, 255, 255, var(--shine)), 0 5px 0 -2.5px var(--lip), 0 5px 0 0 var(--ink);
 }
 .tag::after {
   content: ""; position: absolute; left: 5px; top: 3px; width: 12px; height: 3.5px; border-radius: 2px;
@@ -289,7 +306,10 @@ h1 .eyebrow { text-wrap: wrap; }
    an ink line under it, as the app's team header ---------- */
 .hero, .feature-hero {
   position: relative; isolation: isolate;
-  background: url("/images/camo-black.svg") center / cover, #23241f;
+  background: var(--camo) center / cover, var(--hero-ground);
+  /* The header's lettering, white on Sky Blue's blue camouflage over its
+     navy-lettered page (#111). */
+  --text: var(--hero-text); --muted: var(--hero-text); --strong: var(--hero-text);
   border-bottom: 3px solid var(--ink);
 }
 .hero::before, .feature-hero::before, .lp-board::before {
@@ -299,6 +319,9 @@ h1 .eyebrow { text-wrap: wrap; }
   mask-image: linear-gradient(200deg, #000 4%, transparent 62%);
 }
 .hero { padding: 40px 0 56px; overflow: hidden; }
+/* Text straight on the camouflage has its ground color behind it, so it
+   reads across a light scheme's darker blotches too (#111). */
+.hero .lead, .feature-hero .lead, .feature-hero .crumbs { text-shadow: 0 0 2px var(--hero-ground), 0 0 7px var(--hero-ground); }
 .hero-grid { display: grid; gap: 36px; align-items: center; }
 .lead { font-size: clamp(1.12rem, 3.6vw, 1.3rem); line-height: 1.45; color: var(--text); max-width: 32em; }
 /* Even lines, so no word sits alone on the last one (browsers without it ignore it). */
@@ -373,8 +396,8 @@ section { padding: 64px 0; }
 .app-badge {
   --face: var(--red); --lip: var(--red-lip);
   flex: none; width: 40px; height: 40px; border-radius: 11px; display: inline-grid; place-items: center;
-  background: var(--face); color: #000; border: 3px solid #000;
-  box-shadow: inset 0 2.5px 0 rgba(255, 255, 255, 0.45), 0 5px 0 -3px var(--lip), 0 5px 0 0 #000;
+  background: var(--face); color: var(--ink); border: 3px solid var(--ink);
+  box-shadow: inset 0 2.5px 0 rgba(255, 255, 255, 0.45), 0 5px 0 -3px var(--lip), 0 5px 0 0 var(--ink);
   font: 900 1.25rem/1 var(--stencil); text-shadow: none; -webkit-text-stroke: 0;
 }
 .app-jump li:nth-child(2) .app-badge, #teamsnap .app-badge { --face: var(--orange); --lip: var(--orange-lip); }
@@ -392,7 +415,7 @@ section { padding: 64px 0; }
 .faq details:first-child { border-top: 0; }
 .faq summary {
   cursor: pointer; position: relative; list-style: none;
-  padding: 18px 52px 18px 0; font: 700 1.15rem/1.3 var(--body); color: var(--title);
+  padding: 18px 52px 18px 0; font: 700 1.15rem/1.3 var(--body); color: var(--strong);
 }
 .faq summary::-webkit-details-marker { display: none; }
 .faq summary::after {
@@ -413,15 +436,15 @@ section { padding: 64px 0; }
 .cta {
   position: relative; text-align: center;
   background: radial-gradient(circle, rgba(0, 0, 0, 0.17) 1.6px, transparent 1.95px) 0 0 / 9px 9px, var(--red);
-  color: #000; border: 3px solid #000; box-shadow: 7px 7px 0 var(--drop);
+  color: var(--ink); border: 3px solid var(--ink); box-shadow: 7px 7px 0 var(--drop);
   padding: 50px 24px 44px;
 }
-.cta h2 { text-shadow: 0.05em 0.05em 0 #000; }
-.cta p { font-size: 1.2rem; margin: 0; color: #000; }
+.cta h2 { text-shadow: 0.05em 0.05em 0 var(--ink); }
+.cta p { font-size: 1.2rem; margin: 0; color: var(--ink); }
 .cta .actions { justify-content: center; }
-.cta .btn { --face: var(--trim); --lip: var(--trim-lip); --fg: #000; }
+.cta .btn { --face: var(--trim); --lip: var(--trim-lip); --fg: var(--ink); }
 .cta .eyebrow { margin-left: auto; margin-right: auto; }
-.cta :focus-visible { outline-color: #000; }
+.cta :focus-visible { outline-color: var(--ink); }
 
 .project-support { text-align: center; padding-top: 8px; padding-bottom: 56px; }
 .project-support p { color: var(--muted); font-size: 0.95rem; margin: 12px 0 0; }
@@ -434,7 +457,7 @@ section { padding: 64px 0; }
 .burst {
   position: absolute; z-index: 4; display: grid; place-items: center; text-align: center;
   width: var(--bs, 120px); height: var(--bs, 120px);
-  font: 900 calc(var(--bs, 120px) * 0.16)/1 var(--stencil); letter-spacing: 0.04em; text-transform: uppercase; color: #000;
+  font: 900 calc(var(--bs, 120px) * 0.16)/1 var(--stencil); letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink);
   transform: rotate(10deg); pointer-events: none;
 }
 .burst::before {
@@ -477,21 +500,36 @@ section { padding: 64px 0; }
 .lp-schemes { padding: 30px 0 38px; background: var(--band); border-bottom: 3px solid var(--ink); }
 .lp-schemes-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
 .lp-schemes h2 { margin: 0; font-size: 1.5rem; -webkit-text-stroke: 0; text-shadow: none; color: var(--text); letter-spacing: 0.01em; }
-.lp-schemes h2 b { color: var(--trim); font-weight: 400; }
+.lp-schemes h2 b { color: var(--trim-text); font-weight: 400; }
 .lp-schemes-head p { margin: 0; color: var(--muted); }
 .lp-looks {
   list-style: none; margin: 20px 0 0; padding: 0;
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 12px;
 }
-.lp-looks li { display: flex; flex-direction: column; gap: 9px; min-width: 0; text-align: center; font: 700 0.8rem/1.2 var(--body); color: var(--muted); }
-.lp-looks img {
+.lp-looks li { min-width: 0; }
+/* Each is a button (#111): tapping it puts the whole site in that scheme
+   (scheme.js). Disabled until the script runs, when it's a picture and a
+   name as before. The one the site is in has the trim around it. */
+.lp-look {
+  display: flex; flex-direction: column; gap: 9px; width: 100%; padding: 0; margin: 0;
+  background: none; border: 0; border-radius: 12px; cursor: pointer;
+  text-align: center; font: 700 0.8rem/1.2 var(--body); color: var(--muted);
+  -webkit-tap-highlight-color: transparent;
+}
+.lp-look:disabled { cursor: default; }
+.lp-look img {
   display: block; width: 100%; height: auto; aspect-ratio: 360 / 422;
   border: 3px solid var(--ink); border-radius: 12px;
   box-shadow: 4px 4px 0 var(--drop);
 }
-.lp-looks li:first-child { color: var(--text); }
+.lp-look:not(:disabled):hover img { transform: translateY(-2px); }
+.lp-look:not(:disabled):active img { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--drop); }
+.lp-look[aria-pressed="true"] { color: var(--text); }
+.lp-look[aria-pressed="true"] img { outline: 3px solid var(--trim-text); outline-offset: 2px; }
+.lp-try { flex-basis: 100%; font-weight: 700; color: var(--trim-text); }
+.lp-schemes-head .lp-try { color: var(--trim-text); }
 @media (min-width: 600px) { .lp-looks { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px 18px; } }
-@media (min-width: 900px) { .lp-looks { grid-template-columns: repeat(6, minmax(0, 1fr)); } .lp-looks li { font-size: 0.86rem; } }
+@media (min-width: 900px) { .lp-looks { grid-template-columns: repeat(6, minmax(0, 1fr)); } .lp-look { font-size: 0.86rem; } }
 
 /* A step: its dog tag and caption tag, an outlined title, a line or two, a link. */
 .home section.lp-step { padding: 64px 0; }
@@ -504,15 +542,15 @@ section { padding: 64px 0; }
 .lp-dog {
   position: relative; flex: none; display: inline-grid; place-items: center;
   min-width: 52px; height: 38px; padding: 0 9px 0 22px; border-radius: 10px;
-  background: var(--trim); color: #000; border: 3px solid #000;
-  box-shadow: inset 0 2.5px 0 rgba(255, 255, 255, 0.45), 0 6px 0 -3px var(--trim-lip), 0 6px 0 0 #000;
+  background: var(--trim); color: var(--ink); border: 3px solid var(--ink);
+  box-shadow: inset 0 2.5px 0 rgba(255, 255, 255, 0.45), 0 6px 0 -3px var(--trim-lip), 0 6px 0 0 var(--ink);
   font: 900 1.05rem/1 var(--stencil); letter-spacing: 0.04em; transform: rotate(-7deg);
 }
-.lp-dog::before { content: ""; position: absolute; left: 6px; top: calc(50% - 4px); width: 8px; height: 8px; border-radius: 50%; background: var(--page); border: 2px solid #000; }
+.lp-dog::before { content: ""; position: absolute; left: 6px; top: calc(50% - 4px); width: 8px; height: 8px; border-radius: 50%; background: var(--page); border: 2px solid var(--ink); }
 .lp-dog::after { content: ""; position: absolute; left: 19px; top: 4px; width: 17px; height: 4px; border-radius: 3px; background: rgba(255, 255, 255, 0.72); }
 .lp-step h2, .lp-faq h2 { font-size: clamp(2.25rem, 10.2vw, 3.9rem); line-height: 1.06; margin-bottom: 0.32em; transform: rotate(-1.5deg); transform-origin: 0 100%; }
 .lp-copy > p:not([class]) { margin: 0; max-width: 30em; color: var(--text); font-size: clamp(1.08rem, 2.4vw, 1.2rem); text-wrap: pretty; }
-.lp-copy > .lp-note { display: flex; gap: 8px; margin: 16px 0 0; color: var(--trim); font: 700 0.98rem/1.35 var(--body); }
+.lp-copy > .lp-note { display: flex; gap: 8px; margin: 16px 0 0; color: var(--trim-text); font: 700 0.98rem/1.35 var(--body); }
 .lp-copy > .lp-note::before { content: "\2605"; }
 .lp-more { margin: 10px 0 0; font: 900 1.02rem/1.35 var(--body); }
 /* The arrow is glued to the last word, so it never wraps alone. */
@@ -529,7 +567,7 @@ section { padding: 64px 0; }
 .lp-scene { position: relative; width: 100%; margin: 0 auto; }
 .lp-scene .phone { position: absolute; width: var(--pw, 60%); padding: 1.7%; border-radius: 12.95% / 6.18%; }
 .lp-scene .phone img { border-radius: 11.07% / 5.12%; }
-.lp-clip { position: absolute; margin: 0; border: 3px solid #000; background: #000; box-shadow: 6px 6px 0 var(--drop); }
+.lp-clip { position: absolute; margin: 0; border: 3px solid var(--ink); background: #000; box-shadow: 6px 6px 0 var(--drop); }
 .lp-clip img { display: block; width: 100%; height: auto; aspect-ratio: var(--ar); object-fit: cover; object-position: 50% var(--oy); }
 .lp-clip figcaption { position: absolute; z-index: 2; left: -10px; top: -16px; margin: 0; }
 .lp-clip figcaption .eyebrow { margin: 0; font-size: 0.74rem; }
@@ -542,20 +580,20 @@ section { padding: 64px 0; }
 /* 2. Schedule: the RSVP buttons as the app draws them (candy: the picked
    one green and sunk onto its lip), then the event, a row for every player,
    and Your schedule. */
-.lp-rsvp { margin: 24px 0 0; padding: 16px; max-width: 470px; background: var(--card); border: 3px solid #000; box-shadow: 5px 5px 0 var(--drop); }
+.lp-rsvp { margin: 24px 0 0; padding: 16px; max-width: 470px; background: var(--card); border: 3px solid var(--ink); box-shadow: 5px 5px 0 var(--drop); }
 .lp-rsvp-q { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin: 0 0 12px; font: 400 1.15rem/1.15 var(--display); letter-spacing: 0.01em; }
-.lp-rsvp-q span { font: 400 0.9rem/1.15 var(--body); letter-spacing: 0; color: var(--muted); }
+.lp-rsvp-q span { font: 400 0.9rem/1.15 var(--body); letter-spacing: 0; color: var(--card-muted); }
 .lp-rsvp-row { display: flex; gap: 9px; padding-bottom: 7px; }
 .lp-rsvp-row span {
   position: relative; flex: 1 1 0; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  height: 42px; border-radius: 17px; border: 3px solid #000; background: var(--page); color: var(--text);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.09), 0 7px 0 -3px var(--page-lip), 0 7px 0 0 #000;
+  height: 42px; border-radius: 17px; border: 3px solid var(--ink); background: var(--page); color: var(--text);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.09), 0 7px 0 -3px var(--page-lip), 0 7px 0 0 var(--ink);
   font: 900 clamp(0.82rem, 3.4vw, 0.95rem)/1 var(--body); white-space: nowrap;
 }
 .lp-rsvp-row span::after { content: ""; position: absolute; left: 10px; top: 4px; width: 16px; height: 4.5px; border-radius: 3px; background: rgba(255, 255, 255, 0.17); }
 .lp-rsvp-row .on {
-  background: var(--green); color: #000; transform: translateY(3px);
-  box-shadow: inset 0 2.5px 0 rgba(255, 255, 255, 0.45), 0 4px 0 -3px var(--green-lip), 0 4px 0 0 #000;
+  background: var(--green); color: var(--ink); transform: translateY(3px);
+  box-shadow: inset 0 2.5px 0 rgba(255, 255, 255, 0.45), 0 4px 0 -3px var(--green-lip), 0 4px 0 0 var(--ink);
 }
 .lp-rsvp-row .on::after { background: rgba(255, 255, 255, 0.75); }
 .lp-rsvp-row svg { width: 16px; height: 16px; flex: none; }
@@ -569,7 +607,9 @@ section { padding: 64px 0; }
 .home section.lp-board {
   position: relative; isolation: isolate; --halftone: rgba(244, 234, 208, 0.2); --drop: #1a1a18;
   background: url("/images/camo-army.svg") center / cover, #3f4722;
-  border-top: 3px solid #000; border-bottom: 3px solid #000;
+  /* Army green's lettering in every scheme, as the band is (#111). */
+  --text: #f4ead0; --muted: #d3ccae; --trim-text: #f2c230; --strong: #ffffff;
+  border-top: 3px solid var(--ink); border-bottom: 3px solid var(--ink);
 }
 .lp-board .lp-dog { --page: #3f4722; }
 .lp-scene-board { aspect-ratio: 100 / 104; max-width: 500px; }
@@ -585,7 +625,7 @@ section { padding: 64px 0; }
    ball chain into Battleplan. */
 .lp-links { list-style: none; padding: 0; margin: 18px 0 0; }
 .lp-links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--text); text-decoration-thickness: 3px; }
-.lp-merge { padding: 20px; background: var(--card); border: 3px solid #000; box-shadow: 5px 5px 0 var(--drop); }
+.lp-merge { padding: 20px; background: var(--card); border: 3px solid var(--ink); box-shadow: 5px 5px 0 var(--drop); }
 .lp-apps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; }
 .lp-apps li:last-child { grid-column: 1 / -1; }
 .lp-apps a { width: 100%; padding: 0 8px; font-size: clamp(0.9rem, 3.8vw, 1.05rem); --face: var(--page); --lip: var(--page-lip); --fg: var(--text); --shine: 0.09; --gloss: 0.17; }
@@ -635,7 +675,7 @@ section { padding: 64px 0; }
 .toc h2 { font-size: 1.3rem; margin: 0 0 8px; }
 .steps { padding-left: 1.4em; }
 .steps li { padding-left: 4px; }
-.steps li::marker { font-family: var(--display); font-weight: 400; color: var(--trim); }
+.steps li::marker { font-family: var(--display); font-weight: 400; color: var(--trim-text); }
 /* A contact address, written so spam bots can't read it (#103): no mailto
    link, and a decoy inside it that people never see, hear, or copy. */
 .addr { overflow-wrap: anywhere; }
@@ -649,7 +689,7 @@ kbd, .ui {
 }
 .app-jump { list-style: none; padding: 0; margin: 4px 0 10px; display: flex; flex-wrap: wrap; gap: 8px 18px; }
 .app-jump a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font: 700 1rem var(--body); }
-.app-jump .app-badge { width: 30px; height: 30px; border-radius: 9px; font-size: 1rem; border-width: 2.5px; box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 4px 0 -2.5px var(--lip), 0 4px 0 0 #000; }
+.app-jump .app-badge { width: 30px; height: 30px; border-radius: 9px; font-size: 1rem; border-width: 2.5px; box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 4px 0 -2.5px var(--lip), 0 4px 0 0 var(--ink); }
 .switch-app { padding: 8px 0 12px; }
 /* The app's badge sits beside its heading, outside it, so the heading reads
    "From GroupMe" to search engines, not "GFrom GroupMe". */
@@ -707,7 +747,7 @@ kbd, .ui {
   transition: transform 0.12s, box-shadow 0.12s;
 }
 .related a:hover { transform: translate(2px, 2px); box-shadow: 3px 3px 0 var(--drop); }
-.related b { display: block; font: 400 1.2rem/1.2 var(--display); letter-spacing: 0.01em; color: var(--title); }
+.related b { display: block; font: 400 1.2rem/1.2 var(--display); letter-spacing: 0.01em; color: var(--strong); }
 .related span { display: block; margin-top: 6px; color: var(--card-muted); font-size: 0.98rem; line-height: 1.4; }
 /* Link chips (the 404 page): small licorice push buttons. */
 .link-chips { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 12px; }
@@ -737,7 +777,7 @@ kbd, .ui {
 .site-footer p { margin: 0; }
 /* The feature pages and switching, on every page's footer. */
 .footer-nav { display: grid; gap: 12px 48px; padding-bottom: 14px; margin-bottom: 4px; border-bottom: 1px solid var(--hairline); }
-.site-footer .footer-head { margin: 4px 0 0; font: 900 0.8rem/1.3 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--trim); }
+.site-footer .footer-head { margin: 4px 0 0; font: 900 0.8rem/1.3 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--trim-text); }
 /* Who made it, with the Battle Baseball wordmark (owner's request 2026-11-06). */
 .made-by {
   display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px;
@@ -759,3 +799,427 @@ kbd, .ui {
   .btn:active { --sink: 0px; }
   .related a:hover, .link-chips a:active { transform: none; }
 }
+
+/* ---------- GENERATED SCHEMES (tools/make_web_schemes.py): do not edit by hand ---------- */
+/* Every scheme but Black (:root above), from the app's palettes in
+   lib/core/design/camp_palette.dart: website/scheme.js sets
+   data-scheme on <html> when one is tapped (#111). */
+html[data-scheme="army"] {
+  /* Army green */
+  color-scheme: dark;
+  --page: #474c2b;
+  --band: #3d4124;
+  --dots: rgba(26, 26, 24, 0.2);
+  --text: #f4ead0;
+  --muted: #d3ccae;
+  --hairline: rgba(244, 234, 208, 0.14);
+  --outline: rgba(244, 234, 208, 0.3);
+  --field: #4c5130;
+  --card: #575a3a;
+  --rim: #1a1a18;
+  --card-muted: #d6cfb1;
+  --drop: #1a1a18;
+  --ink: #1a1a18;
+  --trim: #f2c230;
+  --trim-text: #f8c736;
+  --strong: #f4ead0;
+  --card-text: #f4ead0;
+  --name-filter: none;
+  --halftone: rgba(244, 234, 208, 0.2);
+  --hero-text: #f4ead0;
+  --hero-ground: #3f4722;
+  --camo: url("/images/camo-army.svg");
+  --red: #db442f;
+  --green: #9ad04a;
+  --orange: #f5a040;
+  --blue: #5fa3c8;
+  --purple: #ad8cd6;
+  --green-lip: #668c2f;
+  --trim-lip: #a78418;
+  --red-lip: #8c3023;
+  --orange-lip: #b46b18;
+  --purple-lip: #7046a4;
+  --card-lip: #383a28;
+  --page-lip: #2e311e;
+}
+html[data-scheme="light"] {
+  /* Light */
+  color-scheme: light;
+  --page: #f2ebe0;
+  --band: #ffffff;
+  --dots: rgba(26, 26, 24, 0.102);
+  --text: #1a1a18;
+  --muted: #5e584b;
+  --hairline: rgba(26, 26, 24, 0.14);
+  --outline: rgba(26, 26, 24, 0.3);
+  --field: #faedb2;
+  --card: #ffffff;
+  --rim: #1a1a18;
+  --card-muted: #5e584b;
+  --drop: #1a1a18;
+  --ink: #1a1a18;
+  --trim: #efbe2b;
+  --trim-text: #866400;
+  --strong: #1a1a18;
+  --card-text: #1a1a18;
+  --name-filter: invert(1) hue-rotate(180deg);
+  --halftone: rgba(255, 255, 255, 0.451);
+  --hero-text: #1a1a18;
+  --hero-ground: #c7b787;
+  --camo: url("/images/camo-light.svg");
+  --red: #d4432c;
+  --green: #86b93b;
+  --orange: #ee9230;
+  --blue: #4a86a8;
+  --purple: #8c68ad;
+  --green-lip: #57742d;
+  --trim-lip: #a17f19;
+  --red-lip: #843225;
+  --orange-lip: #a2611a;
+  --purple-lip: #5c4472;
+  --card-lip: #a8a8a8;
+  --page-lip: #bda277;
+}
+html[data-scheme="skyblue"] {
+  /* Sky Blue */
+  color-scheme: light;
+  --page: #bcd9f5;
+  --band: #ffffff;
+  --dots: rgba(11, 21, 49, 0.129);
+  --text: #0b1531;
+  --muted: #34476e;
+  --hairline: rgba(11, 21, 49, 0.14);
+  --outline: rgba(11, 21, 49, 0.3);
+  --field: #fbefb4;
+  --card: #ffffff;
+  --rim: #0b1531;
+  --card-muted: #34476e;
+  --drop: #0b1531;
+  --ink: #0b1531;
+  --trim: #f5c731;
+  --trim-text: #765800;
+  --strong: #0b1531;
+  --card-text: #0b1531;
+  --name-filter: invert(1) hue-rotate(180deg);
+  --halftone: rgba(255, 255, 255, 0.341);
+  --hero-text: #ffffff;
+  --hero-ground: #2f5596;
+  --camo: url("/images/camo-skyblue.svg");
+  --red: #e2463a;
+  --green: #7cc84e;
+  --orange: #f5943a;
+  --blue: #4c90e2;
+  --purple: #a98beb;
+  --green-lip: #528533;
+  --trim-lip: #ac8916;
+  --red-lip: #992b23;
+  --orange-lip: #b16117;
+  --purple-lip: #6031c5;
+  --card-lip: #a8a8a8;
+  --page-lip: #4890d5;
+}
+html[data-scheme="candypop"] {
+  /* Royal & Gold */
+  color-scheme: dark;
+  --page: #17307f;
+  --band: #0e1e54;
+  --dots: rgba(255, 255, 255, 0.071);
+  --text: #ffffff;
+  --muted: #c9d3f2;
+  --hairline: rgba(255, 255, 255, 0.14);
+  --outline: rgba(255, 255, 255, 0.3);
+  --field: #13286a;
+  --card: #22409e;
+  --rim: #050b24;
+  --card-muted: #c9d3f2;
+  --drop: #050b24;
+  --ink: #050b24;
+  --trim: #f5c431;
+  --trim-text: #f5c431;
+  --strong: #ffffff;
+  --card-text: #ffffff;
+  --name-filter: none;
+  --halftone: rgba(255, 255, 255, 0.141);
+  --hero-text: #ffffff;
+  --hero-ground: #1b3690;
+  --camo: url("/images/camo-candypop.svg");
+  --red: #e8473a;
+  --green: #86d04f;
+  --orange: #f79a3c;
+  --blue: #6fc0ff;
+  --purple: #c3a6ff;
+  --green-lip: #588d30;
+  --trim-lip: #ac8616;
+  --red-lip: #a0291f;
+  --orange-lip: #b56616;
+  --purple-lip: #6928ee;
+  --card-lip: #1d2d62;
+  --page-lip: #14224f;
+}
+html[data-scheme="graphite"] {
+  /* Graphite */
+  color-scheme: dark;
+  --page: #2b323b;
+  --band: #1e242b;
+  --dots: rgba(241, 244, 247, 0.059);
+  --text: #f1f4f7;
+  --muted: #aeb8c4;
+  --hairline: rgba(241, 244, 247, 0.14);
+  --outline: rgba(241, 244, 247, 0.3);
+  --field: #2e2a2d;
+  --card: #3a434e;
+  --rim: #070a0d;
+  --card-muted: #aeb8c4;
+  --drop: #070a0d;
+  --ink: #070a0d;
+  --trim: #ff7f66;
+  --trim-text: #ff8f75;
+  --strong: #f1f4f7;
+  --card-text: #f1f4f7;
+  --name-filter: none;
+  --halftone: rgba(255, 255, 255, 0.122);
+  --hero-text: #f1f4f7;
+  --hero-ground: #333b45;
+  --camo: url("/images/camo-graphite.svg");
+  --red: #f26a50;
+  --green: #8dc63f;
+  --orange: #f5a93a;
+  --blue: #5aa7f0;
+  --purple: #b49af0;
+  --green-lip: #5c7e2e;
+  --trim-lip: #da3212;
+  --red-lip: #b8351c;
+  --orange-lip: #b17217;
+  --purple-lip: #6333d1;
+  --card-lip: #272c32;
+  --page-lip: #1d2126;
+}
+html[data-scheme="navy"] {
+  /* Navy Steel */
+  color-scheme: dark;
+  --page: #101d3a;
+  --band: #08101f;
+  --dots: rgba(242, 246, 255, 0.071);
+  --text: #f2f6ff;
+  --muted: #afbacb;
+  --hairline: rgba(242, 246, 255, 0.14);
+  --outline: rgba(242, 246, 255, 0.3);
+  --field: #1a2742;
+  --card: #2b3850;
+  --rim: #02060f;
+  --card-muted: #afbacb;
+  --drop: #02060f;
+  --ink: #02060f;
+  --trim: #f2f5fa;
+  --trim-text: #f2f5fa;
+  --strong: #f2f6ff;
+  --card-text: #f2f6ff;
+  --name-filter: none;
+  --halftone: rgba(242, 246, 255, 0.129);
+  --hero-text: #f2f6ff;
+  --hero-ground: #1c2840;
+  --camo: url("/images/camo-navy.svg");
+  --red: #e2463a;
+  --green: #7cc84e;
+  --orange: #f5943a;
+  --blue: #5aa0e0;
+  --purple: #a98beb;
+  --green-lip: #528533;
+  --trim-lip: #7f9ac5;
+  --red-lip: #992b23;
+  --orange-lip: #b16117;
+  --purple-lip: #6031c5;
+  --card-lip: #1e2633;
+  --page-lip: #090e19;
+}
+html[data-scheme="darkarmy"] {
+  /* Forest */
+  color-scheme: dark;
+  --page: #0f2e1f;
+  --band: #081f14;
+  --dots: rgba(255, 255, 255, 0.059);
+  --text: #ffffff;
+  --muted: #b5cfc0;
+  --hairline: rgba(255, 255, 255, 0.14);
+  --outline: rgba(255, 255, 255, 0.3);
+  --field: #0c2619;
+  --card: #183e2c;
+  --rim: #050d09;
+  --card-muted: #b5cfc0;
+  --drop: #050d09;
+  --ink: #050d09;
+  --trim: #ffffff;
+  --trim-text: #ffffff;
+  --strong: #ffffff;
+  --card-text: #ffffff;
+  --name-filter: none;
+  --halftone: rgba(255, 255, 255, 0.129);
+  --hero-text: #ffffff;
+  --hero-ground: #133524;
+  --camo: url("/images/camo-darkarmy.svg");
+  --red: #e5483a;
+  --green: #8bdb5a;
+  --orange: #f5a03a;
+  --blue: #5ba8e0;
+  --purple: #b794e8;
+  --green-lip: #599e2e;
+  --trim-lip: #a8a8a8;
+  --red-lip: #9c2b21;
+  --orange-lip: #b16b17;
+  --purple-lip: #7239c2;
+  --card-lip: #0c1b14;
+  --page-lip: #08140e;
+}
+html[data-scheme="wildcat"] {
+  /* Central Wildcats */
+  color-scheme: dark;
+  --page: #5e1224;
+  --band: #0b0b0b;
+  --dots: rgba(192, 197, 204, 0.11);
+  --text: #ffffff;
+  --muted: #cdd1d8;
+  --hairline: rgba(255, 255, 255, 0.14);
+  --outline: rgba(255, 255, 255, 0.3);
+  --field: #5a1525;
+  --card: #701c30;
+  --rim: #0b0b0b;
+  --card-muted: #cdd1d8;
+  --drop: #0b0b0b;
+  --ink: #0b0b0b;
+  --trim: #c9ced6;
+  --trim-text: #c9ced6;
+  --strong: #ffffff;
+  --card-text: #ffffff;
+  --name-filter: none;
+  --halftone: rgba(255, 255, 255, 0.141);
+  --hero-text: #ffffff;
+  --hero-ground: #55111f;
+  --camo: url("/images/camo-wildcat.svg");
+  --red: #ee4b37;
+  --green: #86c94a;
+  --orange: #f59a3a;
+  --blue: #5fa8e0;
+  --purple: #b08ae0;
+  --green-lip: #588431;
+  --trim-lip: #7b8697;
+  --red-lip: #a62b1b;
+  --orange-lip: #b16617;
+  --purple-lip: #713cb2;
+  --card-lip: #461722;
+  --page-lip: #3a101a;
+}
+html[data-scheme="purplegold"] {
+  /* Geaux Tigahs */
+  color-scheme: dark;
+  --page: #461d7c;
+  --band: #2e1157;
+  --dots: rgba(253, 208, 35, 0.11);
+  --text: #ffffff;
+  --muted: #d5c6f0;
+  --hairline: rgba(255, 255, 255, 0.14);
+  --outline: rgba(255, 255, 255, 0.3);
+  --field: #481f7c;
+  --card: #55278f;
+  --rim: #170730;
+  --card-muted: #d5c6f0;
+  --drop: #170730;
+  --ink: #170730;
+  --trim: #fdd023;
+  --trim-text: #fdd023;
+  --strong: #ffffff;
+  --card-text: #ffffff;
+  --name-filter: none;
+  --halftone: rgba(255, 255, 255, 0.161);
+  --hero-text: #ffffff;
+  --hero-ground: #3f1a72;
+  --camo: url("/images/camo-purplegold.svg");
+  --red: #e8473a;
+  --green: #7fcb52;
+  --orange: #f79a3c;
+  --blue: #5aa5ee;
+  --purple: #c7a6ff;
+  --green-lip: #538933;
+  --trim-lip: #ae8e10;
+  --red-lip: #a0291f;
+  --orange-lip: #b56616;
+  --purple-lip: #7128ee;
+  --card-lip: #391f59;
+  --page-lip: #2f184d;
+}
+html[data-scheme="deserttan"] {
+  /* Desert Tan */
+  color-scheme: light;
+  --page: #e4d6b4;
+  --band: #f4ecd8;
+  --dots: rgba(36, 35, 27, 0.122);
+  --text: #24231b;
+  --muted: #615a45;
+  --hairline: rgba(36, 35, 27, 0.14);
+  --outline: rgba(36, 35, 27, 0.3);
+  --field: #e6e2c0;
+  --card: #f4ecd8;
+  --rim: #24231b;
+  --card-muted: #615a45;
+  --drop: #24231b;
+  --ink: #24231b;
+  --trim: #a3a95a;
+  --trim-text: #596114;
+  --strong: #24231b;
+  --card-text: #24231b;
+  --name-filter: invert(1) hue-rotate(180deg);
+  --halftone: rgba(255, 255, 255, 0.278);
+  --hero-text: #24231b;
+  --hero-ground: #a8956a;
+  --camo: url("/images/camo-deserttan.svg");
+  --red: #c9452e;
+  --green: #6db33f;
+  --orange: #e08a2e;
+  --blue: #4a86a8;
+  --purple: #8c68ad;
+  --green-lip: #49702f;
+  --trim-lip: #696c3f;
+  --red-lip: #7d3326;
+  --orange-lip: #915b21;
+  --purple-lip: #5c4472;
+  --card-lip: #c9ad67;
+  --page-lip: #b79b56;
+}
+html[data-scheme="sugarrush"] {
+  /* Sugar Rush */
+  color-scheme: light;
+  --page: #fff4ea;
+  --band: #ffffff;
+  --dots: rgba(255, 95, 168, 0.141);
+  --text: #2b1a4a;
+  --muted: #6e5f87;
+  --hairline: rgba(43, 26, 74, 0.14);
+  --outline: rgba(43, 26, 74, 0.3);
+  --field: #fff0f7;
+  --card: #ffffff;
+  --rim: #2b1a4a;
+  --card-muted: #6e5f87;
+  --drop: #2b1a4a;
+  --ink: #2b1a4a;
+  --trim: #ff8cc6;
+  --trim-text: #b64983;
+  --strong: #2b1a4a;
+  --card-text: #2b1a4a;
+  --name-filter: invert(1) hue-rotate(180deg);
+  --halftone: rgba(255, 255, 255, 0.549);
+  --hero-text: #2b1a4a;
+  --hero-ground: #ffc4dd;
+  --camo: url("/images/camo-sugarrush.svg");
+  --red: #f2473d;
+  --green: #5ed36a;
+  --orange: #ff9a2e;
+  --blue: #35b0ff;
+  --purple: #b58bff;
+  --green-lip: #34953e;
+  --trim-lip: #ec1883;
+  --red-lip: #ae221a;
+  --orange-lip: #b8660f;
+  --purple-lip: #6518ec;
+  --card-lip: #a8a8a8;
+  --page-lip: #f19e52;
+}
+/* ---------- END GENERATED SCHEMES ---------- */

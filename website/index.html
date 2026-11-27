@@ -8,6 +8,7 @@
   <link rel="canonical" href="https://getbattleplan.app/">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#070707">
+  <script src="/scheme.js"></script>
   <link rel="icon" href="/favicon-small.svg" type="image/svg+xml">
   <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -211,27 +212,31 @@
          request 2026-11-27: "Do something where the screenshots you already
          made are used to show all 12 color schemes."): the top of Thunder's
          schedule in each, in a small phone rim, its name under it. Three,
-         four or six across, so every row is full. The pictures are the
-         empty alt's job only: the names say which is which. -->
+         four or six across, so every row is full. The names say which is
+         which, so the pictures' alt text is empty. Each is a button that
+         recolors the whole site to that scheme, kept for later visits
+         (#111, scheme.js); they stay disabled, and the hint hidden, unless
+         the script runs. -->
     <section class="lp-schemes" aria-labelledby="schemes-title">
       <div class="wrap">
         <div class="lp-schemes-head">
           <h2 id="schemes-title"><b>12</b> color schemes</h2>
           <p>Pick one for each team. Black is where everyone starts.</p>
+          <p class="lp-try" hidden>Tap one to see this site in it.</p>
         </div>
         <ul class="lp-looks">
-          <li><img src="/images/scheme-dark.webp" width="360" height="422" loading="lazy" decoding="async" alt="">Black</li>
-          <li><img src="/images/scheme-army.webp" width="360" height="422" loading="lazy" decoding="async" alt="">Army green</li>
-          <li><img src="/images/scheme-light.webp" width="360" height="422" loading="lazy" decoding="async" alt="">Light</li>
-          <li><img src="/images/scheme-skyblue.webp" width="360" height="422" loading="lazy" decoding="async" alt="">Sky Blue</li>
-          <li><img src="/images/scheme-candypop.webp" width="360" height="422" loading="lazy" decoding="async" alt="">Royal &amp; Gold</li>
-          <li><img src="/images/scheme-graphite.webp" width="360" height="422" loading="lazy" decoding="async" alt="">Graphite</li>
-          <li><img src="/images/scheme-navy.webp" width="360" height="422" loading="lazy" decoding="async" alt="">Navy Steel</li>
-          <li><img src="/images/scheme-darkarmy.webp" width="360" height="422" loading="lazy" decoding="async" alt="">Forest</li>
-          <li><img src="/images/scheme-wildcat.webp" width="360" height="422" loading="lazy" decoding="async" alt="">Central Wildcats</li>
-          <li><img src="/images/scheme-purplegold.webp" width="360" height="422" loading="lazy" decoding="async" alt="">Geaux Tigahs</li>
-          <li><img src="/images/scheme-deserttan.webp" width="360" height="422" loading="lazy" decoding="async" alt="">Desert Tan</li>
-          <li><img src="/images/scheme-sugarrush.webp" width="360" height="422" loading="lazy" decoding="async" alt="">Sugar Rush</li>
+          <li><button class="lp-look" type="button" data-scheme="dark" aria-pressed="false" disabled><img src="/images/scheme-dark.webp" width="360" height="422" loading="lazy" decoding="async" alt=""><span>Black</span></button></li>
+          <li><button class="lp-look" type="button" data-scheme="army" aria-pressed="false" disabled><img src="/images/scheme-army.webp" width="360" height="422" loading="lazy" decoding="async" alt=""><span>Army green</span></button></li>
+          <li><button class="lp-look" type="button" data-scheme="light" aria-pressed="false" disabled><img src="/images/scheme-light.webp" width="360" height="422" loading="lazy" decoding="async" alt=""><span>Light</span></button></li>
+          <li><button class="lp-look" type="button" data-scheme="skyblue" aria-pressed="false" disabled><img src="/images/scheme-skyblue.webp" width="360" height="422" loading="lazy" decoding="async" alt=""><span>Sky Blue</span></button></li>
+          <li><button class="lp-look" type="button" data-scheme="candypop" aria-pressed="false" disabled><img src="/images/scheme-candypop.webp" width="360" height="422" loading="lazy" decoding="async" alt=""><span>Royal &amp; Gold</span></button></li>
+          <li><button class="lp-look" type="button" data-scheme="graphite" aria-pressed="false" disabled><img src="/images/scheme-graphite.webp" width="360" height="422" loading="lazy" decoding="async" alt=""><span>Graphite</span></button></li>
+          <li><button class="lp-look" type="button" data-scheme="navy" aria-pressed="false" disabled><img src="/images/scheme-navy.webp" width="360" height="422" loading="lazy" decoding="async" alt=""><span>Navy Steel</span></button></li>
+          <li><button class="lp-look" type="button" data-scheme="darkarmy" aria-pressed="false" disabled><img src="/images/scheme-darkarmy.webp" width="360" height="422" loading="lazy" decoding="async" alt=""><span>Forest</span></button></li>
+          <li><button class="lp-look" type="button" data-scheme="wildcat" aria-pressed="false" disabled><img src="/images/scheme-wildcat.webp" width="360" height="422" loading="lazy" decoding="async" alt=""><span>Central Wildcats</span></button></li>
+          <li><button class="lp-look" type="button" data-scheme="purplegold" aria-pressed="false" disabled><img src="/images/scheme-purplegold.webp" width="360" height="422" loading="lazy" decoding="async" alt=""><span>Geaux Tigahs</span></button></li>
+          <li><button class="lp-look" type="button" data-scheme="deserttan" aria-pressed="false" disabled><img src="/images/scheme-deserttan.webp" width="360" height="422" loading="lazy" decoding="async" alt=""><span>Desert Tan</span></button></li>
+          <li><button class="lp-look" type="button" data-scheme="sugarrush" aria-pressed="false" disabled><img src="/images/scheme-sugarrush.webp" width="360" height="422" loading="lazy" decoding="async" alt=""><span>Sugar Rush</span></button></li>
         </ul>
       </div>
     </section>
