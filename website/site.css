@@ -12,7 +12,7 @@
    where lettering is stamped on: tags, dog tags, and the starburst. All
    are bundled in fonts/ (SIL OFL, made by tools/make_web_fonts.sh), so the
    site makes no third-party requests. Every page is Black; the landing page
-   shows the thirteen schemes as dog tags. */
+   shows the twelve schemes as dog tags. */
 
 /* Lilita One has one weight. Ask for it at 400 everywhere: at any heavier
    weight a browser thickens it itself, and the letters clog. */
@@ -443,7 +443,7 @@ section { padding: 64px 0; }
 }
 
 /* ---------- The landing page: Camo HQ (#94). The page built like the app:
-   a camouflage hero with three phones, the thirteen schemes as dog tags on a
+   a camouflage hero with three phones, the twelve schemes as dog tags on a
    ball chain, then each feature with a numbered dog tag, an outlined title,
    and its screens, some a detail of a screenshot cropped with CSS; the
    Playbook on an Army green camouflage band; the FAQ as one panel; and a red
@@ -471,8 +471,9 @@ section { padding: 64px 0; }
 
 /* The schemes: candy dog tags on a ball chain, each the scheme's page with
    its trim along the bottom, sat on the trim's lip, and its name under it.
-   Thirteen of them: fives on a phone (5, 5, 3), seven and six on a tablet,
-   one row from 900 px. Under 360 px, fours, with the last one centered. */
+   Twelve of them, so that every row is full (#106): fours on a phone (three
+   rows), sixes from 600 px (two rows), one row from 900 px. If the count
+   changes, change the columns with it so that no row is left short. */
 .lp-schemes { padding: 30px 0 34px; background: var(--band); border-bottom: 3px solid var(--ink); }
 .lp-schemes-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
 .lp-schemes h2 { margin: 0; font-size: 1.5rem; -webkit-text-stroke: 0; text-shadow: none; color: var(--text); letter-spacing: 0.01em; }
@@ -480,7 +481,7 @@ section { padding: 64px 0; }
 .lp-schemes-head p { margin: 0; color: var(--muted); }
 .lp-tags {
   list-style: none; margin: 18px 0 0; padding: 20px 0 0; position: relative;
-  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px 8px;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px 8px;
 }
 .lp-tags::before { content: ""; position: absolute; left: 0; right: 0; top: 4px; height: 3px; background: radial-gradient(circle, #77786e 1.6px, transparent 1.9px) 0 0 / 8px 3px repeat-x; }
 .lp-tags li { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; font: 700 0.78rem/1.2 var(--body); color: var(--muted); }
@@ -510,15 +511,10 @@ section { padding: 64px 0; }
 [data-s="forest"] { --p: #0f2e1f; --k: #ffffff; --l: #a8a8a8; --hi: 0.09; }
 [data-s="wildcat"] { --p: #5e1224; --k: #c9ced6; --l: #7b8697; }
 [data-s="tigahs"] { --p: #461d7c; --k: #fdd023; --l: #ae8e10; }
-[data-s="tropic"] { --p: #0a84b4; --k: #ffd23f; --l: #c29810; }
 [data-s="desert"] { --p: #e4d6b4; --k: #a3a95a; --l: #696c3f; }
 [data-s="sugarrush"] { --p: #fff4ea; --k: #ff8cc6; --l: #ec1883; }
-@media (max-width: 359px) {
-  .lp-tags { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .lp-tags li:last-child { grid-column: 1 / -1; }
-}
-@media (min-width: 600px) { .lp-tags { grid-template-columns: repeat(7, minmax(0, 1fr)); } }
-@media (min-width: 900px) { .lp-tags { grid-template-columns: repeat(13, minmax(0, 1fr)); } }
+@media (min-width: 600px) { .lp-tags { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+@media (min-width: 900px) { .lp-tags { grid-template-columns: repeat(12, minmax(0, 1fr)); } }
 
 /* A step: its dog tag and caption tag, an outlined title, a line or two, a link. */
 .home section.lp-step { padding: 64px 0; }
