@@ -1053,7 +1053,7 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                       ],
                     ),
                   ],
-                  // About Battleplan, at the owner's request: the version, who
+                  // About BattlePlan, at the owner's request: the version, who
                   // made it, and Buy Jared a coffee.
                   const SizedBox(height: 18),
                   PageHeading(l10n.about),

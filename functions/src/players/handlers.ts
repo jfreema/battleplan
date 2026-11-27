@@ -463,7 +463,7 @@ export const resolvePendingPlayer = onCall(async (request) => {
  * (PLAYER-5), by email or by picking someone already on the team (uid).
  * The existing link vouches for them, so no approval is needed. New
  * emails get an added account and a setup email; people already on
- * Battleplan get an "added to the team" email if they weren't on it. A
+ * BattlePlan get an "added to the team" email if they weren't on it. A
  * member picked from the team gets no email, only a "You're now Emma's
  * guardian" notification.
  */

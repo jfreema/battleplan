@@ -8,7 +8,7 @@ Keep it true to the app: change this page when a feature it names changes. Don't
 
 | Field | Value |
 |---|---|
-| App name (30 characters) | `Battleplan` (if Play says it's taken: `Battleplan Team Chat`) |
+| App name (30 characters) | `BattlePlan by Battle Sports` (27 characters; the owner's settled store name, #120). The Play Console has `Battleplan` (the old spelling) until the owner changes it in Main store listing. Under the icon the app is `BattlePlan` |
 | Package name | `app.getbattleplan` (set by the first App Bundle) |
 | Default language | English (United States), en-US |
 | App or game | App |
@@ -23,10 +23,10 @@ Keep it true to the app: change this page when a feature it names changes. Don't
 Free team chat, schedule, and RSVPs for sports teams. No ads, ever.
 ```
 
-**Full description** (4,000 characters at most; this one is about 2,200; the scheme list says Royal & Yellow since #117, 2026-11-27, so the Play Console's copy, which says Royal & Gold, takes it with the next upload, as the phone screenshots take the new coral):
+**Full description** (4,000 characters at most; this one is about 2,200; the scheme list says Royal & Yellow since #117, 2026-11-27, so the Play Console's copy, which says Royal & Gold, takes it with the next upload, with the app's name written BattlePlan (#120), as the phone screenshots take the new coral):
 
 ```
-Battleplan is team chat and scheduling for sports teams, free for every team and with no ads. Coaches, players, and parents get the whole team in one app: the chat, the schedule, who's coming, and the team's files.
+BattlePlan is team chat and scheduling for sports teams, free for every team and with no ads. Coaches, players, and parents get the whole team in one app: the chat, the schedule, who's coming, and the team's files.
 
 TEAM CHAT
 • Photos, reactions, replies, @mentions, and pinned messages
@@ -105,7 +105,7 @@ Check the counts after any edit: the short description must stay at 80 character
 - Any other information:
 
 ```
-Battleplan is team chat and scheduling for sports teams. Teams are invite-only, so the demo account above already owns a team with players, events, chat, a poll, documents, and a play.
+BattlePlan is team chat and scheduling for sports teams. Teams are invite-only, so the demo account above already owns a team with players, events, chat, a poll, documents, and a play.
 
 How to get in:
 • Sign in with Google on the sign-in screen, then tap Join a Team or Group and enter the demo team's code: [the demo team's code, typed here in the Play Console only].
@@ -116,7 +116,7 @@ Where things are:
 • Block: press and hold their message and choose Block, or tap their photo to open their page and use the menu at the top (Block, Report).
 • Delete account: Profile (at the bottom of the Teams screen), then Settings, then Delete account, or getbattleplan.app/delete-account.
 • A language filter is on for every team.
-• Dues (in a team, the Team tab at the bottom, then Dues): team admins record what players owe the team for real-world things like uniforms and league fees, and what each one has paid, all at once or a part at a time. Battleplan takes no payments, sells nothing, takes no share, and holds no money, and paying unlocks nothing in the app. Under How to pay, admins and coaches list the team's own payment usernames: Copy copies one, and Open opens it in that payment service, where members pay the team directly. These are peer-to-peer payments for physical goods and services, outside Google Play billing (Payments policy, section 3).
+• Dues (in a team, the Team tab at the bottom, then Dues): team admins record what players owe the team for real-world things like uniforms and league fees, and what each one has paid, all at once or a part at a time. BattlePlan takes no payments, sells nothing, takes no share, and holds no money, and paying unlocks nothing in the app. Under How to pay, admins and coaches list the team's own payment usernames: Copy copies one, and Open opens it in that payment service, where members pay the team directly. These are peer-to-peer payments for physical goods and services, outside Google Play billing (Payments policy, section 3).
 
 Accounts are for adults 18 and older. Kids don't have accounts: parents and guardians answer for them.
 ```
@@ -146,11 +146,11 @@ Expect a rating with an "Users interact" notice. Don't pick anything aimed at ch
 - Encrypted in transit: yes. People can ask for their data to be deleted: yes.
 - Account deletion URL: `https://getbattleplan.app/delete-account` (also in the app: Profile, then Settings, then Delete account).
 - Data types and purposes: the table in STORE-PRIVACY.md, row for row (name, email, user IDs, phone number, other financial info, photos, files and docs, other in-app messages, app interactions, other user-generated content, approximate location, crash logs, diagnostics, device or other IDs). Nothing is processed ephemerally, and nothing is used for advertising.
-- **Financial info → Other financial info** is for Dues (2026-11-06): what each player or member owes and what they paid (since 2026-11-07, each payment's amount and day as an admin records it), and the team's payment usernames under How to pay. Check it: collected, not shared, optional, for App functionality. Leave **User payment info** and **Purchase history** unchecked: Battleplan never sees a card, bank, or account number, nobody buys anything in or through the app, and a share marked paid is a debt settled outside it (STORE-PRIVACY.md, "Dues: what to change in the consoles").
+- **Financial info → Other financial info** is for Dues (2026-11-06): what each player or member owes and what they paid (since 2026-11-07, each payment's amount and day as an admin records it), and the team's payment usernames under How to pay. Check it: collected, not shared, optional, for App functionality. Leave **User payment info** and **Purchase history** unchecked: BattlePlan never sees a card, bank, or account number, nobody buys anything in or through the app, and a share marked paid is a debt settled outside it (STORE-PRIVACY.md, "Dues: what to change in the consoles").
 
 **Government apps:** No, it isn't developed by or for a government.
 
-**Financial features:** "My app doesn't provide any financial features." Dues only record what members owe and whether they've paid; Battleplan never takes, sends, or holds money, and the **Open** buttons just open the team's Venmo or Cash App page, where people pay each other. It isn't a payment app, a wallet, or a money transfer service, so none of the form's categories fits. If review calls the answer inaccurate, reply with the Dues line in the App access notes; if it still objects, make the Android app copy only, like the iPhone app, rather than declare a payments feature (store checklist, Store payment rules).
+**Financial features:** "My app doesn't provide any financial features." Dues only record what members owe and whether they've paid; BattlePlan never takes, sends, or holds money, and the **Open** buttons just open the team's Venmo or Cash App page, where people pay each other. It isn't a payment app, a wallet, or a money transfer service, so none of the form's categories fits. If review calls the answer inaccurate, reply with the Dues line in the App access notes; if it still objects, make the Android app copy only, like the iPhone app, rather than declare a payments feature (store checklist, Store payment rules).
 
 **Health:** Not a health app (the Health apps declaration: none of the listed features). It stores no health data.
 
@@ -159,5 +159,5 @@ Expect a rating with an "Users interact" notice. Don't pick anything aimed at ch
 ## Release notes (internal and closed testing)
 
 ```
-Battleplan for Android: team chat, the schedule and RSVPs (each player on their own row), polls, documents, plays, and dues (partial payments, and who owes what). Thanks for testing: tell us what breaks at support@getbattleplan.app.
+BattlePlan for Android: team chat, the schedule and RSVPs (each player on their own row), polls, documents, plays, and dues (partial payments, and who owes what). Thanks for testing: tell us what breaks at support@getbattleplan.app.
 ```

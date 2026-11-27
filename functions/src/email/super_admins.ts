@@ -1,4 +1,4 @@
-// Email to the people who run Battleplan, the super admins: report alerts
+// Email to the people who run BattlePlan, the super admins: report alerts
 // (SAFE-4) and the platform alerts for new accounts and teams (ADMIN-9).
 import { logger } from 'firebase-functions/v2';
 import { HttpsError } from 'firebase-functions/v2/https';

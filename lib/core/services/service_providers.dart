@@ -54,7 +54,7 @@ CalendarAdder calendarAdder(Ref ref) => const NoopCalendarAdder();
 @Riverpod(keepAlive: true)
 FileChooser fileChooser(Ref ref) => const NoopFileChooser();
 
-/// Builds every Battleplan URL (ARCH §6.6): links people share (an event's
+/// Builds every BattlePlan URL (ARCH §6.6): links people share (an event's
 /// Share, SCHED-4), invite links, and email links. Web app links are under
 /// `/app`; the paths after it are the app's routes (ARCH §5.4).
 @Riverpod(keepAlive: true)

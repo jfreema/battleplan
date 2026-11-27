@@ -88,9 +88,9 @@ describe('what an event shows', () => {
 
   it('notes the arrival time for games, the notes, and the way back to the app', () => {
     expect(feedNotes(event({ type: 'game', arriveMinutesBefore: 45, description: 'White jerseys.' }))).toBe(
-      'Arrive 45 minutes early.\n\nWhite jerseys.\n\nOpen in Battleplan: https://getbattleplan.app/app/g/t1/schedule/e/e1',
+      'Arrive 45 minutes early.\n\nWhite jerseys.\n\nOpen in BattlePlan: https://getbattleplan.app/app/g/t1/schedule/e/e1',
     );
-    expect(feedNotes(event())).toBe('Open in Battleplan: https://getbattleplan.app/app/g/t1/schedule/e/e1');
+    expect(feedNotes(event())).toBe('Open in BattlePlan: https://getbattleplan.app/app/g/t1/schedule/e/e1');
   });
 });
 

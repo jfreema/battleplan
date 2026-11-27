@@ -632,7 +632,7 @@ class FirebaseAuthRepository implements AuthRepository {
     } on FirebaseAuthException catch (e) {
       // Deleting still goes ahead: the account is what they asked to
       // remove, and without it Apple's tokens open nothing. They can also
-      // remove Battleplan under Sign in with Apple in their Apple Account.
+      // remove BattlePlan under Sign in with Apple in their Apple Account.
       Log.error('Revoking Apple sign-in failed', e);
     }
   }

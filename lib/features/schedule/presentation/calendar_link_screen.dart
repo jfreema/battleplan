@@ -128,7 +128,7 @@ class _CalendarLinkState extends ConsumerState<CalendarLinkScreen> {
     List<Widget> linkActions(CalendarLink link) {
       // The name a new calendar gets: the team's, or the server's own name
       // for all teams.
-      final name = _allTeams ? 'Battleplan' : team;
+      final name = _allTeams ? 'BattlePlan' : team;
       final fetched = switch (link.fetchedAt) {
         final at? => ViewerZone.wallClock(context, at),
         null => null,

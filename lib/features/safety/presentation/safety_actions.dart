@@ -24,7 +24,7 @@ String reportReasonLabel(AppLocalizations l10n, ReportReason r) => switch (r) {
 /// Report a message, document, or person (SAFE-1): a reason, optional
 /// details, and a confirmation. The reported person is never told. One
 /// from a direct conversation ([direct], CHAT-19) goes to the people who
-/// run Battleplan only, and the form says so.
+/// run BattlePlan only, and the form says so.
 Future<void> showReportSheet(
   BuildContext context,
   WidgetRef ref, {

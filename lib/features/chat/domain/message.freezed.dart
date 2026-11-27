@@ -39,7 +39,7 @@ mixin _$Message {
  String? get deletedReason;/// When the server stamped it. Null while a sent message is still local.
 /// An imported message keeps the time it was sent in the other app.
  DateTime? get createdAt;/// The app it was imported from ('groupme'), with its author's name
-/// there; no Battleplan account wrote it (SPEC IMPORT-9).
+/// there; no BattlePlan account wrote it (SPEC IMPORT-9).
  String? get importedFrom;/// True until the server has the message (CHAT-4 "sending").
  bool get pending;
 /// Create a copy of Message
@@ -358,7 +358,7 @@ class _Message extends Message {
 /// An imported message keeps the time it was sent in the other app.
 @override final  DateTime? createdAt;
 /// The app it was imported from ('groupme'), with its author's name
-/// there; no Battleplan account wrote it (SPEC IMPORT-9).
+/// there; no BattlePlan account wrote it (SPEC IMPORT-9).
 @override final  String? importedFrom;
 /// True until the server has the message (CHAT-4 "sending").
 @override@JsonKey() final  bool pending;

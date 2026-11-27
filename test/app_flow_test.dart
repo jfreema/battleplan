@@ -109,7 +109,7 @@ void main() {
     GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/sign-up');
     await tester.pumpAndSettle();
     expect(find.text('Create your free account'), findsNothing);
-    expect(find.text('Welcome to Battleplan'), findsOneWidget);
+    expect(find.text('Welcome to BattlePlan'), findsOneWidget);
   });
 
   testWidgets('a broken sign-in link goes back to email sign-in, where a '
@@ -133,7 +133,7 @@ void main() {
       await tester.enterText(find.byType(TextField).at(1), 'password');
       await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
       await tester.pumpAndSettle();
-      expect(find.text('Welcome to Battleplan'), findsOneWidget);
+      expect(find.text('Welcome to BattlePlan'), findsOneWidget);
     },
   );
 
@@ -150,14 +150,14 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
     await tester.pumpAndSettle();
     expect(find.text('Thunder'), findsOneWidget);
-    expect(find.text('Welcome to Battleplan'), findsNothing);
+    expect(find.text('Welcome to BattlePlan'), findsNothing);
   });
 
   testWidgets('Google sign-in reaches the app', (tester) async {
     await pumpApp(tester, auth: FakeAuthRepository());
     await tester.tap(find.text('Continue with Google'));
     await tester.pumpAndSettle();
-    expect(find.text('Welcome to Battleplan'), findsOneWidget);
+    expect(find.text('Welcome to BattlePlan'), findsOneWidget);
   });
 
   testWidgets('cancelling Google sign-in stays on sign-in with no error', (
@@ -180,7 +180,7 @@ void main() {
     await tester.enterText(find.byType(TextField).at(2), 'longenough');
     await tester.tap(find.widgetWithText(FilledButton, 'Create account'));
     await tester.pumpAndSettle();
-    expect(find.text('Welcome to Battleplan'), findsOneWidget);
+    expect(find.text('Welcome to BattlePlan'), findsOneWidget);
     // AUTH-3: the new email account sees the verification banner.
     expect(find.textContaining('Verify your email'), findsOneWidget);
   });
@@ -261,7 +261,7 @@ void main() {
     expect(router.state.uri.toString(), '/sign-in');
     await tester.tap(find.text('Continue with Google'));
     await tester.pumpAndSettle();
-    expect(find.text('Welcome to Battleplan'), findsOneWidget);
+    expect(find.text('Welcome to BattlePlan'), findsOneWidget);
   });
 
   testWidgets('first-run setup comes first and needs both confirmations', (
@@ -290,7 +290,7 @@ void main() {
     await tester.tap(next);
     await tester.pumpAndSettle();
     expect(users.savedName, 'Jordan Coach');
-    expect(find.text('Welcome to Battleplan'), findsOneWidget);
+    expect(find.text('Welcome to BattlePlan'), findsOneWidget);
   });
 
   testWidgets("a new account the server hasn't made a profile for yet goes "
@@ -315,7 +315,7 @@ void main() {
     await tester.tap(next);
     await tester.pumpAndSettle();
     expect(users.savedName, 'Pat Apple');
-    expect(find.text('Welcome to Battleplan'), findsOneWidget);
+    expect(find.text('Welcome to BattlePlan'), findsOneWidget);
   });
 
   group('finishing setup when the save goes wrong', () {
@@ -352,7 +352,7 @@ void main() {
       users.setupError = null;
       await tester.tap(next);
       await tester.pumpAndSettle();
-      expect(find.text('Welcome to Battleplan'), findsOneWidget);
+      expect(find.text('Welcome to BattlePlan'), findsOneWidget);
     });
 
     testWidgets('a save that never answers shows it is working, then gives '

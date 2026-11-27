@@ -59,7 +59,7 @@ function page(title: string, body: string): string {
     '<!doctype html><html lang="en"><head><meta charset="utf-8">' +
     '<meta name="viewport" content="width=device-width,initial-scale=1">' +
     '<meta name="robots" content="noindex">' +
-    `<title>${escapeHtml(title)} · Battleplan</title><style>${STYLE}</style></head>` +
+    `<title>${escapeHtml(title)} · BattlePlan</title><style>${STYLE}</style></head>` +
     `<body><main>${body}</main></body></html>`
   );
 }
@@ -132,7 +132,7 @@ export function answerFormPage(input: {
       (input.error ? `<p class="error" role="alert">${escapeHtml(input.error)}</p>` : '') +
       `<form method="post">${rows}<button type="submit">Send</button></form>` +
       `<p class="small">Answering as ${escapeHtml(input.answeringAs)}. ` +
-      `<a href="${escapeHtml(input.eventUrl)}">Open in Battleplan</a></p>`,
+      `<a href="${escapeHtml(input.eventUrl)}">Open in BattlePlan</a></p>`,
   );
 }
 
@@ -150,7 +150,7 @@ export function answeredPage(input: {
       `<p class="done">Thanks! ${escapeHtml(lines)}</p>` +
       '<p class="links">' +
       `<a href="${escapeHtml(input.changeUrl)}">Change answer</a>` +
-      `<a href="${escapeHtml(input.eventUrl)}">Open in Battleplan</a></p>`,
+      `<a href="${escapeHtml(input.eventUrl)}">Open in BattlePlan</a></p>`,
   );
 }
 

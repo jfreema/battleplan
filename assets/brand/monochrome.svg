@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-<!-- Battleplan's themed Android icon: the tank as one shape. Made by tools/make_brand.py. -->
+<!-- BattlePlan's themed Android icon: the tank as one shape. Made by tools/make_brand.py. -->
 <defs><mask id="bp-mono-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
 <g transform="translate(-70.5 -32.5) translate(582.5 544.5) scale(0.8933) translate(-582.5 -544.5)">
 <g transform="translate(604 352) rotate(-13 0 0)">

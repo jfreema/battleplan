@@ -13,7 +13,7 @@
 # pool (provider github-android, which accepts only this workflow on main), as
 # play-release@battleplan-prod.iam.gserviceaccount.com, an account with no
 # Google Cloud roles. That account is invited in the Play Console (Users and
-# permissions) with release permissions for Battleplan, and battleplan-prod
+# permissions) with release permissions for BattlePlan, and battleplan-prod
 # has the Google Play Android Developer API turned on (docs/DEVELOPMENT.md,
 # Android builds).
 # Google Play takes uploads only after the app exists in the Play Console

@@ -60,7 +60,7 @@ void main() {
 
   test('adds the links at the end of the head', () {
     final html = preload.withPreloads(
-      '<html>\n<head>\n  <title>Battleplan</title>\n</head>\n<body></body>\n</html>',
+      '<html>\n<head>\n  <title>BattlePlan</title>\n</head>\n<body></body>\n</html>',
       ['https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js'],
     );
     expect(

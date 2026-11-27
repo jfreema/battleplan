@@ -1,4 +1,4 @@
-// Pure helpers for building the Battleplan profile (users/{uid}), kept free
+// Pure helpers for building the BattlePlan profile (users/{uid}), kept free
 // of Firebase so they can be unit tested.
 
 /** What the profile needs from the Firebase Auth user. */

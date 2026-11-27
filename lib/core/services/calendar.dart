@@ -67,7 +67,7 @@ String buildIcs(CalendarEntry e, {required DateTime now}) {
   final lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Battleplan//Schedule//EN',
+    'PRODID:-//BattlePlan//Schedule//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',

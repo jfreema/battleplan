@@ -21,7 +21,7 @@ Stream<AuthUser?> authUser(Ref ref) =>
 UserRepository userRepository(Ref ref) =>
     throw UnimplementedError('Wired in app/providers.dart');
 
-/// The signed-in person's Battleplan profile. Creating it at first sign-in
+/// The signed-in person's BattlePlan profile. Creating it at first sign-in
 /// is idempotent, so it's requested whenever the signed-in user changes.
 @Riverpod(keepAlive: true)
 Stream<UserProfile?> myProfile(Ref ref) {

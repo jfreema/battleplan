@@ -136,7 +136,7 @@ describe('the feed', () => {
   it('serves all teams with their names before the titles', async () => {
     const token = (await link('coach', null))!;
     const { cal } = await feed(token);
-    expect(cal!.name).toBe('Battleplan');
+    expect(cal!.name).toBe('BattlePlan');
     expect(cal!.events.map((e) => e.summary)).toEqual([
       'Cyclone · Cyclone practice',
       'Thunder · Practice',

@@ -20,7 +20,7 @@ bool get showsBuyCoffee => debugShowsBuyCoffee ?? kIsWeb;
 @visibleForTesting
 bool? debugShowsBuyCoffee;
 
-/// Who made Battleplan, for About.
+/// Who made BattlePlan, for About.
 const developerName = 'Jared Freeman';
 const _developerFirstName = 'Jared';
 
@@ -30,7 +30,7 @@ const venmoHandle = '@Jared-D-Freeman';
 final venmoUrl = Uri.https('venmo.com', '/u/Jared-D-Freeman');
 const venmoCardAsset = 'assets/about/venmo.png';
 
-/// About Battleplan, at the end of Team settings (TEAM-5): the version and
+/// About BattlePlan, at the end of Team settings (TEAM-5): the version and
 /// build, who made it, that it's free and he volunteers, and Buy Jared a
 /// coffee, which shows his Venmo, on the web only: the App Store allows a
 /// link to pay outside it only in the US, and the app is listed in Canada

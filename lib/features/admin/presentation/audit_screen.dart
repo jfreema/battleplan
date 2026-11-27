@@ -215,6 +215,11 @@ class _Actor extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // What the server did by itself is the app's own doing: its name, as
+    // it's written now, where the entry stores the old spelling as an id.
+    if (uid == systemActorId) {
+      return Text(AppLocalizations.of(context).appName);
+    }
     final name = uid.isEmpty
         ? null
         : ref.watch(adminPersonNameProvider(uid)).value;

@@ -1,6 +1,6 @@
 {
-    "name": "Battleplan",
-    "short_name": "Battleplan",
+    "name": "BattlePlan",
+    "short_name": "BattlePlan",
     "start_url": "./",
     "scope": "./",
     "display": "standalone",

@@ -76,10 +76,10 @@ describe("an invite link's preview (task 140)", () => {
 
   it("names the team and who invited you, with the team's logo", () => {
     const card = { teamName: 'Thunder U14', logoUrl: 'https://cdn.example/logo.png', invitedBy: 'Coach Lee' };
-    expect(inviteTitle(card)).toBe('Join Thunder U14 on Battleplan');
+    expect(inviteTitle(card)).toBe('Join Thunder U14 on BattlePlan');
     expect(inviteDescription(card)).toBe("Coach Lee invited you to the team's chat, schedule, and RSVPs.");
     const html = invitePreviewPage(card, urls);
-    expect(html).toContain('<meta property="og:title" content="Join Thunder U14 on Battleplan">');
+    expect(html).toContain('<meta property="og:title" content="Join Thunder U14 on BattlePlan">');
     expect(html).toContain('<meta property="og:image" content="https://cdn.example/logo.png">');
     expect(html).toContain('<meta property="og:url" content="https://getbattleplan.app/join/K7XPM2QR">');
     expect(html).toContain('<meta name="twitter:card" content="summary">');
@@ -87,14 +87,14 @@ describe("an invite link's preview (task 140)", () => {
     expect(html).toContain('noindex');
   });
 
-  it("is Battleplan's own without a logo, an inviter, or a team", () => {
+  it("is BattlePlan's own without a logo, an inviter, or a team", () => {
     const noLogo = invitePreviewPage({ teamName: 'Cyclone', logoUrl: null, invitedBy: null }, urls);
     expect(noLogo).toContain('<meta property="og:image" content="https://getbattleplan.app/images/og.jpg">');
     expect(noLogo).toContain('<meta property="og:image:width" content="1200">');
     expect(noLogo).toContain('<meta name="twitter:card" content="summary_large_image">');
     expect(noLogo).toContain("The team&#39;s chat, schedule, and RSVPs, in one app.");
     const none = invitePreviewPage(null, urls);
-    expect(none).toContain('<title>Join your team on Battleplan</title>');
+    expect(none).toContain('<title>Join your team on BattlePlan</title>');
   });
 
   it("links the App Store with Apple's badge and its credit line (task 353)", () => {
@@ -108,7 +108,7 @@ describe("an invite link's preview (task 140)", () => {
 
   it('escapes what people typed', () => {
     const html = invitePreviewPage({ teamName: '<b>"Ducks"</b>', logoUrl: null, invitedBy: 'A & B' }, urls);
-    expect(html).toContain('Join &lt;b&gt;&quot;Ducks&quot;&lt;/b&gt; on Battleplan');
+    expect(html).toContain('Join &lt;b&gt;&quot;Ducks&quot;&lt;/b&gt; on BattlePlan');
     expect(html).toContain('A &amp; B invited you');
     expect(html).not.toContain('<b>');
   });

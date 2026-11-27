@@ -1,6 +1,6 @@
 # App Store and Google Play checklist
 
-What has to happen before Apple's App Store and Google Play will approve Battleplan, in five phases. Phases 1 to 4 are requirements, grouped by what each needs first. Phase 5 isn't required but lowers the odds of a rejection. After launch, fixes and features go out as ordinary updates.
+What has to happen before Apple's App Store and Google Play will approve BattlePlan, in five phases. Phases 1 to 4 are requirements, grouped by what each needs first. Phase 5 isn't required but lowers the odds of a rejection. After launch, fixes and features go out as ordinary updates.
 
 ✅ is done, ⬜ is still to do. 👤 marks your steps: accounts, consoles, and forms only you can fill in. Task numbers are from [ROADMAP.md](ROADMAP.md). Checked against both stores' rules as of October 2026, and their payment rules again on 2026-11-06 ([Store payment rules](#store-payment-rules)).
 
@@ -17,10 +17,10 @@ Required, and doable now.
 - ✅ 1.7 **A filter for objectionable words** (SAFE-7, task 155), for Apple's guideline 1.2, which asks apps where people post content for "a method for filtering objectionable material." Swear words and slurs in chat messages, captions, and polls show as "f***"; it's on for every team, and admins can turn it off under Team settings → Language.
 - ✅ 1.8 **Act on every report within 24 hours.** Reviewers ask for this, and the Terms promise it. Every new report emails each super admin, reports about a team's admins included, and a daily email lists any report open more than 12 hours.
 - ✅ 1.9 **A privacy manifest** (`ios/Runner/PrivacyInfo.xcprivacy`) for the iPhone app, declaring why it uses APIs Apple lists (stored preferences, file timestamps, elapsed time), so uploads aren't refused (ITMS-91053). It also lists the data the Privacy Policy covers, which the App Privacy labels (1.15, 3.4) must match.
-- ✅ 1.10 **Encryption:** `ITSAppUsesNonExemptEncryption` set to NO in Info.plist. Battleplan's only encryption is standard HTTPS, which is exempt, so export compliance won't hold up each build. A test keeps the key in place; any encryption of our own later (such as end-to-end messages) means turning it on and filing the export forms first.
+- ✅ 1.10 **Encryption:** `ITSAppUsesNonExemptEncryption` set to NO in Info.plist. BattlePlan's only encryption is standard HTTPS, which is exempt, so export compliance won't hold up each build. A test keeps the key in place; any encryption of our own later (such as end-to-end messages) means turning it on and filing the export forms first.
 - ⬜ 1.11 **Android release builds in GitHub Actions** (tasks 126, 214, 272): an upload key, and an Android App Bundle signed with it. Nothing runs on your Mac.
   - ✅ The **Android build** workflow (Actions tab) makes the App Bundle and an APK for dev or prod, signed with the upload key from the repository's secrets, and shows the key's fingerprints for Firebase. Without the key a dev build is signed with a throwaway key, and a prod build fails.
-  - ✅ The **Release Android** workflow (Actions tab) builds prod the same way and uploads the App Bundle to Google Play: internal testing by default, closed testing, or production as a draft. It waits for CI (2026-10-25). ✅ Google Play access by keyless sign-in (2026-11-09): GitHub's token through battleplan-prod's workload identity pool, provider `github-android` (accepts only `release-android.yml` on main), as `play-release@battleplan-prod.iam.gserviceaccount.com`, which has no Google Cloud roles and is invited in the Play Console with Release apps to testing tracks and Release to production for Battleplan; battleplan-prod has the Google Play Android Developer API on. No JSON key or `PLAY_SERVICE_ACCOUNT_JSON` secret ([DEVELOPMENT.md](DEVELOPMENT.md), Android builds).
+  - ✅ The **Release Android** workflow (Actions tab) builds prod the same way and uploads the App Bundle to Google Play: internal testing by default, closed testing, or production as a draft. It waits for CI (2026-10-25). ✅ Google Play access by keyless sign-in (2026-11-09): GitHub's token through battleplan-prod's workload identity pool, provider `github-android` (accepts only `release-android.yml` on main), as `play-release@battleplan-prod.iam.gserviceaccount.com`, which has no Google Cloud roles and is invited in the Play Console with Release apps to testing tracks and Release to production for BattlePlan; battleplan-prod has the Google Play Android Developer API on. No JSON key or `PLAY_SERVICE_ACCOUNT_JSON` secret ([DEVELOPMENT.md](DEVELOPMENT.md), Android builds).
   - ⬜ 👤 The upload key itself: a keystore and password, in 1Password and in the repository's secrets (`ANDROID_UPLOAD_KEYSTORE_BASE64`, `ANDROID_UPLOAD_KEYSTORE_PASSWORD`, `ANDROID_UPLOAD_KEY_ALIAS`), then its SHA-1 and SHA-256 added to the Android apps in Firebase so Google sign-in works on these builds.
 - ✅ 1.12 **iPad.** The app is built for iPad too, so every screen has to work there, in both orientations and in Split View (task 210); review runs on iPads. Every screen is tested at iPad mini, Air, and Pro sizes in both orientations and at the Split View and Slide Over widths, and the end-to-end test passes on the iPad simulator.
 - ⬜ 1.13 **It works end to end,** on the iPhone and iPad simulators and on Android with a build from GitHub Actions (`integration_test/e2e_test.dart`, task 271). ✅ iPhone and iPad simulators (again 2026-11-16, now through picking a player, the coach's approval, and the RSVP; task 388). ⬜ Android, with the workflow's end-to-end APK. ⬜ 👤 Google sign-up, which needs a real Google account:
@@ -46,7 +46,7 @@ Required, and doable now.
   - screenshots of the app in use, not the sign-in screen: 6.9-inch iPhone, 13-inch iPad, and Android phone;
   - a 1024 × 500 feature graphic for Google (`store/google-play/feature-graphic.png`); the 512 px icon is `store/google-play/icon-512.png`.
 - ⬜ 1.17 **App Review notes:** *drafted in [STORE-LISTING.md](STORE-LISTING.md); the demo team's code comes with task 132.*
-  - what Battleplan is, and how to get in: sign in with Apple or Google and join the demo team with its code, or the demo login at `getbattleplan.app/emaillogin`;
+  - what BattlePlan is, and how to get in: sign in with Apple or Google and join the demo team with its code, or the demo login at `getbattleplan.app/emaillogin`;
   - that email sign-in is at that address and not on the sign-in screen, since guideline 2.3.1 asks for anything hidden to be described;
   - that teams are invite-only and the demo account already has one;
   - where Report, Block, and Delete account are, and that the language filter is on for every team;
@@ -54,17 +54,17 @@ Required, and doable now.
 
 ## Phase 2 · After Sign in with Apple is set up
 
-Setting it up (the key and Services ID, task 107) happens in your Apple Developer account, so it comes right after you enroll in phase 3. Sign in with Apple is required because Battleplan offers Google sign-in: guideline 4.8 then calls for a sign-in that lets people keep their email private.
+Setting it up (the key and Services ID, task 107) happens in your Apple Developer account, so it comes right after you enroll in phase 3. Sign in with Apple is required because BattlePlan offers Google sign-in: guideline 4.8 then calls for a sign-in that lets people keep their email private.
 
 - ⬜ 2.1 **Continue with Apple** on the sign-in screen and in Sign-in methods, on iPhone, iPad, and the web, with Apple's standard button (task 109). It's built, and Firebase has Apple's key in dev and prod (task 291); prod shows it after the next Release to prod. With email off the sign-in screen, it's the only choice there besides Google, which is what guideline 4.8 asks for: the iPhone app can't go to review without it.
-- ⬜ 2.2 **Email reaches people who hide their address:** register Battleplan's sending domain with Apple's private email relay (task 207).
+- ⬜ 2.2 **Email reaches people who hide their address:** register BattlePlan's sending domain with Apple's private email relay (task 207).
 - ⬜ 2.3 **Delete account also revokes the person's Sign in with Apple token,** through Apple's REST API. Apple requires this of apps that offer Sign in with Apple. *Built 2026-10-16: the iPhone and iPad app signs in with Apple once more and hands the code to Firebase, which revokes the token with Apple using the key, before deleting (SPEC AUTH-10). It's checked in 2.4 once the key is in.*
 - ⬜ 2.4 **Test it end to end:** a new account with Apple, setup, signing out and back in, and deleting the account.
 
 ## Phase 3 · After joining the Apple Developer Program
 
 - ✅ 3.1 👤 **Enroll** as an individual, $99 a year (task 106). It takes a few days.
-- ✅ 3.2 👤 **Create the app in App Store Connect** under the name "Battleplan." The name has to be free on the App Store.
+- ✅ 3.2 👤 **Create the app in App Store Connect** under the name "BattlePlan." The name has to be free on the App Store.
 - ✅ 3.3 **iPhone release builds** (task 209). *Release iOS in the Actions tab; its first good run (2026-10-17) uploaded version 0.1.0, build 272, to TestFlight, after an iPhone was registered on the team so automatic signing could work:*
   - signed for the App Store;
   - built with Xcode 26 or later and the iOS 26 SDK, required since April 28, 2026, and with Xcode 27 and the iOS 27 SDK from April 2027 (Apple's ITMS-90725 notice on 1.4.3 build 531, 2026-11-20). Release iOS builds on GitHub's `xcode-27` machine since 2026-11-20 and stops early if its iOS SDK is older than 27 (this Mac has Xcode 27 too);
@@ -87,7 +87,7 @@ Setting it up (the key and Services ID, task 107) happens in your Apple Develope
   - target audience: adults (18+);
   - ads: none;
   - app access: sign in with Google and join the demo team with its code, or the demo login at `getbattleplan.app/emaillogin`;
-  - the Health apps declaration, which every app files; Battleplan isn't a health app and stores no health data;
+  - the Health apps declaration, which every app files; BattlePlan isn't a health app and stores no health data;
   - government apps, financial features, and news: none.
 - ⬜ 4.5 👤 **EU trader status** in the Play Console.
 - ⬜ 4.6 👤 **The listing** from phase 1 (task 213): the short and full descriptions, the Sports category, the contact email, the privacy URL, the icon, the feature graphic, and the phone screenshots, all in [STORE-LISTING-PLAY.md](STORE-LISTING-PLAY.md) and `store/google-play/`. Then submit for production (task 214).
@@ -97,36 +97,36 @@ Setting it up (the key and Services ID, task 107) happens in your Apple Develope
 - ⬜ 5.1 **Test the store builds on real devices first:** TestFlight and Play internal testing, on a small and a large phone and an iPad. Read Play's pre-launch report.
 - ⬜ 5.2 **Keep prod working with the build in review:** no breaking backend changes while it waits.
 - ⬜ 5.3 **Leave App Check in monitor mode** until real store traffic shows as verified (tasks 104, 214), so a setup slip can't lock the reviewer out.
-- ⬜ 5.4 **Run a trademark search on "Battleplan."** Another software company already uses the name.
+- ⬜ 5.4 **Run a trademark search on "BattlePlan."** Another software company already uses the name.
 - ⬜ 5.5 **Keep other apps' names out of Apple's keywords** (GroupMe, TeamSnap, TeamReach, GameChanger), and don't mention Android in the iPhone listing.
-- ⬜ 5.6 **Aim the listings at coaches and parents:** no kid-focused art or wording, so neither store treats Battleplan as a kids' app.
+- ⬜ 5.6 **Aim the listings at coaches and parents:** no kid-focused art or wording, so neither store treats BattlePlan as a kids' app.
 - ✅ 5.7 **Take "position" out of the Privacy Policy and the delete-account page.** Players no longer have one, and the policy should match the app exactly. They, and the Terms, now say a player's name, jersey number, and walk-up song.
 - ✅ 5.8 **Buy Jared a coffee links out to Venmo.** In the United States both stores now let apps link to other ways to pay, so list the apps in the US only (App Store Connect's availability, the Play Console's countries) while it's there, and say in the App Review notes (1.17) that it's a voluntary tip to the developer that unlocks nothing. Elsewhere, Apple and Google generally want their own in-app purchase for tips, so it would have to go before listing outside the US. Venmo's own terms also expect a business profile for money taken in through an app. *Done 2026-10-20 the other way: the iPhone and iPad app leaves the coffee link out (it stays on the web), so the App Store listing can include Canada. The Android app leaves it out too since 2026-10-25, so the Play listing needs no billing review and can include Canada.*
-- ✅ 5.9 **Dues link out to Venmo and Cash App on Android and the web** (DUES-3, `dues_screen.dart`). These are payments between members, to the team, for real-world things like uniforms and team fees, not purchases from the developer or in the app, so neither store's billing applies and neither takes a cut; Battleplan takes, sends, and holds no money ([Store payment rules](#store-payment-rules), below). The iPhone and iPad app only copies the handles and never opens a payment app: extra caution, since Apple's guideline 3.1.3(e) allows Open too. The App Review notes (STORE-LISTING.md) say so; the Play listing's financial features answer is none, and its App access notes explain Dues (STORE-LISTING-PLAY.md). The amounts owed and paid are declared as other financial info in both stores' privacy answers (STORE-PRIVACY.md).
+- ✅ 5.9 **Dues link out to Venmo and Cash App on Android and the web** (DUES-3, `dues_screen.dart`). These are payments between members, to the team, for real-world things like uniforms and team fees, not purchases from the developer or in the app, so neither store's billing applies and neither takes a cut; BattlePlan takes, sends, and holds no money ([Store payment rules](#store-payment-rules), below). The iPhone and iPad app only copies the handles and never opens a payment app: extra caution, since Apple's guideline 3.1.3(e) allows Open too. The App Review notes (STORE-LISTING.md) say so; the Play listing's financial features answer is none, and its App access notes explain Dues (STORE-LISTING-PLAY.md). The amounts owed and paid are declared as other financial info in both stores' privacy answers (STORE-PRIVACY.md).
 
 ## Store payment rules
 
 What the stores' rules say about Dues (DUES-1 to DUES-4), read on 2026-11-06 from their own pages. Read them again before any release that changes how people pay.
 
-**Neither store takes a cut of team fees.** Dues are a record of what members owe their team for real-world things (uniforms, league and tournament fees), and members pay the team person to person, in their own payment apps. Battleplan sells nothing, unlocks nothing, charges teams nothing, and never takes, holds, or sends money, so there's nothing to bill through either store.
+**Neither store takes a cut of team fees.** Dues are a record of what members owe their team for real-world things (uniforms, league and tournament fees), and members pay the team person to person, in their own payment apps. BattlePlan sells nothing, unlocks nothing, charges teams nothing, and never takes, holds, or sends money, so there's nothing to bill through either store.
 
 **Apple**, [App Store Review Guidelines](https://developer.apple.com/app-store/review/guidelines/) (last updated 2026-10-16):
 
 - **3.1.1:** in-app purchase is for unlocking features or content in the app. Paying dues unlocks nothing.
 - **3.1.3(e):** physical goods and services used outside the app must be paid for some other way than in-app purchase. Uniforms and team fees are exactly that, and they aren't even bought from us.
 - **3.1.1(a) and 3.1.3:** on the US storefront, apps may have buttons and links to other ways to pay. Elsewhere, the limit on pointing people away from in-app purchase is about what in-app purchase would sell, and 3.1.3(e) keeps real-world goods and services out of it. So, on our reading, the iPhone app could have **Open** too, in the US and Canada, which would match Android and the web and end the exception in SPEC §4.2's table. If it does, the App Review notes should say so and cite 3.1.3(e).
-- **3.2.2(iv):** apps that aren't approved nonprofits may not collect fundraising money in the app, only outside it, and must be free. Battleplan is free and collects nothing, so a team can use a due for a fundraiser.
-- **3.2.1(viii) and 5.1.1(ix):** money management must come from the licensed financial institution doing it, and banking and financial services from a legal entity, not an individual developer. Dues is a record, not a financial service, so the individual developer account is fine as long as Battleplan never moves money.
+- **3.2.2(iv):** apps that aren't approved nonprofits may not collect fundraising money in the app, only outside it, and must be free. BattlePlan is free and collects nothing, so a team can use a due for a fundraiser.
+- **3.2.1(viii) and 5.1.1(ix):** money management must come from the licensed financial institution doing it, and banking and financial services from a legal entity, not an individual developer. Dues is a record, not a financial service, so the individual developer account is fine as long as BattlePlan never moves money.
 - **2.3.1(a) and 2.3.3:** the App Review notes describe Dues, and the App Store's Dues screenshots (`iphone-6.9/07-dues.jpg`, `iphone-6.3/07-dues.jpg`, `ipad-13/06-dues.jpg`) come from the iPhone and iPad app, whose How to pay has Copy but no Open (the website's and Google Play's come from the web app).
 - **3.1.3(d), 3.2.1(vii), and 3.1.5** don't apply: they cover real-time services sold one to one (tutoring, for example), gifts between users, and cryptocurrency. How to pay has no crypto wallets.
-- **App Privacy** ([data types](https://developer.apple.com/app-store/app-privacy-details/)): what people owe, and whether it's paid, is Other Financial Info (debts). The team's payment usernames aren't Payment Info, which is a payer's form of payment, card, or bank account number: people pay in their own apps, and Battleplan never sees how ([STORE-PRIVACY.md](STORE-PRIVACY.md)).
+- **App Privacy** ([data types](https://developer.apple.com/app-store/app-privacy-details/)): what people owe, and whether it's paid, is Other Financial Info (debts). The team's payment usernames aren't Payment Info, which is a payer's form of payment, card, or bank account number: people pay in their own apps, and BattlePlan never sees how ([STORE-PRIVACY.md](STORE-PRIVACY.md)).
 
 **Google Play**, [Payments policy](https://support.google.com/googleplay/android-developer/answer/9858738):
 
 - **Section 3:** Play billing must *not* be used when a payment is mainly for physical goods or physical services, or is a peer-to-peer payment. Dues are payments between members for real-world things, so no Play billing and no service fee.
 - **Section 4:** apps may not lead people to other ways to pay, except in section 3's cases, so the Android app's **Open** buttons are allowed in every country.
-- **US programs** ([Play's US changes](https://support.google.com/googleplay/android-developer/answer/15582165)): the external links and alternative billing programs, with service fees since 2026-10-01, are other ways to sell what would otherwise need Play billing: digital goods and services. Battleplan sells none and doesn't enroll, and the Android app leaves out Buy Jared a coffee (5.8).
-- **Financial features declaration** ([help](https://support.google.com/googleplay/android-developer/answer/13849271)): every app files one. Battleplan's answer is "My app doesn't provide any financial features", since Dues isn't a payment app, a wallet, a money transfer service, or any other category on the form ([STORE-LISTING-PLAY.md](STORE-LISTING-PLAY.md) says what to do if review disagrees).
+- **US programs** ([Play's US changes](https://support.google.com/googleplay/android-developer/answer/15582165)): the external links and alternative billing programs, with service fees since 2026-10-01, are other ways to sell what would otherwise need Play billing: digital goods and services. BattlePlan sells none and doesn't enroll, and the Android app leaves out Buy Jared a coffee (5.8).
+- **Financial features declaration** ([help](https://support.google.com/googleplay/android-developer/answer/13849271)): every app files one. BattlePlan's answer is "My app doesn't provide any financial features", since Dues isn't a payment app, a wallet, a money transfer service, or any other category on the form ([STORE-LISTING-PLAY.md](STORE-LISTING-PLAY.md) says what to do if review disagrees).
 - **Data safety** ([data types](https://support.google.com/googleplay/android-developer/answer/10787469)): Other financial info (debts), optional, for App functionality, not shared. Not User payment info or Purchase history.
 
 **What would change this:**

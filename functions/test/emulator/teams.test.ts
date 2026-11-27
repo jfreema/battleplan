@@ -1255,16 +1255,16 @@ describe("the team's link (INV-2, §3)", () => {
     const preview = await open(`/join/${link.code}`, 'facebookexternalhit/1.1');
     expect(preview.status).toBe(200);
     expect(preview.headers['content-type']).toBe('text/html; charset=utf-8');
-    expect(preview.body).toContain('<meta property="og:title" content="Join Thunder U14 on Battleplan">');
+    expect(preview.body).toContain('<meta property="og:title" content="Join Thunder U14 on BattlePlan">');
     expect(preview.body).toContain('Ada Admin invited you');
     expect(preview.body).toMatch(/og:image" content="[^"]*tok/);
     // Apple's badge from the website's own images, on to the App Store (task 353).
     expect(preview.body).toMatch(/<a href="https:\/\/apps\.apple\.com\/app\/id6823884728"><img src="https:\/\/[^"]+\/images\/app-store-badge\.svg"/);
     expect((await open(`/join/${link.code}`, 'WhatsApp/2', 'HEAD')).body).toBe('');
-    // A link that doesn't work, or no code: Battleplan's own preview.
+    // A link that doesn't work, or no code: BattlePlan's own preview.
     await run(invites.revokeGroupInvite, 'ada', { groupId: 'open' });
     const revoked = await open(`/join/${link.code}`, 'Twitterbot/1.0');
-    expect(revoked.body).toContain('Join your team on Battleplan');
+    expect(revoked.body).toContain('Join your team on BattlePlan');
     expect(revoked.body).not.toContain('Thunder');
     expect((await open('/join/', 'Twitterbot/1.0')).body).toContain('images/og.jpg');
     expect((await open('/join/', 'Mozilla/5.0')).location).toBe('/app/join');

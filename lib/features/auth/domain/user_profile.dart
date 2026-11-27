@@ -4,7 +4,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'user_profile.freezed.dart';
 
-/// The Battleplan profile (`users/{uid}`), separate from the sign-in
+/// The BattlePlan profile (`users/{uid}`), separate from the sign-in
 /// identities in Firebase Auth (AUTH-12, ARCH §6.1).
 @freezed
 abstract class UserProfile with _$UserProfile {

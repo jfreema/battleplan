@@ -12,7 +12,7 @@ abstract final class DefaultFirebaseOptions {
     return switch (defaultTargetPlatform) {
       TargetPlatform.iOS => ios,
       TargetPlatform.android => android,
-      _ => throw UnsupportedError('Battleplan runs on iOS, Android, and web.'),
+      _ => throw UnsupportedError('BattlePlan runs on iOS, Android, and web.'),
     };
   }
 

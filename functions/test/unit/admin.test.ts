@@ -294,14 +294,14 @@ describe('admin emails (ADMIN-4, AUTH-6)', () => {
   it('sets up an account without a team', () => {
     const email = accountSetupEmail('pat@example.com', 'Jordan', 'https://example.com/link');
     expect(email.to).toBe('pat@example.com');
-    expect(email.subject).toBe('Jordan set up a Battleplan account for you');
+    expect(email.subject).toBe('Jordan set up a BattlePlan account for you');
     expect(email.text).toContain('Set up my account: https://example.com/link');
     expect(email.html).toContain('href="https://example.com/link"');
   });
 
   it('sends a reset link and never a password', () => {
     const email = passwordResetEmail('pat@example.com', 'https://example.com/reset');
-    expect(email.subject).toBe('Reset your Battleplan password');
+    expect(email.subject).toBe('Reset your BattlePlan password');
     expect(email.text).toContain('Choose a new password: https://example.com/reset');
     expect(email.text).toContain("If you sign in with Google or Apple, you don't need a password.");
     expect(email.text.toLowerCase()).not.toMatch(/your password is|temporary password/);

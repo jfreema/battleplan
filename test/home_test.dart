@@ -166,12 +166,12 @@ void main() {
 
   testWidgets('Teams welcomes someone with no team yet', (tester) async {
     await pumpApp(tester, auth: FakeAuthRepository(user: coach));
-    expect(find.text('Welcome to Battleplan'), findsOneWidget);
+    expect(find.text('Welcome to BattlePlan'), findsOneWidget);
     expect(find.text('Join a Team or Group'), findsOneWidget);
     expect(find.text('Create a Team'), findsOneWidget);
     // The old welcome page's address lands here too.
     await go(tester, '/welcome');
-    expect(find.text('Welcome to Battleplan'), findsOneWidget);
+    expect(find.text('Welcome to BattlePlan'), findsOneWidget);
     await tester.tap(find.text('Create a Team'));
     await tester.pumpAndSettle();
     expect(find.byType(CreateTeamScreen), findsOneWidget);

@@ -28,7 +28,7 @@ abstract class Due with _$Due {
 }
 
 /// One payment on a share (DUES-2), as an admin records it once the money
-/// arrives, outside Battleplan: part of what's owed, or all of what's left.
+/// arrives, outside BattlePlan: part of what's owed, or all of what's left.
 @freezed
 abstract class DuePayment with _$DuePayment {
   const factory({
@@ -203,7 +203,7 @@ DueStatus unwaivedStatus(DueCharge charge) =>
 typedef DuePayer = ({ParticipantType type, String id, String name});
 
 /// How to pay the team (DUES-3): handles the admins or coaches share.
-/// Payments happen between people in those apps, never through Battleplan.
+/// Payments happen between people in those apps, never through BattlePlan.
 @freezed
 abstract class DuesPayments with _$DuesPayments {
   const factory({

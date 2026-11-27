@@ -83,7 +83,7 @@ abstract class Message with _$Message {
     DateTime? createdAt,
 
     /// The app it was imported from ('groupme'), with its author's name
-    /// there; no Battleplan account wrote it (SPEC IMPORT-9).
+    /// there; no BattlePlan account wrote it (SPEC IMPORT-9).
     String? importedFrom,
 
     /// True until the server has the message (CHAT-4 "sending").

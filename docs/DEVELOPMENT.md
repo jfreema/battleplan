@@ -1,4 +1,4 @@
-# Developing Battleplan
+# Developing BattlePlan
 
 How to run the app and backend locally. The design is in [ARCHITECTURE.md](ARCHITECTURE.md); the features are in [SPEC.md](SPEC.md).
 
@@ -60,7 +60,7 @@ dart run tools/fetch_fallback_fonts.dart web/fonts/fallback
 
 | | Dev | Prod |
 |---|---|---|
-| App ID | `app.getbattleplan.dev` ("Battleplan Dev") | `app.getbattleplan` ("Battleplan") |
+| App ID | `app.getbattleplan.dev` ("BattlePlan Dev") | `app.getbattleplan` ("BattlePlan") |
 | Entry point | `lib/main_dev.dart` | `lib/main_prod.dart` |
 | Android | `--flavor dev` | `--flavor prod` |
 | iOS | Xcode scheme `dev` (configs `Debug-dev`, `Release-dev`, `Profile-dev`) | scheme `prod` |
@@ -111,7 +111,7 @@ Prod (`battleplan-prod`) serves the website and the web app at `getbattleplan.ap
 
    From your Mac instead, `tools/release_prod.sh` does the same checks and deploys.
 4. **Once, after your first sign-in on prod:** `npm --prefix tools/seed run super-admin -- battleplan-prod <your email>`.
-5. **One-time changes to data** run on their own at the first 4 AM Central after the release that brings them, from `dailyCleanup` (`functions/src/teams/migrations.ts`, ARCH §6.4), each once: `ops/migrations` records what each changed, and the audit log (ADMIN-6) has an entry from "Battleplan". The first, #48, turned reminders off by default for teams made before Nov 1 still on a reminder the day before. Should it ever need undoing, Claude runs `tools/undo_reminder_defaults.sh battleplan-prod` from the owner's Mac (after `gcloud auth application-default login`): it puts the reminder back on the recorded teams still on No reminders. The second, #45, moves the phone numbers and emails members shared off their memberships into private records (`memberContacts`); it needs no undo, since the app reads both until it has run.
+5. **One-time changes to data** run on their own at the first 4 AM Central after the release that brings them, from `dailyCleanup` (`functions/src/teams/migrations.ts`, ARCH §6.4), each once: `ops/migrations` records what each changed, and the audit log (ADMIN-6) has an entry from "BattlePlan". The first, #48, turned reminders off by default for teams made before Nov 1 still on a reminder the day before. Should it ever need undoing, Claude runs `tools/undo_reminder_defaults.sh battleplan-prod` from the owner's Mac (after `gcloud auth application-default login`): it puts the reminder back on the recorded teams still on No reminders. The second, #45, moves the phone numbers and emails members shared off their memberships into private records (`memberContacts`); it needs no undo, since the app reads both until it has run.
 
 ## iPhone and iPad builds
 
@@ -131,11 +131,11 @@ Android builds run only in GitHub Actions, never on a Mac (no Java or Gradle loc
 
 CI doesn't build Android, so when `FLUTTER_VERSION` changes, check `android/settings.gradle.kts` against the new Flutter's minimum Android Gradle Plugin, Kotlin and Gradle versions (`packages/flutter_tools/gradle/src/main/kotlin/DependencyVersionChecker.kt` in the Flutter SDK), or run **Android build** (dev) once before a release. Flutter 3.50.0 stopped Release Android on 2026-11-16 until the Android Gradle Plugin went to 9.1.1 and Kotlin to 2.4.10; it still warns below 9.3.1, 2.4.20 and Gradle 9.5.0, which are worth taking with the next Flutter update.
 
-The upload key lives in the repository's secrets: `ANDROID_UPLOAD_KEYSTORE_BASE64` (a PKCS #12 keystore), `ANDROID_UPLOAD_KEYSTORE_PASSWORD` (the keystore's and the key's), and `ANDROID_UPLOAD_KEY_ALIAS`. `android/app/build.gradle.kts` signs release builds with it when the workflow provides it, and with the debug key otherwise; the workflow refuses a prod build without it. Keep the keystore and password in 1Password too (ROADMAP task 126). If it's lost, Google Play can reset the upload key, since Google holds the app signing key (Play App Signing). The prod build checks that the key's owner name contains "Battleplan", so make it with a name like `CN=Battleplan`.
+The upload key lives in the repository's secrets: `ANDROID_UPLOAD_KEYSTORE_BASE64` (a PKCS #12 keystore), `ANDROID_UPLOAD_KEYSTORE_PASSWORD` (the keystore's and the key's), and `ANDROID_UPLOAD_KEY_ALIAS`. `android/app/build.gradle.kts` signs release builds with it when the workflow provides it, and with the debug key otherwise; the workflow refuses a prod build without it. Keep the keystore and password in 1Password too (ROADMAP task 126). If it's lost, Google Play can reset the upload key, since Google holds the app signing key (Play App Signing). The prod build checks that the key's owner name contains "BattlePlan", so make it with a name like `CN=BattlePlan`.
 
 **Release Android** in the Actions tab (`.github/workflows/release-android.yml`) builds prod the same way (it runs Android build) and uploads the App Bundle to Google Play. Start it on `main`; it waits for CI on the commit (`skip_ci_check` skips that). Pick the track: **internal** (the default) or **closed** testing roll out to their testers once Play has processed the bundle; **production** is always uploaded as a draft, to check and send for review in the Play Console. Tick **draft** for any track while the app has never been published, since Play takes only drafts until then. It needs, besides the upload key:
 
-- Google Play access: keyless sign-in (2026-11-09): GitHub's token through battleplan-prod's workload identity pool, provider `github-android` (accepts only `release-android.yml` on main), as `play-release@battleplan-prod.iam.gserviceaccount.com`, which has no Google Cloud roles and is invited in the Play Console with Release apps to testing tracks and Release to production for Battleplan; battleplan-prod has the Google Play Android Developer API on. No JSON key or `PLAY_SERVICE_ACCOUNT_JSON` secret.
+- Google Play access: keyless sign-in (2026-11-09): GitHub's token through battleplan-prod's workload identity pool, provider `github-android` (accepts only `release-android.yml` on main), as `play-release@battleplan-prod.iam.gserviceaccount.com`, which has no Google Cloud roles and is invited in the Play Console with Release apps to testing tracks and Release to production for BattlePlan; battleplan-prod has the Google Play Android Developer API on. No JSON key or `PLAY_SERVICE_ACCOUNT_JSON` secret.
 
 Google Play takes uploads from the workflow only after the app exists in the Play Console and its first App Bundle was uploaded there by hand (any Android build artifact for prod), which also turns on Play App Signing.
 

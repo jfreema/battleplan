@@ -3,7 +3,7 @@
 # crawler blocked here would never see that and could still list the URLs.
 #
 # Search engines and AI crawlers and assistants are welcome. /llms.txt has a
-# short summary of Battleplan for language models.
+# short summary of BattlePlan for language models.
 User-agent: *
 Allow: /
 

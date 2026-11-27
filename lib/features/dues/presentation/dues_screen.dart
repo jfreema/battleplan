@@ -77,7 +77,7 @@ void _retryEveryone(WidgetRef ref, Group group) => group.hasPlayers
 /// how many have paid and what's still owed, and add new ones; everyone
 /// else sees only what they, or their players, owe. Under it, how to pay
 /// the team: Venmo, Cash App or Apple Cash handles the admins or coaches
-/// share. No money goes through Battleplan.
+/// share. No money goes through BattlePlan.
 class DuesScreen extends ConsumerWidget {
   const new({required this.groupId, super.key});
 

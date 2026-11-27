@@ -353,7 +353,7 @@ void main() {
     });
 
     testWidgets("in a conversation, I delete only my own, there's no Pin, "
-        'and a report goes to Battleplan', (tester) async {
+        'and a report goes to BattlePlan', (tester) async {
       final id = FakeGroupRepository.directId('coach', 'sam');
       final safety = FakeSafetyRepository();
       await pumpApp(
@@ -385,7 +385,7 @@ void main() {
       expect(
         find.text(
           'Reports from Messages go to the people who run '
-          'Battleplan. Nobody is told who reported it.',
+          'BattlePlan. Nobody is told who reported it.',
         ),
         findsOneWidget,
       );

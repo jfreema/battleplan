@@ -1,4 +1,4 @@
-# Battleplan is free
+# BattlePlan is free
 
 **Every team gets every feature, free, with no ads.** There is no paid plan. A paid "Plus" plan was planned on 2026-10-11 and dropped on 2026-10-12: store fees and Apple's rule that anything unlocked in the iPhone app must also be sold through in-app purchase (App Store Review Guideline 3.1.3(b)) made it costly, and locked features would slow down teams adopting the app.
 
@@ -30,4 +30,4 @@ For scale: a chat photo is resized to about 0.3 to 1 MB, so 200 MB holds roughly
 
 ## Ads, later
 
-Ads may come once enough teams use Battleplan to justify the work (ROADMAP "Ads, later"). Youth teams mean parents and guardians use the app on behalf of children, so any ads plan has to account for children's privacy rules first: COPPA in the US, and Google Play's Families policy if the app is in the Families program or targets children. Until then, the Privacy Policy and store disclosures say there are no ads and no tracking (SPEC LEGAL-2).
+Ads may come once enough teams use BattlePlan to justify the work (ROADMAP "Ads, later"). Youth teams mean parents and guardians use the app on behalf of children, so any ads plan has to account for children's privacy rules first: COPPA in the US, and Google Play's Families policy if the app is in the Families program or targets children. Until then, the Privacy Policy and store disclosures say there are no ads and no tracking (SPEC LEGAL-2).

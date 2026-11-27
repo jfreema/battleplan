@@ -86,7 +86,7 @@ import {
 } from './service.js';
 
 /** The caller's name for emails they trigger ("Jordan added you to Thunder"). */
-const actorName = (uid: string) => displayNameOf(uid, 'Battleplan support');
+const actorName = (uid: string) => displayNameOf(uid, 'BattlePlan support');
 
 /**
  * Throws unless the team exists. A direct conversation (CHAT-19) isn't a

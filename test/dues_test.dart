@@ -960,7 +960,7 @@ void main() {
       expect(find.text('Edit how to pay'), findsNothing);
       // A group's own words.
       expect(
-        find.text("Pay directly. Battleplan doesn't handle payments."),
+        find.text("Pay directly. BattlePlan doesn't handle payments."),
         findsOneWidget,
       );
     });

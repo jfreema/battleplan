@@ -439,21 +439,21 @@ final class FileChooserProvider
 
 String _$fileChooserHash() => r'20ccd176452708f87ec03733eb88f0609b64be74';
 
-/// Builds every Battleplan URL (ARCH §6.6): links people share (an event's
+/// Builds every BattlePlan URL (ARCH §6.6): links people share (an event's
 /// Share, SCHED-4), invite links, and email links. Web app links are under
 /// `/app`; the paths after it are the app's routes (ARCH §5.4).
 
 @ProviderFor(linkService)
 final linkServiceProvider = LinkServiceProvider._();
 
-/// Builds every Battleplan URL (ARCH §6.6): links people share (an event's
+/// Builds every BattlePlan URL (ARCH §6.6): links people share (an event's
 /// Share, SCHED-4), invite links, and email links. Web app links are under
 /// `/app`; the paths after it are the app's routes (ARCH §5.4).
 
 final class LinkServiceProvider
     extends $FunctionalProvider<LinkService, LinkService, LinkService>
     with $Provider<LinkService> {
-  /// Builds every Battleplan URL (ARCH §6.6): links people share (an event's
+  /// Builds every BattlePlan URL (ARCH §6.6): links people share (an event's
   /// Share, SCHED-4), invite links, and email links. Web app links are under
   /// `/app`; the paths after it are the app's routes (ARCH §5.4).
   LinkServiceProvider._()

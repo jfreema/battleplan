@@ -2,7 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'auth_user.freezed.dart';
 
-/// The signed-in identity. The Battleplan profile (`users/{uid}`) is
+/// The signed-in identity. The BattlePlan profile (`users/{uid}`) is
 /// separate (ARCH §6.1, `UserProfile`).
 @freezed
 abstract class AuthUser with _$AuthUser {

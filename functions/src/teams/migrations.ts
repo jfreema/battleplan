@@ -13,7 +13,7 @@ export const REMINDERS_OFF_BEFORE = new Date('2026-11-01T00:00:00-05:00');
 /** The old default: one reminder, a day (1,440 minutes) before. */
 const OLD_DEFAULT = [1440];
 
-/** Who the audit log names for what Battleplan itself does. */
+/** Who the audit log names for what BattlePlan itself does. */
 export const SYSTEM_ACTOR = 'Battleplan';
 
 const migrations = () => db().collection(Collections.ops).doc('migrations');

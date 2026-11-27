@@ -453,7 +453,7 @@ void main() {
       tester,
     ) async {
       await pumpApp(tester, auth: FakeAuthRepository(user: coach));
-      expect(find.text('Welcome to Battleplan'), findsOneWidget);
+      expect(find.text('Welcome to BattlePlan'), findsOneWidget);
       expect(find.text('Join a Team or Group'), findsOneWidget);
       expect(find.text('Your schedule'), findsNothing);
       expect(find.text('See all'), findsNothing);

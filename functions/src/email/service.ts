@@ -7,7 +7,7 @@ import { emailTier, takeEmailSlot, type EmailKind } from './budget.js';
 /** The Resend API key, in Secret Manager. Callables that send declare it. */
 export const resendApiKey = defineSecret('RESEND_API_KEY');
 
-const FROM = 'Battleplan <noreply@getbattleplan.app>';
+const FROM = 'BattlePlan <noreply@getbattleplan.app>';
 const REPLY_TO = 'support@getbattleplan.app';
 
 export interface Email {
@@ -58,13 +58,13 @@ export function escapeHtml(s: string): string {
 
 /** A plain, readable email body: a paragraph or two and one button. */
 export function layout(paragraphs: string[], button?: { label: string; url: string }): { text: string; html: string } {
-  const text = [...paragraphs, ...(button ? [`${button.label}: ${button.url}`] : []), '', '— Battleplan'].join('\n\n');
+  const text = [...paragraphs, ...(button ? [`${button.label}: ${button.url}`] : []), '', '— BattlePlan'].join('\n\n');
   const html =
     '<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:16px;line-height:1.5;color:#1a1c22;max-width:520px">' +
     paragraphs.map((p) => `<p>${escapeHtml(p)}</p>`).join('') +
     (button
       ? `<p><a href="${escapeHtml(button.url)}" style="display:inline-block;background:#2F5BEA;color:#fff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:600">${escapeHtml(button.label)}</a></p>`
       : '') +
-    '<p style="color:#5b5f6b;font-size:14px">— Battleplan</p></div>';
+    '<p style="color:#5b5f6b;font-size:14px">— BattlePlan</p></div>';
   return { text, html };
 }

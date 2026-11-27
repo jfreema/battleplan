@@ -202,7 +202,7 @@ export async function ensureUserProfile(
   // not only from Firebase, and so does the new one.
   if (result.emailChangedFrom && user.email) {
     logger.info('account_email_changed', { uid });
-    const change = `The email for your Battleplan account was changed to ${user.email.toLowerCase()}.`;
+    const change = `The email for your BattlePlan account was changed to ${user.email.toLowerCase()}.`;
     await sendEmail(securityNoticeEmail(result.emailChangedFrom, change), 'securityNotice');
     await sendEmail(securityNoticeEmail(user.email.toLowerCase(), change), 'securityNotice');
   }
@@ -311,10 +311,10 @@ export async function recordSignInMethodChange(
   }
   // AUTH-7: tell the account's email about every change.
   const lines = [
-    ...added.map((m) => `${methodName(m)} sign-in was added to your Battleplan account.`),
-    ...removed.map((m) => `${methodName(m)} sign-in was removed from your Battleplan account.`),
+    ...added.map((m) => `${methodName(m)} sign-in was added to your BattlePlan account.`),
+    ...removed.map((m) => `${methodName(m)} sign-in was removed from your BattlePlan account.`),
     // A new password already reads as "Password sign-in was added".
-    ...(passwordChanged && !added.includes('password') ? ['The password for your Battleplan account was changed.'] : []),
+    ...(passwordChanged && !added.includes('password') ? ['The password for your BattlePlan account was changed.'] : []),
   ];
   const email = (snap.get('email') as string | undefined) ?? user.email;
   if (email && lines.length && (await securityNoticeAllowed(uid))) {

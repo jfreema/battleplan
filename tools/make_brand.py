@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Draws the Battleplan mark, All Sports (SPEC §7.1), in every form it ships.
+"""Draws the BattlePlan mark, All Sports (SPEC §7.1), in every form it ships.
 
 All Sports is the app's B as a tank: a heavy leaning yellow B riding a track
 whose three wheels are a basketball, a soccer ball and a baseball, its gun
@@ -25,7 +25,7 @@ Run from anywhere; it writes, all on the 1024 grid:
                                around it, as wide as its square (the
                                website's header mark, the Play feature
                                graphic's and the link preview's)
-  website/wordmark.svg         the name beside or under the logo: "Battleplan"
+  website/wordmark.svg         the name beside or under the logo: "BattlePlan"
                                in Lilita One's bubbly letters, white on a
                                navy drop, as Candy Pop's header titles were
   website/favicon.svg          the tank on the rounded tile, an app icon on a
@@ -88,7 +88,7 @@ B_GLYPH = ('M-21 0L115 644L497 644Q574 644 622.5 604Q671 564 671 499Q671 479 667
            'M240 164L330 164Q378 164 387 207Q388 210 388 213Q388 216 388 218Q388 247 348 247L258 247Z')
 B_BOX = (-21, 0, 671, 644)
 
-# ---- the name: Lilita One's letters for "Battleplan" (SIL Open Font License 1.1, Juan Montoreano), ----
+# ---- the name: Lilita One's letters for "BattlePlan" (SIL Open Font License 1.1, Juan Montoreano), ----
 # the bubbly title font of the Candy Pop scheme's header before Boot Camp Mix (#85): font units, 1000 per
 # em, y down from the baseline, each with its advance (Lilita One has no kerning between these letters).
 LILITA = {
@@ -98,9 +98,10 @@ LILITA = {
     'l': (272, 'M227 -8Q227 1 125 1Q45 0 45 -7L45 -688Q45 -703 142 -703Q227 -700 227 -693Z'),
     'e': (486, 'M423 -27Q360 10 261 10Q162 10 94 -58Q26 -125 26 -244Q26 -364 92 -437Q157 -510 257 -510Q357 -510 412 -459Q466 -408 466 -335Q466 -173 280 -173L211 -173Q211 -143 228 -132Q244 -120 276 -120Q346 -120 409 -152Q410 -153 418 -138Q442 -95 442 -66Q442 -36 423 -27ZM298 -316Q298 -358 257 -358Q238 -358 224 -346Q211 -335 211 -313L211 -282L265 -282Q298 -282 298 -316Z'),
     'p': (555, 'M260 182Q260 189 174 189Q89 189 89 182L89 -333L55 -333Q31 -333 22 -377Q19 -391 19 -413Q19 -435 33 -465Q53 -509 97 -509Q126 -509 150 -496Q175 -482 184 -470Q194 -459 194 -457Q261 -509 339 -509Q417 -509 473 -448Q529 -388 529 -262Q529 -135 473 -66Q417 4 331 4Q292 4 260 0ZM301 -334Q284 -334 268 -323L268 -146Q285 -144 296 -144Q306 -144 312 -144Q353 -148 353 -249Q353 -334 301 -334Z'),
+    'P': (570, 'M137 2Q46 2 46 -18L46 -666Q46 -700 77 -700L253 -700Q401 -700 466 -639Q532 -578 532 -462Q532 -366 470 -286Q439 -246 379 -222Q319 -198 239 -198L239 -19Q239 -7 202 -2Q164 2 137 2ZM239 -526L239 -368L252 -368Q287 -368 311 -390Q335 -412 335 -452Q335 -492 318 -509Q302 -526 260 -526Z'),
     'n': (551, 'M254 -6Q254 1 182 1Q82 -2 82 -10L82 -334L56 -334Q30 -334 22 -378Q20 -391 20 -404Q20 -435 32 -466Q50 -510 88 -510Q126 -510 156 -492Q186 -474 196 -456Q259 -510 346 -510Q433 -510 472 -463Q511 -416 511 -309L511 -9Q511 3 426 3Q340 3 340 -9L340 -298Q340 -348 305 -348Q295 -348 277 -340Q259 -331 254 -327Z'),
 }
-WORD = 'Battleplan'
+WORD = 'BattlePlan'
 WORD_DROP = 70     # the hard drop straight down, 0.07 em, as Candy Pop's header titles had it
 WORD_EDGE = 90     # the navy edge (stroke width) the name takes on a light page
 
@@ -417,7 +418,7 @@ MASKABLE_R, FOREGROUND_R, SPLASH_R = 400, 452, 332
 
 
 def word_path():
-    """"Battleplan" as one path, its pen starting at 0 on the baseline."""
+    """"BattlePlan" as one path, its pen starting at 0 on the baseline."""
     out, pen = [], 0
     for ch in WORD:
         advance, d = LILITA[ch]
@@ -438,6 +439,8 @@ def word_box():
     pen = sum(LILITA[ch][0] for ch in WORD[:-1])
     left = 61                                  # the B's left side
     right = pen + 511                          # the last n's right side
+    # 189 is the room the small p's tail took under the baseline (the name was "Battleplan" until
+    # #120): kept, so the letters sit where they did beside and under the logo.
     return (left - pad, -703 - pad, right - left + 2 * pad, 703 + 189 + WORD_DROP + 2 * pad)
 
 
@@ -517,7 +520,7 @@ def mono_svg():
     inner = to_svg(monochrome(), 'bp-mono', '').split('\n')
     shapes = '\n'.join(l for l in inner if l and not l.startswith(('<svg', '<!--', '</svg', '<defs')))
     return ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">\n'
-            '<!-- Battleplan\'s themed Android icon: the tank as one shape. Made by tools/make_brand.py. -->\n'
+            '<!-- BattlePlan\'s themed Android icon: the tank as one shape. Made by tools/make_brand.py. -->\n'
             '<defs><mask id="bp-mono-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">\n'
             + shapes + '\n</mask></defs>\n<rect width="1024" height="1024" fill="#FFFFFF" mask="url(#bp-mono-mask)"/>\n</svg>\n')
 
@@ -579,7 +582,7 @@ import 'dart:ui' as ui;
 
 import 'package:material_ui/material_ui.dart';
 
-/// The Battleplan mark (SPEC §7.1), All Sports: the app's B as a tank, a
+/// The BattlePlan mark (SPEC §7.1), All Sports: the app's B as a tank, a
 /// heavy leaning yellow B on a track whose three wheels are a basketball, a
 /// soccer ball and a baseball, its gun up and to the right, every part in a
 /// thick ink edge on a hard ink shadow, on no tile: the page shows around it,
@@ -675,7 +678,7 @@ Path _svgPath(String d) {
 
 
 WORD_DART = """
-/// The app's name as the logo writes it (SPEC §7.1): "Battleplan" in Lilita
+/// The app's name as the logo writes it (SPEC §7.1): "BattlePlan" in Lilita
 /// One's bubbly letters, white on a navy hard drop straight down, the look of
 /// the Candy Pop scheme's header titles. [outlined] gives the letters a navy
 /// edge as well, for a light page. Painted from the same outlines as
@@ -770,20 +773,20 @@ def write_dart(ops):
 
 def main():
     files = {
-        'assets/brand/icon.svg': (tile() + art(), 'bp-icon', "Battleplan's app icon, All Sports on its square tile."),
+        'assets/brand/icon.svg': (tile() + art(), 'bp-icon', "BattlePlan's app icon, All Sports on its square tile."),
         'assets/brand/maskable.svg': (tile() + in_circle(art(), MASKABLE_R), 'bp-mask',
-                                      "Battleplan's maskable web icon: All Sports inside the 80% circle."),
+                                      "BattlePlan's maskable web icon: All Sports inside the 80% circle."),
         'assets/brand/foreground.svg': (in_circle(art(), FOREGROUND_R), 'bp-fg',
-                                        "Battleplan's adaptive Android icon foreground, on no tile."),
+                                        "BattlePlan's adaptive Android icon foreground, on no tile."),
         'assets/brand/background.svg': (background(), 'bp-bg',
-                                        "Battleplan's adaptive Android icon background: the tile, at two thirds."),
+                                        "BattlePlan's adaptive Android icon background: the tile, at two thirds."),
         'assets/brand/mark.svg': (in_circle(art(**OFF_TILE), SPLASH_R), 'bp-mark',
-                                  "Battleplan's splash mark: All Sports on no tile, inside Android 12's circle."),
-        'website/logo.svg': (logo(), 'bp-logo', "Battleplan's logo, All Sports, on no tile."),
-        'website/wordmark.svg': (wordmark(), 'bp-word', "Battleplan's name as the logo writes it, in Lilita One (OFL).", word_box()),
-        'website/favicon.svg': (tile(True) + art(), 'bp-fav', "Battleplan's mark, All Sports, on its rounded tile."),
-        'website/favicon-small.svg': (favicon_small(), 'bp-small', "Battleplan's browser-tab icon, drawn for 16 px."),
-        'web/favicon-small.svg': (favicon_small(), 'bp-small', "Battleplan's browser-tab icon, drawn for 16 px."),
+                                  "BattlePlan's splash mark: All Sports on no tile, inside Android 12's circle."),
+        'website/logo.svg': (logo(), 'bp-logo', "BattlePlan's logo, All Sports, on no tile."),
+        'website/wordmark.svg': (wordmark(), 'bp-word', "BattlePlan's name as the logo writes it, in Lilita One (OFL).", word_box()),
+        'website/favicon.svg': (tile(True) + art(), 'bp-fav', "BattlePlan's mark, All Sports, on its rounded tile."),
+        'website/favicon-small.svg': (favicon_small(), 'bp-small', "BattlePlan's browser-tab icon, drawn for 16 px."),
+        'web/favicon-small.svg': (favicon_small(), 'bp-small', "BattlePlan's browser-tab icon, drawn for 16 px."),
     }
     for path, (ops, prefix, comment, *box) in files.items():
         (ROOT / path).write_text(to_svg(ops, prefix, comment, *box))
@@ -796,7 +799,7 @@ def main():
     name = to_svg(wordmark(), 'bp-splash-word', '', word_box()).split('\n', 2)[2].rstrip('\n')
     inline += '<svg class="name" viewBox="%g %g %g %g" aria-hidden="true">' % (x, y, w, h) + name
     index = ROOT / 'web/index.html'
-    html, n = re.subn(r'<svg class="mark".*?</svg>(?:<svg class="name".*?</svg>|Battleplan)', lambda m: inline,
+    html, n = re.subn(r'<svg class="mark".*?</svg>(?:<svg class="name".*?</svg>|BattlePlan)', lambda m: inline,
                       index.read_text(), count=1, flags=re.S)
     assert n == 1, 'web/index.html has no <svg class="mark"> and name to replace'
     index.write_text(html)

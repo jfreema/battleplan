@@ -112,7 +112,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(auth.currentUser!.providerIds, contains('google.com'));
       expect(prefs.pendingLink, isNull);
-      expect(find.text('Welcome to Battleplan'), findsOneWidget);
+      expect(find.text('Welcome to BattlePlan'), findsOneWidget);
     });
 
     testWidgets('Apple for an existing email links the same way '
@@ -128,7 +128,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(auth.currentUser!.providerIds, contains('apple.com'));
       expect(prefs.pendingLink, isNull);
-      expect(find.text('Welcome to Battleplan'), findsOneWidget);
+      expect(find.text('Welcome to BattlePlan'), findsOneWidget);
     });
 
     testWidgets('Not now skips linking and forgets it', (tester) async {
@@ -141,7 +141,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(prefs.pendingLink, isNull);
       expect(auth.currentUser!.providerIds, isNot(contains('google.com')));
-      expect(find.text('Welcome to Battleplan'), findsOneWidget);
+      expect(find.text('Welcome to BattlePlan'), findsOneWidget);
     });
 
     test('changes need a sign-in within the last 5 minutes, by the time the '
@@ -196,7 +196,7 @@ void main() {
       expect(auth.uncheckedChanges, ['password']);
       // A fresh sign-in on this device may ask for it from now on.
       expect(prefs.passwordSetUids, {'coach'});
-      expect(find.text('Welcome to Battleplan'), findsOneWidget);
+      expect(find.text('Welcome to BattlePlan'), findsOneWidget);
     });
 
     testWidgets('they can choose Apple instead (task 109)', (tester) async {
@@ -229,7 +229,7 @@ void main() {
       expect(find.text("Confirm it's you"), findsNothing);
       expect(auth.uncheckedChanges, ['google.com']);
       expect(users.chooseSignIn, isFalse);
-      expect(find.text('Welcome to Battleplan'), findsOneWidget);
+      expect(find.text('Welcome to BattlePlan'), findsOneWidget);
     });
 
     testWidgets('they can sign out instead of choosing', (tester) async {
@@ -265,7 +265,7 @@ void main() {
       await tester.tap(find.text('Continue with Google'));
       await tester.pumpAndSettle();
       expect(users.chooseSignIn, isFalse);
-      expect(find.text('Welcome to Battleplan'), findsOneWidget);
+      expect(find.text('Welcome to BattlePlan'), findsOneWidget);
     });
   });
 
@@ -290,7 +290,7 @@ void main() {
         user: coach.copyWith(authTime: signedInAt),
       );
       await pumpApp(tester, auth: auth, users: users);
-      expect(find.text('Welcome to Battleplan'), findsOneWidget);
+      expect(find.text('Welcome to BattlePlan'), findsOneWidget);
 
       users
         ..sessionsRevokedAt = signedInAt.subtract(const Duration(days: 1))

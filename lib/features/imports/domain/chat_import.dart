@@ -4,10 +4,10 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/imports/domain/event_import.dart';
 import 'package:crypto/crypto.dart';
 
-/// What an imported item is in Battleplan.
+/// What an imported item is in BattlePlan.
 enum ImportItemKind { message, document }
 
-/// An imported message's or document's ID in Battleplan: the same for the
+/// An imported message's or document's ID in BattlePlan: the same for the
 /// same team, app, and item, so importing again adds only what's new
 /// (IMPORT-5). The server works it out the same way (functions/src/
 /// imports/messages.ts importedItemId); the app needs it first, to upload

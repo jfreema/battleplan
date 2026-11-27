@@ -1,4 +1,4 @@
-// The only code that builds Battleplan URLs on the server (ARCH §6.6). The
+// The only code that builds BattlePlan URLs on the server (ARCH §6.6). The
 // website is at the root of the domain and the web app under /app (D40):
 // invite links stay short at /join/<CODE>, and everything that opens the app
 // goes to /app/....

@@ -69,16 +69,16 @@ if [ ! -f "$out/index.html" ]; then
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Battleplan</title>
+  <title>BattlePlan</title>
   <style>
     :root { color-scheme: light dark; }
     body { font: 18px/1.5 system-ui, sans-serif; margin: 0; padding: 48px 16px; text-align: center; }
   </style>
 </head>
 <body>
-  <h1>Battleplan</h1>
+  <h1>BattlePlan</h1>
   <p>Free team chat and scheduling for sports teams.</p>
-  <p><a href="/app/">Open Battleplan</a></p>
+  <p><a href="/app/">Open BattlePlan</a></p>
 </body>
 </html>
 HTML

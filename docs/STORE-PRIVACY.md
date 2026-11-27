@@ -4,7 +4,7 @@ The answers for the App Store's App Privacy section and Google Play's Data safet
 
 If the app starts collecting something new, change the Privacy Policy, the privacy manifest, and this page together, then both stores' answers.
 
-## What Battleplan collects
+## What BattlePlan collects
 
 | Data | Where it comes from | Why | Required? |
 |---|---|---|---|
@@ -14,7 +14,7 @@ If the app starts collecting something new, change the Privacy Policy, the priva
 | Photos | Chat photos, profile photos, team logos and backgrounds | Shown to the team | No |
 | Files and documents | Team documents | Shown to the team | No |
 | Messages | Team chat | Shown to the team | No |
-| Dues | Team admins add a due (what it's for, the amount, an optional date and note) and record what each player or member paid, all at once or a part at a time (each payment's amount, the day it was paid, who recorded it, and an optional short note), or waive a share or the rest of it, with the date a share was paid in full; they and the team's coaches share how to pay (a Venmo username, a Cash App $cashtag, an Apple Cash phone or email, a note) (DUES-1 to DUES-5) | Tracking who owes and who paid team fees, seen only by admins and each share's own people; How to pay is seen by the team. Battleplan takes no payments | No |
+| Dues | Team admins add a due (what it's for, the amount, an optional date and note) and record what each player or member paid, all at once or a part at a time (each payment's amount, the day it was paid, who recorded it, and an optional short note), or waive a share or the rest of it, with the date a share was paid in full; they and the team's coaches share how to pay (a Venmo username, a Cash App $cashtag, an Apple Cash phone or email, a note) (DUES-1 to DUES-5) | Tracking who owes and who paid team fees, seen only by admins and each share's own people; How to pay is seen by the team. BattlePlan takes no payments | No |
 | Other content | Polls and votes, events, RSVPs and their notes, players' records (name, jersey number, walk-up song, and the optional details), reports | The team's schedule, roster, and moderation | No |
 | User ID | The account | Running the app; analytics and crash reports carry it | Yes |
 | Device IDs | A notification token per phone or browser; Analytics' app instance ID (never the advertising ID) | Notifications; analytics | Yes |
@@ -22,12 +22,12 @@ If the app starts collecting something new, change the Privacy Policy, the priva
 | Approximate location | Analytics infers the country from the IP address | Analytics | Yes |
 | Crash logs and diagnostics | Firebase Crashlytics on phones; sampled error reports from the web app | Fixing bugs | Yes |
 
-Not collected: health information (medical notes were removed on 2026-10-20), precise location, contacts (the system calendar sheet reads them, not Battleplan), browsing or search history, purchases, payment details (no card, bank, or payment account numbers: Battleplan takes no payments, and a due's amount and the payments admins record against it, with their amounts and dates, are the only financial information), the advertising ID, and audio. Nothing is used for tracking or advertising, and nothing is sold.
+Not collected: health information (medical notes were removed on 2026-10-20), precise location, contacts (the system calendar sheet reads them, not BattlePlan), browsing or search history, purchases, payment details (no card, bank, or payment account numbers: BattlePlan takes no payments, and a due's amount and the payments admins record against it, with their amounts and dates, are the only financial information), the advertising ID, and audio. Nothing is used for tracking or advertising, and nothing is sold.
 
 ## App Store: App Privacy
 
 - **Do you or your third-party partners collect data from this app?** Yes.
-- **Tracking:** no data is used to track. Battleplan never asks for App Tracking Transparency.
+- **Tracking:** no data is used to track. BattlePlan never asks for App Tracking Transparency.
 - **Linked to the user:** everything below. Analytics and Crashlytics carry the account's user ID.
 
 | App Store data type | Collected | Linked | Purposes |
@@ -52,7 +52,7 @@ Everything else: not collected. These match the manifest's `NSPrivacyCollectedDa
 - **Does your app collect or share any of the required user data types?** Yes.
 - **Is all of the user data collected by your app encrypted in transit?** Yes (HTTPS only).
 - **Do you provide a way for users to request that their data is deleted?** Yes: in the app (Settings → Delete account) and at `https://getbattleplan.app/delete-account`.
-- **Shared with third parties:** none. Google (Firebase), Apple, and Resend process data for Battleplan as service providers, which Play doesn't count as sharing.
+- **Shared with third parties:** none. Google (Firebase), Apple, and Resend process data for BattlePlan as service providers, which Play doesn't count as sharing.
 - **Processed ephemerally:** no.
 
 | Play category: type | Collected | Optional? | Purposes |
@@ -85,5 +85,5 @@ Dues (2026-11-06, the web app now; iOS from 1.2, ROADMAP task 352) record what e
 
 - **Privacy Policy URL:** `https://getbattleplan.app/privacy`. **Account deletion URL** (Play): `https://getbattleplan.app/delete-account`.
 - **Play target audience:** adults, 18 and over. Accounts are for adults (SAFE-6); youth players never sign in.
-- **Play Health apps declaration:** Battleplan isn't a health app and collects no health data.
+- **Play Health apps declaration:** BattlePlan isn't a health app and collects no health data.
 - **App Store age rating:** say yes to people chatting and sharing content, which comes with Report, Block, and the language filter (SAFE-1, SAFE-2, SAFE-7).

@@ -1,4 +1,4 @@
-# Battleplan — Setup TODO
+# BattlePlan — Setup TODO
 
 Things only you can do (accounts, payments, decisions), organized by phase. **Nothing is bought until the phase that needs it,** except the domain, which was worth securing early. We build and test against Firebase's local emulators first, which need no account and cost nothing.
 
@@ -58,13 +58,13 @@ You won't write any Java. Android's build tools and Firebase's local database em
 
 ### Accounts and decisions
 
-- [x] **Use your personal Gmail** for Battleplan's services. Without the LLC, a separate account isn't needed. 2-Step Verification confirmed on 2026-10-10.
+- [x] **Use your personal Gmail** for BattlePlan's services. Without the LLC, a separate account isn't needed. 2-Step Verification confirmed on 2026-10-10.
   - It owns the Firebase projects, and later the billing account and Google Play.
   - Whoever can sign in controls the app's servers, billing, and Play listing, so keep 2-Step Verification on and your recovery phone and email current (myaccount.google.com/security).
   - Google's sign-in screen shows the project's support email. When you turn on Google sign-in, pick `battleplan-help@googlegroups.com` there, not your Gmail.
   - Optional: after creating the dev project, add a second Google account you control as an owner (*Project settings → Users and permissions*). Losing access to one account then never locks you out.
 - [x] **Create a Google Group for that support email**: `battleplan-help@googlegroups.com`, created and tested 2026-10-09.
-- [x] **Make a Battleplan vault in the family 1Password** for every login and 2FA recovery code. Don't share it with the family. *Done 2026-10-11: the "Battle" vault.*
+- [x] **Make a BattlePlan vault in the family 1Password** for every login and 2FA recovery code. Don't share it with the family. *Done 2026-10-11: the "Battle" vault.*
 - [x] **Bought `getbattleplan.app` at Cloudflare** (SPEC Q8) on 2026-10-10: $8.20 the first year, then $14.20/year. It expires 2027-10-10 unless auto-renew (on by default) renews it, so leave auto-renew on.
   - The Cloudflare account signs in with Google, so your Gmail's 2-Step Verification protects it. Cloudflare's own two-factor (*My Profile → Authentication*) is an optional extra layer.
   - [x] **Verify the domain's contact email if Cloudflare asks.** No verification email came; the Cloudflare account signs in with Google, so its email is already verified (checked 2026-10-11).
@@ -112,7 +112,7 @@ The website and the web app at `getbattleplan.app/app`, in desktop and phone bro
   - Connect `getbattleplan.app` on its Hosting page (*Add custom domain*). In Cloudflare, add the records Firebase shows and set each to **DNS only** (grey cloud). A proxied (orange) record points the domain at Cloudflare instead of Firebase, so Firebase can't verify it or issue the certificate.
   - Our team's data on prod carries straight into every later phase.
 - [x] **Support address.** In Cloudflare, turn on Email Routing for `getbattleplan.app` (*Compute → Email Service → Email Routing*), verify your Gmail as the destination, and forward `support@getbattleplan.app` and `privacy@getbattleplan.app` to it. *Done (ROADMAP task 111).*
-- [ ] **Firebase's built-in emails from your domain**, after the domain is connected to prod Hosting. In prod, go to *Authentication → Templates → Customize domain* and add the records it lists, with the CNAMEs set to DNS only. Merge Firebase's SPF entry into the one apex `v=spf1` record; a domain can have only one. Set the sender to "Battleplan" `<noreply@getbattleplan.app>` and the reply-to to `support@getbattleplan.app`. Verification can take up to 24 hours. *Deferred 2026-10-13 at your choice: Firebase's own sender is fine while it's our team; do it before inviting other teams (ROADMAP task 112). Not set up yet as of 2026-10-15.*
+- [ ] **Firebase's built-in emails from your domain**, after the domain is connected to prod Hosting. In prod, go to *Authentication → Templates → Customize domain* and add the records it lists, with the CNAMEs set to DNS only. Merge Firebase's SPF entry into the one apex `v=spf1` record; a domain can have only one. Set the sender to "BattlePlan" `<noreply@getbattleplan.app>` and the reply-to to `support@getbattleplan.app`. Verification can take up to 24 hours. *Deferred 2026-10-13 at your choice: Firebase's own sender is fine while it's our team; do it before inviting other teams (ROADMAP task 112). Not set up yet as of 2026-10-15.*
 - [x] **DMARC record.** Add `_dmarc` with `v=DMARC1; p=none; rua=...` and turn on Cloudflare DMARC Management to read the reports. It gets stricter in Phase 2. *Done 2026-10-13 (ROADMAP task 190).*
 - [x] **Bootstrap yourself as prod's first super admin.** I'll give you the one command to run. *Done 2026-10-13 (ROADMAP task 118).*
 - [x] **Fill in the legal pages.** The Privacy Policy, Terms of Use, and delete-account drafts have bracketed placeholders for your legal name, governing law, and effective date. *Done 2026-10-13 (ROADMAP task 121).*
@@ -124,9 +124,9 @@ The website and the web app at `getbattleplan.app/app`, in desktop and phone bro
 ## Phase 2 · GDPR and EU, backups, security (right after Phase 1)
 
 - [ ] **Data processing terms.** Accept Google's data processing terms for both Firebase projects (in the Firebase console's project settings), and keep copies of Resend's and Cloudflare's.
-- [ ] **Decide whether Battleplan serves EU teams on purpose.** If it does, GDPR Art. 27 asks for a representative in the EU, which is a paid service.
+- [ ] **Decide whether BattlePlan serves EU teams on purpose.** If it does, GDPR Art. 27 asks for a representative in the EU, which is a paid service.
 - [ ] **Backups off-site** (ARCH §6.12, D62). In Cloudflare, create an R2 bucket for backups and an API token that can reach only that bucket. Save the token and the backup encryption key I give you in the Battle vault, and keep an offline copy of the key. R2 is free up to 10 GB, then $0.015/GB-month; Wasabi and Azure cost more at our size.
-- [ ] **Two-factor everywhere.** Turn on 2-Step Verification on every Battleplan account: Google, Cloudflare, GitHub, Resend, and 1Password.
+- [ ] **Two-factor everywhere.** Turn on 2-Step Verification on every BattlePlan account: Google, Cloudflare, GitHub, Resend, and 1Password.
 - [ ] **DNSSEC.** Turn it on for `getbattleplan.app` in Cloudflare (*DNS → Settings*).
 - [ ] **Stricter DMARC.** After 2 to 4 weeks of reports showing Firebase and Resend passing, change the record to `p=quarantine`, then `p=reject`.
 
@@ -155,7 +155,7 @@ The website and the web app at `getbattleplan.app/app`, in desktop and phone bro
 - [ ] **Invite our team's iPhone and iPad users to TestFlight.**
 - [ ] **EU trader status** in App Store Connect. Apple asks even if you skip the EU.
   - A trader's address and phone number appear on EU store pages. Apple lets an individual show a P.O. box instead of a home address.
-  - A free app with no business behind it may count as non-trader, which shows nothing. Revisit if Battleplan ever charges (SPEC Q4).
+  - A free app with no business behind it may count as non-trader, which shows nothing. Revisit if BattlePlan ever charges (SPEC Q4).
 - [ ] **The rest of the Phase 4 checklist** in [docs/SPEC.md](docs/SPEC.md) §10: the store listing, screenshots, the age rating, and the App Review demo account.
 
 ---
@@ -213,3 +213,12 @@ Every question in SPEC §12 is decided as of 2026-10-12.
 - Set up the emulators with seed data, so the whole app runs locally for free.
 - Add starter security rules, indexes, and TTL policies, plus the GitHub Actions workflows, the import-boundary check, and `.gitignore` rules for key files. Cloud deploys of server functions switch on when dev moves to Blaze.
 - Tell you when an item in a later phase becomes necessary, and walk you through the console-only steps.
+
+## The name is BattlePlan (2026-11-27, #120)
+
+The app, the emails, and the website write it BattlePlan now. These names live in consoles only you can change:
+
+- [ ] **App Store Connect:** with the next version (1.4.7), set the app's Name to `BattlePlan by Battle Sports` and paste the description and review notes from docs/STORE-LISTING.md. 1.4.6 is in review with the old spelling, and a name can't change without a new version.
+- [ ] **Play Console:** Main store listing → App name `BattlePlan by Battle Sports`, the description from docs/STORE-LISTING-PLAY.md, and the new `store/google-play/icon-512.png` and `feature-graphic.png`.
+- [ ] **Google's sign-in screen:** Google Cloud console → Google Auth Platform → Branding (the OAuth consent screen) → App name `BattlePlan`, in the prod and the dev project. It's the name on "Sign in to continue to…"; Google may review the change.
+- [ ] **Firebase's own emails:** Firebase console → Project settings → General → Public-facing name `BattlePlan`, in both projects. Password reset and sign-in link emails use it.

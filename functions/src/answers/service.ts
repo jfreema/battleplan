@@ -320,7 +320,7 @@ export interface PageResponse {
   html: string;
 }
 
-function problem(status: number, heading: string, body: string, url = appUrl('/'), label = 'Open Battleplan'): PageResponse {
+function problem(status: number, heading: string, body: string, url = appUrl('/'), label = 'Open BattlePlan'): PageResponse {
   return { status, html: answerProblemPage({ heading, body, url, label }) };
 }
 
@@ -343,14 +343,14 @@ export async function answerPage(
   const token = answerToken(path);
   const linkId = token ? answerLinkId(token) : null;
   const link = linkId ? await db().collection(Collections.answerLinks).doc(linkId).get() : null;
-  if (!link?.exists) return problem(404, "This link doesn't work anymore", 'Open Battleplan to RSVP.');
+  if (!link?.exists) return problem(404, "This link doesn't work anymore", 'Open BattlePlan to RSVP.');
 
   const groupId = String(link.get('groupId'));
   const eventId = String(link.get('eventId'));
   const uid = String(link.get('uid'));
   const eventUrl = appUrl(eventRoute(groupId, eventId));
   const tooLate = () =>
-    problem(410, "It's too late to answer here", 'The event has started or RSVPs are closed.', eventUrl, 'Open in Battleplan');
+    problem(410, "It's too late to answer here", 'The event has started or RSVPs are closed.', eventUrl, 'Open in BattlePlan');
 
   const [event, team, user] = await db().getAll(
     db().collection(Collections.events).doc(eventId),
@@ -358,14 +358,14 @@ export async function answerPage(
     db().collection(Collections.users).doc(uid),
   );
   if (!event.exists || !team.exists || team.get('archivedAt') != null || team.get('suspendedAt') != null) {
-    return problem(410, "This event isn't taking answers", 'Open Battleplan to see your schedule.');
+    return problem(410, "This event isn't taking answers", 'Open BattlePlan to see your schedule.');
   }
   if (!user.exists || user.get('status') === 'disabled') {
-    return problem(404, "This link doesn't work anymore", 'Open Battleplan to RSVP.');
+    return problem(404, "This link doesn't work anymore", 'Open BattlePlan to RSVP.');
   }
   const data = event.data() as DocumentData;
   const view = eventView(data);
-  if (view.canceled) return problem(410, 'This event was canceled', "There's nothing to answer.", eventUrl, 'Open in Battleplan');
+  if (view.canceled) return problem(410, 'This event was canceled', "There's nothing to answer.", eventUrl, 'Open in BattlePlan');
   const deadlineMs = msOf(data.rsvpDeadline);
   if (data.rsvpEnabled === false || nowMs >= msOf(link.get('expiresAt')) || nowMs >= view.startMs || (deadlineMs && nowMs >= deadlineMs)) {
     return tooLate();
@@ -387,7 +387,7 @@ export async function answerPage(
     return player.exists && player.get('groupId') === groupId && player.get('status') !== 'pending' && linked.exists;
   });
   if (!people.length) {
-    return problem(403, "You can't answer for them anymore", 'Open Battleplan to see who you answer for.', eventUrl, 'Open in Battleplan');
+    return problem(403, "You can't answer for them anymore", 'Open BattlePlan to see who you answer for.', eventUrl, 'Open in BattlePlan');
   }
 
   const allowMaybe = team.get('settings.allowMaybe') !== false;
@@ -458,7 +458,7 @@ export async function answerPage(
   try {
     await consumeRateLimit(linkId!.slice(0, 32), 'answerLink', Limits.answerLinkTriesPerHour, 'hour');
   } catch {
-    return problem(429, 'Too many tries', 'Wait a bit and try again.', eventUrl, 'Open in Battleplan');
+    return problem(429, 'Too many tries', 'Wait a bit and try again.', eventUrl, 'Open in BattlePlan');
   }
   const batch = db().batch();
   for (const { player: p, status, note } of answers) {

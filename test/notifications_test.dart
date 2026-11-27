@@ -417,7 +417,7 @@ void main() {
         auth: FakeAuthRepository(user: coach),
         push: FakePushRepository(permission: PushPermission.notDetermined),
       );
-      expect(find.text('Welcome to Battleplan'), findsOneWidget);
+      expect(find.text('Welcome to BattlePlan'), findsOneWidget);
       expect(find.text('Turn on notifications?'), findsNothing);
     });
 

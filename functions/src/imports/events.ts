@@ -1,4 +1,4 @@
-// Calendar entries to Battleplan events (SPEC IMPORT-4): a type, a title,
+// Calendar entries to BattlePlan events (SPEC IMPORT-4): a type, a title,
 // the opponent and home or away for games, a place, and times in the
 // event's own zone, with daily and weekly repeats expanded into dates.
 // Pure functions with no Firestore.

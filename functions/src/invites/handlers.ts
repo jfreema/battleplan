@@ -141,7 +141,7 @@ export const getInvitePreview = onCall(async (request) => {
  * everyone else goes straight on to the app's /join page with a 302, as the
  * Hosting redirect this replaces did. The team lookup shares
  * getInvitePreview's limit per IP address; past it, or for a code that
- * doesn't work, the preview is Battleplan's own.
+ * doesn't work, the preview is BattlePlan's own.
  */
 export const joinPage = onRequest({ invoker: 'public' }, async (req, res) => {
   // The answer differs by who asks, so no cache may keep it for others.

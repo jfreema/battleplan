@@ -13,7 +13,7 @@ describe('emails', () => {
 
   it('builds the setup email', () => {
     const e = setupEmail('a@x.com', 'Thunder', 'Jordan', 'https://link');
-    expect(e.subject).toBe('Jordan added you to Thunder on Battleplan');
+    expect(e.subject).toBe('Jordan added you to Thunder on BattlePlan');
     expect(e.text).toContain('https://link');
   });
 });

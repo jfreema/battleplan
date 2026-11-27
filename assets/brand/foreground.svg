@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-<!-- Battleplan's adaptive Android icon foreground, on no tile. Made by tools/make_brand.py. -->
+<!-- BattlePlan's adaptive Android icon foreground, on no tile. Made by tools/make_brand.py. -->
 <defs><linearGradient id="bp-fg-blend0" gradientUnits="userSpaceOnUse" x1="0" y1="-34" x2="0" y2="34"><stop offset="0" stop-color="#FFE566"/><stop offset="1" stop-color="#E9A800"/></linearGradient><linearGradient id="bp-fg-blend1" gradientUnits="userSpaceOnUse" x1="0" y1="196" x2="0" y2="696"><stop offset="0" stop-color="#FFE566"/><stop offset="1" stop-color="#F5B800"/></linearGradient><clipPath id="bp-fg-clip"><path d="M205.3 701.6Q236 676 276 676L752 676Q792 676 822.7 701.6L834 711Q876 746 848.8 799.5L841.7 813.6Q810 876 740 876L292 876Q222 876 188.8 814.4L180.4 798.8Q152 746 194 711Z"/></clipPath><clipPath id="bp-fg-clip1"><rect x="238" y="710" width="136" height="136" rx="68"/></clipPath><clipPath id="bp-fg-clip2"><rect x="446" y="710" width="136" height="136" rx="68"/></clipPath><clipPath id="bp-fg-clip3"><rect x="654" y="710" width="136" height="136" rx="68"/></clipPath></defs>
 <g transform="translate(-70.5 -32.5) translate(582.5 544.5) scale(0.8933) translate(-582.5 -544.5)">
 <g transform="translate(22 26)">

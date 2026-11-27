@@ -39,13 +39,13 @@ export const DOCUMENTS_PER_CALL = 50;
  */
 export const CHAT_IMPORT_CALLS_PER_TEAM_PER_DAY = 1000;
 
-/** Who wrote an imported message: never a Battleplan account (IMPORT-4). */
+/** Who wrote an imported message: never a BattlePlan account (IMPORT-4). */
 export function importedAuthorId(source: ChatSource, authorSourceId: string): string {
   return `${source}:${authorSourceId}`;
 }
 
 /**
- * A message's or document's ID in Battleplan: the same for the same team,
+ * A message's or document's ID in BattlePlan: the same for the same team,
  * source, and item, so importing again adds only what's new (IMPORT-5).
  * The app works out the same ID, to upload photos and files to its folder
  * first (lib/features/imports/domain/groupme_export.dart).

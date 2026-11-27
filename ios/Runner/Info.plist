@@ -37,17 +37,17 @@
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Battleplan saves team photos, and plays as GIFs, to your library when you tap Save photo or Save as GIF.</string>
+	<string>BattlePlan saves team photos, and plays as GIFs, to your library when you tap Save photo or Save as GIF.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Battleplan uses your photo library so you can choose a profile photo and share photos with your teams.</string>
+	<string>BattlePlan uses your photo library so you can choose a profile photo and share photos with your teams.</string>
 	<key>NSCalendarsUsageDescription</key>
-	<string>Battleplan adds team events to your calendar when you tap Add to calendar.</string>
+	<string>BattlePlan adds team events to your calendar when you tap Add to calendar.</string>
 	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
-	<string>Battleplan adds team events to your calendar when you tap Add to calendar.</string>
+	<string>BattlePlan adds team events to your calendar when you tap Add to calendar.</string>
 	<key>NSContactsUsageDescription</key>
 	<string>The calendar screen can suggest places from your contacts for an event's location.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Battleplan uses the camera so you can take photos to share with your teams and scan team QR codes.</string>
+	<string>BattlePlan uses the camera so you can take photos to share with your teams and scan team QR codes.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

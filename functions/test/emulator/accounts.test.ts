@@ -110,7 +110,7 @@ describe('security notices (AUTH-7)', () => {
     await run(accounts.recordSignInMethodChange, 'sam', { passwordChanged: true });
     expect(mail.sent).toHaveLength(1);
     expect(mail.sent[0].to).toBe('sam@example.com');
-    expect(mail.sent[0].text).toContain('password for your Battleplan account was changed');
+    expect(mail.sent[0].text).toContain('password for your BattlePlan account was changed');
   });
 
   it('nothing changed, nothing sent', async () => {

@@ -117,7 +117,7 @@ export function demoDocs(demo: { uid: string; email: string }, now: Date): DemoD
   ];
   const chats: Record<string, [string, string, number][]> = {
     [DEMO_TEAM]: [
-      [demo.uid, 'Welcome to Battleplan! Practice is Tuesday at 6.', 300],
+      [demo.uid, 'Welcome to BattlePlan! Practice is Tuesday at 6.', 300],
       ['demo-jordan', 'Field 3 is reserved. I will bring the extra bats.', 240],
       ['demo-sam', 'On my way!', 30],
     ],

@@ -195,7 +195,7 @@ void main() {
     expect(r.links.links.single.groupId, isNull);
     await tester.tap(find.text('Add to Outlook'));
     await tester.pumpAndSettle();
-    expect(r.opener.opened.last.queryParameters['name'], 'Battleplan');
+    expect(r.opener.opened.last.queryParameters['name'], 'BattlePlan');
     // Thunder's own link is still to make.
     await tester.tap(find.text('Thunder').last);
     await tester.pumpAndSettle();

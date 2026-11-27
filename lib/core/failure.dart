@@ -98,7 +98,7 @@ final class RequiresRecentLogin extends AppFailure {
   String get code => 'requiresRecentLogin';
 }
 
-/// The sign-in method is already linked to another Battleplan account.
+/// The sign-in method is already linked to another BattlePlan account.
 /// Two accounts are never merged automatically (AUTH-7).
 final class CredentialInUse extends AppFailure {
   const new([super.message]);

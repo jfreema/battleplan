@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<!-- Battleplan's privacy manifest (store checklist 1.9). Apple requires the
+<!-- BattlePlan's privacy manifest (store checklist 1.9). Apple requires the
      reason for each "required reason" API the app uses (ITMS-91053); the
      Flutter engine, Firebase, and most plugins ship their own manifests,
      and these cover the app's own use and plugins without one (pdfium,
@@ -99,7 +99,7 @@
 		</dict>
 		<!-- Dues (DUES-1 to DUES-5): what each player or member owes and
 		     what they paid, all at once or a part at a time (the amounts
-		     and days admins record). Battleplan takes no payments. -->
+		     and days admins record). BattlePlan takes no payments. -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypeOtherFinancialInfo</string>

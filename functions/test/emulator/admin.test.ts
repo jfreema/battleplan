@@ -717,7 +717,7 @@ describe('users (ADMIN-4)', () => {
     expect(user.passwordHash).toBeUndefined();
     expect((await users().doc(uid).get()).data()).toMatchObject({ displayName: 'Nia New', status: 'provisioned' });
     expect(mail.sent).toHaveLength(1);
-    expect(mail.sent[0]).toMatchObject({ to: 'new@example.com', subject: 'Root Admin set up a Battleplan account for you' });
+    expect(mail.sent[0]).toMatchObject({ to: 'new@example.com', subject: 'Root Admin set up a BattlePlan account for you' });
     expect((await audits('createUser'))[0]).toMatchObject({ targetId: uid, after: { email: 'new@example.com', groupId: null } });
     await expect(
       asRoot(admin.adminCreateUser, { email: 'new@example.com', displayName: 'Again' }),
@@ -731,7 +731,7 @@ describe('users (ADMIN-4)', () => {
     const membership = await db().collection(Collections.groupMembers).doc(`thunder_${uid}`).get();
     expect(membership.data()).toMatchObject({ role: 'admin', pending: true, displayName: 'Cory Coach' });
     expect((await groups().doc('thunder').get()).get('memberCount')).toBe(4);
-    expect(mail.sent.map((m) => m.subject)).toEqual(['Root Admin added you to Thunder on Battleplan']);
+    expect(mail.sent.map((m) => m.subject)).toEqual(['Root Admin added you to Thunder on BattlePlan']);
     expect((await audits('createUser'))[0]).toMatchObject({ groupId: 'thunder', after: { role: 'admin' } });
   });
 
@@ -749,7 +749,7 @@ describe('users (ADMIN-4)', () => {
 
     await asRoot(admin.adminUpdateUser, { uid: 'pat', addToGroup: { groupId: 'hawks', role: 'admin' } });
     expect((await db().collection(Collections.groupMembers).doc('hawks_pat').get()).get('role')).toBe('admin');
-    expect(mail.sent.map((m) => m.subject)).toEqual(["You're on Hawks U14 on Battleplan"]);
+    expect(mail.sent.map((m) => m.subject)).toEqual(["You're on Hawks U14 on BattlePlan"]);
     await expect(
       asRoot(admin.adminUpdateUser, { uid: 'pat', addToGroup: { groupId: 'thunder' } }),
     ).rejects.toMatchObject({ code: 'failed-precondition', message: 'already-member' });
@@ -790,7 +790,7 @@ describe('users (ADMIN-4)', () => {
     const result = await asRoot(admin.adminSendPasswordReset, { uid: 'pat' });
     expect(result).toEqual({ ok: true });
     expect(mail.sent).toHaveLength(1);
-    expect(mail.sent[0]).toMatchObject({ to: 'pat@example.com', subject: 'Reset your Battleplan password' });
+    expect(mail.sent[0]).toMatchObject({ to: 'pat@example.com', subject: 'Reset your BattlePlan password' });
     expect(mail.sent[0].text).toMatch(/Choose a new password: http/);
     expect((await audits('sendPasswordReset'))[0]).toMatchObject({ targetId: 'pat' });
   });

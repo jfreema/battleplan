@@ -78,7 +78,7 @@ export interface Caller {
 }
 
 /**
- * The event's ID in Battleplan: the same for the same team, source, and
+ * The event's ID in BattlePlan: the same for the same team, source, and
  * entry, so importing again adds only what's new (IMPORT-5).
  */
 export function importedEventId(groupId: string, source: ImportSource, sourceId: string): string {

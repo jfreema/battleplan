@@ -1,19 +1,21 @@
 # SEO plan: getbattleplan.app
 
+Since 2026-11-27 (#120) the name is written BattlePlan. The site's JSON-LD keeps the old spelling as an `alternateName`, so searches for it still find the site; the notes below on other products with the name hold either way.
+
 How the website gets found: what people search for, which page answers each search, and what's still to do. The owner asked for it on 2026-11-09: "find a good SEO skill and use that to give the battleplan landing page good SEO for things like team chat, team messaging, group messaging, baseball team play whiteboard, and things that will help direct potential customers to the site." ROADMAP task 368 did the first round; the audit below, made the same day with the `seo-audit` skill's process, is the plan to keep following. How the pages are built, and the rules they keep, are in [website/README.md](../website/README.md).
 
 ## Status
 
 **Done (2026-11-09, task 368).** Quick wins Q1 to Q7, Q9, and Q11, and new pages S1 to S6, as the audit specifies them, with these differences:
 
-- **Q1, Q3:** the landing page's title, description, Open Graph and Twitter text, eyebrow (kept as the owner's "For Groups and Sports Teams"; "team chat" is in the title, description and lead instead), and lead are as in §3. The heading still reads "Every team needs a Battleplan.", with the eyebrow inside the `<h1>`, looking as it did, so the heading carries "team chat". `images/og.jpg` still shows the old eyebrow.
+- **Q1, Q3:** the landing page's title, description, Open Graph and Twitter text, eyebrow (kept as the owner's "For Groups and Sports Teams"; "team chat" is in the title, description and lead instead), and lead are as in §3. The heading still reads "Every team needs a BattlePlan.", with the eyebrow inside the `<h1>`, looking as it did, so the heading carries "team chat". `images/og.jpg` still shows the old eyebrow.
 - **Q2:** the whiteboard section names baseball and softball, Post to chat, and Save as GIF, with Softball and Save as GIF chips.
 - **Q4:** `/switch` has the new title, description, and H1, a "Why teams switch" line linking both alternative pages, breadcrumbs with `BreadcrumbList`, the badge letters beside the headings rather than in them, and **Get Started** at the end.
 - **Q5, S6:** every page's footer has **Features** (Team chat, Schedule and RSVPs, Team dues, Baseball whiteboard, Groups) and **Switching** (Switch from GroupMe or TeamSnap, TeamSnap alternative, GroupMe alternative). The landing page links each feature page under its tiles ("Take a closer look") and from the whiteboard, Players first, Dues, and Switching sections; its feature tiles themselves are unchanged. The 404 page lists the most visited pages.
 - **Q6:** the color scheme answer says a team's admins set its scheme, in the page and the `FAQPage`. The landing page also has three new questions (is it a team chat app, does it sync with Google Calendar, can we draw plays), each linking to its page.
-- **Q7:** `alternateName` ("Battleplan Team Chat", "Battleplan team app") on `WebSite` and `SoftwareApplication`, a fuller `featureList`, the whiteboard screenshot, and `twitter:image:alt` on every page. `Organization` has no `sameAs` yet: the Facebook page's address isn't in the repo.
+- **Q7:** `alternateName` ("BattlePlan Team Chat", "BattlePlan team app") on `WebSite` and `SoftwareApplication`, a fuller `featureList`, the whiteboard screenshot, and `twitter:image:alt` on every page. `Organization` has no `sameAs` yet: the Facebook page's address isn't in the repo.
 - **Q9:** `tools/build_hosting.sh dev` adds a robots `noindex` to every website page on the dev site.
-- **S1 to S5:** `/team-chat`, `/baseball-whiteboard`, `/team-schedule`, `/team-dues`, `/groups`, `/teamsnap-alternative`, and `/groupme-alternative`, at the URLs, titles, H1s, and descriptions in §8, each with breadcrumbs, an FAQ, and `WebPage`, `BreadcrumbList`, and `FAQPage` JSON-LD, in `sitemap.xml` and `llms.txt`. They reuse the landing page's screenshots: `/baseball-whiteboard` shows the still Relay home screenshot, not the looping animation (to do, below). The alternative pages state only Battleplan's facts and make no claims about the other apps.
+- **S1 to S5:** `/team-chat`, `/baseball-whiteboard`, `/team-schedule`, `/team-dues`, `/groups`, `/teamsnap-alternative`, and `/groupme-alternative`, at the URLs, titles, H1s, and descriptions in §8, each with breadcrumbs, an FAQ, and `WebPage`, `BreadcrumbList`, and `FAQPage` JSON-LD, in `sitemap.xml` and `llms.txt`. They reuse the landing page's screenshots: `/baseball-whiteboard` shows the still Relay home screenshot, not the looping animation (to do, below). The alternative pages state only BattlePlan's facts and make no claims about the other apps.
 - Players and guardians throughout: "parents" is still not used on any page (the owner's call, §2.2).
 
 **Waiting on Jared.** Q8 (verify the site in Google Search Console and Bing Webmaster Tools, submit `sitemap.xml`, and request indexing of `/`, `/switch`, and the seven new pages) and Q10 (free listings on AlternativeTo, Capterra and GetApp, G2, and Product Hunt). Q8 comes first: nothing else can be measured without it.
@@ -31,12 +33,12 @@ Full site audit, run with the `seo-audit` skill's process (keyword research, on-
 
 ### 1. Executive summary
 
-Battleplan's site is technically excellent: static HTML with 8 KB of compressed markup, a 140 ms time to first byte, clean URLs with 301s from `.html`, `www`, and `http`, self-canonicals, valid JSON-LD (Organization, WebSite, SoftwareApplication, FAQPage), Open Graph and Twitter cards on every page, a welcoming `robots.txt`, a dated sitemap, and a thorough `llms.txt`. That foundation is its biggest strength. The problem is that search engines have almost nothing to rank it for. One marketing page tries to cover every keyword. Its title starts with the brand, its H1 is a slogan ("Every team needs a Battleplan."), and "softball", "group messaging", "play designer", and "dues tracker" don't appear on it at all. In about 25 web searches for the owner's terms and the brand, the site never showed up once, and "Battleplan" is shared with a WW2 strategy game and several "Battle Plan" apps.
+BattlePlan's site is technically excellent: static HTML with 8 KB of compressed markup, a 140 ms time to first byte, clean URLs with 301s from `.html`, `www`, and `http`, self-canonicals, valid JSON-LD (Organization, WebSite, SoftwareApplication, FAQPage), Open Graph and Twitter cards on every page, a welcoming `robots.txt`, a dated sitemap, and a thorough `llms.txt`. That foundation is its biggest strength. The problem is that search engines have almost nothing to rank it for. One marketing page tries to cover every keyword. Its title starts with the brand, its H1 is a slogan ("Every team needs a BattlePlan."), and "softball", "group messaging", "play designer", and "dues tracker" don't appear on it at all. In about 25 web searches for the owner's terms and the brand, the site never showed up once, and "BattlePlan" is shared with a WW2 strategy game and several "Battle Plan" apps.
 
 **Top three priorities:**
 
-1. **Get indexed, measured, and told apart from the other Battleplans.** Verify the site in Google Search Console and Bing Webmaster Tools and submit the sitemap. Add `alternateName` and `sameAs` to the JSON-LD, and make page titles pair "Battleplan" with "team chat".
-2. **Build keyword landing pages.** Start with the **baseball and softball whiteboard**, where the competition is mostly old iPad apps and thin pages and Battleplan is the only free option that animates plays, exports GIFs, and posts them to the team chat. Then build **team chat and group messaging** and the **team dues tracker**, followed by **team schedule and RSVPs**.
+1. **Get indexed, measured, and told apart from the other Battleplans.** Verify the site in Google Search Console and Bing Webmaster Tools and submit the sitemap. Add `alternateName` and `sameAs` to the JSON-LD, and make page titles pair "BattlePlan" with "team chat".
+2. **Build keyword landing pages.** Start with the **baseball and softball whiteboard**, where the competition is mostly old iPad apps and thin pages and BattlePlan is the only free option that animates plays, exports GIFs, and posts them to the team chat. Then build **team chat and group messaging** and the **team dues tracker**, followed by **team schedule and RSVPs**.
 3. **Earn authority.** Write TeamSnap and GroupMe alternative pages, get listed on AlternativeTo, Capterra, G2, and Product Hunt, get links from Battle Baseball's own channels, and build an animated baseball plays library that other sites will want to link to.
 
 **Overall assessment: strong technical foundation, but content and authority need work.** Nothing is broken. The site just doesn't have pages built to win searches yet.
@@ -47,13 +49,13 @@ Battleplan's site is technically excellent: static HTML with 8 KB of compressed 
 
 #### 2.1 What the results pages show
 
-- **"Team chat app" and "team messaging app"** are workplace terms. Slack, Microsoft Teams, RingCentral, Pumble, ClickUp, and business roundups fill the results. Battleplan can't win them as written, but it can win the **sports versions** ("team chat app for sports teams"), which Spond, BenchApp, TeamSnap, GroupMe's blog, and vendor roundups (Jersey Watch, TeamLinkt, DialMyCalls) compete for.
+- **"Team chat app" and "team messaging app"** are workplace terms. Slack, Microsoft Teams, RingCentral, Pumble, ClickUp, and business roundups fill the results. BattlePlan can't win them as written, but it can win the **sports versions** ("team chat app for sports teams"), which Spond, BenchApp, TeamSnap, GroupMe's blog, and vendor roundups (Jersey Watch, TeamLinkt, DialMyCalls) compete for.
 - **"Group messaging app" and "group chat app"** belong to WhatsApp, GroupMe, Signal, and Telegram. Win them through long-tail versions: GroupMe alternative, group chat for clubs, and group chat with no ads.
-- **Baseball and softball play whiteboard terms are wide open.** The results are mostly App Store listings (Baseball WhiteBoard, free but last updated in 2021; Baseball Board, $4.99 for iPad; Baseball Board – Tactics; TacticalPad), plus ConceptDraw's static diagrams and tactical-board.com's page of about 120 words. No strong web page owns these terms. Battleplan's web, iPhone, and iPad app with animation, GIF export, and team chat is a better product than anything ranking.
-- **Dues tracking** is served by small apps (TeamTracky, Team Dues, Team Fund Tracker, PayUp) and vendor blogs (BenchApp, Jersey Watch, TeamLinkt). The difficulty is easy to moderate. Battleplan's angle stands out: no fees, money never goes through the app, and partial payments are supported.
+- **Baseball and softball play whiteboard terms are wide open.** The results are mostly App Store listings (Baseball WhiteBoard, free but last updated in 2021; Baseball Board, $4.99 for iPad; Baseball Board – Tactics; TacticalPad), plus ConceptDraw's static diagrams and tactical-board.com's page of about 120 words. No strong web page owns these terms. BattlePlan's web, iPhone, and iPad app with animation, GIF export, and team chat is a better product than anything ranking.
+- **Dues tracking** is served by small apps (TeamTracky, Team Dues, Team Fund Tracker, PayUp) and vendor blogs (BenchApp, Jersey Watch, TeamLinkt). The difficulty is easy to moderate. BattlePlan's angle stands out: no fees, money never goes through the app, and partial payments are supported.
 - **"Free TeamSnap alternative" and "GroupMe alternative"** are proven terms. BenchApp has six "alternative" pages, and TeamSideline, Cactusware, AlternativeTo, and Capterra all rank. Most free rivals carry ads (Heja's free tier, Stack Team App, The Futures App, TeamReach) or charge for key features (BenchApp's text RSVPs, TeamSnap's paid plans). **"Free, every feature, no ads" is a real point of difference.**
 - **Scheduling and youth sports app terms are hard.** TeamSnap, SportsEngine, GameChanger, BenchApp, and Spond have strong domains and dedicated pages.
-- **AI answers:** assistants cite vendor blog posts with FAQ sections (Spond, BenchApp). BenchApp also publishes `.md` copies of its pages for language models. Battleplan's `llms.txt` and welcoming `robots.txt` are a good start. Pages that answer the questions directly will get cited.
+- **AI answers:** assistants cite vendor blog posts with FAQ sections (Spond, BenchApp). BenchApp also publishes `.md` copies of its pages for language models. BattlePlan's `llms.txt` and welcoming `robots.txt` are a good start. Pages that answer the questions directly will get cited.
 
 #### 2.2 Keyword opportunity table
 
@@ -70,7 +72,7 @@ Demand and difficulty are estimated as described above. "Not found" means the si
 | 7 | free TeamSnap alternative | Medium | Moderate | **High** | Not found | Commercial (decision) | `/teamsnap-alternative` |
 | 8 | GroupMe alternative for sports teams | Low–Med | Easy–Moderate | **High** | Not found | Commercial (decision) | `/groupme-alternative` |
 | 9 | team dues tracker / track team dues app | Low–Med | Easy–Moderate | **High** | Not found | Commercial | `/team-dues` |
-| 10 | Battleplan team app / Battleplan team chat (brand) | Low | Moderate (name clash) | **High** | Not found | Navigational | Homepage title + JSON-LD `alternateName` |
+| 10 | BattlePlan team app / BattlePlan team chat (brand) | Low | Moderate (name clash) | **High** | Not found | Navigational | Homepage title + JSON-LD `alternateName` |
 | 11 | how to collect team dues (Venmo) | Low–Med | Moderate | Medium | Not found | Informational | `/team-dues` FAQ + "Ditch the spreadsheet" section |
 | 12 | move GroupMe group to another app / import GroupMe chat | Low–Med | Moderate (Microsoft support owns "export") | Medium | Not found | Informational | `/switch` (retitled) + `/groupme-alternative` |
 | 13 | TeamReach alternative | Low | Easy | Medium | Not found | Commercial | `/switch` + `/teamsnap-alternative` mention |
@@ -85,7 +87,7 @@ Demand and difficulty are estimated as described above. "Not found" means the si
 | 22 | team messaging app | High | Hard (workplace) | Low | Not found | Commercial (workplace) | Secondary on `/team-chat` |
 | 23 | group messaging app / group chat app | High | Very hard | Low | Not found | Commercial / navigational | Secondary on `/team-chat` and `/groups` |
 | 24 | team chat app (head term) | High | Hard (workplace) | Low (direct) | Not found | Commercial | Homepage title (with "sports teams") |
-| 25 | GameChanger alternative | Low | Moderate | Low | Not found | Commercial | Don't target: Battleplan has no scoring; use "Use it with GameChanger" on `/switch` |
+| 25 | GameChanger alternative | Low | Moderate | Low | Not found | Commercial | Don't target: BattlePlan has no scoring; use "Use it with GameChanger" on `/switch` |
 
 **Note on "parents":** `website/README.md` says the landing page says **players** and **guardians**, never kids, children, or parents. That rule is the owner's. "Parents" is the higher-demand word in search ("app for coaches to communicate with parents"). The App Store listing already aims at "coaches and parents". This audit keeps "guardians" in every page outline below. Allowing "parents" on one page (for example a later `/youth-teams`) would be Jared's call.
 
@@ -107,19 +109,19 @@ Measured from the HTML. Titles should be 50–60 characters, meta descriptions 1
 
 | Page | Title (chars) | Meta (chars) | H1 | Words in `<main>` | Notes |
 |---|---|---|---|---|---|
-| `/` | 65 | 157, no CTA | "Every team needs a Battleplan." | ~656 (many are chips) | "team chat" in the first 15 words; "softball" 0 times; "baseball" only in chips, alt text, and the footer |
-| `/switch` | 20 | 132, no CTA | "Switch to Battleplan" | ~559 | Not in any footer; no Get Started |
+| `/` | 65 | 157, no CTA | "Every team needs a BattlePlan." | ~656 (many are chips) | "team chat" in the first 15 words; "softball" 0 times; "baseball" only in chips, alt text, and the footer |
+| `/switch` | 20 | 132, no CTA | "Switch to BattlePlan" | ~559 | Not in any footer; no Get Started |
 | `/support` | 20 | 103 | "Support" | ~653 | Fine for a help page |
 | `/privacy` | 27 | 131 | "Privacy Policy" | ~3,669 | Fine |
 | `/terms` | 25 | 100 | "Terms of Use" | ~2,230 | Fine |
-| `/delete-account` | 32 | 101 | "Delete your Battleplan account" | ~774 | Fine |
+| `/delete-account` | 32 | 101 | "Delete your BattlePlan account" | ~774 | Fine |
 | `/404` | — | — | "Page not found" | ~52 | `noindex`, real 404 status: correct |
 
 #### On-page issues table
 
 | Page | Issue | Severity | Recommended Fix |
 |---|---|---|---|
-| `/` | Title is 65 characters (cut off in results) and starts with a brand that has no recognition yet, while the brand name clashes with a game | High | `Free team chat & scheduling for sports teams · Battleplan` (57). Copy it to `og:title` and `twitter:title` |
+| `/` | Title is 65 characters (cut off in results) and starts with a brand that has no recognition yet, while the brand name clashes with a game | High | `Free team chat & scheduling for sports teams · BattlePlan` (57). Copy it to `og:title` and `twitter:title` |
 | `/` | Meta description has no call to action and spends words on guardians rather than search terms | Medium | `Free team chat app for sports teams and groups: group messaging, schedules and RSVPs, dues, polls, and a coach's play whiteboard. No ads. Get started free.` (155) |
 | `/` | H1 is a slogan with no keyword | Medium | Keep the slogan as the H1 (it's the brand and the og image). Put the keyword in the eyebrow above it, `Team chat for groups and sports teams`, and in the lead: `Team chat, schedules, RSVPs, dues, and plays for sports teams and groups. Free, with no ads.` (Stronger but bigger change: make the H1 the keyword line and the slogan the eyebrow. That's a design call for Jared.) |
 | `/` | "Softball" never appears; the whiteboard is one sentence; nothing says "animated", "Save as GIF", or "Post to chat" | High | Whiteboard copy: `Draw baseball and softball plays on the diamond, add steps, and press play. Post a play to the team chat or save it as a GIF. Made for an iPad at practice.` Chips: Baseball, Softball, Basketball, Soccer, Football, Blank board, Save as GIF. Softball uses the baseball diamond, so say "baseball and softball", not "a softball field" |
@@ -127,9 +129,9 @@ Measured from the HTML. Titles should be 50–60 characters, meta descriptions 1
 | `/` | FAQ "Can I change how my team looks?" says "Everyone picks their own". Since `ed6ccfd` team admins set a team default (`llms.txt` already says so). The JSON-LD copy is stale too | Medium | Update the answer in the HTML and the FAQPage JSON-LD together (README rule) |
 | `/` | FAQ, support page, and `llms.txt` say "Dues and the new color schemes come to the iPhone app in its next update" | Low | Already tracked in ROADMAP task 352: remove it when iOS 1.2 is out |
 | `/` | No social proof (no quotes, ratings, or team counts) | Medium | Add 2–3 real coach quotes and the App Store rating once there are some. Never invent them |
-| `/` | Hero image alt text runs ~800 characters (others 450–690) | Low | Keep the descriptions for screen readers but trim to ~150–250 characters with the keywords (for example "Battleplan on five phones: a baseball play on the coach's whiteboard, a team schedule with RSVPs, team chat, group chat, and a poll") |
+| `/` | Hero image alt text runs ~800 characters (others 450–690) | Low | Keep the descriptions for screen readers but trim to ~150–250 characters with the keywords (for example "BattlePlan on five phones: a baseball play on the coach's whiteboard, a team schedule with RSVPs, team chat, group chat, and a poll") |
 | `/` | Anchor text "Bring your history." is vague | Low | "Switch from GroupMe or TeamSnap" |
-| `/switch` | Title "Switch to Battleplan" (20) has no search terms | High | `Move your team from GroupMe or TeamSnap · Battleplan` (52) |
+| `/switch` | Title "Switch to BattlePlan" (20) has no search terms | High | `Move your team from GroupMe or TeamSnap · BattlePlan` (52) |
 | `/switch` | Meta description has no call to action | Medium | `Bring your team's chat history, schedule, roster, and files over from GroupMe, TeamSnap, TeamReach, GameChanger, or Google Calendar, step by step. Start free.` (158) |
 | `/switch` | H1 has no search terms | Medium | `Move your team from GroupMe, TeamSnap, and more` |
 | `/switch` | No Get Started button: a reader convinced to switch has only Login | High (conversion) | Add the closing call to action from the homepage (Get Started → `/app/sign-up`) |
@@ -139,7 +141,7 @@ Measured from the HTML. Titles should be 50–60 characters, meta descriptions 1
 | All subpages | `twitter:image:alt` missing (the homepage has it) | Low | Add it to match `og:image:alt` |
 | All subpages | Same og image everywhere | Low | New keyword pages should get their own 1200 × 630 image (for example the whiteboard page shows a play) |
 | All subpages | No `BreadcrumbList` | Low | Add one to each new keyword page (Home › Team chat) |
-| `/support` | Short title and meta (fine for help) | Low | Optional: `Battleplan support: help with team chat, RSVPs, invites` (55) |
+| `/support` | Short title and meta (fine for help) | Low | Optional: `BattlePlan support: help with team chat, RSVPs, invites` (55) |
 | Header and footer | Navigation has only in-page anchors, Support, and Login: no links to features | Medium | Add a footer "Features" list: Team chat · Schedule & RSVPs · Dues · Baseball whiteboard · Groups · Switch from GroupMe or TeamSnap |
 
 What passes: every indexable page has exactly one H1, a logical H2/H3 order, a unique title and description, an absolute self-canonical, and alt text on every image (decorative ones `alt=""`). URLs are short, readable, and have no query strings, and screenshot filenames describe the screen (`team-chat-navy.webp`, `whiteboard-army.webp`).
@@ -161,18 +163,18 @@ Competitors checked: **BenchApp** (15 feature pages, 14 sport pages, 6 "alternat
 
 | # | Topic or keyword | Why it matters | Recommended format | Priority | Estimated effort |
 |---|---|---|---|---|---|
-| 1 | Baseball & softball whiteboard / play designer | The owner's term. Weakest competition of any target, and Battleplan's product is better than what ranks. Battle Baseball heritage gives credibility | Landing page `/baseball-whiteboard` with a looping play animation | **High** | Moderate (half day, plus GIF/video export) |
-| 2 | Team chat & group messaging for teams | The owner's top terms. Spond, BenchApp, and TeamSnap all have a chat page; Battleplan doesn't | Landing page `/team-chat` | **High** | Moderate (half day) |
+| 1 | Baseball & softball whiteboard / play designer | The owner's term. Weakest competition of any target, and BattlePlan's product is better than what ranks. Battle Baseball heritage gives credibility | Landing page `/baseball-whiteboard` with a looping play animation | **High** | Moderate (half day, plus GIF/video export) |
+| 2 | Team chat & group messaging for teams | The owner's top terms. Spond, BenchApp, and TeamSnap all have a chat page; BattlePlan doesn't | Landing page `/team-chat` | **High** | Moderate (half day) |
 | 3 | Team dues tracker | Small-app competition; "no fees, money never goes through us, partial payments" stands out; a fresh feature | Landing page `/team-dues` | **High** | Moderate (half day) |
-| 4 | Free TeamSnap alternative | Proven decision-stage term; BenchApp has a page for it; "free, no ads, no paid tier" sets Battleplan apart | Comparison page `/teamsnap-alternative` | **High** | Moderate (half day) |
-| 5 | GroupMe alternative for sports teams | Battleplan imports GroupMe history (rare); GroupMe's blog shows sports teams are a big GroupMe audience | Comparison page `/groupme-alternative` | **High** | Moderate (half day) |
+| 4 | Free TeamSnap alternative | Proven decision-stage term; BenchApp has a page for it; "free, no ads, no paid tier" sets BattlePlan apart | Comparison page `/teamsnap-alternative` | **High** | Moderate (half day) |
+| 5 | GroupMe alternative for sports teams | BattlePlan imports GroupMe history (rare); GroupMe's blog shows sports teams are a big GroupMe audience | Comparison page `/groupme-alternative` | **High** | Moderate (half day) |
 | 6 | Sports team scheduling & RSVPs | Core feature; harder terms, but needed for the cluster and for internal links | Landing page `/team-schedule` | Medium | Moderate (half day) |
 | 7 | Animated baseball plays (relays, cutoffs, bunt coverage, first-and-third) | Informational searches with static-diagram competition (ConceptDraw). Animated GIFs are link-worthy and show off Plays | Guide library `/plays/baseball/<play>`, one short page per play | Medium–High | Substantial (multi-day; about 1–2 hours per play) |
 | 8 | Group chat for clubs and groups | Groups are a real feature (Saturday Run Club) with nowhere to rank | Landing page `/groups` | Medium | Moderate (half day) |
 | 9 | Sport pages (baseball team app, softball team app) | BenchApp and TeamSnap each have 8–14 sport pages; baseball fits the brand | `/baseball-team-app`, later others | Medium | Moderate each |
 | 10 | Guides: collect dues without awkwardness; run a snack schedule; move off GroupMe without losing photos | Question searches that AI assistants answer from vendor blogs | Short guides (600–900 words, FAQ) | Medium | Moderate each |
 | 11 | Social proof (quotes, ratings, team counts) | Trust signals for both rankings and conversion; every competitor has them | Homepage strip plus a line on each landing page | Medium | Quick win once quotes exist |
-| 12 | Youth teams and guardians | "Youth sports team app" is hard, but guardians answering per player sets Battleplan apart | `/youth-teams` (see "parents" note) | Low–Med | Moderate |
+| 12 | Youth teams and guardians | "Youth sports team app" is hard, but guardians answering per player sets BattlePlan apart | `/youth-teams` (see "parents" note) | Low–Med | Moderate |
 
 ---
 
@@ -188,7 +190,7 @@ Competitors checked: **BenchApp** (15 feature pages, 14 sport pages, 6 "alternat
 | noindex usage | Pass | `/404` meta `noindex`; `/app/**` `X-Robots-Tag: noindex` header (confirmed live) |
 | Duplicate hosts | Warning | `battleplan-prod.web.app`, `battleplan-prod.firebaseapp.com`, and the dev site `battleplan-dev-ecce4.web.app` serve the same pages. Canonicals point to getbattleplan.app, which mitigates it, but the dev site is crawlable and indexable. (BenchApp's preview and staging builds show up in search results today, a live example of the risk.) Fix: have `tools/build_hosting.sh dev` add `<meta name="robots" content="noindex">` to the website pages, keeping canonicals |
 | Indexation | **Fail (unverified)** | The site didn't appear in any of ~25 searches, including brand + feature queries; the `site:` operator wasn't supported. Verify in Search Console and Bing Webmaster Tools, submit the sitemap, and request indexing of `/` and `/switch` |
-| Brand disambiguation | Warning | "Battleplan" collides with Slitherine's WW2 game and several "Battle Plan" apps. Add `alternateName` (`Battleplan Team Chat`, `Battleplan team app`) to WebSite and SoftwareApplication, add `sameAs` (App Store, Facebook page, later Google Play) to Organization, and pair the brand with "team chat" in titles |
+| Brand disambiguation | Warning | "BattlePlan" collides with Slitherine's WW2 game and several "Battle Plan" apps. Add `alternateName` (`BattlePlan Team Chat`, `BattlePlan team app`) to WebSite and SoftwareApplication, add `sameAs` (App Store, Facebook page, later Google Play) to Organization, and pair the brand with "team chat" in titles |
 | Structured data | Warning | Valid graph: Organization, WebSite, SoftwareApplication, FAQPage. Since 2023 Google shows FAQ rich results only for government and health sites, so FAQPage helps Bing and AI answers, not Google snippets. SoftwareApplication rich results need `aggregateRating` or `review`: add them only from real, visible ratings. One FAQ answer is stale (see on-page). New pages: WebPage + BreadcrumbList, `about` → `#app` |
 | Open Graph / Twitter | Pass | All pages; 1200 × 630 JPEG, 137 KB, with alt. Subpages lack `twitter:image:alt` (Low) |
 | Mobile-friendliness | Pass | `viewport-fit=cover`, safe-area padding, 44 px tap targets, no horizontal scroll at 320 px (README checks 320–1920 px) |
@@ -209,18 +211,18 @@ Competitors checked: **BenchApp** (15 feature pages, 14 sport pages, 6 "alternat
 
 #### 6.1 Team apps
 
-| Dimension | Battleplan | BenchApp | Spond | TeamSnap | GroupMe | Winner |
+| Dimension | BattlePlan | BenchApp | Spond | TeamSnap | GroupMe | Winner |
 |---|---|---|---|---|---|---|
 | Keyword footprint (est.) | ~0: not found for any target or brand query | Large: 15 feature, 14 sport, 6 alternative pages, plus a blog | Large: feature pages plus a blog targeting "best team chat and scheduling app" | Very large: sport pages, club and league focus | Very large brand; blog pages on youth baseball and HS football | TeamSnap / GroupMe |
 | Content depth | 6 pages; homepage ~650 words, mostly chips | Homepage ~2,000 words; feature pages ~500 words with 6–8 FAQs | Posts ~1,100 words with 5 FAQs | Enterprise pages, light on chat and RSVP | Posts ~650–700 words | BenchApp |
 | Publishing frequency | None (no blog) | Frequent | Regular | Regular | Regular | Competitors |
 | Backlink signals | Near zero (new domain, no mentions found) | Moderate–strong; in many roundups | Strong in Europe, moderate in US | Very strong | Very strong (Microsoft) | TeamSnap / GroupMe |
-| Technical score | Excellent: static, fast, schema, llms.txt, AI-crawler friendly | Good, plus `.md` copies for AI; staging builds leaking into the index | Good; heavy scripts and cookie banner | Heavy scripts | Good | **Battleplan** |
+| Technical score | Excellent: static, fast, schema, llms.txt, AI-crawler friendly | Good, plus `.md` copies for AI; staging builds leaking into the index | Good; heavy scripts and cookie banner | Heavy scripts | Good | **BattlePlan** |
 | SERP feature presence | None | Cited in AI answers; in roundups | Cited in AI answers | Knowledge panel, app packs | Knowledge panel | TeamSnap / GroupMe |
-| Offer | Free, every feature, no ads, no paid tier | Free plus PRO ($9/mo for text RSVPs) | Free; fees on payments | Limited free; paid plans | Free chat only | **Battleplan** (strongest message, unused in search) |
-| Feature coverage | Chat, schedule, RSVPs, polls, dues tracking, documents, plays whiteboard, imports | No whiteboard | No whiteboard | No whiteboard | Chat, polls, events only | **Battleplan** |
+| Offer | Free, every feature, no ads, no paid tier | Free plus PRO ($9/mo for text RSVPs) | Free; fees on payments | Limited free; paid plans | Free chat only | **BattlePlan** (strongest message, unused in search) |
+| Feature coverage | Chat, schedule, RSVPs, polls, dues tracking, documents, plays whiteboard, imports | No whiteboard | No whiteboard | No whiteboard | Chat, polls, events only | **BattlePlan** |
 
-**Keyword overlap and gaps.** The overlap is "free team app", "team chat and scheduling", and "TeamSnap alternative". The gaps where competitors have pages and Battleplan doesn't are team chat, scheduling and RSVPs, payments and dues, sport pages, alternative pages, and "app for coaches to communicate with parents". No team-app competitor targets **play whiteboard** terms at all. That's Battleplan's open lane.
+**Keyword overlap and gaps.** The overlap is "free team app", "team chat and scheduling", and "TeamSnap alternative". The gaps where competitors have pages and BattlePlan doesn't are team chat, scheduling and RSVPs, payments and dues, sport pages, alternative pages, and "app for coaches to communicate with parents". No team-app competitor targets **play whiteboard** terms at all. That's BattlePlan's open lane.
 
 **What gets competitors links:** inclusion in "best free team apps" roundups, comparison pages, sport-specific landing pages, and parent and coach guides.
 
@@ -228,7 +230,7 @@ Competitors checked: **BenchApp** (15 feature pages, 14 sport pages, 6 "alternat
 
 | Tool | Platform | Price | Animation | Shares to team | Web page strength |
 |---|---|---|---|---|---|
-| **Battleplan Plays** | iPhone, iPad, web | Free, no ads | Yes, step by step, Save as GIF | Post to chat | None yet (one section of the homepage) |
+| **BattlePlan Plays** | iPhone, iPad, web | Free, no ads | Yes, step by step, Save as GIF | Post to chat | None yet (one section of the homepage) |
 | Baseball WhiteBoard | iPad | Free | No (dry-erase style) | No | App Store listing only; last updated 2021 |
 | Baseball Board (Farrell) | iPad | $4.99 | Not stated; baseball or softball toggle | Share diagrams | App Store listing |
 | Baseball Board – Tactics | iPad | Free | Not stated | No | App Store listing |
@@ -244,7 +246,7 @@ A strong, focused web page plus an App Store listing that names plays and whiteb
 
 | Page | Primary keywords | Secondary keywords |
 |---|---|---|
-| `/` (existing) | free team chat & scheduling app for sports teams; free team app no ads | team chat app; sports team app; Battleplan team app (brand); group messaging; coach's whiteboard |
+| `/` (existing) | free team chat & scheduling app for sports teams; free team app no ads | team chat app; sports team app; BattlePlan team app (brand); group messaging; coach's whiteboard |
 | `/switch` (existing, retitle) | move team from GroupMe / TeamSnap; import GroupMe chat history | export GroupMe chat; TeamSnap export roster/schedule; TeamReach alternative; GameChanger calendar link |
 | `/support`, `/privacy`, `/terms`, `/delete-account` (existing) | Brand help and legal only | Don't target marketing keywords |
 | **NEW** `/team-chat` | team chat app for sports teams; team chat & group messaging for teams | team messaging app (sports); group chat for a sports team; team chat with polls; team chat app without ads; coach-to-team communication app |
@@ -287,10 +289,10 @@ Every new page should follow `website/README.md`. Plain HTML in `website/<slug>.
 
 #### 8.2 `/team-chat` (priority 2)
 
-- **Title (54):** `Team chat & group messaging app for teams · Battleplan`
+- **Title (54):** `Team chat & group messaging app for teams · BattlePlan`
 - **H1:** `Team chat for sports teams and groups`
 - **Meta (158):** `Free team chat and group messaging for sports teams and groups: photos, replies, reactions, @mentions, pinned announcements, and DMs. No ads. Start your team.`
-- **Lead:** "Battleplan is a free team chat app for sports teams and groups: one place for every message, with no ads."
+- **Lead:** "BattlePlan is a free team chat app for sports teams and groups: one place for every message, with no ads."
 - **Outline:**
   1. Hero with `team-chat-navy` or `team-chat-skyblue`
   2. H2 **Everything a group chat should do:** photos, replies, reactions, @mentions, chat search
@@ -305,10 +307,10 @@ Every new page should follow `website/README.md`. Plain HTML in `website/<slug>.
 
 #### 8.3 `/team-dues` (priority 3)
 
-- **Title (59):** `Team dues tracker: see who's paid and who owes · Battleplan`
+- **Title (59):** `Team dues tracker: see who's paid and who owes · BattlePlan`
 - **H1:** `Team dues tracker`
 - **Meta (159):** `Track team dues for uniforms, fees, and tournaments: partial payments, who owes what, and your Venmo or Cash App. Money never goes through us. Free. Start now.`
-- **Lead:** "Track team dues for uniforms, league fees, and tournaments: who's paid, who owes what, and partial payments. Free, and money never goes through Battleplan."
+- **Lead:** "Track team dues for uniforms, league fees, and tournaments: who's paid, who owes what, and partial payments. Free, and money never goes through BattlePlan."
 - **Outline:**
   1. Hero with `dues-army` and `dues-mine-light`
   2. H2 **Every due in one place:** an amount and due date for every player on a team or every member of a group
@@ -317,13 +319,13 @@ Every new page should follow `website/README.md`. Plain HTML in `website/<slug>.
   5. H2 **How to pay:** the team's Venmo, Cash App, or Apple Cash; people pay the team directly; no fees
   6. H2 **Private:** only admins see what others owe; everyone sees What you owe
   7. H2 **Ditch the spreadsheet:** a short answer to "how to track team dues" (Venmo plus a spreadsheet versus one shared record)
-  8. H2 **Questions:** Does Battleplan collect payments? Are there fees? Can people pay part now? Who can see what I owe? Can a group track dues?
+  8. H2 **Questions:** Does BattlePlan collect payments? Are there fees? Can people pay part now? Who can see what I owe? Can a group track dues?
   9. Closing call to action
 - Keep the iPhone app's payment rules in mind: on the site, say people pay the team directly, as the homepage does.
 
 #### 8.4 `/team-schedule` (priority 4)
 
-- **Title (56):** `Sports team scheduling app with RSVPs, free · Battleplan`
+- **Title (56):** `Sports team scheduling app with RSVPs, free · BattlePlan`
 - **H1:** `Team schedule and RSVPs`
 - **Meta (157):** `Schedule games and practices, get Going, Maybe, or Not going for every player, send reminders, and sync to Google or Apple Calendar. Free, no ads. Start now.`
 - **Lead:** "A free sports team scheduling app: games, practices, and events, with RSVPs in one tap."
@@ -341,24 +343,24 @@ Every new page should follow `website/README.md`. Plain HTML in `website/<slug>.
 
 #### 8.5 `/teamsnap-alternative` (priority 5)
 
-- **Title (50):** `Free TeamSnap alternative with no ads · Battleplan`
+- **Title (50):** `Free TeamSnap alternative with no ads · BattlePlan`
 - **H1:** `A free TeamSnap alternative`
-- **Meta (157):** `Looking for a free TeamSnap alternative? Battleplan gives every team chat, schedules, RSVPs, dues, and plays, with no ads and no paid tier. Import your team.`
+- **Meta (157):** `Looking for a free TeamSnap alternative? BattlePlan gives every team chat, schedules, RSVPs, dues, and plays, with no ads and no paid tier. Import your team.`
 - **Outline:**
   1. Hero: every feature free, no ads, no paid tier
   2. H2 **What every team gets:** chat, schedule and RSVPs, polls, dues tracking, documents, plays, calendar sync
   3. H2 **Bring your TeamSnap team:** schedule link, roster CSV, files; chat and contact details stay behind (link to `/switch#teamsnap`)
   4. H2 **Players and guardians:** a row for each player
-  5. H2 **What Battleplan doesn't do:** no payment processing, registration, live scoring, or streaming (honesty builds trust and filters fit)
+  5. H2 **What BattlePlan doesn't do:** no payment processing, registration, live scoring, or streaming (honesty builds trust and filters fit)
   6. H2 **Questions**
   7. Fineprint: trademarks belong to their owners, no affiliation (as on `/switch`)
-- State only Battleplan's facts, and competitor facts only with a source and date. No logos.
+- State only BattlePlan's facts, and competitor facts only with a source and date. No logos.
 
 #### 8.6 `/groupme-alternative` (priority 5)
 
-- **Title (55):** `GroupMe alternative for sports teams, free · Battleplan`
+- **Title (55):** `GroupMe alternative for sports teams, free · BattlePlan`
 - **H1:** `A GroupMe alternative built for teams`
-- **Meta (155):** `Keep your GroupMe chat history and add schedules, RSVPs, polls, dues, and plays. Battleplan is free with no ads. Import your group in a few taps and start.`
+- **Meta (155):** `Keep your GroupMe chat history and add schedules, RSVPs, polls, dues, and plays. BattlePlan is free with no ads. Import your group in a few taps and start.`
 - **Outline:**
   1. Hero
   2. H2 **Keep your chat history:** messages, photos, files, and events, with names and original dates; nothing imported sends notifications
@@ -370,7 +372,7 @@ Every new page should follow `website/README.md`. Plain HTML in `website/<slug>.
 
 #### 8.7 `/groups` (priority 6)
 
-- **Title (58):** `Group chat & event RSVPs for clubs and groups · Battleplan`
+- **Title (58):** `Group chat & event RSVPs for clubs and groups · BattlePlan`
 - **H1:** `Group chat and events for any group`
 - **Meta (158):** `Free group chat for run clubs, leagues, and any group: messages, photos, events with RSVPs, polls, documents, and dues in one place. No ads. Start your group.`
 - **Outline:**
@@ -384,7 +386,7 @@ Every new page should follow `website/README.md`. Plain HTML in `website/<slug>.
 
 #### 8.8 Later: animated baseball play library
 
-One short page per play at `/plays/baseball/<play>` (relay-home, cutoff-to-third, bunt-coverage, first-and-third-defense, backing-up-bases). Each page has an H1 with the play name ("Baseball relay home: who goes where"), the looping animation, 4–6 numbered steps for each position, a "Draw it yourself in Battleplan" call to action, and a link up to `/baseball-whiteboard`. These are the most link-worthy pages the site can have: coaches share them, and nobody else offers free animated versions.
+One short page per play at `/plays/baseball/<play>` (relay-home, cutoff-to-third, bunt-coverage, first-and-third-defense, backing-up-bases). Each page has an H1 with the play name ("Baseball relay home: who goes where"), the looping animation, 4–6 numbered steps for each position, a "Draw it yourself in BattlePlan" call to action, and a link up to `/baseball-whiteboard`. These are the most link-worthy pages the site can have: coaches share them, and nobody else offers free animated versions.
 
 ---
 
@@ -394,7 +396,7 @@ One short page per play at `/plays/baseball/<play>` (relay-home, cutoff-to-third
 
 | # | Action | Expected impact | Effort | Dependencies |
 |---|---|---|---|---|
-| Q1 | Homepage title → `Free team chat & scheduling for sports teams · Battleplan`; meta description as in §3; copy both to `og:` and `twitter:` | High | 15 min | None |
+| Q1 | Homepage title → `Free team chat & scheduling for sports teams · BattlePlan`; meta description as in §3; copy both to `og:` and `twitter:` | High | 15 min | None |
 | Q2 | Homepage whiteboard: add Softball and Save as GIF chips and the new copy (§3) | High | 30 min | None |
 | Q3 | Homepage eyebrow `Team chat for groups and sports teams`; lead adds "and groups" | Medium | 15 min | Jared's OK on hero wording (design) |
 | Q4 | `/switch`: new title, meta, and H1; Get Started call to action; badge letters out of the H2s; a "Why teams switch" line | High | 1 hr | None |

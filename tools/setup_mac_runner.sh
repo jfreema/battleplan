@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sets this Mac up as a machine GitHub Actions runs Battleplan's jobs on (a
+# Sets this Mac up as a machine GitHub Actions runs BattlePlan's jobs on (a
 # "self-hosted runner"), so Release iOS builds here at no charge rather than
 # on GitHub's macOS machine, which a private repository pays about $1.10 a
 # run for (ROADMAP task 485), and, with --ci, CI's App job, Web build and

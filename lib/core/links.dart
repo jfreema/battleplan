@@ -1,4 +1,4 @@
-/// The one place the app builds Battleplan URLs (ARCH §6.6, D40).
+/// The one place the app builds BattlePlan URLs (ARCH §6.6, D40).
 ///
 /// The website is served at the root of the domain and the web app under
 /// `/app`. Invite links stay short at `/join/<CODE>`; everything that opens

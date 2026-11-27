@@ -26,7 +26,7 @@ export interface CalendarEvent {
 export interface FeedEvent extends CalendarEvent {
   /** The team's name, before the title on a link for all one's teams. */
   team: string | null;
-  /** Where the event opens in Battleplan. */
+  /** Where the event opens in BattlePlan. */
   url: string;
 }
 
@@ -98,7 +98,7 @@ export function feedPlace(location: CalendarEvent['location']): string {
 /** The notes: arrival time for games, the event's own notes, and the way back to it. */
 export function feedNotes(e: FeedEvent): string {
   const arrive = e.arriveMinutesBefore && e.arriveMinutesBefore > 0 ? `Arrive ${e.arriveMinutesBefore} minutes early.` : '';
-  return [arrive, e.description.trim(), `Open in Battleplan: ${e.url}`].filter(Boolean).join('\n\n');
+  return [arrive, e.description.trim(), `Open in BattlePlan: ${e.url}`].filter(Boolean).join('\n\n');
 }
 
 function eventLines(e: FeedEvent, stamp: string): string[] {
@@ -132,7 +132,7 @@ export function buildCalendar(name: string, events: FeedEvent[], nowMs: number):
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Battleplan//Schedule//EN',
+    'PRODID:-//BattlePlan//Schedule//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     `NAME:${icsText(name)}`,

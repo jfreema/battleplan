@@ -45,14 +45,14 @@ describe('the emails (ADMIN-9)', () => {
       "This looks like one of Google Play's test accounts, from its automatic checks after an Android upload. " +
         'Nothing needs doing.',
     );
-    expect(test.text).toContain('Pat Lee (jane.48213@gmail.com) finished signing up for Battleplan, with Google.');
+    expect(test.text).toContain('Pat Lee (jane.48213@gmail.com) finished signing up for BattlePlan, with Google.');
   });
 
   it('names up to 20 in a spike, then how many more', () => {
     const people = Array.from({ length: 20 }, (_, i) => ({ name: `Person ${i + 1}`, email: `p${i + 1}@example.com` }));
     const spike = signupSpikeEmail('root@example.com', { count: 27, people }, 'https://app.test/admin/users');
     expect(spike.subject).toBe('Sign-up spike: 27 new accounts in the last hour');
-    expect(spike.text).toContain('27 new accounts finished signing up for Battleplan in the last hour:');
+    expect(spike.text).toContain('27 new accounts finished signing up for BattlePlan in the last hour:');
     expect(spike.text).toContain('Person 1 (p1@example.com)');
     expect(spike.text).toContain('Person 20 (p20@example.com)');
     expect(spike.text).toContain('and 7 more');

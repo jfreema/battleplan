@@ -282,6 +282,12 @@ List<AdminReportAction> reportActionsFor(AdminReport report) => [
       a,
 ];
 
+/// The actor id of what the server does by itself, the one-time changes to
+/// data (SYSTEM_ACTOR in functions/src/teams/migrations.ts). It is stored in
+/// the entries, so it keeps the name's old spelling (#120); the log shows
+/// the app's name for it.
+const systemActorId = 'Battleplan';
+
 /// One audit log entry (ADMIN-6): who did what, on which team, when, and
 /// the values before and after.
 @freezed

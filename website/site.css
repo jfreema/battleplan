@@ -1,4 +1,4 @@
-/* Battleplan website (WEB-1, WEB-5). Plain CSS, no build step.
+/* BattlePlan website (WEB-1, WEB-5). Plain CSS, no build step.
    Camo HQ (#94, owner's pick 2026-11-23) in the Team Shirt lettering (#104,
    owner's pick 2026-11-27): the site drawn the way the app draws Boot Camp
    Mix. The colors written here (:root) are its default scheme's, Black;
@@ -478,7 +478,7 @@ section { padding: 64px 0; }
    slab to Get Started. ---------- */
 .home { overflow-x: clip; }
 
-/* Hero: the title with Battleplan in mustard, and three phones. */
+/* Hero: the title with BattlePlan in mustard, and three phones. */
 .home h1 { font-size: clamp(2.6rem, 12.9vw, 5.5rem); line-height: 1.04; text-wrap: wrap; transform: rotate(-2deg); transform-origin: 0 100%; margin-top: 4px; }
 .home h1 .hl { color: var(--trim); }
 .home h1 .eyebrow { margin-bottom: 22px; transform: rotate(0deg); font-size: 0.84rem; }
@@ -627,7 +627,7 @@ section { padding: 64px 0; }
 .lp-clip-mine { --ar: 600 / 560; --oy: 35.5%; right: 0; top: 30%; width: 60%; z-index: 2; transform: rotate(2.5deg); }
 
 /* 5. Switching: the five apps as push buttons (licorice, on the panel), a
-   ball chain into Battleplan. */
+   ball chain into BattlePlan. */
 .lp-links { list-style: none; padding: 0; margin: 18px 0 0; }
 .lp-links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--text); text-decoration-thickness: 3px; }
 .lp-merge { padding: 20px; background: var(--card); border: 3px solid var(--ink); box-shadow: 5px 5px 0 var(--drop); }

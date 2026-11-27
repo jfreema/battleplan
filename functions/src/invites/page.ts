@@ -1,5 +1,5 @@
 // The page messaging apps read for an invite link's preview (ARCH §6.6,
-// ROADMAP task 140): "Join Thunder U14 on Battleplan" with the team's logo,
+// ROADMAP task 140): "Join Thunder U14 on BattlePlan" with the team's logo,
 // in Open Graph and Twitter card tags. People's browsers never get it: they
 // go straight on to the app's /join page. Pure functions, so the wording can
 // be tested without Firestore.
@@ -29,7 +29,7 @@ export function isPreviewFetcher(userAgent: string | undefined): boolean {
 
 /** The preview's title: the team, or any team for a code that doesn't work. */
 export function inviteTitle(card: InviteCard | null): string {
-  return card ? `Join ${card.teamName} on Battleplan` : 'Join your team on Battleplan';
+  return card ? `Join ${card.teamName} on BattlePlan` : 'Join your team on BattlePlan';
 }
 
 /** The preview's line under the title. */
@@ -67,7 +67,7 @@ export function invitePreviewPage(
   const named = (name: string, content: string) => `<meta name="${name}" content="${escapeHtml(content)}">`;
   const tags = [
     property('og:type', 'website'),
-    property('og:site_name', 'Battleplan'),
+    property('og:site_name', 'BattlePlan'),
     property('og:title', title),
     property('og:description', description),
     property('og:url', urls.joinUrl),

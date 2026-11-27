@@ -1,14 +1,14 @@
-// The emails Battleplan sends from Functions (ARCH §6.7).
+// The emails BattlePlan sends from Functions (ARCH §6.7).
 import { escapeHtml, layout, type Email } from './service.js';
 
 /** AUTH-6: an admin added someone who has no account yet. */
 export function setupEmail(to: string, teamName: string, addedBy: string, link: string): Email {
   return {
     to,
-    subject: `${addedBy} added you to ${teamName} on Battleplan`,
+    subject: `${addedBy} added you to ${teamName} on BattlePlan`,
     ...layout(
       [
-        `${addedBy} added you to ${teamName} on Battleplan, the app your team uses for chat, schedules, and RSVPs.`,
+        `${addedBy} added you to ${teamName} on BattlePlan, the app your team uses for chat, schedules, and RSVPs.`,
         'Tap the button to set up your account. You can sign in with Google, Apple, or a password after that. The link works once and expires soon; ask your team admin for a new one if it does.',
       ],
       { label: 'Set up my account', url: link },
@@ -20,10 +20,10 @@ export function setupEmail(to: string, teamName: string, addedBy: string, link: 
 export function accountSetupEmail(to: string, addedBy: string, link: string): Email {
   return {
     to,
-    subject: `${addedBy} set up a Battleplan account for you`,
+    subject: `${addedBy} set up a BattlePlan account for you`,
     ...layout(
       [
-        `${addedBy} set up a Battleplan account for you. Battleplan is the app teams use for chat, schedules, and RSVPs.`,
+        `${addedBy} set up a BattlePlan account for you. BattlePlan is the app teams use for chat, schedules, and RSVPs.`,
         'Tap the button to finish setting it up. You can sign in with Google, Apple, or a password after that. The link works once and expires soon.',
       ],
       { label: 'Set up my account', url: link },
@@ -38,10 +38,10 @@ export function accountSetupEmail(to: string, addedBy: string, link: string): Em
 export function passwordResetEmail(to: string, link: string): Email {
   return {
     to,
-    subject: 'Reset your Battleplan password',
+    subject: 'Reset your BattlePlan password',
     ...layout(
       [
-        'Battleplan support sent you a link to choose a new password.',
+        'BattlePlan support sent you a link to choose a new password.',
         "If you sign in with Google or Apple, you don't need a password. If you didn't ask for this, you can ignore this email.",
       ],
       { label: 'Choose a new password', url: link },
@@ -53,7 +53,7 @@ export function passwordResetEmail(to: string, link: string): Email {
 export function addedToTeamEmail(to: string, teamName: string, addedBy: string, url: string): Email {
   return {
     to,
-    subject: `You're on ${teamName} on Battleplan`,
+    subject: `You're on ${teamName} on BattlePlan`,
     ...layout([`${addedBy} added you to ${teamName}.`], { label: `Open ${teamName}`, url }),
   };
 }
@@ -62,10 +62,10 @@ export function addedToTeamEmail(to: string, teamName: string, addedBy: string, 
 export function inviteEmail(to: string, teamName: string, invitedBy: string, url: string, note?: string): Email {
   return {
     to,
-    subject: `${invitedBy} invited you to join ${teamName} on Battleplan`,
+    subject: `${invitedBy} invited you to join ${teamName} on BattlePlan`,
     ...layout(
       [
-        `${invitedBy} invited you to join ${teamName} on Battleplan.`,
+        `${invitedBy} invited you to join ${teamName} on BattlePlan.`,
         ...(note ? [`"${note}"`] : []),
         'This link works once and expires in 14 days.',
       ],
@@ -78,7 +78,7 @@ export function inviteEmail(to: string, teamName: string, invitedBy: string, url
 export function securityNoticeEmail(to: string, change: string): Email {
   return {
     to,
-    subject: 'A change to how you sign in to Battleplan',
+    subject: 'A change to how you sign in to BattlePlan',
     ...layout([change, "If this wasn't you, contact support@getbattleplan.app right away."]),
   };
 }
@@ -101,7 +101,7 @@ export function reportAlertEmail(
         [
           `Someone reported ${report.what} in a direct message (${report.reason}).`,
           'Direct messages have no team admins, so only super admins see it.',
-          'Battleplan promises to act on every report within 24 hours.',
+          'BattlePlan promises to act on every report within 24 hours.',
         ],
         { label: 'Open reports', url },
       ),
@@ -116,7 +116,7 @@ export function reportAlertEmail(
         report.teamVisible
           ? "The team's admins can act on it too."
           : "It's about one of the team's admins, so only super admins see it.",
-        'Battleplan promises to act on every report within 24 hours.',
+        'BattlePlan promises to act on every report within 24 hours.',
       ],
       { label: 'Open reports', url },
     ),
@@ -128,11 +128,11 @@ export function openReportsEmail(to: string, count: number, oldestHours: number,
   const reports = count === 1 ? '1 report is' : `${count} reports are`;
   return {
     to,
-    subject: `${reports} waiting on Battleplan`,
+    subject: `${reports} waiting on BattlePlan`,
     ...layout(
       [
         `${reports} still open; the oldest was filed ${oldestHours} hours ago.`,
-        'Battleplan promises to act on every report within 24 hours.',
+        'BattlePlan promises to act on every report within 24 hours.',
       ],
       { label: 'Open reports', url },
     ),
@@ -169,7 +169,7 @@ export function newAccountEmail(
                 'upload. Nothing needs doing.',
             ]
           : []),
-        `${account.name} (${account.email}) finished signing up for Battleplan${how}.`,
+        `${account.name} (${account.email}) finished signing up for BattlePlan${how}.`,
         ...(account.addedByAdmin ? ['A team admin added them first.'] : []),
       ],
       { label: 'Open in the Super Admin Panel', url },
@@ -197,7 +197,7 @@ export function signupSpikeEmail(
     subject: `Sign-up spike: ${spike.count} new accounts in the last hour`,
     ...layout(
       [
-        `${spike.count} new accounts finished signing up for Battleplan in the last hour:`,
+        `${spike.count} new accounts finished signing up for BattlePlan in the last hour:`,
         ...shown,
         ...(more > 0 ? [`and ${more} more`] : []),
         "If these look like bots, you can disable them on the Users page. Google Play test accounts aren't counted.",
@@ -272,7 +272,7 @@ export function rsvpReminderEmail(input: {
   place: string;
   asks: RsvpAsk[];
   sentBy: string;
-  /** The event in Battleplan. */
+  /** The event in BattlePlan. */
   eventUrl: string;
 }): Email {
   const answersOf = (ask: RsvpAsk): [string, string, boolean][] => [
@@ -285,8 +285,8 @@ export function rsvpReminderEmail(input: {
     input.team,
     [input.title, input.when, input.place].filter(Boolean).join('\n'),
     ...input.asks.flatMap((ask) => [ask.question, answersOf(ask).map(([label, url]) => `${label}: ${url}`).join('\n')]),
-    `${by} You can also answer in Battleplan: ${input.eventUrl}`,
-    '— Battleplan',
+    `${by} You can also answer in BattlePlan: ${input.eventUrl}`,
+    '— BattlePlan',
   ].join('\n\n');
   const button = (label: string, url: string, primary: boolean) =>
     `<a href="${escapeHtml(url)}" style="display:inline-block;margin:0 8px 8px 0;padding:12px 20px;border-radius:999px;` +
@@ -304,7 +304,7 @@ export function rsvpReminderEmail(input: {
           `<p>${answersOf(ask).map(([label, url, primary]) => button(label, url, primary)).join('')}</p>`,
       )
       .join('') +
-    `<p style="color:#5b5f6b;font-size:14px">${escapeHtml(by)} You can also <a href="${escapeHtml(input.eventUrl)}" style="color:#2549c4">answer in Battleplan</a>.</p>` +
-    '<p style="color:#5b5f6b;font-size:14px">— Battleplan</p></div>';
+    `<p style="color:#5b5f6b;font-size:14px">${escapeHtml(by)} You can also <a href="${escapeHtml(input.eventUrl)}" style="color:#2549c4">answer in BattlePlan</a>.</p>` +
+    '<p style="color:#5b5f6b;font-size:14px">— BattlePlan</p></div>';
   return { to: input.to, subject: `${input.team}: RSVP for ${input.title}, ${input.when}`, text, html };
 }

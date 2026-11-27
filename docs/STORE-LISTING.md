@@ -8,7 +8,7 @@ Keep it true to the app: change this page when a feature it names changes. Don't
 
 | Field | Value |
 |---|---|
-| Name | `Battleplan` (if the App Store says it's taken: `Battleplan Team Chat`) |
+| Name | `BattlePlan by Battle Sports` (27 of 30 characters; the owner's settled store name, #120). App Store Connect has `Battleplan` (the old spelling, with which 1.4.6 is in review): a name changes only with a new version, so it goes in with the next one. Under the icon the app is `BattlePlan` |
 | Subtitle (30 characters) | `Team chat, schedule, and RSVPs` |
 | Bundle ID | `app.getbattleplan` |
 | SKU | `battleplan` |
@@ -99,10 +99,10 @@ Your schedule: what's next on every team, on the Teams screen.
 Free for every team, with no ads. Chat with the team, schedule games and practices, see who's coming for every player, and keep files and plays in one place.
 ```
 
-**Description** (4,000 characters; for 1.2, so it names Open Field's color schemes and Dues, which 1.1 doesn't have; the scheme list says Royal & Yellow since #117, 2026-11-27, which App Store Connect's 1.4.6, in review, doesn't have yet: its text says Royal & Gold, and the new name goes in with the next version, as do screenshots in the new coral, since the 27 store pictures show Black with the red it had):
+**Description** (4,000 characters; for 1.2, so it names Open Field's color schemes and Dues, which 1.1 doesn't have; the scheme list says Royal & Yellow since #117, 2026-11-27, which App Store Connect's 1.4.6, in review, doesn't have yet: its text says Royal & Gold, and the new name goes in with the next version, as does the app's own name written BattlePlan, #120, where 1.4.6's description and review notes have the old spelling, as do screenshots in the new coral, since the 27 store pictures show Black with the red it had):
 
 ```
-Battleplan is team chat and scheduling for sports teams, free for every team and with no ads. Coaches, players, and parents get the whole team in one app: the chat, the schedule, who's coming, and the team's files.
+BattlePlan is team chat and scheduling for sports teams, free for every team and with no ads. Coaches, players, and parents get the whole team in one app: the chat, the schedule, who's coming, and the team's files.
 
 TEAM CHAT
 • Photos, reactions, replies, @mentions, and pinned messages
@@ -178,7 +178,7 @@ They're captures of the app in Boot Camp Mix's Black, the scheme for anyone who 
 - **Notes.** The demo login (`appreview@getbattleplan.app`, made on prod by `tools/seed/demo.ts --write-to-prod`; its password is only in App Store Connect and 1Password) works in the iPhone app once Universal Links are on (task 110): a tapped `getbattleplan.app/emaillogin` link opens the app's email sign-in, but a link typed into Safari opens the web app instead.
 
 ```
-Battleplan is team chat and scheduling for sports teams. Teams are invite-only, so the demo account above already owns a team with players, events, chat, a poll, documents, and a play, and you can sign in with it directly.
+BattlePlan is team chat and scheduling for sports teams. Teams are invite-only, so the demo account above already owns a team with players, events, chat, a poll, documents, and a play, and you can sign in with it directly.
 
 How to get in:
 • Sign in with Apple or Google on the sign-in screen, then join the demo team with code [the demo team's code, kept only in App Store Connect] (Join a team).
@@ -189,7 +189,7 @@ Where things are:
 • Block: press and hold their message and choose Block, or tap their photo to open their page and use the menu at the top (Block, Report).
 • Delete account: Profile (the tab at the bottom of the Teams screen; from a team, tap the back arrow at the top left first), then Settings, then Delete account. Accounts that use Sign in with Apple sign in with Apple once more, and the app revokes Apple's tokens before deleting.
 • A language filter is on for every team.
-• Dues (in a team, the Team tab at the bottom, then Dues): team admins record what players owe the team for real-world things like uniforms and league fees, and what each one has paid, all at once or a part at a time. Battleplan takes no payments, sells nothing, takes no share, and holds no money, and paying unlocks nothing in the app. Admins and coaches can list the team's own payment usernames under How to pay; the iPhone and iPad app only lets people copy them and never opens a payment app. Members pay the team directly, outside the app, for goods and services used outside it (guideline 3.1.3(e)).
+• Dues (in a team, the Team tab at the bottom, then Dues): team admins record what players owe the team for real-world things like uniforms and league fees, and what each one has paid, all at once or a part at a time. BattlePlan takes no payments, sells nothing, takes no share, and holds no money, and paying unlocks nothing in the app. Admins and coaches can list the team's own payment usernames under How to pay; the iPhone and iPad app only lets people copy them and never opens a payment app. Members pay the team directly, outside the app, for goods and services used outside it (guideline 3.1.3(e)).
 
 Accounts are for adults 18 and older. Kids don't have accounts: parents and guardians answer for them.
 ```

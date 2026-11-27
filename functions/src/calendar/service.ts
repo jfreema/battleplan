@@ -289,7 +289,7 @@ export async function calendarFeed(path: string, nowMs = Date.now()): Promise<Fe
   events.sort((a, b) => a.startMs - b.startMs || a.id.localeCompare(b.id));
 
   // A team link is named for the team, even once it's empty.
-  let name = 'Battleplan';
+  let name = 'BattlePlan';
   if (groupId !== null) {
     const team = groups[0]?.exists ? String(groups[0].get('name') ?? '').trim() : '';
     if (team) name = team;

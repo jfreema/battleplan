@@ -377,6 +377,17 @@ void main() {
       ],
     );
 
+    testWidgets("what the server did by itself is under the app's name, as "
+        "it's written now (#120)", (tester) async {
+      // The entry stores the old spelling as its actor's id.
+      final admin = FakeAdminRepository(
+        audit: [entry('e1', 'Battleplan', 'reminderDefaultsOff', hoursAgo: 1)],
+      );
+      await open(tester, '/admin/audit', admin: admin);
+      expect(find.text('BattlePlan'), findsOneWidget);
+      expect(find.text('Battleplan'), findsNothing);
+    });
+
     testWidgets('sorts by any column either way (owner, 2026-11-14)', (
       tester,
     ) async {

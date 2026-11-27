@@ -58,7 +58,7 @@ describe('a new account (ADMIN-9)', () => {
     expect(alerts()).toEqual([]);
     await run(ensureUserProfile, 'pat', { setup });
     expect(alerts().map((m) => m.subject)).toEqual(['New account: Pat Lee']);
-    expect(alerts()[0].text).toContain('Pat Lee (pat@example.com) finished signing up for Battleplan, with email.');
+    expect(alerts()[0].text).toContain('Pat Lee (pat@example.com) finished signing up for BattlePlan, with email.');
     expect(alerts()[0].text).toContain('/admin/users/pat');
     expect(alerts()[0].text).not.toContain('A team admin added them');
     // A save sent again isn't another account.

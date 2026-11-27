@@ -139,13 +139,13 @@ final class UserRepositoryProvider
 
 String _$userRepositoryHash() => r'2514308090efaa25862553395f53a6e0804f4ac7';
 
-/// The signed-in person's Battleplan profile. Creating it at first sign-in
+/// The signed-in person's BattlePlan profile. Creating it at first sign-in
 /// is idempotent, so it's requested whenever the signed-in user changes.
 
 @ProviderFor(myProfile)
 final myProfileProvider = MyProfileProvider._();
 
-/// The signed-in person's Battleplan profile. Creating it at first sign-in
+/// The signed-in person's BattlePlan profile. Creating it at first sign-in
 /// is idempotent, so it's requested whenever the signed-in user changes.
 
 final class MyProfileProvider
@@ -156,7 +156,7 @@ final class MyProfileProvider
           Stream<UserProfile?>
         >
     with $FutureModifier<UserProfile?>, $StreamProvider<UserProfile?> {
-  /// The signed-in person's Battleplan profile. Creating it at first sign-in
+  /// The signed-in person's BattlePlan profile. Creating it at first sign-in
   /// is idempotent, so it's requested whenever the signed-in user changes.
   MyProfileProvider._()
     : super(

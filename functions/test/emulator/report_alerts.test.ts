@@ -104,7 +104,7 @@ describe('the daily reminder (SAFE-4)', () => {
     await report('r4', 30, 'dismissed');
     expect(await remindOpenReports()).toBe(2);
     expect(mail.sent.map((m) => m.to).sort()).toEqual(['rae@example.com', 'root@example.com']);
-    expect(mail.sent[0].subject).toBe('2 reports are waiting on Battleplan');
+    expect(mail.sent[0].subject).toBe('2 reports are waiting on BattlePlan');
     expect(mail.sent[0].text).toContain('the oldest was filed 20 hours ago');
   });
 

@@ -100,7 +100,7 @@ function get(url: URL, limits: FetchLimits): Promise<{ status: number; location?
       {
         lookup: publicLookup,
         timeout: limits.timeoutMs,
-        headers: { Accept: 'text/calendar, */*', 'User-Agent': 'Battleplan calendar import (+https://getbattleplan.app)' },
+        headers: { Accept: 'text/calendar, */*', 'User-Agent': 'BattlePlan calendar import (+https://getbattleplan.app)' },
       },
       (res) => {
         const status = res.statusCode ?? 0;
