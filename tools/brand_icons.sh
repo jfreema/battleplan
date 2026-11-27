@@ -1,21 +1,23 @@
 #!/usr/bin/env bash
 # Regenerates every icon and splash screen from the brand mark (SPEC §7.1:
-# the Sticker Pair, two die-cut sticker dog tags on a white ball chain, the
-# yellow one in front with a white stencil B and the coral one behind, on a
-# Candy Pop royal blue tile).
+# All Sports, the app's B as a tank: a yellow B on a track whose wheels are
+# a basketball, a soccer ball and a baseball, its gun out to the right, in a
+# thick ink edge on a hard shadow, on an Army green tile under a dot grid).
 #
 # The SVGs below, and lib/core/widgets/brand_mark.dart and the loading
 # screen's mark in web/index.html, are written by tools/make_brand.py
 # (python3 tools/make_brand.py): change the mark there, run it, then run this.
 #
-#   assets/brand/icon.svg  the full icon: the tags on their blue tile, square
-#   assets/brand/mark.svg  the mark alone on transparent, on a short chain,
-#                          inside the splash screens' safe zones (Android 12
-#                          crops a circle)
+#   assets/brand/icon.svg  the full icon: the tank on its tile, square
+#   assets/brand/mark.svg  the mark alone on transparent, inside the splash
+#                          screens' safe zones (Android 12 crops a circle)
 #   assets/brand/foreground.svg  the mark larger, for Android's adaptive icon
 #                          (the tool insets it into the safe zone)
-#   assets/brand/monochrome.svg  the tags, chain and B as one shape, for
-#                          Android's themed icon
+#   assets/brand/background.svg  the tile alone, for Android's adaptive icon
+#                          (drawn at two thirds: Android shows the middle
+#                          two thirds of this layer)
+#   assets/brand/monochrome.svg  the gun, the B and the track as one shape,
+#                          for Android's themed icon
 #   assets/brand/maskable.svg  the web app's maskable icon: the mark inside
 #                          the 80% circle any mask keeps
 #   website/favicon.svg    the mark on its rounded tile: the landing page's app
@@ -44,7 +46,7 @@ size() { # size <png> <px> <out>
   sips -z "$2" "$2" "$1" --out "$3" >/dev/null
 }
 
-for name in icon mark foreground monochrome maskable; do
+for name in icon mark foreground background monochrome maskable; do
   render "assets/brand/$name.svg" "$PWD/assets/brand/$name.png"
 done
 

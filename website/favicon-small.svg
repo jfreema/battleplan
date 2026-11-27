@@ -1,15 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
 <!-- Battleplan's browser-tab icon, drawn for 16 px. Made by tools/make_brand.py. -->
-<g transform="rotate(22 512 200)">
-<rect x="300" y="170" width="440" height="680" rx="150" fill="#FFFFFF" stroke="#0B1640" stroke-width="110" stroke-linejoin="round"/>
-<rect x="300" y="170" width="440" height="680" rx="150" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="50" stroke-linejoin="round"/>
-<rect x="300" y="170" width="440" height="680" rx="150" fill="#FF7F66" stroke="#D9533B" stroke-width="9" stroke-linejoin="round"/>
+<defs><linearGradient id="bp-small-blend0" gradientUnits="userSpaceOnUse" x1="0" y1="-34" x2="0" y2="34"><stop offset="0" stop-color="#FFE566"/><stop offset="1" stop-color="#E9A800"/></linearGradient><linearGradient id="bp-small-blend1" gradientUnits="userSpaceOnUse" x1="0" y1="196" x2="0" y2="696"><stop offset="0" stop-color="#FFE566"/><stop offset="1" stop-color="#F5B800"/></linearGradient></defs>
+<g transform="translate(-59.5 -24) translate(571.5 536) scale(1.17) translate(-571.5 -536)">
+<g transform="translate(604 352) rotate(-13 0 0)">
+<rect x="0" y="-34" width="300" height="68" rx="8" fill="#0B0B0A" stroke="#0B0B0A" stroke-width="80" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="0" y="-34" width="300" height="68" rx="8" fill="url(#bp-small-blend0)"/>
+<rect x="276" y="-50" width="84" height="100" rx="16" fill="#0B0B0A" stroke="#0B0B0A" stroke-width="80" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="276" y="-50" width="84" height="100" rx="16" fill="#F5B800"/>
 </g>
-<g transform="rotate(-8 512 200)">
-<rect x="282" y="150" width="480" height="760" rx="160" fill="#FFFFFF" stroke="#0B1640" stroke-width="120" stroke-linejoin="round"/>
-<rect x="282" y="150" width="480" height="760" rx="160" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="56" stroke-linejoin="round"/>
-<rect x="282" y="150" width="480" height="760" rx="160" fill="#FFD43A" stroke="#E0A800" stroke-width="9" stroke-linejoin="round"/>
-<path d="M411.1 775.0L411.1 345.0L491.8 345.0L491.8 775.0ZM518.6 775.0L518.6 704.0L521.3 704.0Q538.3 704.0 547.3 695.0Q556.3 686.0 556.3 669.1Q556.3 661.9 556.3 654.9Q556.3 647.9 556.3 640.6Q556.3 614.0 548.1 602.9Q539.9 591.7 521.3 591.7L518.6 591.7L518.6 520.8L521.3 520.8Q538.3 520.8 547.3 509.1Q556.3 497.4 556.3 476.2Q556.3 468.4 556.3 460.7Q556.3 453.0 556.3 445.5Q556.3 431.3 547.3 423.6Q538.3 415.9 521.3 415.9L518.6 415.9L518.6 345.0L521.3 345.0Q581.5 345.0 609.2 369.3Q636.9 393.6 636.9 449.8Q636.9 457.3 636.9 464.3Q636.9 471.3 636.4 478.3Q634.7 507.6 623.3 524.9Q611.9 542.3 588.0 550.3L588.0 563.2Q612.7 571.3 624.3 588.9Q635.8 606.5 636.9 636.9Q637.4 645.7 637.4 653.3Q637.4 660.8 636.9 670.2Q634.5 726.1 608.0 750.5Q581.5 775.0 521.3 775.0Z" fill="#0B1640" stroke="#0B1640" stroke-width="64" stroke-linejoin="round"/>
-<path d="M411.1 775.0L411.1 345.0L491.8 345.0L491.8 775.0ZM518.6 775.0L518.6 704.0L521.3 704.0Q538.3 704.0 547.3 695.0Q556.3 686.0 556.3 669.1Q556.3 661.9 556.3 654.9Q556.3 647.9 556.3 640.6Q556.3 614.0 548.1 602.9Q539.9 591.7 521.3 591.7L518.6 591.7L518.6 520.8L521.3 520.8Q538.3 520.8 547.3 509.1Q556.3 497.4 556.3 476.2Q556.3 468.4 556.3 460.7Q556.3 453.0 556.3 445.5Q556.3 431.3 547.3 423.6Q538.3 415.9 521.3 415.9L518.6 415.9L518.6 345.0L521.3 345.0Q581.5 345.0 609.2 369.3Q636.9 393.6 636.9 449.8Q636.9 457.3 636.9 464.3Q636.9 471.3 636.4 478.3Q634.7 507.6 623.3 524.9Q611.9 542.3 588.0 550.3L588.0 563.2Q612.7 571.3 624.3 588.9Q635.8 606.5 636.9 636.9Q637.4 645.7 637.4 653.3Q637.4 660.8 636.9 670.2Q634.5 726.1 608.0 750.5Q581.5 775.0 521.3 775.0Z" fill="#FFFFFF"/>
+<path d="M183.4 696L289 196L585.5 196Q645.3 196 683 227.1Q720.6 258.1 720.6 308.6Q720.6 324.1 717.5 337.3Q709.8 374.6 691.5 401Q673.3 427.4 648.4 442.9Q669.4 453.8 681.8 469.7Q694.2 485.6 694.2 512.8Q694.2 519.8 693.1 527.9Q691.9 536.1 690.4 544.6Q675.6 615.3 625.5 655.6Q575.4 696 483.1 696ZM424.8 387.8L494.7 387.8Q532 387.8 539 354.4Q539.7 351.3 539.7 346.6Q539.7 323.3 508.7 323.3L438.8 323.3ZM386 568.7L455.9 568.7Q493.1 568.7 500.1 535.3Q500.9 533 500.9 530.6Q500.9 528.3 500.9 526.7Q500.9 504.2 469.9 504.2L400 504.2Z" fill="#0B0B0A" stroke="#0B0B0A" stroke-width="80" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M183.4 696L289 196L585.5 196Q645.3 196 683 227.1Q720.6 258.1 720.6 308.6Q720.6 324.1 717.5 337.3Q709.8 374.6 691.5 401Q673.3 427.4 648.4 442.9Q669.4 453.8 681.8 469.7Q694.2 485.6 694.2 512.8Q694.2 519.8 693.1 527.9Q691.9 536.1 690.4 544.6Q675.6 615.3 625.5 655.6Q575.4 696 483.1 696ZM424.8 387.8L494.7 387.8Q532 387.8 539 354.4Q539.7 351.3 539.7 346.6Q539.7 323.3 508.7 323.3L438.8 323.3ZM386 568.7L455.9 568.7Q493.1 568.7 500.1 535.3Q500.9 533 500.9 530.6Q500.9 528.3 500.9 526.7Q500.9 504.2 469.9 504.2L400 504.2Z" fill="url(#bp-small-blend1)"/>
+<path d="M205.3 701.6Q236 676 276 676L752 676Q792 676 822.7 701.6L834 711Q876 746 848.8 799.5L841.7 813.6Q810 876 740 876L292 876Q222 876 188.8 814.4L180.4 798.8Q152 746 194 711Z" fill="#0B0B0A" stroke="#0B0B0A" stroke-width="80" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M205.3 701.6Q236 676 276 676L752 676Q792 676 822.7 701.6L834 711Q876 746 848.8 799.5L841.7 813.6Q810 876 740 876L292 876Q222 876 188.8 814.4L180.4 798.8Q152 746 194 711Z" fill="#4A5327"/>
+<circle cx="306" cy="778" r="68" fill="#F28A2A" stroke="#0B0B0A" stroke-width="22" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="514" cy="778" r="68" fill="#FFFFFF" stroke="#0B0B0A" stroke-width="22" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="722" cy="778" r="68" fill="#FFF8EA" stroke="#0B0B0A" stroke-width="22" stroke-linejoin="round" stroke-linecap="round"/>
 </g>
 </svg>

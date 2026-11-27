@@ -122,13 +122,16 @@ flutter:
       fonts:
         - asset: assets/fonts/battleplan_sans/BattleplanSans-Black.ttf
 
-# App icons and splash screens from the Sticker Pair on Candy Pop blue (SPEC
-# §7.1). Regenerate with tools/brand_icons.sh.
+# App icons and splash screens from All Sports, the B as a tank on three
+# sports' balls, on Army green (SPEC §7.1). Regenerate with
+# tools/brand_icons.sh.
 flutter_launcher_icons:
   image_path: assets/brand/icon.png
   android: true
-  # Candy Pop's royal blue, the Sticker Pair's tile (SPEC §7.1).
-  adaptive_icon_background: "#1748D4"
+  # All Sports' tile alone: Army green under its dot grid (SPEC §7.1), as a
+  # picture, since a color can't carry the dots. Android shows the middle
+  # two thirds of it, so background.svg draws the tile at two thirds.
+  adaptive_icon_background: assets/brand/background.png
   # The tool insets these 16% into the adaptive icon's safe zone.
   adaptive_icon_foreground: assets/brand/foreground.png
   adaptive_icon_monochrome: assets/brand/monochrome.png
@@ -137,12 +140,14 @@ flutter_launcher_icons:
   web:
     generate: true
     image_path: assets/brand/icon.png
-    background_color: "#1748D4"
-    theme_color: "#1748D4"
+    # Black's page, as web/manifest.json has them (the tool's own manifest
+    # isn't kept: tools/brand_icons.sh puts ours back).
+    background_color: "#0E0E0D"
+    theme_color: "#0E0E0D"
 
-# The splash screens: the Sticker Pair on its short chain (mark.svg), on
-# the dark page of the default color scheme (SET-2), so the app's first frame
-# follows without a change of color; the mark keeps its own colors.
+# The splash screens: All Sports on no tile (mark.svg), on the dark page of
+# the default color scheme (SET-2), so the app's first frame follows without
+# a change of color; the tank's track is Army green there, to be seen.
 flutter_native_splash:
   color: "#0E0E0D"
   image: assets/brand/mark.png
