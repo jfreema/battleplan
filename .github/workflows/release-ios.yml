@@ -16,6 +16,14 @@
 # In a private repo this machine is billed at about ten times a Linux one
 # ($0.062 a minute on 2026-11-27, about $1.10 for a run of 17 minutes), and
 # a run that fails is billed for the minutes it ran (ARCH §9, Minutes).
+#
+# So it can build on the owner's Mac instead, through GitHub's runner app,
+# at no charge (ROADMAP task 485, DEVELOPMENT.md "Building on your Mac"):
+# once tools/setup_mac_runner.sh has set the Mac up and turned on the
+# repository variable IOS_ON_MAC, and only while the repository is private,
+# since a runner on someone's own computer shouldn't take a public
+# repository's jobs. The run waits for the Mac when it's asleep or nobody
+# is logged in. The on_github_mac box sends one run to GitHub's machine.
 name: Release iOS
 
 on:
@@ -23,6 +31,10 @@ on:
     inputs:
       skip_ci_check:
         description: Release without waiting for CI to pass on this commit
+        type: boolean
+        default: false
+      on_github_mac:
+        description: Build on GitHub's Mac this time, not yours (billed once the repo is private; only matters when IOS_ON_MAC is on)
         type: boolean
         default: false
 
@@ -118,7 +130,12 @@ jobs:
     # Xcode per macOS. Move to macos-27 once GitHub offers that label. If the
     # preview machine misbehaves, macos-26 still uploads until April 2027,
     # with MIN_IOS_SDK at 26.
-    runs-on: xcode-27
+    #
+    # Or the owner's Mac (the labels tools/setup_mac_runner.sh gives it), when
+    # IOS_ON_MAC is on and the repository is private, unless this run asked
+    # for GitHub's. Steps that only GitHub's machine needs check
+    # runner.environment, which is "self-hosted" on the Mac.
+    runs-on: ${{ vars.IOS_ON_MAC == 'on' && github.event.repository.private && !inputs.on_github_mac && fromJSON('["self-hosted", "macOS", "battleplan"]') || 'xcode-27' }}
     timeout-minutes: 60
     permissions:
       contents: read
@@ -152,11 +169,13 @@ jobs:
             exit 1
           fi
 
+      # On the Mac, Flutter stays in the runner's own folder between runs, so
+      # there's nothing to save to GitHub's cache.
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
-          cache: true
+          cache: ${{ runner.environment == 'github-hosted' }}
 
       - name: App Store Connect key
         env:
@@ -187,7 +206,10 @@ jobs:
       # machines are gone; until 2026-11-12 every run left one, and they
       # filled the account. Only those: never a distribution or Developer ID
       # certificate, or one made in Xcode on a Mac. A failure only warns.
+      # Not on the owner's Mac: it keeps its keychain, and with it the
+      # certificate its first run made, so later runs there reuse that one.
       - name: Revoke earlier runs' development certificates
+        if: runner.environment == 'github-hosted'
         env:
           ASC_KEY_PATH: ${{ runner.temp }}/asc_key.p8
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -227,8 +249,9 @@ jobs:
 
       # The one the archive made, whose private key goes with this machine.
       # The uploaded build is signed for distribution, so it isn't affected.
+      # The owner's Mac keeps its own (above).
       - name: Revoke this run's development certificate
-        if: always()
+        if: always() && runner.environment == 'github-hosted'
         env:
           ASC_KEY_PATH: ${{ runner.temp }}/asc_key.p8
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -240,5 +263,7 @@ jobs:
         run: rm -f "$RUNNER_TEMP/asc_key.p8"
 
       - name: Summary
+        env:
+          WHERE: ${{ runner.environment == 'self-hosted' && 'on your Mac' || 'on GitHub''s Mac' }}
         run: |
-          echo "Uploaded prod build **$BUILD_NUMBER** (\`${GITHUB_SHA:0:7}\`), built with the iOS $IOS_SDK SDK, to App Store Connect. It shows in TestFlight once Apple finishes processing it, usually within an hour." >> "$GITHUB_STEP_SUMMARY"
+          echo "Uploaded prod build **$BUILD_NUMBER** (\`${GITHUB_SHA:0:7}\`), built $WHERE with the iOS $IOS_SDK SDK, to App Store Connect. It shows in TestFlight once Apple finishes processing it, usually within an hour." >> "$GITHUB_STEP_SUMMARY"

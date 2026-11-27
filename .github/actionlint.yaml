@@ -1,9 +1,11 @@
 # actionlint's settings, for checking the workflows on a Mac (CI doesn't run
-# it). Release iOS runs on GitHub's "xcode-27" machine (macOS 27 with Xcode
-# 27, a GitHub-hosted public preview as of 2026-11-20), whose label actionlint
-# doesn't know yet; this is actionlint's one place to name extra labels, even
-# though the machine isn't self-hosted. Remove it when Release iOS moves to
-# macos-27.
+# it). Labels actionlint doesn't know:
+# - xcode-27: GitHub's machine for Release iOS (macOS 27 with Xcode 27, a
+#   GitHub-hosted public preview as of 2026-11-20), named here even though
+#   it isn't self-hosted. Drop it when Release iOS moves to macos-27.
+# - battleplan: the owner's Mac, a self-hosted runner set up by
+#   tools/setup_mac_runner.sh (ROADMAP task 485).
 self-hosted-runner:
   labels:
     - xcode-27
+    - battleplan
