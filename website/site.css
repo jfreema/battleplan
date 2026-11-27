@@ -783,7 +783,17 @@ kbd, .ui {
   display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px;
   padding-bottom: 20px; margin-bottom: 8px; border-bottom: 1px solid var(--hairline);
 }
-.made-by .battle-baseball { width: 168px; height: auto; flex: none; overflow: visible; }
+/* Battle Baseball's name as its own picture has it (#116), a link to the
+   shop: cream and coral letters in an ink outline on an ink shadow. On a
+   dark band the ink would be lost, so the picture has the band's hard-shadow
+   color (olive in Black) drawn close around it; on a light band that color
+   is the ink itself. */
+.made-by .battle-baseball { display: block; flex: none; width: 176px; border-radius: 8px; }
+.made-by .battle-baseball img {
+  display: block; width: 100%; height: auto;
+  filter: drop-shadow(1.5px 0 0 var(--drop)) drop-shadow(-1.5px 0 0 var(--drop)) drop-shadow(0 1.5px 0 var(--drop)) drop-shadow(0 -1.5px 0 var(--drop));
+}
+.made-by .battle-baseball:hover img { transform: translateY(-1px); }
 .made-by p { flex: 1 1 220px; color: var(--text); font: 400 1.05rem/1.4 var(--body); }
 /* Apple's credit line, on the pages that show the App Store badge. */
 .site-footer .credit { font-size: 0.85rem; }
