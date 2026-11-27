@@ -12,7 +12,7 @@
    where lettering is stamped on: tags, dog tags, and the starburst. All
    are bundled in fonts/ (SIL OFL, made by tools/make_web_fonts.sh), so the
    site makes no third-party requests. Every page is Black; the landing page
-   shows the twelve schemes as dog tags. */
+   shows the app in each of the twelve schemes (#110). */
 
 /* Lilita One has one weight. Ask for it at 400 everywhere: at any heavier
    weight a browser thickens it itself, and the letters clog. */
@@ -443,8 +443,8 @@ section { padding: 64px 0; }
 }
 
 /* ---------- The landing page: Camo HQ (#94). The page built like the app:
-   a camouflage hero with three phones, the twelve schemes as dog tags on a
-   ball chain, then each feature with a numbered dog tag, an outlined title,
+   a camouflage hero with three phones, the app in each of the twelve
+   schemes (#110), then each feature with a numbered dog tag, an outlined title,
    and its screens, some a detail of a screenshot cropped with CSS; the
    Playbook on an Army green camouflage band; the FAQ as one panel; and a red
    slab to Get Started. ---------- */
@@ -469,52 +469,29 @@ section { padding: 64px 0; }
   .hero-grid { grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: 40px; }
 }
 
-/* The schemes: candy dog tags on a ball chain, each the scheme's page with
-   its trim along the bottom, sat on the trim's lip, and its name under it.
-   Twelve of them, so that every row is full (#106): fours on a phone (three
-   rows), sixes from 600 px (two rows), one row from 900 px. If the count
-   changes, change the columns with it so that no row is left short. */
-.lp-schemes { padding: 30px 0 34px; background: var(--band); border-bottom: 3px solid var(--ink); }
+/* The schemes (#110): the top of Thunder's schedule in each of the twelve,
+   in a small phone rim on a hard shadow, its name under it, in rows that
+   are all full: threes on a phone (four rows), fours from 600 px (three),
+   sixes from 900 px (two). If the count changes, change the columns with
+   it so that no row is left short. */
+.lp-schemes { padding: 30px 0 38px; background: var(--band); border-bottom: 3px solid var(--ink); }
 .lp-schemes-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
 .lp-schemes h2 { margin: 0; font-size: 1.5rem; -webkit-text-stroke: 0; text-shadow: none; color: var(--text); letter-spacing: 0.01em; }
 .lp-schemes h2 b { color: var(--trim); font-weight: 400; }
 .lp-schemes-head p { margin: 0; color: var(--muted); }
-.lp-tags {
-  list-style: none; margin: 18px 0 0; padding: 20px 0 0; position: relative;
-  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px 8px;
+.lp-looks {
+  list-style: none; margin: 20px 0 0; padding: 0;
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 12px;
 }
-.lp-tags::before { content: ""; position: absolute; left: 0; right: 0; top: 4px; height: 3px; background: radial-gradient(circle, #77786e 1.6px, transparent 1.9px) 0 0 / 8px 3px repeat-x; }
-.lp-tags li { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; font: 700 0.78rem/1.2 var(--body); color: var(--muted); }
-/* The tag's layers, from the top: the shine, the punched hole, the face. */
-.lp-tags li::before {
-  content: ""; width: 48px; height: 60px; border-radius: 12px; border: 3px solid #000;
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.72)) 5px 4px / 10px 4px no-repeat,
-    radial-gradient(circle at 50% 12px, var(--band) 3.5px, #000 3.6px 5.4px, transparent 5.5px),
-    linear-gradient(var(--p) 0 62%, var(--k) 62% 100%);
-  box-shadow: inset 0 2.5px 0 rgba(255, 255, 255, var(--hi, 0.45)), 0 6px 0 -3px var(--l), 0 6px 0 0 #000;
-  transform: rotate(var(--r, -4deg));
+.lp-looks li { display: flex; flex-direction: column; gap: 9px; min-width: 0; text-align: center; font: 700 0.8rem/1.2 var(--body); color: var(--muted); }
+.lp-looks img {
+  display: block; width: 100%; height: auto; aspect-ratio: 360 / 422;
+  border: 3px solid var(--ink); border-radius: 12px;
+  box-shadow: 4px 4px 0 var(--drop);
 }
-.lp-tags li:nth-child(3n + 2) { --r: 3deg; }
-.lp-tags li:nth-child(3n) { --r: -1deg; }
-.lp-tags li:first-child { color: var(--text); }
-/* Each scheme's page (--p), its trim (--k; its own balloon color for Black),
-   from SPEC §7.4, and the trim's lip (--l). A dark page's line along the
-   top is fainter (--hi). */
-[data-s="black"] { --p: #0d0d0c; --k: #93cff5; --l: #2995da; --hi: 0.09; }
-[data-s="army"] { --p: #474c2b; --k: #f2c230; --l: #a78418; }
-[data-s="light"] { --p: #f2ebe0; --k: #efbe2b; --l: #a17f19; }
-[data-s="skyblue"] { --p: #bcd9f5; --k: #f5c731; --l: #ac8916; }
-[data-s="royalgold"] { --p: #17307f; --k: #f5c431; --l: #ac8616; }
-[data-s="graphite"] { --p: #2b323b; --k: #ff7f66; --l: #da3212; }
-[data-s="navysteel"] { --p: #101d3a; --k: #f2f5fa; --l: #7f9ac5; --hi: 0.09; }
-[data-s="forest"] { --p: #0f2e1f; --k: #ffffff; --l: #a8a8a8; --hi: 0.09; }
-[data-s="wildcat"] { --p: #5e1224; --k: #c9ced6; --l: #7b8697; }
-[data-s="tigahs"] { --p: #461d7c; --k: #fdd023; --l: #ae8e10; }
-[data-s="desert"] { --p: #e4d6b4; --k: #a3a95a; --l: #696c3f; }
-[data-s="sugarrush"] { --p: #fff4ea; --k: #ff8cc6; --l: #ec1883; }
-@media (min-width: 600px) { .lp-tags { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
-@media (min-width: 900px) { .lp-tags { grid-template-columns: repeat(12, minmax(0, 1fr)); } }
+.lp-looks li:first-child { color: var(--text); }
+@media (min-width: 600px) { .lp-looks { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px 18px; } }
+@media (min-width: 900px) { .lp-looks { grid-template-columns: repeat(6, minmax(0, 1fr)); } .lp-looks li { font-size: 0.86rem; } }
 
 /* A step: its dog tag and caption tag, an outlined title, a line or two, a link. */
 .home section.lp-step { padding: 64px 0; }
