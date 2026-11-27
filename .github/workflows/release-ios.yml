@@ -11,8 +11,11 @@
 # makes on each run ("Created via API"), since the machine starts empty;
 # Apple allows only so many, so the run revokes those before the archive and
 # after the upload (tools/revoke_ci_certificates.py, ROADMAP task 382).
-# It runs on GitHub's macOS machines, whose minutes count 10 times against
-# the repo's Actions minutes (it's private), so it runs only when started.
+# It runs on one of GitHub's macOS machines, only when started. While the
+# repo is public GitHub counts no minutes for its runs, this one included.
+# In a private repo this machine is billed at about ten times a Linux one
+# ($0.062 a minute on 2026-11-27, about $1.10 for a run of 17 minutes), and
+# a run that fails is billed for the minutes it ran (ARCH §9, Minutes).
 name: Release iOS
 
 on:

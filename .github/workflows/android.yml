@@ -146,8 +146,13 @@ jobs:
           cp build/app/outputs/flutter-apk/app-dev-debug.apk \
             "out/battleplan-dev-$BUILD_NUMBER-e2e.apk"
 
+      # Kept three days, time enough to download them: Release Android sends
+      # the App Bundle to Google Play in the same run, and a private
+      # repository is billed for what its runs keep beyond a small allowance
+      # (this is 158 MB a build; kept 30 days, as until 2026-11-27, a month
+      # of releases held 4 GB).
       - uses: actions/upload-artifact@v4
         with:
           name: battleplan-android-${{ inputs.flavor }}-${{ env.BUILD_NUMBER }}
           path: out/
-          retention-days: 30
+          retention-days: 3

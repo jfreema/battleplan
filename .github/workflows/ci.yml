@@ -4,8 +4,8 @@ on:
   pull_request:
   push:
     branches: [main]
-  # Run it again on a commit from the Actions tab (on main, it deploys to
-  # dev as a push does).
+  # Run it again on a commit from the Actions tab: every job runs, whatever
+  # changed, and on main it deploys everything to dev.
   workflow_dispatch:
 
 concurrency:
@@ -15,10 +15,55 @@ concurrency:
 env:
   FLUTTER_VERSION: 3.50.0
 
+# Every job has a timeout-minutes several times its usual length. Left to
+# GitHub's own limit a job that hangs runs six hours, and in a private
+# repository those are billed minutes.
 jobs:
+  # Which jobs this push needs, from the files that changed since the last
+  # commit CI passed on (tools/ci_changes.sh, ARCH §9): a website edit skips
+  # the app's and the server's tests, an app change skips the server's, and
+  # the deploy to dev sends only the parts that changed. A pull request, a
+  # run started by hand, and anything it can't sort out run everything; so
+  # the jobs below ask whether it said "false", and run if it said nothing.
+  # It needs the history but no files' contents, so it clones without them
+  # and checks out only its script.
+  changes:
+    name: What changed
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      # To ask which CI run passed last.
+      actions: read
+    outputs:
+      app: ${{ steps.changes.outputs.app }}
+      functions: ${{ steps.changes.outputs.functions }}
+      web: ${{ steps.changes.outputs.web }}
+      rules: ${{ steps.changes.outputs.rules }}
+      fdeploy: ${{ steps.changes.outputs.fdeploy }}
+      deploy: ${{ steps.changes.outputs.deploy }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          sparse-checkout: tools/ci_changes.sh
+          sparse-checkout-cone-mode: false
+      - name: What this run checks
+        id: changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: tools/ci_changes.sh
+
+  # The app's checks and then its tests, in one job: a private repository
+  # is billed for each job's minutes, each rounded up, and a second job would
+  # set Flutter up a second time; and this way a formatting or analyzer
+  # failure stops the run before the tests, its longest part.
   app:
     name: App (format, analyze, test)
+    needs: changes
+    if: needs.changes.outputs.app != 'false'
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -51,7 +96,20 @@ jobs:
       - name: Import boundaries (ENG-1)
         run: tools/check_imports.sh
       # The golden images compare on macOS only, so CI leaves them out.
-      - run: flutter test --coverage --exclude-tags golden
+      #
+      # A test file runs on each of the machine's cores at once (GitHub's
+      # machines have four for a public repository and two for a private
+      # one); left to itself Flutter uses half of them. And the biggest files
+      # go first: Flutter takes them in whatever order the disk lists them,
+      # and when a long one came last (accessibility_test.dart is a quarter
+      # of the whole run) the other cores sat idle until it finished. The
+      # files are the ones `flutter test` finds by itself: every *_test.dart
+      # under test/.
+      - name: Tests
+        run: |
+          # shellcheck disable=SC2046
+          flutter test --coverage --exclude-tags golden --concurrency "$(nproc)" \
+            $(find test -name '*_test.dart' -printf '%s %p\n' | sort -rn | cut -d' ' -f2-)
       # At least 80% of the domain and data layers (SPEC §8.1).
       - name: Coverage of domain and data layers
         run: dart run tools/check_coverage.dart coverage/lcov.info --min=80
@@ -61,7 +119,10 @@ jobs:
   # (ARCH §6.6, D40). The PR preview and the deploy to dev use this build.
   web:
     name: Web build
+    needs: changes
+    if: needs.changes.outputs.web != 'false'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       # The whole history: the build number counts the commits (ARCH §9).
       - uses: actions/checkout@v4
@@ -88,22 +149,29 @@ jobs:
         env:
           # Fills in apple-app-site-association once set (ROADMAP task 110).
           APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+      # For the preview and the deploy below, minutes later. Kept a day, the
+      # shortest GitHub allows: a private repository is billed for what its
+      # runs keep beyond a small allowance, and this is 68 MB a push.
       - uses: actions/upload-artifact@v4
         with:
           name: hosting-build
           path: build/hosting
           include-hidden-files: true
-          retention-days: 3
+          retention-days: 1
 
   functions:
     name: Functions and security rules
+    needs: changes
+    if: needs.changes.outputs.functions != 'false'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: functions
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - id: node
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
@@ -112,7 +180,24 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - run: npm ci
+      # node_modules itself, kept between runs: `npm ci` takes about a minute
+      # even with npm's downloads cached (setup-node above), most of it
+      # unpacking. The lockfile says exactly what goes in it, so the folder
+      # is kept under the lockfile's hash (and Node's version, which built
+      # the packages that have compiled parts), and saved right after
+      # `npm ci`, before any tool writes its own files there.
+      - id: modules
+        uses: actions/cache/restore@v4
+        with:
+          path: functions/node_modules
+          key: functions-modules-${{ runner.os }}-node-${{ steps.node.outputs.node-version }}-${{ hashFiles('functions/package-lock.json') }}
+      - if: steps.modules.outputs.cache-hit != 'true'
+        run: npm ci
+      - if: steps.modules.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: functions/node_modules
+          key: ${{ steps.modules.outputs.cache-primary-key }}
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run build
@@ -129,7 +214,9 @@ jobs:
 
   # Deploys use keyless Workload Identity Federation (ARCH §9). They turn on
   # once the repository variables FIREBASE_DEPLOYS=true, WIF_PROVIDER, and
-  # WIF_SERVICE_ACCOUNT are set.
+  # WIF_SERVICE_ACCOUNT are set. After turning them on, start CI by hand once
+  # (Run workflow), which deploys everything: a push sends only what changed
+  # since CI last passed.
 
   # Web preview per PR.
   preview:
@@ -138,6 +225,7 @@ jobs:
     if: github.event_name == 'pull_request' && vars.FIREBASE_DEPLOYS == 'true' && github.event.pull_request.head.repo.full_name == github.repository
     needs: [app, functions, web]
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
       id-token: write
@@ -166,16 +254,36 @@ jobs:
           gh pr comment ${{ github.event.number }} --edit-last --create-if-none \
             --body "Web preview: website ${{ steps.deploy.outputs.url }}/ · app ${{ steps.deploy.outputs.url }}/app/"
 
-  # Every push to main deploys everything to the dev project: Firestore rules
-  # and indexes, Storage rules, Functions, and the web app, in that order, so
-  # dev's web app never calls a function that isn't there yet (a new Dues
-  # build once met three-week-old Functions: "Couldn't save"). Release to dev
-  # (release-dev.yml) does the same by hand, for any branch.
+  # Every push to main deploys to the dev project what it changed: Firestore
+  # rules and indexes and Storage rules, Functions, and the web app, in that
+  # order, so dev's web app never calls a function that isn't there yet (a
+  # new Dues build once met three-week-old Functions: "Couldn't save"). A
+  # part nothing changed in stays as dev has it: the last run that passed
+  # left it there, and a push after a failed or canceled run is compared
+  # with that one, so nothing is left behind (tools/ci_changes.sh, which
+  # says when it can't count on that and sends everything). A run started
+  # by hand deploys all three, as does the first push after a Release to dev
+  # (release-dev.yml), which deploys everything by hand, for any branch.
   deploy-dev:
     name: Deploy to dev
-    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' && vars.FIREBASE_DEPLOYS == 'true'
-    needs: [app, functions, web]
+    # After the checks this push needed. One it didn't need is skipped, and a
+    # job that needs a skipped job is skipped too unless it says otherwise,
+    # so this names each one: passed or not needed, never failed or canceled.
+    if: >-
+      ${{
+        !cancelled()
+        && needs.changes.result == 'success'
+        && needs.changes.outputs.deploy != 'false'
+        && (needs.app.result == 'success' || needs.app.result == 'skipped')
+        && (needs.functions.result == 'success' || needs.functions.result == 'skipped')
+        && (needs.web.result == 'success' || needs.web.result == 'skipped')
+        && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        && github.ref == 'refs/heads/main'
+        && vars.FIREBASE_DEPLOYS == 'true'
+      }}
+    needs: [changes, app, functions, web]
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: read
       id-token: write
@@ -186,22 +294,27 @@ jobs:
       - uses: actions/checkout@v4
       # The Web build job's site, not a second build.
       - uses: actions/download-artifact@v4
+        if: needs.changes.outputs.web != 'false'
         with:
           name: hosting-build
           path: build/hosting
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      # From the lockfile; Functions need no package's install scripts.
+      # From the lockfile; Functions need no package's install scripts. Only
+      # the Functions deploy reads them: the rules and Hosting deploy without.
       - name: Functions dependencies
+        if: needs.changes.outputs.fdeploy != 'false'
         run: npm ci --prefix functions --ignore-scripts
       - uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ vars.WIF_PROVIDER }}
           service_account: ${{ vars.WIF_SERVICE_ACCOUNT }}
       - name: Deploy rules
+        if: needs.changes.outputs.rules != 'false'
         run: npx --yes firebase-tools@15 deploy --only firestore:rules,firestore:indexes,storage --project battleplan-dev-ecce4 --non-interactive
       - name: Deploy Functions
+        if: needs.changes.outputs.fdeploy != 'false'
         run: |
           # As in release.yml: Google's quota can stop a big deploy for a
           # minute; then try again (unchanged functions are skipped). Any
@@ -223,4 +336,5 @@ jobs:
           done
           exit 1
       - name: Deploy hosting
+        if: needs.changes.outputs.web != 'false'
         run: npx --yes firebase-tools@15 deploy --only hosting --project battleplan-dev-ecce4 --non-interactive

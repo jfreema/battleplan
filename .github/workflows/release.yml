@@ -124,12 +124,15 @@ jobs:
             fi
           done
           exit 1
+      # For the release job below, minutes later. Kept a day, the shortest
+      # GitHub allows: a private repository is billed for what its runs keep
+      # beyond a small allowance, and this is 68 MB a release.
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: hosting-${{ inputs.flavor }}
           path: build/hosting
           include-hidden-files: true
-          retention-days: 3
+          retention-days: 1
 
   release:
     name: Release to ${{ inputs.flavor }}
