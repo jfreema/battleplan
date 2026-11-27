@@ -41,7 +41,8 @@ env:
   FIREBASE_ANALYTICS_WITHOUT_ADID: 'true'
 
 jobs:
-  # On Linux, where minutes are cheap: wait for CI before paying for macOS.
+  # On Linux, where minutes are cheap: check the version with Apple and wait
+  # for CI before paying for macOS.
   checks:
     name: Ready to release
     runs-on: ubuntu-latest
@@ -54,6 +55,35 @@ jobs:
         run: |
           echo "::error::iOS releases come from main (this is ${GITHUB_REF_NAME})."
           exit 1
+
+      # Only what the version check reads, not the whole repo.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            pubspec.yaml
+            tools/check_ios_version.py
+            tools/revoke_ci_certificates.py
+          sparse-checkout-cone-mode: false
+
+      # Apple takes no more builds of a version once it's approved, and the
+      # upload, the last step on the Mac, was the first to say so (runs #15
+      # and #17, after 15 minutes each). This asks App Store Connect first, in
+      # seconds, and stops with the version to change to. If App Store
+      # Connect can't be asked, it warns and the run goes on.
+      - name: Apple still takes builds of this version
+        env:
+          PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          umask 077
+          export ASC_KEY_PATH="$RUNNER_TEMP/asc_key.p8"
+          printf '%s\n' "$PRIVATE_KEY" > "$ASC_KEY_PATH"
+          status=0
+          python3 tools/check_ios_version.py || status=$?
+          rm -f "$ASC_KEY_PATH"
+          exit "$status"
 
       - name: Skipping the CI check, as asked
         if: ${{ inputs.skip_ci_check }}
