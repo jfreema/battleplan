@@ -28,7 +28,7 @@ Every push to `main` deploys what it changed to dev once CI passes, server funct
 
 ## Built with
 
-Flutter (web, iOS, and Android from one codebase) and Firebase: Authentication, Firestore, Cloud Functions in TypeScript, Storage, and Hosting. The website in `website/` is plain HTML and CSS with one small script (tap a color scheme on the landing page and the whole site takes it), in the app's Boot Camp Mix look in Black (Camo HQ). The app bundles its fonts, Lilita One, Lato and Big Shoulders Stencil, and the website serves the same ones itself, as the web app serves its fonts for emoji and other scripts: never from Google Fonts.
+Flutter (web, iOS, and Android from one codebase) and Firebase: Authentication, Firestore, Cloud Functions in TypeScript, Storage, and Hosting. The website in `website/` is plain HTML and CSS with one small script (tap a color scheme on the landing page and the whole site takes it for a day), in the app's Boot Camp Mix look, Army green unless you pick another (Camo HQ). The app bundles its fonts, Lilita One, Lato and Big Shoulders Stencil, and the website serves the same ones itself, as the web app serves its fonts for emoji and other scripts: never from Google Fonts.
 
 ## Docs
 

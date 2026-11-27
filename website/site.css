@@ -1,7 +1,10 @@
 /* Battleplan website (WEB-1, WEB-5). Plain CSS, no build step.
    Camo HQ (#94, owner's pick 2026-11-23) in the Team Shirt lettering (#104,
    owner's pick 2026-11-27): the site drawn the way the app draws Boot Camp
-   Mix, in its default scheme, Black. Bubbly outlined titles on a hard olive
+   Mix. The colors written here (:root) are its default scheme's, Black;
+   every page's <html> asks for Army green, the site's default since #118,
+   and a visitor can tap any of the twelve (#111). Bubbly outlined titles
+   on a hard olive
    shadow, candy push buttons, tags, and dog tags (#98: a face with a shine,
    sat on a lip of its own darker shade), panels with ink outlines and hard
    shadows, camouflage under the heroes with a halftone fade, and a fine dot
@@ -11,8 +14,9 @@
    links and bold spans, Black for buttons; and Battleplan Stencil only
    where lettering is stamped on: tags, dog tags, and the starburst. All
    are bundled in fonts/ (SIL OFL, made by tools/make_web_fonts.sh), so the
-   site makes no third-party requests. Every page is Black; the landing page
-   shows the app in each of the twelve schemes (#110). */
+   site makes no third-party requests. Every page opens in Army green (#118;
+   Black until then); the landing page shows the app in each of the twelve
+   schemes (#110), each a button that puts the site in it for a day (#111). */
 
 /* Lilita One has one weight. Ask for it at 400 everywhere: at any heavier
    weight a browser thickens it itself, and the letters clog. */
@@ -813,8 +817,9 @@ kbd, .ui {
 
 /* ---------- GENERATED SCHEMES (tools/make_web_schemes.py): do not edit by hand ---------- */
 /* Every scheme but Black (:root above), from the app's palettes in
-   lib/core/design/camp_palette.dart: website/scheme.js sets
-   data-scheme on <html> when one is tapped (#111). */
+   lib/core/design/camp_palette.dart. Every page's <html> names Army
+   green, the site's default (#118); website/scheme.js sets
+   data-scheme to the one a visitor tapped, for a day (#111). */
 html[data-scheme="army"] {
   /* Army green */
   color-scheme: dark;

@@ -7,8 +7,9 @@ hand):
 
   * a block of the site's role tokens, `html[data-scheme="<value>"]`, between
     the GENERATED SCHEMES markers at the end of website/site.css, which
-    website/scheme.js turns on when a scheme is tapped (and on later
-    visits); and
+    a page's <html data-scheme="..."> turns on: every page's own markup
+    names Army green, the site's default (#118), and website/scheme.js
+    names the one a visitor tapped, for a day; and
   * website/images/camo-<value>.svg, the heroes' camouflage in the scheme's
     four camouflage colors: camo-black.svg with its four colors swapped. A
     scheme whose headers are plain in the app (CandyTouches.plainHeader:
@@ -248,8 +249,9 @@ def main():
     css = CSS.read_text()
     generated = (
         BEGIN + "\n/* Every scheme but Black (:root above), from the app's palettes in\n"
-        "   lib/core/design/camp_palette.dart: website/scheme.js sets\n"
-        "   data-scheme on <html> when one is tapped (#111). */\n" + "\n".join(blocks) + "\n" + END + "\n"
+        "   lib/core/design/camp_palette.dart. Every page's <html> names Army\n"
+        "   green, the site's default (#118); website/scheme.js sets\n"
+        "   data-scheme to the one a visitor tapped, for a day (#111). */\n" + "\n".join(blocks) + "\n" + END + "\n"
     )
     if BEGIN in css:
         a = css.index(BEGIN)
