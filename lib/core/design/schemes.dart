@@ -562,9 +562,6 @@ class SchemeRoles {
   /// Forest (#89), in Open Field's Forest green's stored value (D81).
   static final darkarmy = SchemeRoles.camp(CampPalette.forest);
 
-  /// Tropic Blue (#90): ocean blue, its panels white under navy.
-  static final tropicblue = SchemeRoles.camp(CampPalette.tropicBlue);
-
   /// Desert Tan (#90): sand and olive, a light scheme.
   static final deserttan = SchemeRoles.camp(CampPalette.desertTan);
 
@@ -583,7 +580,6 @@ class SchemeRoles {
     TeamScheme.graphite => graphite,
     TeamScheme.navy => navy,
     TeamScheme.darkarmy => darkarmy,
-    TeamScheme.tropicblue => tropicblue,
     TeamScheme.deserttan => deserttan,
     TeamScheme.sugarrush => sugarrush,
     _ => dark,
@@ -671,9 +667,10 @@ abstract final class ThemeCatalog {
   static bool sprinklesOf(TeamScheme scheme) =>
       _camp[scheme.look]?.sprinkles ?? true;
 
-  /// The schemes the pickers offer: Boot Camp Mix's thirteen (#85, #86, #89,
-  /// #90, #98, #105). The other built-in schemes and saved themes are no longer
-  /// offered; a pick of one shows in its closest ([TeamSchemeLook.look]).
+  /// The schemes the pickers offer: Boot Camp Mix's twelve (#85, #86, #89,
+  /// #90, #98, #105, #106). The other built-in schemes and saved themes are
+  /// no longer offered; a pick of one shows in its closest
+  /// ([TeamSchemeLook.look]).
   static const List<TeamScheme> available = bootCampSchemes;
 }
 
@@ -681,9 +678,10 @@ abstract final class ThemeCatalog {
 /// 2026-11-22: "let's replace the existing themes with these 3 themes";
 /// #86, the same day: "add 4 new themes to the UI"; #89, the next:
 /// Graphite, Navy Steel, and Forest; #90: Royal & Gold in Candy Pop's
-/// place, Tropic Blue, and Desert Tan; and #98: Sugar Rush). Thirteen
-/// since #105 took Teal Wave out (owner, 2026-11-27: "You can get rid of
-/// Teal Wave").
+/// place, and Desert Tan; and #98: Sugar Rush). Twelve since #105 took
+/// Teal Wave out (owner, 2026-11-27: "You can get rid of Teal Wave") and
+/// #106 took Tropic Blue out the same day ("Remove the tropic blue theme
+/// so that there's 12 themes, an even number.").
 const List<TeamScheme> bootCampSchemes = [
   TeamScheme.army,
   TeamScheme.dark,
@@ -695,7 +693,6 @@ const List<TeamScheme> bootCampSchemes = [
   TeamScheme.graphite,
   TeamScheme.navy,
   TeamScheme.darkarmy,
-  TeamScheme.tropicblue,
   TeamScheme.deserttan,
   TeamScheme.sugarrush,
 ];
@@ -704,24 +701,27 @@ const List<TeamScheme> bootCampSchemes = [
 /// and whether its page is dark.
 extension TeamSchemeLook on TeamScheme {
   /// The Boot Camp Mix scheme this is drawn in (#85, #86, #89, #90, #98):
-  /// itself for the thirteen; for a scheme the app no longer offers, the
+  /// itself for the twelve; for a scheme the app no longer offers, the
   /// closest. Stored picks are never rewritten, so an older app still
   /// shows its own. Since #89 Open Field's Navy is Navy Steel and its
   /// Forest green is Forest (D81); Scoreboard goes to Black; Sky Blue Pop
   /// to Sky Blue; Teal Wave (#105) to Graphite, the closest by color, which
-  /// keeps its coral; a saved theme to Black or Light by how dark its page
+  /// keeps its coral; Tropic Blue (#106) to Sky Blue, the closest by color,
+  /// which keeps its white panels lettered in navy, its yellow trim and a
+  /// blue camouflage; a saved theme to Black or Light by how dark its page
   /// is.
   TeamScheme get look => switch (this) {
     TeamScheme.army => TeamScheme.army,
     TeamScheme.light => TeamScheme.light,
-    TeamScheme.sky || TeamScheme.skyblue => TeamScheme.sky,
+    TeamScheme.sky ||
+    TeamScheme.skyblue ||
+    TeamScheme.tropicblue => TeamScheme.sky,
     TeamScheme.candypop => TeamScheme.candypop,
     TeamScheme.wildcat => TeamScheme.wildcat,
     TeamScheme.purplegold => TeamScheme.purplegold,
     TeamScheme.graphite || TeamScheme.tealwave => TeamScheme.graphite,
     TeamScheme.navy => TeamScheme.navy,
     TeamScheme.darkarmy => TeamScheme.darkarmy,
-    TeamScheme.tropicblue => TeamScheme.tropicblue,
     TeamScheme.deserttan => TeamScheme.deserttan,
     TeamScheme.sugarrush => TeamScheme.sugarrush,
     TeamScheme.dark || TeamScheme.scoreboard => TeamScheme.dark,
@@ -758,7 +758,6 @@ extension TeamSchemeLook on TeamScheme {
     TeamScheme.graphite => l10n.schemeGraphite,
     TeamScheme.navy => l10n.schemeNavy,
     TeamScheme.darkarmy => l10n.schemeDarkarmy,
-    TeamScheme.tropicblue => l10n.schemeTropicblue,
     TeamScheme.deserttan => l10n.schemeDeserttan,
     TeamScheme.sugarrush => l10n.schemeSugarrush,
     _ => l10n.schemeDark,
@@ -775,7 +774,6 @@ extension TeamSchemeLook on TeamScheme {
     TeamScheme.graphite => l10n.schemeGraphiteShort,
     TeamScheme.navy => l10n.schemeNavyShort,
     TeamScheme.darkarmy => l10n.schemeDarkarmyShort,
-    TeamScheme.tropicblue => l10n.schemeTropicblueShort,
     TeamScheme.deserttan => l10n.schemeDeserttanShort,
     TeamScheme.sugarrush => l10n.schemeSugarrushShort,
     _ => l10n.schemeDarkShort,

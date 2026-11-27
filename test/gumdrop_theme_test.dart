@@ -16,207 +16,181 @@ import 'package:battleplan/core/widgets/team_badge.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'helpers/two_letterings.dart';
+
 /// The design's tokens (#85, #86, #89), by name, in [bootCampSchemes]'
 /// order: Army green, Black, Light, Sky Blue, Royal & Gold (in Candy Pop's
 /// place since #90), Central Wildcats, Geaux Tigahs, Graphite, Navy Steel,
-/// Forest, Tropic Blue, Desert Tan, and Sugar Rush (Teal Wave left in
-/// #105).
+/// Forest, Desert Tan, and Sugar Rush (Teal Wave left in #105, Tropic Blue
+/// in #106).
 const _tokens = <String, List<int>>{
   'ink': [
     0xFF1A1A18, 0xFF000000, 0xFF1A1A18, //
     0xFF0B1531, 0xFF050B24, 0xFF0B0B0B, 0xFF170730,
     0xFF070A0D, 0xFF02060F, 0xFF050D09,
-    0xFF062033, 0xFF24231B,
-    0xFF2B1A4A,
+    0xFF24231B, 0xFF2B1A4A,
   ],
   'shadow': [
     0xFF1A1A18, 0xFF363A28, 0xFF1A1A18, //
     0xFF0B1531, 0xFF050B24, 0xFF0B0B0B, 0xFF170730,
     0xFF070A0D, 0xFF02060F, 0xFF050D09,
-    0xFF062033, 0xFF24231B,
-    0xFF2B1A4A,
+    0xFF24231B, 0xFF2B1A4A,
   ],
   'page': [
     0xFF474C2B, 0xFF0D0D0C, 0xFFF2EBE0, //
     0xFFBCD9F5, 0xFF17307F, 0xFF5E1224, 0xFF461D7C,
     0xFF2B323B, 0xFF101D3A, 0xFF0F2E1F,
-    0xFF0A7EAC, 0xFFE4D6B4,
-    0xFFFFF4EA,
+    0xFFE4D6B4, 0xFFFFF4EA,
   ],
   'pageDots': [
     0x331A1A18, 0x0EF4EAD0, 0x1A1A1A18, //
     0x210B1531, 0x12FFFFFF, 0x1CC0C5CC, 0x1CFDD023,
     0x0FF1F4F7, 0x12F2F6FF, 0x0FFFFFFF,
-    0x21FFFFFF, 0x1F24231B,
-    0x24FF5FA8,
+    0x1F24231B, 0x24FF5FA8,
   ],
   'panel': [
     0xFF575A3A, 0xFF252522, 0xFFFFFFFF, //
     0xFFFFFFFF, 0xFF22409E, 0xFF701C30, 0xFF55278F,
     0xFF3A434E, 0xFF2B3850, 0xFF183E2C,
-    0xFFFFFFFF, 0xFFF4ECD8,
-    0xFFFFFFFF,
+    0xFFF4ECD8, 0xFFFFFFFF,
   ],
   'tabBar': [
     0xFF3D4124, 0xFF070707, 0xFFFFFFFF, //
     0xFFFFFFFF, 0xFF0E1E54, 0xFF0B0B0B, 0xFF2E1157,
     0xFF1E242B, 0xFF08101F, 0xFF081F14,
-    0xFF062A45, 0xFFF4ECD8,
-    0xFFFFFFFF,
+    0xFFF4ECD8, 0xFFFFFFFF,
   ],
   'text': [
     0xFFF4EAD0, 0xFFF4EAD0, 0xFF1A1A18, //
     0xFF0B1531, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
     0xFFF1F4F7, 0xFFF2F6FF, 0xFFFFFFFF,
-    0xFFFFFFFF, 0xFF24231B,
-    0xFF2B1A4A,
+    0xFF24231B, 0xFF2B1A4A,
   ],
   'muted': [
     0xFFD3CCAE, 0xFFB5B1A2, 0xFF5E584B, //
     0xFF34476E, 0xFFC9D3F2, 0xFFCDD1D8, 0xFFD5C6F0,
     0xFFAEB8C4, 0xFFAFBACB, 0xFFB5CFC0,
-    0xFFD8F1FF, 0xFF615A45,
-    0xFF6E5F87,
+    0xFF615A45, 0xFF6E5F87,
   ],
   'panelText': [
     0xFFF4EAD0, 0xFFF4EAD0, 0xFF1A1A18, //
     0xFF0B1531, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
     0xFFF1F4F7, 0xFFF2F6FF, 0xFFFFFFFF,
-    0xFF062033, 0xFF24231B,
-    0xFF2B1A4A,
+    0xFF24231B, 0xFF2B1A4A,
   ],
   'panelMuted': [
     0xFFD3CCAE, 0xFFB5B1A2, 0xFF5E584B, //
     0xFF34476E, 0xFFC9D3F2, 0xFFCDD1D8, 0xFFD5C6F0,
     0xFFAEB8C4, 0xFFAFBACB, 0xFFB5CFC0,
-    0xFF3D5F7A, 0xFF615A45,
-    0xFF6E5F87,
+    0xFF615A45, 0xFF6E5F87,
   ],
   'mustard': [
     0xFFF2C230, 0xFFF2C230, 0xFFEFBE2B, //
     0xFFF5C731, 0xFFF5C431, 0xFFC9CED6, 0xFFFDD023,
     0xFFFF7F66, 0xFFF2F5FA, 0xFFFFFFFF,
-    0xFFFFD23F, 0xFFA3A95A,
-    0xFFFF8CC6,
+    0xFFA3A95A, 0xFFFF8CC6,
   ],
   'balloon': [
     0xFFF2C230, 0xFF93CFF5, 0xFFEFBE2B, //
     0xFFF5C731, 0xFFF5C431, 0xFFC9CED6, 0xFFFDD023,
     0xFFFF7F66, 0xFFF2F5FA, 0xFFFFFFFF,
-    0xFFFFD23F, 0xFFA3A95A,
-    0xFFFF8CC6,
+    0xFFA3A95A, 0xFFFF8CC6,
   ],
   'red': [
     0xFFDB442F, 0xFFDB442F, 0xFFD4432C, //
     0xFFE2463A, 0xFFE8473A, 0xFFEE4B37, 0xFFE8473A,
     0xFFF26A50, 0xFFE2463A, 0xFFE5483A,
-    0xFFFF5A4E, 0xFFC9452E,
-    0xFFF2473D,
+    0xFFC9452E, 0xFFF2473D,
   ],
   'blue': [
     0xFF5FA3C8, 0xFF4F93B9, 0xFF4A86A8, //
     0xFF4C90E2, 0xFF6FC0FF, 0xFF5FA8E0, 0xFF5AA5EE,
     0xFF5AA7F0, 0xFF5AA0E0, 0xFF5BA8E0,
-    0xFF4FCBF7, 0xFF4A86A8,
-    0xFF35B0FF,
+    0xFF4A86A8, 0xFF35B0FF,
   ],
   'green': [
     0xFF9AD04A, 0xFF8DC63F, 0xFF86B93B, //
     0xFF7CC84E, 0xFF86D04F, 0xFF86C94A, 0xFF7FCB52,
     0xFF8DC63F, 0xFF7CC84E, 0xFF8BDB5A,
-    0xFF4FD38A, 0xFF6DB33F,
-    0xFF5ED36A,
+    0xFF6DB33F, 0xFF5ED36A,
   ],
   'orange': [
     0xFFF5A040, 0xFFF2983A, 0xFFEE9230, //
     0xFFF5943A, 0xFFF79A3C, 0xFFF59A3A, 0xFFF79A3C,
     0xFFF5A93A, 0xFFF5943A, 0xFFF5A03A,
-    0xFFFF9A2E, 0xFFE08A2E,
-    0xFFFF9A2E,
+    0xFFE08A2E, 0xFFFF9A2E,
   ],
   'purple': [
     0xFFAD8CD6, 0xFF9B79C4, 0xFF8C68AD, //
     0xFFA98BEB, 0xFFC3A6FF, 0xFFB08AE0, 0xFFC7A6FF,
     0xFFB49AF0, 0xFFA98BEB, 0xFFB794E8,
-    0xFFB58BFF, 0xFF8C68AD,
-    0xFFB58BFF,
+    0xFF8C68AD, 0xFFB58BFF,
   ],
   'unansweredTag': [
     0xFF7E8160, 0xFF47473F, 0xFFDCD3C3, //
     0xFFE6F1FC, 0xFF4560B0, 0xFF8A5562, 0xFF7A56AE,
     0xFF4F5966, 0xFF4A5670, 0xFF375A48,
-    0xFFCDE7F2, 0xFFD3C6A6,
-    0xFFEDE6F5,
+    0xFFD3C6A6, 0xFFEDE6F5,
   ],
   'answerRow': [
     0xFF4C5130, 0xFF1B1B19, 0xFFFAEDB2, //
     0xFFFBEFB4, 0xFF13286A, 0xFF5A1525, 0xFF481F7C,
     0xFF2E2A2D, 0xFF1A2742, 0xFF0C2619,
-    0xFFFFF1B0, 0xFFE6E2C0,
-    0xFFFFF0F7,
+    0xFFE6E2C0, 0xFFFFF0F7,
   ],
   'toolsRow': [
     0xFF4C5130, 0xFF1A1A18, 0xFFE6DCCB, //
     0xFFA9CBEE, 0xFF1A3486, 0xFF681A2E, 0xFF4E2287,
     0xFF2F3740, 0xFF22304A, 0xFF14382A,
-    0xFF0B76A3, 0xFFD8C9A5,
-    0xFFF5E1EE,
+    0xFFD8C9A5, 0xFFF5E1EE,
   ],
   'disabledIcon': [
     0xFF8E9173, 0xFF64645C, 0xFFB2AB9B, //
     0xFF6F86AB, 0xFF7A8CC4, 0xFFA88892, 0xFF9A86C0,
     0xFF6F7A87, 0xFF6B7790, 0xFF6A897A,
-    0xFF9CC3D6, 0xFFA39A80,
-    0xFFB6A9C9,
+    0xFFA39A80, 0xFFB6A9C9,
   ],
   'camoGround': [
     0xFF3F4722, 0xFF23241F, 0xFFC7B787, //
     0xFF2F5596, 0xFF1B3690, 0xFF55111F, 0xFF3F1A72,
     0xFF333B45, 0xFF1C2840, 0xFF133524,
-    0xFF0A6E99, 0xFFA8956A,
-    0xFFFFC4DD,
+    0xFFA8956A, 0xFFFFC4DD,
   ],
   'camoBig': [
     0xFF2A3016, 0xFF161713, 0xFFA69468, //
     0xFF1E3A70, 0xFF112468, 0xFF350A14, 0xFF2A0F50,
     0xFF232A32, 0xFF121A2C, 0xFF0B2418,
-    0xFF075478, 0xFF8A7A52,
-    0xFFFF9FCB,
+    0xFF8A7A52, 0xFFFF9FCB,
   ],
   'camoMid': [
     0xFF7F7A48, 0xFF3A3C33, 0xFFE0D4AC, //
     0xFF6390CC, 0xFF2F52B8, 0xFF8A2E42, 0xFF6C3DB0,
     0xFF4A5562, 0xFF3A4760, 0xFF28543D,
-    0xFF1E9CC8, 0xFFC9B88C,
-    0xFFA9DCFF,
+    0xFFC9B88C, 0xFFA9DCFF,
   ],
   'camoSmall': [
     0xFF14170B, 0xFF070706, 0xFF6E6143, //
     0xFF0E1D42, 0xFF070F33, 0xFF0B0B0B, 0xFF150628,
     0xFF12161B, 0xFF060A14, 0xFF05110B,
-    0xFF04324A, 0xFF5C5236,
-    0xFFFFE27D,
+    0xFF5C5236, 0xFFFFE27D,
   ],
   'headerHalftone': [
     0x33F4EAD0, 0x1FF4EAD0, 0x73FFFFFF, //
     0x57FFFFFF, 0x24FFFFFF, 0x24FFFFFF, 0x29FFFFFF,
     0x1FFFFFFF, 0x21F2F6FF, 0x21FFFFFF,
-    0x38FFFFFF, 0x47FFFFFF,
-    0x8CFFFFFF,
+    0x47FFFFFF, 0x8CFFFFFF,
   ],
   'headerLettering': [
     0xFFF4EAD0, 0xFFF4EAD0, 0xFF1A1A18, //
     0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
     0xFFF1F4F7, 0xFFF2F6FF, 0xFFFFFFFF,
-    0xFFFFFFFF, 0xFF24231B,
-    0xFF2B1A4A,
+    0xFF24231B, 0xFF2B1A4A,
   ],
   'ballChain': [
     0xFF1A1A18, 0xFF77786E, 0xFF1A1A18, //
     0xFF0B1531, 0xFFF5C431, 0xFFC0C5CC, 0xFFFDD023,
     0xFFFF7F66, 0xFF8E9AB4, 0xFFCFE3D6,
-    0xFFFFD23F, 0xFF24231B,
-    0xFF2B1A4A,
+    0xFF24231B, 0xFF2B1A4A,
   ],
 };
 
@@ -265,6 +239,213 @@ void _reads(Color fg, Color bg, String what, {double min = 4.5}) {
   );
 }
 
+/// [r] is built from its palette's tokens. Where the panels have a lettering
+/// of their own (Candy Pop's navy on white in #86, and Tropic Blue's in #90,
+/// shipped so; now only the theme editor's, #88), text boxes and menus opened
+/// from the page take the camouflage's ground, where the page's lettering
+/// reads.
+void _rolesFromTokens(SchemeRoles r) {
+  final p = r.palette;
+  final two = p.panelText != p.text;
+  final field = two ? p.camoGround : p.panel;
+  expect(r.page, p.page);
+  expect(r.text, p.text);
+  expect(r.cardText, p.panelText);
+  expect(
+    r.pageMuted,
+    ColorMath.readable(p.muted, [
+      p.page,
+      field,
+      p.tabBar,
+      if (!two) ...[p.panel, p.toolsRow],
+    ]),
+  );
+  expect(r.card, p.panel);
+  expect(r.field, field);
+  expect(r.popup, field);
+  expect(r.tabbar, p.tabBar);
+  for (final line in [
+    r.hairline,
+    r.outline,
+    r.tabbarLine,
+    r.fieldRim,
+    r.cardRim,
+    r.cardOutline,
+    r.candyInk,
+  ]) {
+    expect(line, p.ink);
+  }
+  // Sugar Rush's bubblegum (#98), elsewhere the shadow.
+  expect(r.titleDrop, p.touches.titleDrop ?? p.shadow);
+  expect(r.accentMark, p.mustard);
+  expect(r.you, p.balloon);
+}
+
+/// Every text role of [scheme], as it's drawn now, reads on what it sits on.
+void _textRolesRead(TeamScheme scheme) {
+  final r = SchemeRoles.of(scheme);
+  for (final (fg, bg, what) in [
+    (r.text, r.page, 'text on page'),
+    (r.cardText, r.card, 'card text on card'),
+    (r.text, r.tabbar, 'text on tab bar'),
+    (r.text, r.field, 'text on field'),
+    (r.text, r.popup, 'text on pop-ups'),
+    (r.cardText, r.cardField, 'card text on a card field'),
+    (r.cardMuted, r.cardField, 'card-muted on a card field'),
+    (r.pageMuted, r.page, 'page-muted on page'),
+    (r.pageMuted, r.tabbar, 'page-muted on tab bar'),
+    (r.pageMuted, r.field, 'page-muted on field'),
+    (r.cardMuted, r.card, 'card-muted on card'),
+    (r.accentText, r.page, 'accent-text on page'),
+    (r.goingText, r.page, 'going-text on page'),
+    (r.maybeText, r.page, 'maybe-text on page'),
+    (r.cardMaybeText, r.card, 'card-maybe-text on card'),
+    (r.gameText, r.page, 'game-text on page'),
+    (r.cardGoingText, r.card, 'card-going-text on card'),
+    (r.cardAccentText, r.card, 'card-accent-text on card'),
+    (r.typeGame, r.card, 'type-game on card'),
+    (r.typePractice, r.card, 'type-practice on card'),
+    (r.typeOther, r.card, 'type-other on card'),
+    // The derived page and card texts (A.3).
+    (r.grapePageText, r.page, 'grape on page'),
+    (r.bubblegumPageText, r.page, 'bubblegum on page'),
+    (r.blueRaspberryPageText, r.page, 'blue raspberry on page'),
+    (r.blueRaspberryCardText, r.card, 'blue raspberry on card'),
+  ]) {
+    _reads(fg, bg, '${scheme.value} $what');
+  }
+  // Marks need 3:1: the not-going icon, and the mustard tags and
+  // tiles, which carry an ink outline besides.
+  _reads(r.notGoingIcon, r.page, 'not-going icon', min: 3);
+  _reads(r.palette.ink, r.palette.mustard, 'ink on mustard');
+}
+
+/// [scheme]'s card texts, as it's drawn now, take their places in the card
+/// context.
+void _cardTextsTakeTheirPlaces(TeamScheme scheme) {
+  final r = SchemeRoles.of(scheme);
+  final page = GumdropColors.forScheme(scheme);
+  final card = page.card;
+  expect(card.onCard, isTrue);
+  expect(card.scheme, scheme);
+  // Your color as text, made to read where it sits.
+  expect(page.you.text, ColorMath.readable(r.you, [r.page]));
+  expect(card.you.text, ColorMath.readable(r.you, [r.card]));
+  expect(page.mint.text, r.goingText);
+  expect(card.mint.text, r.cardGoingText);
+  expect(page.lemon.text, r.maybeText);
+  expect(card.lemon.text, r.cardMaybeText);
+  expect(page.tangerine.text, r.gameText);
+  expect(card.tangerine.text, r.typeGame);
+  expect(card.grape.text, r.typePractice);
+  expect(card.bubblegum.text, r.typeOther);
+  expect(card.blueRaspberry.text, r.blueRaspberryCardText);
+  expect(page.textMutedOnPage, r.pageMuted);
+  expect(card.textMutedOnPage, r.cardMuted);
+  // Where the panels have their own lettering, the page's wells are its
+  // text boxes' color (as on Candy Pop's blue page in #86).
+  expect(page.well, r.cardText == r.text ? r.cardTrack : r.field);
+  expect(card.well, r.cardTrack);
+  // Plain headings have no drop; big titles are outlined.
+  expect(page.headingShadow.a, 0);
+  expect(card.headingShadow.a, 0);
+  expect(page.pageShadow, r.palette.shadow);
+  expect(card.notGoingIcon, r.cardAccentText);
+  expect(card.badgeRing, r.card);
+  expect(page.badgeRing, r.page);
+  // The card's own text and fields, and Material's pop-ups.
+  expect(page.textPrimary, r.text);
+  expect(card.textPrimary, r.cardText);
+  expect(card.textOnPage, r.cardText);
+  expect(card.headingText, r.cardText);
+  expect(page.headingTextOnCard, r.cardText);
+  expect(page.inputFill, r.field);
+  expect(card.inputFill, r.cardField);
+  expect(page.popup, r.popup);
+  expect(card.popup, r.card);
+}
+
+/// The Material theme of [scheme], as it's drawn now, has text that reads
+/// (SPEC §7.6): on the page, or in the card context.
+void _materialTextReads(TeamScheme scheme, {required bool onCard}) {
+  final where = '${scheme.value} ${onCard ? 'card' : 'page'}';
+  final theme = AppTheme.of(scheme, onCard: onCard);
+  final s = theme.colorScheme;
+  // Low is the cards and sheets, whose content is in the card
+  // context (its own check): from the page, only the containers
+  // Material draws its own rows on (menus, pickers) need the page's
+  // text to read. They're one color but where the panels have their
+  // own lettering (#72).
+  for (final (bg, name) in [
+    (s.surface, 'surface'),
+    (s.surfaceContainerLowest, 'lowest'),
+    if (onCard) (s.surfaceContainerLow, 'low'),
+    (s.surfaceContainer, 'container'),
+    (s.surfaceContainerHigh, 'high'),
+    (s.surfaceContainerHighest, 'highest'),
+  ]) {
+    _reads(s.onSurface, bg, '$where onSurface on $name');
+    _reads(s.onSurfaceVariant, bg, '$where onSurfaceVariant on $name');
+  }
+  for (final (fg, name) in [
+    (s.primary, 'primary'),
+    (s.secondary, 'secondary'),
+    (s.tertiary, 'tertiary'),
+    (s.error, 'error'),
+  ]) {
+    _reads(fg, s.surface, '$where $name on surface');
+    _reads(fg, s.surfaceContainer, '$where $name on pop-ups');
+    if (onCard) {
+      _reads(fg, s.surfaceContainerLow, '$where $name on cards');
+    }
+  }
+  if (!onCard) {
+    // Panels and pop-ups are one color, but where the panels have
+    // their own lettering: there, pop-ups from the page are the
+    // camouflage's ground, where the page's lettering reads.
+    final r = SchemeRoles.of(scheme);
+    expect(
+      s.surfaceContainerLow == s.surfaceContainer,
+      r.cardText == r.text,
+      reason: where,
+    );
+  }
+  for (final (fg, bg, name) in [
+    (s.onPrimary, s.primary, 'onPrimary'),
+    (s.onSecondary, s.secondary, 'onSecondary'),
+    (s.onTertiary, s.tertiary, 'onTertiary'),
+    (s.onError, s.error, 'onError'),
+    (s.onPrimaryContainer, s.primaryContainer, 'onPrimaryContainer'),
+    (s.onTertiaryContainer, s.tertiaryContainer, 'onTertiaryContainer'),
+    (s.onErrorContainer, s.errorContainer, 'onErrorContainer'),
+    (s.onInverseSurface, s.inverseSurface, 'snack bar'),
+  ]) {
+    _reads(fg, bg, '$where $name');
+  }
+  final input = theme.inputDecorationTheme;
+  _reads(
+    theme.textTheme.bodyLarge!.color!,
+    input.fillColor!,
+    '$where input text',
+  );
+  _reads(input.hintStyle!.color!, input.fillColor!, '$where hint');
+  final app = theme.extension<AppColors>()!;
+  for (final (fg, name) in [
+    (app.going, 'going'),
+    (app.maybe, 'maybe'),
+    (app.notGoing, 'not going'),
+    (app.game, 'game'),
+    (app.practice, 'practice'),
+    (app.meeting, 'meeting'),
+    (app.social, 'social'),
+    (app.otherEvent, 'other'),
+  ]) {
+    _reads(fg, s.surface, '$where $name');
+  }
+  _reads(app.onBubbleMine, app.bubbleMine, '$where my bubble');
+  _reads(app.onBubbleOther, app.bubbleOther, "$where others' bubble");
+}
+
 void main() {
   group('the tokens (#85)', () {
     for (final (i, scheme) in bootCampSchemes.indexed) {
@@ -285,47 +466,14 @@ void main() {
 
       test('${scheme.value}: the roles come from the tokens', () {
         final r = SchemeRoles.of(scheme);
-        final p = r.palette;
-        // Tropic Blue letters its page white and its white panels navy (#90,
-        // as Candy Pop did in #86): its text boxes and menus opened from the
-        // page take the camouflage's deeper blue.
-        final two = p.panelText != p.text;
-        final field = two ? p.camoGround : p.panel;
-        expect(r.page, p.page);
-        expect(r.text, p.text);
-        expect(r.cardText, p.panelText);
-        expect(
-          r.pageMuted,
-          ColorMath.readable(p.muted, [
-            p.page,
-            field,
-            p.tabBar,
-            if (!two) ...[p.panel, p.toolsRow],
-          ]),
-        );
-        expect(r.card, p.panel);
-        expect(r.field, field);
-        expect(r.popup, field);
-        expect(r.tabbar, p.tabBar);
-        for (final line in [
-          r.hairline,
-          r.outline,
-          r.tabbarLine,
-          r.fieldRim,
-          r.cardRim,
-          r.cardOutline,
-          r.candyInk,
-        ]) {
-          expect(line, p.ink);
-        }
-        // Sugar Rush's bubblegum (#98), elsewhere the shadow.
-        expect(r.titleDrop, p.touches.titleDrop ?? p.shadow);
-        expect(r.accentMark, p.mustard);
-        expect(r.you, p.balloon);
+        // One lettering, on the page and on panels, in every scheme as it
+        // ships: Tropic Blue's two left with it (#106).
+        expect(r.palette.panelText, r.palette.text);
+        _rolesFromTokens(r);
       });
     }
 
-    test('the thirteen are offered, and Black is the default', () {
+    test('the twelve are offered, and Black is the default', () {
       expect(ThemeCatalog.available, [
         TeamScheme.army,
         TeamScheme.dark,
@@ -337,14 +485,13 @@ void main() {
         TeamScheme.graphite,
         TeamScheme.navy,
         TeamScheme.darkarmy,
-        TeamScheme.tropicblue,
         TeamScheme.deserttan,
         TeamScheme.sugarrush,
       ]);
       expect(defaultTeamScheme, TeamScheme.dark);
     });
 
-    test('every other stored scheme is drawn in the closest of the thirteen, '
+    test('every other stored scheme is drawn in the closest of the twelve, '
         'and never rewritten', () {
       const want = {
         TeamScheme.army: TeamScheme.army,
@@ -361,7 +508,9 @@ void main() {
         // Teal Wave left the app (#105): Graphite is the closest, and
         // keeps its coral.
         TeamScheme.tealwave: TeamScheme.graphite,
-        TeamScheme.tropicblue: TeamScheme.tropicblue,
+        // Tropic Blue left the app (#106): Sky Blue is the closest, and
+        // keeps its white panels under navy lettering.
+        TeamScheme.tropicblue: TeamScheme.sky,
         TeamScheme.deserttan: TeamScheme.deserttan,
         TeamScheme.sugarrush: TeamScheme.sugarrush,
         TeamScheme.wildcat: TeamScheme.wildcat,
@@ -431,8 +580,8 @@ void main() {
       }
     });
 
-    test('light pages are Light, Sky Blue, Desert Tan and Sugar Rush; cards '
-        "agree but Tropic Blue's white ones", () {
+    test('light pages are Light, Sky Blue, Desert Tan and Sugar Rush, and '
+        'every card agrees with its page', () {
       expect(bootCampSchemes.where((s) => !s.isDark), [
         TeamScheme.light,
         TeamScheme.sky,
@@ -441,11 +590,10 @@ void main() {
       ]);
       for (final scheme in bootCampSchemes) {
         final want = scheme.isDark ? Brightness.dark : Brightness.light;
-        final card = scheme == TeamScheme.tropicblue ? Brightness.light : want;
         expect(GumdropColors.forScheme(scheme).brightness, want);
-        expect(GumdropColors.forScheme(scheme, onCard: true).brightness, card);
+        expect(GumdropColors.forScheme(scheme, onCard: true).brightness, want);
         expect(AppTheme.of(scheme).brightness, want);
-        expect(AppTheme.of(scheme, onCard: true).brightness, card);
+        expect(AppTheme.of(scheme, onCard: true).brightness, want);
       }
     });
 
@@ -467,90 +615,19 @@ void main() {
 
   group('contrast (Appendix A.4)', () {
     for (final scheme in bootCampSchemes) {
-      test('${scheme.value}: every text role reads on what it sits on', () {
-        final r = SchemeRoles.of(scheme);
-        for (final (fg, bg, what) in [
-          (r.text, r.page, 'text on page'),
-          (r.cardText, r.card, 'card text on card'),
-          (r.text, r.tabbar, 'text on tab bar'),
-          (r.text, r.field, 'text on field'),
-          (r.text, r.popup, 'text on pop-ups'),
-          (r.cardText, r.cardField, 'card text on a card field'),
-          (r.cardMuted, r.cardField, 'card-muted on a card field'),
-          (r.pageMuted, r.page, 'page-muted on page'),
-          (r.pageMuted, r.tabbar, 'page-muted on tab bar'),
-          (r.pageMuted, r.field, 'page-muted on field'),
-          (r.cardMuted, r.card, 'card-muted on card'),
-          (r.accentText, r.page, 'accent-text on page'),
-          (r.goingText, r.page, 'going-text on page'),
-          (r.maybeText, r.page, 'maybe-text on page'),
-          (r.cardMaybeText, r.card, 'card-maybe-text on card'),
-          (r.gameText, r.page, 'game-text on page'),
-          (r.cardGoingText, r.card, 'card-going-text on card'),
-          (r.cardAccentText, r.card, 'card-accent-text on card'),
-          (r.typeGame, r.card, 'type-game on card'),
-          (r.typePractice, r.card, 'type-practice on card'),
-          (r.typeOther, r.card, 'type-other on card'),
-          // The derived page and card texts (A.3).
-          (r.grapePageText, r.page, 'grape on page'),
-          (r.bubblegumPageText, r.page, 'bubblegum on page'),
-          (r.blueRaspberryPageText, r.page, 'blue raspberry on page'),
-          (r.blueRaspberryCardText, r.card, 'blue raspberry on card'),
-        ]) {
-          _reads(fg, bg, '${scheme.value} $what');
-        }
-        // Marks need 3:1: the not-going icon, and the mustard tags and
-        // tiles, which carry an ink outline besides.
-        _reads(r.notGoingIcon, r.page, 'not-going icon', min: 3);
-        _reads(r.palette.ink, r.palette.mustard, 'ink on mustard');
-      });
+      test(
+        '${scheme.value}: every text role reads on what it sits on',
+        () => _textRolesRead(scheme),
+      );
     }
   });
 
   group('the card context (4.3)', () {
     for (final scheme in bootCampSchemes) {
-      test('${scheme.value}: the card texts take their places', () {
-        final r = SchemeRoles.of(scheme);
-        final page = GumdropColors.forScheme(scheme);
-        final card = page.card;
-        expect(card.onCard, isTrue);
-        expect(card.scheme, scheme);
-        // Your color as text, made to read where it sits.
-        expect(page.you.text, ColorMath.readable(r.you, [r.page]));
-        expect(card.you.text, ColorMath.readable(r.you, [r.card]));
-        expect(page.mint.text, r.goingText);
-        expect(card.mint.text, r.cardGoingText);
-        expect(page.lemon.text, r.maybeText);
-        expect(card.lemon.text, r.cardMaybeText);
-        expect(page.tangerine.text, r.gameText);
-        expect(card.tangerine.text, r.typeGame);
-        expect(card.grape.text, r.typePractice);
-        expect(card.bubblegum.text, r.typeOther);
-        expect(card.blueRaspberry.text, r.blueRaspberryCardText);
-        expect(page.textMutedOnPage, r.pageMuted);
-        expect(card.textMutedOnPage, r.cardMuted);
-        // On Tropic Blue's blue page its wells are its text boxes' deeper
-        // blue (#90, as on Candy Pop's in #86).
-        expect(page.well, r.cardText == r.text ? r.cardTrack : r.field);
-        expect(card.well, r.cardTrack);
-        // Plain headings have no drop; big titles are outlined.
-        expect(page.headingShadow.a, 0);
-        expect(card.headingShadow.a, 0);
-        expect(page.pageShadow, r.palette.shadow);
-        expect(card.notGoingIcon, r.cardAccentText);
-        expect(card.badgeRing, r.card);
-        expect(page.badgeRing, r.page);
-        // The card's own text and fields, and Material's pop-ups.
-        expect(page.textPrimary, r.text);
-        expect(card.textPrimary, r.cardText);
-        expect(card.textOnPage, r.cardText);
-        expect(card.headingText, r.cardText);
-        expect(page.headingTextOnCard, r.cardText);
-        expect(page.inputFill, r.field);
-        expect(card.inputFill, r.cardField);
-        expect(page.popup, r.popup);
-        expect(card.popup, r.card);
-      });
+      test(
+        '${scheme.value}: the card texts take their places',
+        () => _cardTextsTakeTheirPlaces(scheme),
+      );
     }
 
     test('a bare MaterialApp falls back to Army green', () {
@@ -561,78 +638,71 @@ void main() {
   group("the Material theme's text reads (SPEC §7.6)", () {
     for (final scheme in bootCampSchemes) {
       for (final onCard in [false, true]) {
-        final where = '${scheme.value} ${onCard ? 'card' : 'page'}';
-        test(where, () {
-          final theme = AppTheme.of(scheme, onCard: onCard);
-          final s = theme.colorScheme;
-          // Low is the cards and sheets, whose content is in the card
-          // context (its own check): from the page, only the containers
-          // Material draws its own rows on (menus, pickers) need the page's
-          // text to read. They're one color but in Tropic Blue (#72, #90).
-          for (final (bg, name) in [
-            (s.surface, 'surface'),
-            (s.surfaceContainerLowest, 'lowest'),
-            if (onCard) (s.surfaceContainerLow, 'low'),
-            (s.surfaceContainer, 'container'),
-            (s.surfaceContainerHigh, 'high'),
-            (s.surfaceContainerHighest, 'highest'),
-          ]) {
-            _reads(s.onSurface, bg, '$where onSurface on $name');
-            _reads(s.onSurfaceVariant, bg, '$where onSurfaceVariant on $name');
-          }
-          for (final (fg, name) in [
-            (s.primary, 'primary'),
-            (s.secondary, 'secondary'),
-            (s.tertiary, 'tertiary'),
-            (s.error, 'error'),
-          ]) {
-            _reads(fg, s.surface, '$where $name on surface');
-            _reads(fg, s.surfaceContainer, '$where $name on pop-ups');
-            if (onCard) {
-              _reads(fg, s.surfaceContainerLow, '$where $name on cards');
-            }
-          }
-          if (!onCard && scheme != TeamScheme.tropicblue) {
-            // Panels and pop-ups are one color, but in Tropic Blue, whose
-            // pop-ups from the page are a deeper blue than its white panels.
-            expect(s.surfaceContainerLow, s.surfaceContainer);
-          }
-          for (final (fg, bg, name) in [
-            (s.onPrimary, s.primary, 'onPrimary'),
-            (s.onSecondary, s.secondary, 'onSecondary'),
-            (s.onTertiary, s.tertiary, 'onTertiary'),
-            (s.onError, s.error, 'onError'),
-            (s.onPrimaryContainer, s.primaryContainer, 'onPrimaryContainer'),
-            (s.onTertiaryContainer, s.tertiaryContainer, 'onTertiaryContainer'),
-            (s.onErrorContainer, s.errorContainer, 'onErrorContainer'),
-            (s.onInverseSurface, s.inverseSurface, 'snack bar'),
-          ]) {
-            _reads(fg, bg, '$where $name');
-          }
-          final input = theme.inputDecorationTheme;
-          _reads(
-            theme.textTheme.bodyLarge!.color!,
-            input.fillColor!,
-            '$where input text',
-          );
-          _reads(input.hintStyle!.color!, input.fillColor!, '$where hint');
-          final app = theme.extension<AppColors>()!;
-          for (final (fg, name) in [
-            (app.going, 'going'),
-            (app.maybe, 'maybe'),
-            (app.notGoing, 'not going'),
-            (app.game, 'game'),
-            (app.practice, 'practice'),
-            (app.meeting, 'meeting'),
-            (app.social, 'social'),
-            (app.otherEvent, 'other'),
-          ]) {
-            _reads(fg, s.surface, '$where $name');
-          }
-          _reads(app.onBubbleMine, app.bubbleMine, '$where my bubble');
-          _reads(app.onBubbleOther, app.bubbleOther, "$where others' bubble");
-        });
+        test(
+          '${scheme.value} ${onCard ? 'card' : 'page'}',
+          () => _materialTextReads(scheme, onCard: onCard),
+        );
       }
+    }
+  });
+
+  // No scheme ships with two letterings since Tropic Blue left (#106), but the
+  // theme editor can still give a scheme's panels a lettering of their own
+  // (#88): Tropic Blue's colors, as its changes to Sky Blue.
+  group('a scheme the theme editor gave two letterings (#88)', () {
+    const scheme = twoLetteringsScheme;
+    setUp(() => ThemeCatalog.installCamp({scheme: twoLetterings}));
+    tearDown(() => ThemeCatalog.installCamp(const {}));
+
+    test('is drawn with them: white on its blue page, navy on its white '
+        "panels, and text boxes in the camouflage's ground", () {
+      final r = SchemeRoles.of(scheme);
+      final p = r.palette;
+      expect(r.page, const Color(0xFF0A7EAC));
+      expect(r.text, const Color(0xFFFFFFFF));
+      expect(r.card, const Color(0xFFFFFFFF));
+      expect(r.cardText, const Color(0xFF062033));
+      expect(r.field, const Color(0xFF0A6E99));
+      expect(r.popup, r.field);
+      // Second lines on panels are the panels' own, and their wells and
+      // tracks a pale blue the navy reads on.
+      expect(r.cardMuted, ColorMath.readable(p.panelMuted, [p.panel]));
+      expect(r.cardMuted, isNot(r.pageMuted));
+      expect(r.cardTrack, p.unansweredTag);
+      _rolesFromTokens(r);
+      // The scheme as it ships has one lettering, and comes back.
+      ThemeCatalog.installCamp(const {});
+      expect(SchemeRoles.of(scheme).cardText, SchemeRoles.of(scheme).text);
+    });
+
+    test(
+      'every text role reads on what it sits on',
+      () => _textRolesRead(scheme),
+    );
+
+    test("the card texts take their places, and the page's wells are its "
+        "text boxes' color", () {
+      _cardTextsTakeTheirPlaces(scheme);
+      final r = SchemeRoles.of(scheme);
+      expect(GumdropColors.forScheme(scheme).well, r.field);
+      expect(GumdropColors.forScheme(scheme).well, isNot(r.cardTrack));
+    });
+
+    test('its white cards are light on its dark page', () {
+      expect(GumdropColors.forScheme(scheme).brightness, Brightness.dark);
+      expect(
+        GumdropColors.forScheme(scheme, onCard: true).brightness,
+        Brightness.light,
+      );
+      expect(AppTheme.of(scheme).brightness, Brightness.dark);
+      expect(AppTheme.of(scheme, onCard: true).brightness, Brightness.light);
+    });
+
+    for (final onCard in [false, true]) {
+      test(
+        "the Material theme's text reads ${onCard ? 'on a card' : 'on the page'}",
+        () => _materialTextReads(scheme, onCard: onCard),
+      );
     }
   });
 

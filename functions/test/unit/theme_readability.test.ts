@@ -52,7 +52,11 @@ describe('unreadableParts', () => {
     expect(unreadableParts('army', theme({ card: '#F4EAD0' }))).toEqual(
       expect.arrayContaining(['text on cards', 'text on pop-ups']),
     );
+    // Tropic Blue is drawn as Sky Blue since #106: white cards under navy.
     expect(unreadableParts('tropicblue', theme({ cardText: '#FFFFFF' }))).toContain('text on cards');
+    expect(unreadableParts('tropicblue', theme({ cardText: '#FFFFFF' }))).toEqual(
+      unreadableParts('sky', theme({ cardText: '#FFFFFF' })),
+    );
     // Navy is drawn as Navy Steel since #89: near-white text.
     expect(unreadableParts('navy', theme({ page: '#F0F4FC' }))).toContain('text on page');
     // Scoreboard is drawn as Black: cream text on a page nearly cream.
@@ -97,8 +101,11 @@ describe('unreadableCampParts', () => {
   it('knows every Boot Camp Mix scheme, and each passes as it ships', () => {
     expect([...campSchemeValues].sort()).toEqual([
       'army', 'candypop', 'dark', 'darkarmy', 'deserttan', 'graphite', 'light', 'navy', 'purplegold', 'sky', 'sugarrush',
-      'tropicblue', 'wildcat',
+      'wildcat',
     ]);
+    // Teal Wave (#105) and Tropic Blue (#106) left: neither can be edited.
+    expect(unreadableCampParts('tealwave', {})).toEqual(['scheme']);
+    expect(unreadableCampParts('tropicblue', {})).toEqual(['scheme']);
     for (const scheme of campSchemeValues) expect(unreadableCampParts(scheme, {})).toEqual([]);
   });
 
@@ -110,17 +117,25 @@ describe('unreadableCampParts', () => {
   it('refuses games, send and alerts nearly the color of the page or the panels', () => {
     const page = CAMP_PALETTES.army.page;
     expect(unreadableCampParts('army', { red: page })).toEqual(['red on page', 'red on panel']);
-    // Tropic Blue's panels are white on its ocean-blue page.
-    expect(unreadableCampParts('tropicblue', { red: '#FFFFFE' })).toEqual(['red on panel']);
+    // Sky Blue's panels are white on its sky-blue page.
+    expect(unreadableCampParts('sky', { red: '#FFFFFE' })).toEqual(['red on panel']);
   });
 
   it('refuses text nearly the color of the page, tab bar, text boxes or panels', () => {
     expect(unreadableCampParts('dark', { page: CAMP_PALETTES.dark.text })).toEqual(['text on page']);
     expect(unreadableCampParts('light', { tabBar: '#1A1A1A' })).toEqual(['text on tabBar']);
     expect(unreadableCampParts('light', { panel: '#222222' })).toContain('panelText on panel');
-    // Tropic Blue's text boxes are the camouflage's ground, where its page's
-    // white reads.
-    expect(unreadableCampParts('tropicblue', { camoGround: '#FFFFFF' })).toContain('text on camoGround');
+    // Where an edit gives the panels a lettering of their own (as Tropic Blue
+    // shipped until #106: white on its ocean-blue page, navy on its white
+    // panels), text boxes are the camouflage's ground, where the page's
+    // lettering has to read.
+    const two = { page: '#0A7EAC', text: '#FFFFFF', tabBar: '#062A45', panelText: '#062033', camoGround: '#0A6E99' };
+    expect(unreadableCampParts('sky', two)).toEqual([]);
+    expect(unreadableCampParts('sky', { ...two, camoGround: '#FFFFFF' })).toEqual(
+      expect.arrayContaining(['text on camoGround', 'headerLettering on camoGround']),
+    );
+    // With one lettering, they're the panels, whatever the camouflage is.
+    expect(unreadableCampParts('sky', { camoGround: '#0B1531' })).toEqual([]);
   });
 
   it("refuses the tags' trim nearly the ink of their lettering, or the tab bar of the current tab", () => {

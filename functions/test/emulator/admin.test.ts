@@ -1268,6 +1268,9 @@ describe('the theme editor (#82)', () => {
     for (const [bad, part] of [
       [{ scheme: 'army', page: '#F4EAD0' }, 'text on page'],
       [{ scheme: 'army', text: '#474C2B' }, 'text on page'],
+      // Sky Blue's white cards (a stored Tropic Blue is drawn as Sky Blue
+      // since #106, and checked as it).
+      [{ scheme: 'sky', cardText: '#FFFFFF' }, 'text on cards'],
       [{ scheme: 'tropicblue', cardText: '#FFFFFF' }, 'text on cards'],
       [{ scheme: 'army', page: '#FFFFFF', text: '#3D4124' }, 'text on tab bar'],
       [{ scheme: 'light', accent: '#FBF5E6' }, 'buttons on page'],

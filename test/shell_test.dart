@@ -731,7 +731,7 @@ void main() {
     });
 
     testWidgets('a pick of a scheme that left is drawn and checked as the '
-        'closest of the thirteen, and never rewritten (#85)', (tester) async {
+        'closest of the twelve, and never rewritten (#85)', (tester) async {
       // Scoreboard left in #85; it's drawn as Black.
       final members = FakeMemberRepository([
         testMembership(
@@ -783,6 +783,37 @@ void main() {
       expect(find.textContaining('Teal Wave'), findsNothing);
       expect(members.calls.where((c) => c.startsWith('scheme')), isEmpty);
       expect(members.memberships.single.colorScheme, TeamScheme.tealwave);
+    });
+
+    testWidgets('a pick of Tropic Blue, which left in #106, is drawn, named '
+        'and checked as Sky Blue, and never rewritten', (tester) async {
+      final members = FakeMemberRepository([
+        testMembership(
+          'a',
+          'coach',
+        ).copyWith(colorScheme: TeamScheme.tropicblue),
+      ]);
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {'a': testGroup('a', 'Thunder')},
+        memberRepo: members,
+      );
+      await tester.pumpAndSettle();
+      GoRouter.of(tester.element(find.byType(Scaffold).first))
+          .go('/g/a/scheme');
+      await tester.pumpAndSettle();
+      // Sky Blue, the closest scheme, which keeps Tropic Blue's white
+      // panels under navy lettering.
+      expect(page(tester), SchemeRoles.sky.page);
+      expect(
+        tester.getSemantics(find.bySemanticsLabel(RegExp('^Sky Blue, '))),
+        isSemantics(isSelected: true, isButton: true, hasTapAction: true),
+      );
+      // It isn't offered any more.
+      expect(find.textContaining('Tropic Blue'), findsNothing);
+      expect(members.calls.where((c) => c.startsWith('scheme')), isEmpty);
+      expect(members.memberships.single.colorScheme, TeamScheme.tropicblue);
     });
 
     testWidgets("Admin settings sets the team's default for everyone", (

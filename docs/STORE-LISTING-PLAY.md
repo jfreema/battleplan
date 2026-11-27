@@ -55,7 +55,7 @@ MORE FOR COACHES
 • Bring your team's messages, photos, files, and schedule over from the app or calendar you use now
 
 MAKE IT YOURS
-• Thirteen color schemes, from Black and Army green to Sky Blue, Navy Steel, Royal & Gold, and Sugar Rush
+• Twelve color schemes, from Black and Army green to Sky Blue, Navy Steel, Royal & Gold, and Sugar Rush
 • Pick the scheme you see for each team, and a default
 • Pick your icon: a photo, or your initials on a color
 • Coaches pick the chat's message color and background

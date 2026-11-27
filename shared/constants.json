@@ -549,7 +549,7 @@
     }
   },
   "schemeInk": {
-    "$comment": "Each stored scheme's text and what it sits on, as the app draws it (since Boot Camp Mix, #85, #86, #89, #90, #98 and #105, the closest of its thirteen schemes: tealwave has Graphite's), for the theme editor's server check (#83). test/scheme_ink_test.dart checks they match SchemeRoles.",
+    "$comment": "Each stored scheme's text and what it sits on, as the app draws it (since Boot Camp Mix, #85, #86, #89, #90, #98, #105 and #106, the closest of its twelve schemes: tealwave has Graphite's and tropicblue has Sky Blue's), for the theme editor's server check (#83). test/scheme_ink_test.dart checks they match SchemeRoles.",
     "army": {
       "page": "#474C2B",
       "text": "#F4EAD0",
@@ -694,15 +694,15 @@
       "candyInk": "#070A0D"
     },
     "tropicblue": {
-      "page": "#0A7EAC",
-      "text": "#FFFFFF",
-      "tabbar": "#062A45",
-      "field": "#0A6E99",
+      "page": "#BCD9F5",
+      "text": "#0B1531",
+      "tabbar": "#FFFFFF",
+      "field": "#FFFFFF",
       "card": "#FFFFFF",
-      "cardText": "#062033",
+      "cardText": "#0B1531",
       "cardField": "#FFFFFF",
-      "popup": "#0A6E99",
-      "candyInk": "#062033"
+      "popup": "#FFFFFF",
+      "candyInk": "#0B1531"
     },
     "deserttan": {
       "page": "#E4D6B4",
@@ -1008,34 +1008,6 @@
       "camoMid": "#28543D",
       "camoSmall": "#05110B",
       "ballChain": "#CFE3D6"
-    },
-    "tropicblue": {
-      "page": "#0A7EAC",
-      "panel": "#FFFFFF",
-      "tabBar": "#062A45",
-      "ink": "#062033",
-      "shadow": "#062033",
-      "text": "#FFFFFF",
-      "muted": "#D8F1FF",
-      "panelText": "#062033",
-      "panelMuted": "#3D5F7A",
-      "headerLettering": "#FFFFFF",
-      "mustard": "#FFD23F",
-      "balloon": "#FFD23F",
-      "red": "#FF5A4E",
-      "blue": "#4FCBF7",
-      "green": "#4FD38A",
-      "orange": "#FF9A2E",
-      "purple": "#B58BFF",
-      "unansweredTag": "#CDE7F2",
-      "answerRow": "#FFF1B0",
-      "toolsRow": "#0B76A3",
-      "disabledIcon": "#9CC3D6",
-      "camoGround": "#0A6E99",
-      "camoBig": "#075478",
-      "camoMid": "#1E9CC8",
-      "camoSmall": "#04324A",
-      "ballChain": "#FFD23F"
     },
     "deserttan": {
       "page": "#E4D6B4",

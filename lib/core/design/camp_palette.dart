@@ -5,10 +5,10 @@ import 'package:material_ui/material_ui.dart';
 /// "let's replace the existing themes with these 3 themes"; SPEC §7.4):
 /// Army green, Black, and Light, since #86 Sky Blue, Candy Pop (Royal &
 /// Gold since #90), Central Wildcat, and Geaux Tigahs, since #89 Graphite,
-/// Navy Steel, and Forest, since #90 Tropic Blue and Desert Tan, and since
-/// #98 Sugar Rush (Teal Wave, #89, left in #105). Every color the look
-/// draws comes from here; `SchemeRoles` and `GumdropColors` are built from
-/// it.
+/// Navy Steel, and Forest, since #90 Desert Tan, and since #98 Sugar Rush
+/// (Teal Wave, #89, left in #105, and Tropic Blue, #90, in #106). Every
+/// color the look draws comes from here; `SchemeRoles` and `GumdropColors`
+/// are built from it.
 @immutable
 final class CampPalette {
   const new({
@@ -68,9 +68,11 @@ final class CampPalette {
   /// Times, places, and other second lines.
   final Color muted;
 
-  /// Lettering on panels: the page's [text], but navy on Tropic Blue's white
-  /// panels (#90; Candy Pop's before), the one scheme with two lettering
-  /// colors.
+  /// Lettering on panels: the page's [text] in every scheme as it ships.
+  /// The theme editor can set it apart (#88), as Candy Pop's navy on white
+  /// panels over a blue page was (#86) and Tropic Blue's after it (#90,
+  /// gone with #106): a scheme with two lettering colors takes the
+  /// camouflage's ground for its text boxes and menus.
   final Color panelText;
 
   /// Second lines on panels: [muted], or Candy Pop's navy-gray.
@@ -548,43 +550,6 @@ final class CampPalette {
     headerHalftone: Color(0x21FFFFFF),
     headerLettering: Color(0xFFFFFFFF),
     ballChain: Color(0xFFCFE3D6),
-  );
-
-  /// Tropic Blue (#90, "Add the Tropic Blue theme to the app as well.";
-  /// style 50): Candy Pop's arrangement, an ocean-blue page under white
-  /// lettering and white panels under deep-sea navy lettering, sunny yellow
-  /// trim and balloons, and a blue camouflage.
-  static const tropicBlue = CampPalette(
-    ink: Color(0xFF062033),
-    shadow: Color(0xFF062033),
-    // A hair deeper than the mockup's #0A84B4, so its white lettering
-    // reads at 4.5:1 (WCAG AA, SPEC §7.6).
-    page: Color(0xFF0A7EAC),
-    pageDots: Color(0x21FFFFFF),
-    panel: Color(0xFFFFFFFF),
-    tabBar: Color(0xFF062A45),
-    text: Color(0xFFFFFFFF),
-    muted: Color(0xFFD8F1FF),
-    panelText: Color(0xFF062033),
-    panelMuted: Color(0xFF3D5F7A),
-    mustard: Color(0xFFFFD23F),
-    balloon: Color(0xFFFFD23F),
-    red: Color(0xFFFF5A4E),
-    blue: Color(0xFF4FCBF7),
-    green: Color(0xFF4FD38A),
-    orange: Color(0xFFFF9A2E),
-    purple: Color(0xFFB58BFF),
-    unansweredTag: Color(0xFFCDE7F2),
-    answerRow: Color(0xFFFFF1B0),
-    toolsRow: Color(0xFF0B76A3),
-    disabledIcon: Color(0xFF9CC3D6),
-    camoGround: Color(0xFF0A6E99),
-    camoBig: Color(0xFF075478),
-    camoMid: Color(0xFF1E9CC8),
-    camoSmall: Color(0xFF04324A),
-    headerHalftone: Color(0x38FFFFFF),
-    headerLettering: Color(0xFFFFFFFF),
-    ballChain: Color(0xFFFFD23F),
   );
 
   /// Desert Tan (#90, "also add the Desert Tan theme to the app"; style

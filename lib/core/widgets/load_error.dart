@@ -98,7 +98,7 @@ class RefreshFailedNotice extends StatelessWidget {
     final ink = c.onCard ? c.textPrimary : c.textOnPage;
     final gutter = Space.gutter(MediaQuery.sizeOf(context).width);
     // A Maybe tint over what it's on; where that would take the words under
-    // 4.5:1 (white on Tropic Blue's mid-blue page, #90), an ink tint, which
+    // 4.5:1 (white on a mid-blue page, as Tropic Blue's was, #90), an ink tint, which
     // deepens it instead.
     final tinted = Color.alphaBlend(
       AppColors.of(context).maybe.withValues(alpha: 0.18),

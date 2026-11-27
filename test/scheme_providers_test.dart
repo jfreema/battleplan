@@ -263,7 +263,7 @@ void main() {
 
     test(
       'a pick the app no longer offers reads as the closest of the '
-      'thirteen, and is never rewritten (#85, #86, #89, #90, #98, #105)',
+      'twelve, and is never rewritten (#85, #86, #89, #90, #98, #105, #106)',
       () async {
         final users = FakeUserRepository()..colorScheme = TeamScheme.dark;
         final c = await container(

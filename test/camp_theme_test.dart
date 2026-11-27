@@ -15,6 +15,8 @@ import 'package:battleplan/features/admin/data/functions_admin_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'helpers/two_letterings.dart';
+
 const _coral = 0xFFF45B5B;
 
 void main() {
@@ -151,12 +153,17 @@ void main() {
       expect(problems(dark, {CampColor.headerLettering: dark.camoGround}), [
         (CampColor.headerLettering, CampColor.camoGround),
       ]);
-      // Tropic Blue's text boxes are the camouflage's ground.
-      const candy = CampPalette.tropicBlue;
-      expect(problems(candy, {CampColor.camoGround: const Color(0xFFFFFFFF)}), [
+      // Where the panels have a lettering of their own (the editor's;
+      // Tropic Blue shipped so until #106), text boxes are the
+      // camouflage's ground.
+      final two = twoLetteringsPalette;
+      expect(two.panelText, isNot(two.text));
+      expect(problems(two, {CampColor.camoGround: const Color(0xFFFFFFFF)}), [
         (CampColor.text, CampColor.camoGround),
         (CampColor.headerLettering, CampColor.camoGround),
       ]);
+      // And the editor's own two letterings read, so they're drawn.
+      expect(campThemeReads(twoLetteringsScheme, twoLetterings), isTrue);
       // Black's ink is black on its near-black page as it ships: never
       // refused for that.
       expect(problems(dark, {CampColor.shadow: dark.ink}), isEmpty);
