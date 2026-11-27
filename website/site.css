@@ -565,7 +565,11 @@ section { padding: 64px 0; }
 .steps { padding-left: 1.4em; }
 .steps li { padding-left: 4px; }
 .steps li::marker { font-family: var(--stencil); font-weight: 900; color: var(--trim); }
-.email { font: 700 1.15rem var(--body); }
+/* A contact address, written so spam bots can't read it (#103): no mailto
+   link, and a decoy inside it that people never see, hear, or copy. */
+.addr { overflow-wrap: anywhere; }
+.addr-x { display: none; }
+.note .addr { font: 700 1.15rem var(--body); }
 .placeholder { color: var(--muted); font-style: italic; }
 kbd, .ui {
   font: 700 0.95em var(--body); color: var(--text); background: var(--field);
