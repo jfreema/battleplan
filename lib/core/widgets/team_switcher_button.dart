@@ -11,11 +11,12 @@ import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// The team switcher in the header (SPEC §5.2, §7.3): the tab's stencil
-/// [eyebrow] over the team's [name] in the stencil outlined,
-/// and a small chevron. One button, at least 48 tall, with the 3 px focus
-/// ring for the keyboard. Screen readers hear the eyebrow in plain case,
-/// then "Switch team: {name}". News in other teams is the back arrow's one
-/// dot (#13, 2026-11-16); the switcher's list has each team's count.
+/// [eyebrow] over the team's [name] in the bubbly letters outlined (Team
+/// Shirt, #104), and a small chevron. One button, at least 48 tall, with
+/// the 3 px focus ring for the keyboard. Screen readers hear the eyebrow
+/// in plain case, then "Switch team: {name}". News in other teams is the
+/// back arrow's one dot (#13, 2026-11-16); the switcher's list has each
+/// team's count.
 class TeamSwitcherButton extends StatelessWidget {
   const new({
     required this.name,
@@ -170,11 +171,12 @@ class TeamTitle extends StatelessWidget {
   );
 }
 
-/// A team's name in the stencil outlined (SPEC §7.3).
+/// A team's name in the bubbly letters outlined (SPEC §7.3; Team Shirt,
+/// #104), as it's written, capitals and small letters.
 ///
-/// On one line at 27, stepping down to 23, 21 and 19 to fit. A name that
-/// doesn't fit even at 19 wraps onto two lines at 19, or at 17, breaking
-/// only between words; only a name too long for two lines at 17 ends in
+/// On one line at 31, stepping down to 27, 24 and 21 to fit. A name that
+/// doesn't fit even at 21 wraps onto two lines at 21, or at 18, breaking
+/// only between words; only a name too long for two lines at 18 ends in
 /// "…" (#13, 2026-11-16: names over about 15 letters, and about 10 beside
 /// a super admin's Admin panel button, used to be cut, as "Android Ap…").
 class TeamName extends StatelessWidget {
@@ -186,26 +188,30 @@ class TeamName extends StatelessWidget {
   /// otherwise.
   final TeamNameFit? fit;
 
-  /// The sizes tried on one line, largest first: the stencil is narrow,
-  /// so they're bigger than Open Field's were (#85).
-  static const List<double> sizes = [32, 28, 25, 22];
+  /// The sizes tried on one line, largest first: the mockup's 31 (#104),
+  /// then down a step at a time.
+  static const List<double> sizes = [31, 27, 24, 21];
 
   /// The sizes tried on two lines, largest first.
-  static const List<double> wrapSizes = [22, 19];
+  static const List<double> wrapSizes = [21, 18];
 
   /// Two lines' height: set solid, so they read as one name and two lines
-  /// at 22 with the shadow's room fit the one-row header (#85).
-  static const double wrapHeight = 1;
+  /// at 21 with the shadow's room fit the one-row header (#85).
+  static const double wrapHeight = 1.02;
 
   /// The tallest two lines may make the header, in pixels, at large text
   /// sizes; above it the name stays on one line and ends in "…".
   static const double tallestWrap = 96;
 
+  /// A one-line name's line, as a share of its size: 36.4 px at 31, the
+  /// line the stencil's 32 stood on, so the header keeps its height (#104).
+  static const double lineHeight = (37 / 32.5) * (32 / 31);
+
   static TextStyle _heading(BuildContext context, double size) =>
       Theme.of(context).textTheme.headlineMedium!.copyWith(
         fontSize: size,
-        height: 37 / 32.5,
-        letterSpacing: size * 0.04,
+        height: lineHeight,
+        letterSpacing: AppFonts.bubblySpacing(size),
         shadows: const [],
       );
 
@@ -290,8 +296,8 @@ class TeamName extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget text(TeamNameFit fit) {
-      // Boot Camp Mix (#85): white stencil on an ink stroke, with a hard
-      // shadow.
+      // White bubbly letters on an ink stroke, with a hard shadow (#85,
+      // #104).
       Widget name = OutlinedText(
         this.name,
         maxLines: fit.lines,

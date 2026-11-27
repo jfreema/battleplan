@@ -238,9 +238,11 @@ void main() {
   });
 
   group('Sugar Rush (#98)', () {
-    test('is the fourteenth scheme, light, vanilla and bubblegum', () {
+    test('is the last of the thirteen schemes (fourteen until Teal Wave '
+        'left, #105), light, vanilla and bubblegum', () {
       expect(bootCampSchemes.last, TeamScheme.sugarrush);
-      expect(bootCampSchemes, hasLength(14));
+      expect(bootCampSchemes, hasLength(13));
+      expect(bootCampSchemes, isNot(contains(TeamScheme.tealwave)));
       expect(TeamScheme.sugarrush.look, TeamScheme.sugarrush);
       expect(TeamScheme.sugarrush.isDark, isFalse);
       final p = SchemeRoles.of(TeamScheme.sugarrush).palette;

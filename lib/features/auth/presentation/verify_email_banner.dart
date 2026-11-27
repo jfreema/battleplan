@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:battleplan/core/design/app_colors.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
@@ -102,8 +103,10 @@ class _VerifyEmailBannerState extends ConsumerState<VerifyEmailBanner> {
     final ink = c.inkOn(c.blueRaspberry);
     final button = TextButton.styleFrom(
       foregroundColor: ink,
+      // Underlined links: the plain face's Bold at 15 (#104).
       textStyle: theme.textTheme.labelLarge?.copyWith(
-        fontWeight: FontWeight.w800,
+        fontSize: 15,
+        fontWeight: AppFonts.bold,
         decoration: TextDecoration.underline,
         decorationColor: ink,
       ),
@@ -301,7 +304,6 @@ class VerifyEmailNotice extends ConsumerWidget {
                                   : l10n.verifyEmailTeamTitle,
                               style: theme.textTheme.titleSmall?.copyWith(
                                 color: card.textPrimary,
-                                fontWeight: FontWeight.w800,
                               ),
                             ),
                             const SizedBox(height: 3),
@@ -313,7 +315,7 @@ class VerifyEmailNotice extends ConsumerWidget {
                                 color: waiting
                                     ? card.textPrimary
                                     : card.textMuted,
-                                fontWeight: FontWeight.w600,
+                                fontWeight: AppFonts.reading,
                               ),
                             ),
                           ],

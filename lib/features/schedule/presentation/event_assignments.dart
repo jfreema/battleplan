@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
@@ -134,7 +135,7 @@ class AssignmentsRow extends ConsumerWidget {
             text: word,
             style: TextStyle(
               color: c.textOnPage,
-              fontWeight: FontWeight.w800,
+              fontWeight: AppFonts.bold,
               decoration: TextDecoration.underline,
               decorationColor: c.accentMark,
               decorationThickness: 2,

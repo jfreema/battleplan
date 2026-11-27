@@ -137,7 +137,8 @@ class _TapCardState extends State<TapCard> {
 /// A schedule panel's date pennant (Boot Camp Mix, #85, SPEC §7.4): the
 /// event's color under a halftone, down the panel's left side and ending
 /// in a point edged in ink, with the weekday in small ink stencil over the
-/// day in big outlined stencil. It reads as the day.
+/// day in big outlined bubbly letters (Team Shirt, #104). It reads as the
+/// day.
 class DatePennant extends StatelessWidget {
   const new({
     required this.day,
@@ -199,12 +200,12 @@ class DatePennant extends StatelessWidget {
                   textScaler: TextScaler.noScaling,
                   shadow: 2.5,
                   maxLines: 1,
+                  // The date in the bubbly letters; the weekday over it
+                  // keeps the stencil (Team Shirt, #104).
                   style: const TextStyle(
-                    fontFamily: AppFonts.stencil,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 38,
-                    height: 39 / 38,
-                    letterSpacing: 38 * 0.02,
+                    fontSize: 34,
+                    height: 38 / 34,
+                    letterSpacing: 0,
                   ),
                 ),
               ],
@@ -329,9 +330,9 @@ class AnswerStamp extends StatelessWidget {
   }
 }
 
-/// A month's label in the schedule (#85): its name in mustard stencil on
-/// an ink block with corners of 8 (#98), a mustard star before it, turned
-/// -1.2°.
+/// A month's label in the schedule (#85): its name in mustard bubbly
+/// letters (Team Shirt, #104), as it's written, on an ink block with
+/// corners of 8 (#98), a mustard star before it, turned -1.2°.
 class MonthLabel extends StatelessWidget {
   const new({required this.month, super.key});
 
@@ -353,7 +354,7 @@ class MonthLabel extends StatelessWidget {
               color: c.ink,
               borderRadius: BorderRadius.circular(8),
             ),
-            padding: const EdgeInsets.fromLTRB(9, 2, 10, 0),
+            padding: const EdgeInsets.fromLTRB(9, 1, 11, 1),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -367,12 +368,14 @@ class MonthLabel extends StatelessWidget {
                     DateFormat.MMMM(l10n.localeName).format(month),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
+                    // The month in the bubbly letters (Team Shirt, #104).
                     style: TextStyle(
-                      fontFamily: AppFonts.stencil,
-                      fontWeight: FontWeight.w900,
+                      fontFamily: AppFonts.bubbly,
+                      fontFamilyFallback: AppFonts.bubblyFallback,
+                      fontWeight: AppFonts.displayWeight,
                       fontSize: 16,
                       height: 22 / 16,
-                      letterSpacing: 16 * 0.08,
+                      letterSpacing: 16 * 0.03,
                       color: mustard,
                     ),
                   ),
@@ -559,10 +562,10 @@ class _LockedAnswer extends StatelessWidget {
           child: Text(
             label,
             maxLines: 1,
+            // Lettered as the answer buttons it stands in for (#104).
             style: GumdropStyle.of(context).label(
               TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: compact ? 14 : 15,
+                fontSize: compact ? 13.5 : 15,
                 height: 1.2,
                 color: muted,
               ),
@@ -598,8 +601,7 @@ class _LockedAnswer extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: GumdropStyle.of(context).label(
                   TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: compact ? 14 : 16,
+                    fontSize: compact ? 13.5 : 15,
                     height: 1.2,
                     color: ink,
                   ),
@@ -626,10 +628,10 @@ class _LockedAnswer extends StatelessWidget {
 /// (#98): a licorice one, the panel color on a lip of its darker shade,
 /// in an ink outline; picked, its answer's color (green, orange, or Can't
 /// go's salmon) on its own lip with the answer's icon, sunk onto its lip.
-/// The label is stencil capitals, ink on a picked one. On the event's page
-/// ([page]) 50 tall, corners of 20, a 3 px outline on an 8 px lip, sinking
-/// 4; on the cards 36 tall, corners of 14, 2.5 on 6, sinking 3, in a 48 px
-/// tap height. Picked, the lip under it is 4 deep.
+/// The label is in the plain face's Black (#104), ink on a picked one. On
+/// the event's page ([page]) 50 tall, corners of 20, a 3 px outline on an
+/// 8 px lip, sinking 4; on the cards 36 tall, corners of 14, 2.5 on 6,
+/// sinking 3, in a 48 px tap height. Picked, the lip under it is 4 deep.
 class _RsvpPush extends StatelessWidget {
   const new({
     required this.status,
@@ -707,10 +709,11 @@ class _RsvpPush extends StatelessWidget {
                 Text(
                   label,
                   maxLines: 1,
+                  // The plain face's Black (Team Shirt, #104), as the
+                  // answer is written: "Going", "Can't go".
                   style: GumdropStyle.of(context).label(
                     TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: page ? 20 : 15,
+                      fontSize: page ? 18 : 13.5,
                       height: 1,
                       color: text,
                     ),

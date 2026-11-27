@@ -6,7 +6,7 @@ import 'package:battleplan/core/widgets/candy_sprinkles.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// The unread count on a button or tab (SPEC §7.3): Boot Camp Mix's red
-/// (#85), a pill at least 19 px across with a black stencil number, in a
+/// (#85), a pill at least 19 px across with a black number at 11, in a
 /// 2.5 px ink outline, a candy drop on a 4 px lip of a darker red with a
 /// shine at its top left (#98). [child] is the icon it's on;
 /// [offset] places the pill from the icon's top-right corner (Material
@@ -46,13 +46,9 @@ Widget unreadBadge(
         child: Text(
           label,
           textScaler: scaler,
+          // A count: the plain face's Black at 11 (#104).
           style: GumdropStyle.of(context).label(
-            TextStyle(
-              fontSize: 12,
-              height: 19 / 12,
-              fontWeight: FontWeight.w900,
-              color: c.inkOn(c.cherry),
-            ),
+            TextStyle(fontSize: 11, height: 19 / 11, color: c.inkOn(c.cherry)),
           ),
         ),
       ),

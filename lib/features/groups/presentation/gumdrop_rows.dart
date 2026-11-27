@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/candy.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/team_theme.dart';
@@ -33,7 +34,8 @@ export 'package:battleplan/core/team_color_names.dart' show teamColorName;
 ///
 /// A 48 px back row, pinned: the chevron and [backLabel] (the screen it
 /// goes back to), and [actions] on its right as 48 px icon buttons. Then
-/// the [title] in stencil 32 outlined, 20 px from the left,
+/// the [title] in big outlined bubbly letters ([PageTitle]), 20 px from
+/// the left,
 /// which scrolls away with the page's own list, giving back its room
 /// (owner's request 2026-11-05: headers that take less room). Once it's
 /// out of sight the page's name fades into the back row's middle, small,
@@ -254,11 +256,12 @@ class PageList extends StatelessWidget {
   );
 }
 
-/// A page's big title (SPEC §7.3; Boot Camp Mix, #85): white stencil
-/// capitals in a thick ink outline on a hard shadow (`OutlinedText`), 50
-/// stepping down to fit, turned -2°, 20 px from the left, on up to two lines
-/// ("NOTIFICATIONS FOR THIS TEAM"), as it scrolls away rather than holding
-/// the top. The route's heading for screen readers.
+/// A page's big title (SPEC §7.3; Boot Camp Mix, #85): white bubbly
+/// letters (Team Shirt, #104) in a thick ink outline on a hard shadow
+/// (`OutlinedText`), 45 stepping down to fit, turned -2°, 20 px from the
+/// left, on up to two lines ("Notifications for this team"), as it scrolls
+/// away rather than holding the top. The route's heading for screen
+/// readers.
 class PageTitle extends StatelessWidget {
   const new(this.title, {super.key});
 
@@ -266,7 +269,7 @@ class PageTitle extends StatelessWidget {
 
   /// The sizes tried, largest first: each must hold every word whole and
   /// the title in two lines; with large text a long word steps it down.
-  static const List<double> sizes = [50, 42, 36, 30, 25];
+  static const List<double> sizes = [45, 38, 32, 27, 23];
 
   @override
   Widget build(BuildContext context) {
@@ -307,8 +310,8 @@ class PageTitle extends StatelessWidget {
 
           TextStyle styleAt(double size) => base.copyWith(
             fontSize: size,
-            height: 54 / 50,
-            letterSpacing: size * 0.025,
+            height: 51 / 45,
+            letterSpacing: AppFonts.bubblySpacing(size),
           );
           final size = sizes.firstWhere(
             (size) => fits(styleAt(size)),
@@ -342,8 +345,9 @@ class PageTitle extends StatelessWidget {
 }
 
 /// The page's name in the back row once its big title has scrolled away:
-/// stencil 19, centered on the row, and only where it fits between what's
-/// [left] and [right] of the middle. The back label matters more.
+/// the bubbly letters at 17, centered on the row, and only where it fits
+/// between what's [left] and [right] of the middle. The back label matters
+/// more.
 class _SmallTitle extends StatelessWidget {
   const new({
     required this.title,
@@ -360,7 +364,7 @@ class _SmallTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = Theme.of(context).textTheme.headlineMedium
-        ?.copyWith(fontSize: 19, height: 1.2, shadows: const []);
+        ?.copyWith(fontSize: 17, height: 1.2, shadows: const []);
     // It grows with the text size only so far, to stay in the 48 px row;
     // the big title above the page carries the large size.
     final scaler = MediaQuery.textScalerOf(context).clamp(maxScaleFactor: 1.3);
@@ -485,7 +489,7 @@ String? backLabelFrom(BuildContext context, String usual) {
 }
 
 /// The top bar of Teams and Profile (SPEC §7.3): 52 px, the [title] in
-/// stencil 27 outlined, 20 px from the left, and [actions]
+/// the bubbly letters at 31, outlined, 20 px from the left, and [actions]
 /// (48 px icon buttons) on the right.
 class TopLevelBar extends StatelessWidget {
   const new({
@@ -542,9 +546,9 @@ class TopLevelBar extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.headlineMedium!
                                   .copyWith(
-                                    fontSize: 32.5,
-                                    height: 37 / 32.5,
-                                    letterSpacing: 32.5 * 0.04,
+                                    fontSize: 31,
+                                    height: 37 / 31,
+                                    letterSpacing: AppFonts.bubblySpacing(31),
                                   ),
                             ),
                           ),
@@ -674,8 +678,8 @@ class PageListRow extends StatelessWidget {
 
 /// A row in a panel of rows (SPEC §7.3; Boot Camp Mix, #85): at least 52
 /// tall, its [icon] in ink on a 36 px mustard ball in an ink outline on a
-/// 4 px lip (#98) (or [leading]), the title in Nunito Bold 16.5/21, the
-/// subtitle SemiBold 14/17 muted, and a 20 px chevron when it opens
+/// 4 px lip (#98) (or [leading]), the title in bold 16.5/21, the
+/// subtitle 14/17 muted, and a 20 px chevron when it opens
 /// something. [destructive] puts the badge in the red and the title in the
 /// accent text.
 /// Screen readers hear the row as one item, or as [semanticsLabel] when
@@ -811,9 +815,10 @@ class PageRow extends StatelessWidget {
                             style: text.bodyLarge?.copyWith(
                               fontSize: 16.5,
                               height: 21 / 16.5,
-                              fontWeight: bold
-                                  ? FontWeight.w800
-                                  : FontWeight.w700,
+                              // A row's title is a bold span in the plain
+                              // face, whether unread or not (#104: Lato has
+                              // no weight between Bold and Black).
+                              fontWeight: bold ? AppFonts.heavy : AppFonts.bold,
                               color: color,
                             ),
                           ),
@@ -878,9 +883,9 @@ class _Spoken extends StatelessWidget {
         );
 }
 
-/// A section heading on the page (SPEC §7.3; Boot Camp Mix, #85): stencil
-/// 900 20/25, spaced 0.045 em, capitals, in the text color ("JUST FOR
-/// YOU"). Screen readers hear it in plain case.
+/// A section heading on the page (SPEC §7.3): the bubbly letters at 18/25
+/// (Team Shirt, #104), as it's written, in the text color ("Just for
+/// you").
 class SectionLabel extends StatelessWidget {
   const new(this.text, {super.key});
 
@@ -892,14 +897,13 @@ class SectionLabel extends StatelessWidget {
     container: true,
     header: true,
     child: Text(
-      text.toUpperCase(),
-      semanticsLabel: text,
-      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-        fontSize: 20,
-        height: 25 / 20,
-        fontWeight: FontWeight.w900,
-        letterSpacing: 20 * 0.045,
+      text,
+      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+        fontSize: 18,
+        height: 25 / 18,
+        letterSpacing: AppFonts.bubblySpacing(18),
         color: GumdropColors.of(context).textOnPage,
+        shadows: const [],
       ),
     ),
   );
@@ -975,7 +979,7 @@ class SettingsCard extends StatelessWidget {
 }
 
 /// A settings row (SPEC §7.3): a [PageRow], its icon on a mustard badge,
-/// the title in Nunito Bold, the subtitle muted, and a chevron when it
+/// the title in bold, the subtitle muted, and a chevron when it
 /// opens something. [highlighted] sets the title bold; a cherry
 /// [accent] (Delete) puts the icon and title in the accent text. A
 /// [ListTile]'s semantics, through [PageRow].
@@ -1033,19 +1037,19 @@ class SettingsRow extends StatelessWidget {
   }
 }
 
-/// A permission row's text style (design §3.8, §3.11): Nunito Bold 15, in
-/// the card's text color (a switch row sits on a card).
+/// A permission row's text style (design §3.8, §3.11): the plain face's
+/// Bold at 15, in the card's text color (a switch row sits on a card).
 TextStyle? switchRowTitle(BuildContext context) =>
     Theme.of(context).textTheme.bodyMedium?.copyWith(
       fontSize: 15,
-      fontWeight: FontWeight.w800,
+      fontWeight: AppFonts.bold,
       // The panel's lettering: switch rows sit in a panel of rows (#85),
       // whose lettering is Candy Pop's navy on white (#86).
       color: GumdropColors.of(context).card.textPrimary,
     );
 
-/// A heading inside a card (SPEC §7.3): the stencil 20 in the text color,
-/// with no drop.
+/// A heading inside a card (SPEC §7.3): the bubbly letters at 18 in the
+/// text color, with no drop.
 class CardHeading extends StatelessWidget {
   const new(this.text, {super.key});
 
@@ -1060,7 +1064,7 @@ class CardHeading extends StatelessWidget {
       child: Text(
         text,
         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-          fontSize: 20,
+          fontSize: 18,
           height: 1.1,
           color: c.headingTextOnCard,
           shadows: const [],
@@ -1070,8 +1074,8 @@ class CardHeading extends StatelessWidget {
   }
 }
 
-/// A section heading on the page (SPEC §7.3): the stencil 25/30 with the
-/// scheme's drop.
+/// A section heading on the page (SPEC §7.3): the bubbly letters at 23/28
+/// with the scheme's drop.
 class PageHeading extends StatelessWidget {
   const new(this.text, {super.key});
 
@@ -1084,14 +1088,14 @@ class PageHeading extends StatelessWidget {
     child: Text(
       text,
       style: Theme.of(context).textTheme.titleLarge
-          ?.copyWith(fontSize: 25, height: 30 / 25),
+          ?.copyWith(fontSize: 23, height: 28 / 23),
     ),
   );
 }
 
-/// A field with its caps label above it (design §3.13): stencil 600 12,
-/// spaced out, muted, 4 px over the field. The label also names the field
-/// for screen readers.
+/// A field with its caps label above it (design §3.13): the plain face's
+/// Black at 11, spaced out, muted, 4 px over the field. The label also
+/// names the field for screen readers.
 class LabeledField extends StatelessWidget {
   const new({required this.label, required this.child, super.key});
 
@@ -1106,14 +1110,16 @@ class LabeledField extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
+          // A small label in the plain face's capitals (Team Shirt, #104).
           Text(
             label.toUpperCase(),
             semanticsLabel: label,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              fontSize: 13,
-              height: 16 / 13,
-              letterSpacing: 13 * 0.12,
-              color: c.onCard ? c.textMuted : c.textMutedOnPage,
+            style: GumdropStyle.caps(
+              TextStyle(
+                fontSize: 11,
+                height: 16 / 11,
+                color: c.onCard ? c.textMuted : c.textMutedOnPage,
+              ),
             ),
           ),
           const SizedBox(height: 4),
@@ -1124,8 +1130,8 @@ class LabeledField extends StatelessWidget {
   }
 }
 
-/// The settings field look (design §3.13): 44 tall, 14 px corners, Nunito
-/// SemiBold 16. The fill and outline come from the theme.
+/// The settings field look (design §3.13): 44 tall, 14 px corners, the
+/// plain face's Regular at 17. The fill and outline come from the theme.
 InputDecoration gumdropField({String? hint, Widget? suffixIcon}) =>
     InputDecoration(
       hintText: hint,
@@ -1135,7 +1141,7 @@ InputDecoration gumdropField({String? hint, Widget? suffixIcon}) =>
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
     );
 
-/// The settings field text: Nunito SemiBold 16, as reading text is.
+/// The settings field text: the plain face's Regular, as reading text is.
 TextStyle? gumdropFieldText(BuildContext context) =>
     Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.2);
 

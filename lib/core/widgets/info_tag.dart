@@ -1,9 +1,11 @@
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// A flat tag for status and information (a role, when reminders go, a
-/// count): outlined, with no lip or face, so it never looks like a button.
+/// count): outlined, with no lip or face, so it never looks like a button,
+/// and lettered in the plain face's Bold (Team Shirt, #104).
 /// Gumdrops are only for things that do something.
 class InfoTag extends StatelessWidget {
   const new({required this.text, this.icon, this.iconColor, super.key});
@@ -37,10 +39,11 @@ class InfoTag extends StatelessWidget {
           Flexible(
             child: Text(
               text,
+              // Information, not a button: the plain face's Bold (#104).
               style: GumdropStyle.of(context).label(
                 TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
+                  fontWeight: AppFonts.bold,
+                  fontSize: 13,
                   height: 1.2,
                   color: color,
                 ),

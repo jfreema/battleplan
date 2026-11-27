@@ -104,7 +104,12 @@ class _Banner extends StatelessWidget {
                               message.title ?? '',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.titleSmall,
+                              // Who it's from: the plain face's Black
+                              // (Team Shirt, #104).
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                fontSize: 15,
+                                height: 1.2,
+                              ),
                             ),
                             Text(
                               message.body ?? '',

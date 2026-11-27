@@ -34,7 +34,7 @@ Don't pick the Kids category or "made for kids": accounts are for adults, and pl
 
 ## Version information
 
-**What's New in This Version** (1.2, approved by Apple by 2026-11-10; then 1.3, live since 2026-11-11, and 1.4.1, live since 2026-11-13, ROADMAP tasks 375 and 382, each with its What's New below; then 1.4.2, approved by Apple by 2026-11-19 (build 492), which closed it to new builds; then 1.4.3, approved by Apple by 2026-11-21, which closed it too (task 431); then 1.4.4, live by 2026-11-23 (task 452); then 1.4.5, submitted for review on 2026-11-24 with build 570, task 463; 4,000 characters). Version 1.1 went out on 2026-11-05, built on 2026-11-04 from `3d84c33` in Gumdrop Army; its What's New and description are in `git show 85053f7:docs/STORE-LISTING.md`.
+**What's New in This Version** (1.2, approved by Apple by 2026-11-10; then 1.3, live since 2026-11-11, and 1.4.1, live since 2026-11-13, ROADMAP tasks 375 and 382, each with its What's New below; then 1.4.2, approved by Apple by 2026-11-19 (build 492), which closed it to new builds; then 1.4.3, approved by Apple by 2026-11-21, which closed it too (task 431); then 1.4.4, live by 2026-11-23 (task 452); then 1.4.5, submitted for review on 2026-11-24 with build 570 and live that day, task 463; then 1.4.6, the next one, task 476; 4,000 characters). Version 1.1 went out on 2026-11-05, built on 2026-11-04 from `3d84c33` in Gumdrop Army; its What's New and description are in `git show 85053f7:docs/STORE-LISTING.md`.
 
 ```
 A whole new look, Open Field, with five color schemes: Army green, the default, plus Light, Dark, Navy, and Light blue. Everyone picks the scheme they see for each team, and a default for the rest.
@@ -45,7 +45,15 @@ Also new:
 • On a team, RSVPs are for players, each on their own row: parents answer for each of their kids, and adult players answer for themselves
 ```
 
-**What's New in 1.4.5** (ROADMAP task 463; submitted for review on 2026-11-24 with build 570 from `be7bc08` and this text, the description below (fourteen schemes, volleyball, and Can't go), and the screenshots retaken in the candy finish (task 469) in all three sets; released automatically once Apple approves it). Everything made since the 1.4.4 build (544, `3dfa0dc`): Boot Camp Mix and its fourteen schemes (tasks 454, 455, 458, 459, and Sugar Rush in 468), the candy finish (468) and Nunito for reading text (467), the Sticker Pair app icon (470), the Plays board as the mockup draws it and the volleyball court (456), and the iPad's full-width headers (461), then one vote per player (466) and Guardian or Parent (465), whose callables went live on prod with Release to prod before 1.4.5 was submitted; the theme editor's changes (453, 457, 460, 471) are for super admins only.
+**What's New in 1.4.6** (ROADMAP tasks 474 to 476; the next version, nothing built or submitted yet. 1.4.5 went live on 2026-11-24 as it was sent, with "bold stencil lettering" and fourteen schemes, so `pubspec.yaml` is 1.4.6 now: run Release iOS, add version 1.4.6 in App Store Connect, and pick the new build). Everything made since the 1.4.5 build (570, `be7bc08`): Team Shirt's lettering (task 474, #104) and Teal Wave's removal (475, #105); the Super Admin Panel's headers following the Sprinkles switch (471) is for super admins only. With it, the description's Make it yours line says thirteen color schemes (below), and the screenshots are the ones retaken in the new lettering.
+
+```
+Friendlier lettering that's easier to read. Titles are in rounded letters, buttons, tabs, and names in plain ones, and the stencil stays on tags and stamps.
+
+There are thirteen color schemes now. Teal Wave is gone, and anyone who had picked it sees Graphite.
+```
+
+**What's New in 1.4.5** (ROADMAP task 463; live in the App Store since 2026-11-24; submitted for review that day with build 570 from `be7bc08` and this text, the description below (fourteen schemes, volleyball, and Can't go), and the screenshots retaken in the candy finish (task 469) in all three sets; released automatically once Apple approves it). Everything made since the 1.4.4 build (544, `3dfa0dc`): Boot Camp Mix and its fourteen schemes (tasks 454, 455, 458, 459, and Sugar Rush in 468), the candy finish (468) and Nunito for reading text (467), the Sticker Pair app icon (470), the Plays board as the mockup draws it and the volleyball court (456), and the iPad's full-width headers (461), then one vote per player (466) and Guardian or Parent (465), whose callables went live on prod with Release to prod before 1.4.5 was submitted; the theme editor's changes (453, 457, 460, 471) are for super admins only.
 
 ```
 A whole new look, Boot Camp Mix: camouflage headers, bold stencil lettering, glossy candy buttons, and fourteen color schemes. Black is the default, with Army green, Light, Sky Blue, Navy Steel, Forest, Graphite, Teal Wave, Tropic Blue, Desert Tan, Sugar Rush, Royal & Gold, Central Wildcats, and Geaux Tigahs. Pick the one you see for each team.
@@ -126,7 +134,7 @@ MORE FOR COACHES
 • Groups for anything that isn't a team, with the same chat, schedule, and RSVPs
 
 MAKE IT YOURS
-• Fourteen color schemes, from Black and Army green to Sky Blue, Navy Steel, Royal & Gold, and Sugar Rush
+• Thirteen color schemes, from Black and Army green to Sky Blue, Navy Steel, Royal & Gold, and Sugar Rush
 • Pick the scheme you see for each team, and a default
 • Pick your icon: a photo, or your initials on a color
 • Coaches pick the chat's message color and background

@@ -286,7 +286,7 @@ class _PollCardState extends ConsumerState<PollCard> {
           );
           final link = style.label(
             TextStyle(
-              fontWeight: FontWeight.w600,
+              fontWeight: AppFonts.bold,
               fontSize: 14,
               color: ink,
               decoration: TextDecoration.underline,
@@ -303,14 +303,9 @@ class _PollCardState extends ConsumerState<PollCard> {
           final label = Text(
             l10n.pollLabel.toUpperCase(),
             semanticsLabel: l10n.pollLabel,
-            style: style.label(
-              TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-                height: 16 / 13,
-                letterSpacing: 13 * 0.08,
-                color: ink,
-              ),
+            // A small label in the plain face's capitals (#104).
+            style: GumdropStyle.caps(
+              TextStyle(fontSize: 11, height: 16 / 11, color: ink),
             ),
           );
           return Column(
@@ -352,7 +347,7 @@ class _PollCardState extends ConsumerState<PollCard> {
                 value.question,
                 style: TextStyle(
                   fontFamily: AppFonts.body,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: AppFonts.bold,
                   fontSize: 18,
                   height: 23 / 18,
                   color: ink,

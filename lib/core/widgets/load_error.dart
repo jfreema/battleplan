@@ -1,6 +1,7 @@
 import 'package:battleplan/core/design/app_colors.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/color_math.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
@@ -65,7 +66,7 @@ class LoadError extends StatelessWidget {
             message ?? l10n.loadErrorShort,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontSize: 15,
-              fontWeight: FontWeight.w600,
+              fontWeight: AppFonts.reading,
               color: c.onCard ? c.textMuted : c.textMutedOnPage,
             ),
           ),

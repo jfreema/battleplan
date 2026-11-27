@@ -321,7 +321,9 @@ class _NotificationRow extends StatelessWidget {
                   if (at != null)
                     Text(
                       relativeTime(l10n, at, now, zone: ViewerZone.of(context)),
-                      style: theme.textTheme.labelSmall?.copyWith(
+                      // A time reads as text does (Team Shirt, #104).
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontSize: 12.5,
                         color: c.textMutedOnPage,
                       ),
                     ),

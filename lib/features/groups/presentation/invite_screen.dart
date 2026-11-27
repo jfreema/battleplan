@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
@@ -226,7 +228,7 @@ class _InviteBody extends ConsumerWidget {
         line,
         style: theme.textTheme.bodyLarge?.copyWith(
           color: c.textMutedOnPage,
-          fontWeight: FontWeight.w600,
+          fontWeight: AppFonts.reading,
         ),
       ),
       const SizedBox(height: Space.lg),
@@ -246,9 +248,9 @@ class _InviteBody extends ConsumerWidget {
         l10n.inviteCodeLabel.toUpperCase(),
         semanticsLabel: l10n.inviteCodeLabel,
         textAlign: TextAlign.center,
-        style: theme.textTheme.labelSmall?.copyWith(
-          letterSpacing: 12 * 0.07,
-          color: c.textMutedOnPage,
+        // A small capital label (Team Shirt, #104).
+        style: GumdropStyle.caps(
+          TextStyle(fontSize: 11, height: 16 / 11, color: c.textMutedOnPage),
         ),
       ),
       const SizedBox(height: 4),
@@ -586,7 +588,7 @@ class _LinkSettingsSheet extends ConsumerWidget {
     final current = invite.value;
     final muted = theme.textTheme.bodyMedium?.copyWith(
       color: c.textMuted,
-      fontWeight: FontWeight.w600,
+      fontWeight: AppFonts.reading,
     );
     return SafeArea(
       child: SingleChildScrollView(

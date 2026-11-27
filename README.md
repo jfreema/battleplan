@@ -14,7 +14,7 @@ Team chat and scheduling for sports teams, free for every team and with no ads. 
 - **Groups:** besides teams, plain groups for anything else, as simple as they can be: the same chat, schedule, RSVPs, and documents, but no players or Plays, and everyone answers for themselves. A group's owner can make it a team later.
 - **New seasons:** a team's owner starts the next season as a new team, bringing the players, parents, coaches, and anyone else they choose, who are on it at once with nothing to accept; the old season is archived with its chat, photos, and schedule.
 - **Sign-in:** Continue with Google or Apple; an email and password, or an emailed link, for whoever needs one.
-- **Color schemes:** one look, Boot Camp Mix (stencil lettering, ink outlines, glossy candy buttons, tags and dog tags on their lips, camouflage headers with candy sprinkles), in fourteen schemes: Black (the default), Army green, Light, Sky Blue, Royal & Gold, Central Wildcats, Geaux Tigahs, Graphite, Teal Wave, Navy Steel, Forest, Tropic Blue, Desert Tan, and Sugar Rush. A team's admins set its default, or System default, and can reset everyone to it; each person can pick their own for a team or group, and a default for the rest. Picks of the older schemes show in the closest of the fourteen. Super admins can change any scheme's colors and header background (camouflage, digital, topo map, playbook, hazard stripes, or halftone) in the Super Admin Panel's theme editor.
+- **Color schemes:** one look, Boot Camp Mix (rounded, friendly lettering with stencil only on tags and stamps, ink outlines, glossy candy buttons, tags and dog tags on their lips, camouflage headers with candy sprinkles), in thirteen schemes: Black (the default), Army green, Light, Sky Blue, Royal & Gold, Central Wildcats, Geaux Tigahs, Graphite, Navy Steel, Forest, Tropic Blue, Desert Tan, and Sugar Rush. A team's admins set its default, or System default, and can reset everyone to it; each person can pick their own for a team or group, and a default for the rest. Picks of the older schemes show in the closest of the thirteen. Super admins can change any scheme's colors and header background (camouflage, digital, topo map, playbook, hazard stripes, or halftone) in the Super Admin Panel's theme editor.
 - **Import:** bring a team over from GroupMe (messages, photos, files, and events) or TeamSnap (schedule, players, and files), and schedules from TeamReach, GameChanger, or Google Calendar.
 
 ## Sites
@@ -28,7 +28,7 @@ Every push to `main` deploys everything to dev once CI passes, server functions 
 
 ## Built with
 
-Flutter (web, iOS, and Android from one codebase) and Firebase: Authentication, Firestore, Cloud Functions in TypeScript, Storage, and Hosting. The website in `website/` is plain HTML and CSS with no script, in the app's Boot Camp Mix look in Black (Camo HQ). The app bundles its fonts, Big Shoulders Stencil and Nunito, and the website serves the same ones itself, as the web app serves its fonts for emoji and other scripts: never from Google Fonts.
+Flutter (web, iOS, and Android from one codebase) and Firebase: Authentication, Firestore, Cloud Functions in TypeScript, Storage, and Hosting. The website in `website/` is plain HTML and CSS with no script, in the app's Boot Camp Mix look in Black (Camo HQ). The app bundles its fonts, Lilita One, Lato and Big Shoulders Stencil, and the website serves the same ones itself, as the web app serves its fonts for emoji and other scripts: never from Google Fonts.
 
 ## Docs
 

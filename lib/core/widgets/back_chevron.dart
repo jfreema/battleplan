@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/widgets/candy_sprinkles.dart';
@@ -9,9 +10,10 @@ import 'package:material_ui/material_ui.dart';
 
 /// The Open Field back button (SPEC §7.3): a 28 px chevron in the text
 /// color and, when given, the screen it goes back to ([label], "Team
-/// info") in stencil 600 17, in one tap area at least 48 tall, with the
-/// 3 px focus ring for the keyboard. It keeps Material's "Back" tooltip,
-/// and is a "Back" button node of its own for screen readers.
+/// info") in the plain face's Bold at 16, in one tap area at least 48
+/// tall, with the 3 px focus ring for the keyboard. It keeps Material's
+/// "Back" tooltip, and is a "Back" button node of its own for screen
+/// readers.
 class BackChevron extends StatelessWidget {
   const new({
     this.label,
@@ -46,12 +48,13 @@ class BackChevron extends StatelessWidget {
   static Widget iconBuilder(BuildContext context) =>
       const Icon(AppIcons.chevronLeft, size: 28, weight: 700);
 
-  /// The back label's text style: stencil 600 17.
+  /// The back label's text style: the plain face's Bold at 16 (Team Shirt,
+  /// #104), like every row that's a link.
   static TextStyle labelStyle(BuildContext context) =>
       GumdropStyle.of(context).label(
         TextStyle(
-          fontSize: 17,
-          fontWeight: FontWeight.w600,
+          fontSize: 16,
+          fontWeight: AppFonts.bold,
           height: 1.2,
           color: GumdropColors.of(context).textOnPage,
           shadows: const [],

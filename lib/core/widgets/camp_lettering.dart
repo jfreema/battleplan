@@ -8,10 +8,10 @@ import 'package:battleplan/core/widgets/candy_box.dart';
 import 'package:battleplan/core/widgets/candy_sprinkles.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Boot Camp Mix's big titles (#85, SPEC §7.4): [text] in white stencil
-/// with an ink stroke under it and a hard shadow down and to the right in
-/// the scheme's shadow color: the team name in the header, a screen's
-/// title, an event's opponent.
+/// The big titles (#85, SPEC §7.4): [text] in white bubbly letters (Team
+/// Shirt, #104; the stencil before it) with an ink stroke under it and a
+/// hard shadow down and to the right in the scheme's shadow color: the
+/// team name in the header, a screen's title, an event's opponent.
 class OutlinedText extends StatelessWidget {
   const new(
     this.text, {
@@ -71,8 +71,18 @@ class OutlinedText extends StatelessWidget {
     final scaler = textScaler ?? MediaQuery.textScalerOf(context);
     // The style as the fill's Text resolves it, so the stroke matches.
     final inherited = DefaultTextStyle.of(context);
+    final family = style.fontFamily ?? AppFonts.display;
+    final bubbly = family == AppFonts.bubbly;
     final base = inherited.style.merge(
-      style.copyWith(fontFamily: style.fontFamily ?? AppFonts.display),
+      style.copyWith(
+        fontFamily: family,
+        // The bubbly letters have one weight (a heavier one asked for would
+        // be faked), and what they lack draws in the plain face.
+        fontWeight: bubbly ? AppFonts.displayWeight : style.fontWeight,
+        fontFamilyFallback: bubbly
+            ? AppFonts.bubblyFallback
+            : style.fontFamilyFallback,
+      ),
     );
     final lines = maxLines ?? inherited.maxLines;
     // A header's sprinkles keep off it (#98).
@@ -93,6 +103,7 @@ class OutlinedText extends StatelessWidget {
                 text: text,
                 style: TextStyle(
                   fontFamily: base.fontFamily,
+                  fontFamilyFallback: base.fontFamilyFallback,
                   fontWeight: base.fontWeight,
                   fontSize: base.fontSize,
                   height: base.height,

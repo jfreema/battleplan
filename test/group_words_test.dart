@@ -55,8 +55,8 @@ void main() {
         'change it.';
     for (final words in [
       'GROUP NAME',
-      // Look's small label, in capitals (#32).
-      'COLOR',
+      // Look's label, as it's written (#32; in capitals until #104).
+      'Color',
       "The color is on the group's badge and in the switcher.",
       'Group color scheme',
       "Everyone can see who's in the group",
@@ -69,7 +69,7 @@ void main() {
     }
     for (final words in [
       'TEAM NAME',
-      'TEAM COLOR',
+      'Team color',
       'Team color scheme',
       'Coach',
       'Archive team',
@@ -107,7 +107,7 @@ void main() {
     await open(tester, '/g/a/info,/g/a/settings', kind: GroupKind.team);
     for (final words in [
       'TEAM NAME',
-      'TEAM COLOR',
+      'Team color',
       'Team color scheme',
       "Everyone can see who's on the team",
       'Archive team',

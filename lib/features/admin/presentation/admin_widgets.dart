@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_colors.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
@@ -88,7 +89,7 @@ class AdminScaffold extends StatelessWidget {
         semanticLabel: canPop ? null : l10n.adminExit,
       ),
       // The panel's name on a mustard tag over the page's in outlined
-      // stencil, on the camouflage (#85).
+      // bubbly letters, on the camouflage (#85, #104).
       toolbarHeight: 62,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,9 +101,10 @@ class AdminScaffold extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.headlineMedium!.copyWith(
-              fontSize: 30,
-              height: 34 / 30,
-              letterSpacing: 30 * 0.035,
+              // Nine tenths of the stencil's 30 (Team Shirt, #104).
+              fontSize: 27,
+              height: 34 / 27,
+              letterSpacing: AppFonts.bubblySpacing(27),
             ),
           ),
         ],

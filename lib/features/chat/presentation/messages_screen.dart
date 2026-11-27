@@ -154,7 +154,8 @@ class _ChatRow extends ConsumerWidget {
                 DateTime.now(),
                 zone: ViewerZone.of(context),
               ),
-              style: theme.textTheme.labelSmall?.copyWith(
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontSize: 12.5,
                 color: c.textMutedOnPage,
               ),
             ),

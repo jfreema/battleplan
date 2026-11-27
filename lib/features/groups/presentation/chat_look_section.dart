@@ -419,7 +419,7 @@ class _ColorTile extends StatelessWidget {
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      fontSize: 13,
+                      fontSize: 12,
                       height: 1.1,
                       color: selected ? onTile.textPrimary : c.textOnPage,
                     ),
@@ -585,7 +585,7 @@ class _Preview extends StatelessWidget {
                           name,
                           style: TextStyle(
                             fontFamily: AppFonts.body,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: AppFonts.bold,
                             fontSize: 16,
                             height: 20 / 16,
                             color: c.textOnPage,

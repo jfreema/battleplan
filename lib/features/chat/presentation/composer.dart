@@ -399,7 +399,7 @@ class _ComposerState extends State<Composer> {
                       hintMaxLines: 1,
                       hintStyle: TextStyle(
                         fontFamily: AppFonts.body,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: AppFonts.reading,
                         fontSize: 17,
                         color: panel.textMutedOnPage,
                       ),

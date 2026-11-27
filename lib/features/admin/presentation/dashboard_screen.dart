@@ -190,8 +190,9 @@ class _StatGrid extends StatelessWidget {
 }
 
 /// One total as a Boot Camp Mix panel (#85): a 44 px rounded badge in an
-/// ink outline with its icon on [accent]'s face, the label in stencil over
-/// [note], and the number in big outlined stencil at the end, or under the
+/// ink outline with its icon on [accent]'s face, the label in the plain
+/// face's Black over [note], and the number in big outlined bubbly letters
+/// (Team Shirt, #104) at the end, or under the
 /// note with large text. A total with
 /// a list ([route]) opens it, with the card's chevron.
 class _Stat extends StatelessWidget {
@@ -226,20 +227,19 @@ class _Stat extends StatelessWidget {
     final color = alert ? page.cherry : accent(page);
     final target = route;
     // The number under the words with large text, and a long one ("38 of
-    // 90", #47) on a phone, where its big stencil wouldn't fit beside them
+    // 90", #47) on a phone, where its big letters wouldn't fit beside them
     // (#85).
     final stacked =
         MediaQuery.textScalerOf(context).scale(1) > 1.5 ||
         (value.length > 6 && MediaQuery.sizeOf(context).width < 600);
-    // The stencil draws capitals whatever the string's case.
+    // A tile's name in the plain face's Black (Team Shirt, #104).
     final name = Text(
       label,
       style: TextStyle(
-        fontFamily: AppFonts.stencil,
-        fontWeight: FontWeight.w900,
-        fontSize: 19,
-        height: 22 / 19,
-        letterSpacing: 19 * 0.05,
+        fontFamily: AppFonts.label,
+        fontWeight: AppFonts.heavy,
+        fontSize: 16,
+        height: 22 / 16,
         color: c.textPrimary,
       ),
     );
@@ -257,12 +257,14 @@ class _Stat extends StatelessWidget {
     // are solid ink, the open reports' red in an ink outline; elsewhere
     // outlined in the text color (#85, #86).
     final light = c.brightness == Brightness.light;
+    // Its number in the bubbly letters.
     final numberStyle = TextStyle(
-      fontFamily: AppFonts.stencil,
-      fontWeight: FontWeight.w900,
-      fontSize: 30,
+      fontFamily: AppFonts.bubbly,
+      fontFamilyFallback: AppFonts.bubblyFallback,
+      fontWeight: AppFonts.displayWeight,
+      fontSize: 27,
       height: 1,
-      letterSpacing: 30 * 0.03,
+      letterSpacing: 0,
       color: c.ink,
     );
     final total = light && !alert

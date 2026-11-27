@@ -902,10 +902,21 @@ class CampThemePreview extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final p = palette;
     final ink = BorderSide(color: p.ink, width: 2.5);
+    // Lettered as the app is (Team Shirt, #104): the tag in the stencil,
+    // the names in the bubbly letters, the buttons in the plain face.
     TextStyle stencil(double size, Color color) => TextStyle(
       fontFamily: AppFonts.stencil,
       fontSize: size,
       fontWeight: FontWeight.w900,
+      color: color,
+      height: 1.1,
+    );
+    TextStyle bubbly(double size, Color color) => TextStyle(
+      fontFamily: AppFonts.bubbly,
+      fontFamilyFallback: AppFonts.bubblyFallback,
+      fontWeight: AppFonts.displayWeight,
+      fontSize: size,
+      letterSpacing: AppFonts.bubblySpacing(size),
       color: color,
       height: 1.1,
     );
@@ -940,7 +951,16 @@ class CampThemePreview extends StatelessWidget {
         shineColor: Candy.streakOn(face),
         height: 26,
         alignment: Alignment.center,
-        child: Text(label.toUpperCase(), style: stencil(11, _on(face))),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: AppFonts.label,
+            fontWeight: AppFonts.heavy,
+            fontSize: 10.5,
+            height: 1.1,
+            color: _on(face),
+          ),
+        ),
       ),
     );
     return ExcludeSemantics(
@@ -971,8 +991,8 @@ class CampThemePreview extends StatelessWidget {
                           children: [
                             SprinkleKeepOut(
                               child: Text(
-                                l10n.adminThemePreviewTeam.toUpperCase(),
-                                style: stencil(24, p.headerLettering),
+                                l10n.adminThemePreviewTeam,
+                                style: bubbly(23, p.headerLettering),
                               ),
                             ),
                             const Spacer(),
@@ -1047,8 +1067,8 @@ class CampThemePreview extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  l10n.adminThemePreviewGame.toUpperCase(),
-                                  style: stencil(17, _on(p.red)),
+                                  l10n.adminThemePreviewGame,
+                                  style: bubbly(16, _on(p.red)),
                                 ),
                               ],
                             ),

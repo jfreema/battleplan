@@ -173,21 +173,15 @@ class _NextUpStripState extends ConsumerState<NextUpStrip>
     final line = Text.rich(
       TextSpan(
         children: [
+          // A small label in the plain face's capitals (Team Shirt, #104).
           TextSpan(
-            text: '${l10n.nextUpLabel}  ',
-            style: GumdropStyle.of(context).label(
-              TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 13 * 0.06,
-                color: muted,
-              ),
-            ),
+            text: '${l10n.nextUpLabel.toUpperCase()}  ',
+            style: GumdropStyle.caps(TextStyle(fontSize: 11, color: muted)),
           ),
           TextSpan(
             text: what,
             style: TextStyle(
-              fontWeight: FontWeight.w800,
+              fontWeight: AppFonts.bold,
               color: c.textOnPage,
               decoration: event.isCanceled ? TextDecoration.lineThrough : null,
             ),
@@ -200,7 +194,7 @@ class _NextUpStripState extends ConsumerState<NextUpStrip>
       overflow: TextOverflow.ellipsis,
       style: TextStyle(
         fontFamily: AppFonts.body,
-        fontWeight: FontWeight.w600,
+        fontWeight: AppFonts.reading,
         fontSize: 15,
         height: 20 / 15,
         color: c.textOnPage,
@@ -326,7 +320,7 @@ class _AnswerFor extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontFamily: AppFonts.body,
-              fontWeight: FontWeight.w800,
+              fontWeight: AppFonts.bold,
               fontSize: 14,
               height: 18 / 14,
               color: c.textOnPage,
@@ -385,14 +379,9 @@ class _AnswerTag extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             statusLabel(l10n, status),
-            style: GumdropStyle.of(context).label(
-              TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 14,
-                height: 1.2,
-                color: ink,
-              ),
-            ),
+            // The plain face's Black, as a small answer button (#104).
+            style: GumdropStyle.of(context)
+                .label(TextStyle(fontSize: 13.5, height: 1.2, color: ink)),
           ),
         ],
       ),
@@ -420,12 +409,7 @@ class _QuietTag extends StatelessWidget {
         child: Text(
           label,
           style: GumdropStyle.of(context).label(
-            TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-              height: 1.2,
-              color: c.textMutedOnPage,
-            ),
+            TextStyle(fontSize: 13.5, height: 1.2, color: c.textMutedOnPage),
           ),
         ),
       ),
@@ -469,7 +453,7 @@ class TeamCardNextLine extends ConsumerWidget {
     ].join(', ');
     final muted = TextStyle(
       fontFamily: AppFonts.body,
-      fontWeight: FontWeight.w600,
+      fontWeight: AppFonts.reading,
       fontSize: 15,
       height: 19 / 15,
       letterSpacing: -0.2,
@@ -497,7 +481,7 @@ class TeamCardNextLine extends ConsumerWidget {
                     TextSpan(
                       text: ' · ${l10n.nextUpNeedsAnswer}',
                       style: TextStyle(
-                        fontWeight: FontWeight.w800,
+                        fontWeight: AppFonts.bold,
                         color: c.textPrimary,
                       ),
                     ),

@@ -110,10 +110,10 @@ String shareSpoken(AppLocalizations l10n, DueCharge c) {
   };
 }
 
-/// Muted text on a card or the page: Nunito SemiBold 15/19.
+/// Muted text on a card or the page: reading text at 15/19.
 TextStyle duesMuted(GumdropColors c) => TextStyle(
   fontFamily: AppFonts.body,
-  fontWeight: FontWeight.w600,
+  fontWeight: AppFonts.reading,
   fontSize: 15,
   height: 19 / 15,
   color: c.textMuted,
@@ -132,7 +132,7 @@ class DuesQuiet extends StatelessWidget {
       text,
       style: TextStyle(
         fontFamily: AppFonts.body,
-        fontWeight: FontWeight.w600,
+        fontWeight: AppFonts.reading,
         fontSize: 15,
         color: GumdropColors.of(context).textMutedOnPage,
       ),
@@ -166,14 +166,9 @@ class DueStatePill extends StatelessWidget {
       ),
       child: Text(
         shareStateName(l10n, state),
-        style: GumdropStyle.of(context).label(
-          TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 13,
-            height: 16 / 13,
-            color: text,
-          ),
-        ),
+        // The plain face's Black at 12 (Team Shirt, #104).
+        style: GumdropStyle.of(context)
+            .label(TextStyle(fontSize: 12, height: 16 / 12, color: text)),
       ),
     );
   }
@@ -237,20 +232,18 @@ class DuesTotalsPanel extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
+              // A small label in the plain face's capitals (#104).
               Text(
                 label.toUpperCase(),
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  fontSize: 12,
-                  height: 15 / 12,
-                  letterSpacing: 12 * 0.1,
-                  color: c.textMuted,
+                style: GumdropStyle.caps(
+                  TextStyle(fontSize: 11, height: 15 / 11, color: c.textMuted),
                 ),
               ),
               Text(
                 d(cents),
                 style: TextStyle(
                   fontFamily: AppFonts.body,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: AppFonts.bold,
                   fontSize: 22,
                   height: 28 / 22,
                   color: c.textPrimary,
@@ -324,7 +317,7 @@ class DuesTotalsPanel extends StatelessWidget {
                                       l10n.duesWhoOwesWhat,
                                       style: TextStyle(
                                         fontFamily: AppFonts.body,
-                                        fontWeight: FontWeight.w800,
+                                        fontWeight: AppFonts.bold,
                                         fontSize: 16,
                                         height: 21 / 16,
                                         color: c.textPrimary,

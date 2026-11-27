@@ -1,5 +1,7 @@
 // The app shell, design system, and web parity (SPEC §4.2, §5.2, §5.3,
 // §5.5, §7.3, §7.5, §7.6, §7.7).
+import 'dart:convert';
+
 import 'package:battleplan/app/services/share_plus_sharer.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
@@ -438,7 +440,7 @@ void main() {
   });
 
   // The test font draws every letter 1 em square, so its names are far
-  // wider than the stencil's; the steps are the same.
+  // wider than the bubbly letters'; the steps are the same.
   testWidgets('a long team name takes two lines in the same one-row header, '
       'without the eyebrow (#13)', (tester) async {
     Future<double> rowHeight(String name) async {
@@ -460,9 +462,9 @@ void main() {
 
     final long = await rowHeight('Blue Jays');
     final name = tester.widget<Text>(find.text('Blue Jays'));
-    // Two lines at 22, the first size that holds it on two (#85).
+    // Two lines at 21, the first size that holds it on two (#85, #104).
     expect(name.maxLines, 2);
-    expect(name.style!.fontSize, 22);
+    expect(name.style!.fontSize, 21);
     // It steps aside, and is still read (TeamSwitcherButton's label).
     expect(find.text('TEAM CHAT'), findsNothing);
     expect(headerEyebrow(tester), 'TEAM CHAT');
@@ -729,7 +731,7 @@ void main() {
     });
 
     testWidgets('a pick of a scheme that left is drawn and checked as the '
-        'closest of the fourteen, and never rewritten (#85)', (tester) async {
+        'closest of the thirteen, and never rewritten (#85)', (tester) async {
       // Scoreboard left in #85; it's drawn as Black.
       final members = FakeMemberRepository([
         testMembership(
@@ -754,6 +756,33 @@ void main() {
       );
       expect(members.calls.where((c) => c.startsWith('scheme')), isEmpty);
       expect(members.memberships.single.colorScheme, TeamScheme.scoreboard);
+    });
+
+    testWidgets('a pick of Teal Wave, which left in #105, is drawn, named and '
+        'checked as Graphite, and never rewritten', (tester) async {
+      final members = FakeMemberRepository([
+        testMembership('a', 'coach').copyWith(colorScheme: TeamScheme.tealwave),
+      ]);
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {'a': testGroup('a', 'Thunder')},
+        memberRepo: members,
+      );
+      await tester.pumpAndSettle();
+      GoRouter.of(tester.element(find.byType(Scaffold).first))
+          .go('/g/a/scheme');
+      await tester.pumpAndSettle();
+      // Graphite, the closest scheme, which keeps Teal Wave's coral.
+      expect(page(tester), SchemeRoles.graphite.page);
+      expect(
+        tester.getSemantics(find.bySemanticsLabel(RegExp('^Graphite, '))),
+        isSemantics(isSelected: true, isButton: true, hasTapAction: true),
+      );
+      // It isn't offered any more.
+      expect(find.textContaining('Teal Wave'), findsNothing);
+      expect(members.calls.where((c) => c.startsWith('scheme')), isEmpty);
+      expect(members.memberships.single.colorScheme, TeamScheme.tealwave);
     });
 
     testWidgets("Admin settings sets the team's default for everyone", (
@@ -1541,36 +1570,61 @@ void main() {
       expect(Motion.fast.inMilliseconds, 150);
     });
 
-    testWidgets("Boot Camp Mix's fonts are bundled, with their licenses", (
+    testWidgets("Team Shirt's fonts are bundled, with their licenses (#104)", (
       tester,
     ) async {
       final manifest = await rootBundle.loadString('FontManifest.json');
       for (final file in [
+        // What's stamped on: tags, stamps, dog tags.
         'assets/fonts/battleplan_stencil/BattleplanStencil-Black.ttf',
-        // Reading text (#97): SemiBold, and Bold for bold spans.
-        'assets/fonts/nunito/Nunito-SemiBold.ttf',
-        'assets/fonts/nunito/Nunito-Bold.ttf',
+        // Names and titles.
+        'assets/fonts/lilita_one/LilitaOne-Regular.ttf',
+        // The rest, in Lato cut and renamed: to read, bold spans and
+        // tabs, and buttons, labels and names.
+        'assets/fonts/battleplan_sans/BattleplanSans-Regular.ttf',
+        'assets/fonts/battleplan_sans/BattleplanSans-Bold.ttf',
+        'assets/fonts/battleplan_sans/BattleplanSans-Black.ttf',
       ]) {
         expect(manifest, contains(file));
       }
-      // Open Field's other fonts are gone (#85), and Comic Neue (#97).
-      for (final gone in [
-        'Lilita',
-        'Fredoka',
-        'BlackOps',
-        'Inter',
-        'Comic',
-        'Nunito-Regular',
-        'Nunito-ExtraBold',
-        'Nunito-Black',
-      ]) {
+      // Open Field's other fonts are gone (#85), Comic Neue (#97), and
+      // Nunito (#104).
+      for (final gone in ['Fredoka', 'BlackOps', 'Inter', 'Comic', 'Nunito']) {
         expect(manifest, isNot(contains(gone)));
       }
-      expect(AppFonts.display, 'Battleplan Stencil');
-      expect(AppFonts.label, AppFonts.display);
-      expect(AppFonts.body, 'Nunito');
-      expect(AppFonts.reading, FontWeight.w600);
+      expect(AppFonts.stencil, 'Battleplan Stencil');
+      expect(AppFonts.display, 'Lilita One');
+      // Lilita One has one weight: a heavier one would be faked.
+      expect(AppFonts.displayWeight, FontWeight.w400);
+      expect(AppFonts.label, 'Battleplan Sans');
+      expect(AppFonts.body, AppFonts.label);
+      expect(AppFonts.reading, FontWeight.w400);
       expect(AppFonts.bold, FontWeight.w700);
+      expect(AppFonts.heavy, FontWeight.w900);
+      // A letter Lilita One lacks draws in the Black, which is a family of
+      // its own so the title's weight (400) can't pick the Regular.
+      expect(AppFonts.bubblyFallback, [
+        'Battleplan Sans Black',
+        'Battleplan Sans',
+      ]);
+      final families = [
+        for (final entry in jsonDecode(manifest) as List<Object?>)
+          (entry! as Map<String, Object?>)['family'],
+      ];
+      expect(
+        families,
+        containsAll([
+          'Battleplan Stencil',
+          'Lilita One',
+          'Battleplan Sans',
+          'Battleplan Sans Black',
+        ]),
+      );
+      expect(fontLicenseAssets.keys, [
+        'Battleplan Stencil (Big Shoulders Stencil)',
+        'Lilita One',
+        'Battleplan Sans (Lato)',
+      ]);
       registerFontLicenses();
       final entries = await LicenseRegistry.licenses.toList();
       for (final family in fontLicenseAssets.keys) {

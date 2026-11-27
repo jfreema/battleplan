@@ -505,17 +505,17 @@ class _MessageTileState extends ConsumerState<MessageTile> {
           end: r.end,
           style: mine
               ? TextStyle(
-                  fontWeight: FontWeight.w900,
+                  fontWeight: AppFonts.bold,
                   color: c.ink,
                   backgroundColor: GumdropColors.mentionBg,
                 )
               : r.isMe
               ? TextStyle(
-                  fontWeight: FontWeight.w900,
+                  fontWeight: AppFonts.bold,
                   color: c.ink,
                   backgroundColor: c.roles.palette.mustard,
                 )
-              : const TextStyle(fontWeight: FontWeight.w900),
+              : const TextStyle(fontWeight: AppFonts.bold),
         ),
     ];
     // "edited" and "Pinned" (CHAT-15) beside the time. Where an imported
@@ -576,7 +576,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     final metaStyle = ChatText.face(theme.textTheme.bodySmall).copyWith(
       fontSize: 13,
       height: 20 / 13,
-      fontWeight: FontWeight.w600,
+      fontWeight: AppFonts.reading,
       color: muted,
       letterSpacing: 0,
     );
@@ -676,10 +676,12 @@ class _MessageTileState extends ConsumerState<MessageTile> {
               children: [
                 Icon(AppIcons.announcement, size: 18, color: foreground),
                 const SizedBox(width: Space.xs),
+                // A small label in the plain face's capitals (#104).
                 Text(
-                  l10n.chatAnnouncementLabel,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: foreground,
+                  l10n.chatAnnouncementLabel.toUpperCase(),
+                  semanticsLabel: l10n.chatAnnouncementLabel,
+                  style: GumdropStyle.caps(
+                    TextStyle(fontSize: 11, height: 1.2, color: foreground),
                   ),
                 ),
               ],
@@ -814,11 +816,12 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     final openAuthor = mine ? null : _authorTap(m);
     final pageMeta = theme.textTheme.bodySmall?.copyWith(
       color: c.textMutedOnPage,
-      fontWeight: FontWeight.w800,
+      fontWeight: AppFonts.bold,
     );
     // Others' balloons and event cards have the name and time above them,
-    // on the page: the name in stencil, the time beside it in small muted
-    // type (#85). A poll card says who asked inside it.
+    // on the page: the name in the plain face's Black (#104), the time
+    // beside it in small muted type (#85). A poll card says who asked
+    // inside it.
     final header = !isEvent && !nameAbove
         ? null
         : nameAbove
@@ -1078,20 +1081,20 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     );
   }
 
-  /// The sender's name in stencil capitals, and their players beside it in
-  /// small muted type ("CLAIRE D." then "· Luke #7"), as the design has it
-  /// (#85).
+  /// The sender's name in the plain face's Black (Team Shirt, #104), and
+  /// their players beside it in small muted type ("Claire D." then "· Luke
+  /// #7"), as the design has it (#85).
   List<InlineSpan> _nameSpans(Message m, Color name, Color muted) {
     final full = nameWithPlayersOf(m.authorName, m.authorPlayerSummary);
     final short = shortNameOf(m.authorName);
     final split =
         full != m.authorName && full.startsWith(short) && full != short;
     final nameStyle = TextStyle(
-      fontFamily: AppFonts.stencil,
-      fontWeight: FontWeight.w900,
+      fontFamily: AppFonts.label,
+      fontWeight: AppFonts.heavy,
       fontSize: 14.5,
       height: 18 / 14.5,
-      letterSpacing: 14.5 * 0.055,
+      letterSpacing: 0,
       color: name,
     );
     final rest = TextStyle(
@@ -1279,8 +1282,7 @@ class _OpenPlayBadge extends StatelessWidget {
               AppLocalizations.of(context).playOpen,
               style: style.label(
                 TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
+                  fontSize: 12.5,
                   height: 1.2,
                   color: c.inkOn(c.sticker),
                 ),

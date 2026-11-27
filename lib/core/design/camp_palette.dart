@@ -5,9 +5,10 @@ import 'package:material_ui/material_ui.dart';
 /// "let's replace the existing themes with these 3 themes"; SPEC §7.4):
 /// Army green, Black, and Light, since #86 Sky Blue, Candy Pop (Royal &
 /// Gold since #90), Central Wildcat, and Geaux Tigahs, since #89 Graphite,
-/// Teal Wave, Navy Steel, and Forest, since #90 Tropic Blue and Desert
-/// Tan, and since #98 Sugar Rush. Every color the look draws comes from
-/// here; `SchemeRoles` and `GumdropColors` are built from it.
+/// Navy Steel, and Forest, since #90 Tropic Blue and Desert Tan, and since
+/// #98 Sugar Rush (Teal Wave, #89, left in #105). Every color the look
+/// draws comes from here; `SchemeRoles` and `GumdropColors` are built from
+/// it.
 @immutable
 final class CampPalette {
   const new({
@@ -478,39 +479,6 @@ final class CampPalette {
     headerHalftone: Color(0x1FFFFFFF),
     headerLettering: Color(0xFFF1F4F7),
     ballChain: Color(0xFFFF7F66),
-  );
-
-  /// Teal Wave (#89, "Also add the Teal Wave theme."; style 43): a deep
-  /// teal page, aqua trim, your balloons coral, teal camouflage.
-  static const tealWave = CampPalette(
-    ink: Color(0xFF021214),
-    shadow: Color(0xFF021214),
-    page: Color(0xFF0B3B40),
-    pageDots: Color(0x12F0FBFA),
-    panel: Color(0xFF135058),
-    tabBar: Color(0xFF062A2E),
-    text: Color(0xFFF0FBFA),
-    muted: Color(0xFFA9D3D0),
-    panelText: Color(0xFFF0FBFA),
-    panelMuted: Color(0xFFA9D3D0),
-    mustard: Color(0xFF5CE1D3),
-    balloon: Color(0xFFFF8D75),
-    red: Color(0xFFFF6B57),
-    blue: Color(0xFF5AA7F0),
-    green: Color(0xFF8DD85A),
-    orange: Color(0xFFFFB347),
-    purple: Color(0xFFB99AF0),
-    unansweredTag: Color(0xFF3D6B70),
-    answerRow: Color(0xFF0A3035),
-    toolsRow: Color(0xFF10464D),
-    disabledIcon: Color(0xFF5F8E91),
-    camoGround: Color(0xFF0E4A50),
-    camoBig: Color(0xFF083338),
-    camoMid: Color(0xFF1F6E73),
-    camoSmall: Color(0xFF03191C),
-    headerHalftone: Color(0x24F0FBFA),
-    headerLettering: Color(0xFFF0FBFA),
-    ballChain: Color(0xFF5FE0D6),
   );
 
   /// Navy Steel (#89, "Add Navy Steel theme to the app, as well"; style 39):

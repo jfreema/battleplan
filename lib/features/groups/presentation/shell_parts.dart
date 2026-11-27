@@ -1,3 +1,4 @@
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/widgets/candy_box.dart';
@@ -300,17 +301,17 @@ class _Tab extends StatelessWidget {
   });
 
   /// A label's size before the text size scales it.
-  static const double labelSize = 13;
+  static const double labelSize = 11;
 
-  /// A label's style, before the text size scales it: stencil, spaced
-  /// 0.07 em (#85).
+  /// A label's style, before the text size scales it: the plain face's
+  /// Bold, spaced 0.01 em (Team Shirt, #104).
   static TextStyle labelStyle(BuildContext context, {Color? color}) =>
       GumdropStyle.of(context).label(
         TextStyle(
           fontSize: labelSize,
-          height: 1.1,
-          fontWeight: FontWeight.w900,
-          letterSpacing: labelSize * 0.07,
+          height: 16 / 11,
+          fontWeight: AppFonts.bold,
+          letterSpacing: labelSize * 0.01,
           color: color,
         ),
       );

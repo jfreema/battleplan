@@ -589,7 +589,7 @@ class _PlayEditorState extends ConsumerState<PlayEditorScreen>
                           onPressed: () => unawaited(_newBoard()),
                         ),
                         // Named, not just an icon, so it's found; snug, so
-                        // the bar fits half an iPad with the stencil (#85).
+                        // the bar fits half an iPad (#85).
                         TextButton.icon(
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(

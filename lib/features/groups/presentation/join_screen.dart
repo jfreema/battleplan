@@ -232,7 +232,7 @@ class _JoinScreenState extends ConsumerState<JoinScreen> {
               Text(
                 preview.name,
                 style: theme.textTheme.headlineSmall?.copyWith(
-                  fontSize: 20,
+                  fontSize: 18,
                   height: 1.1,
                   color: c.card.headingTextOnCard,
                   shadows: const [],

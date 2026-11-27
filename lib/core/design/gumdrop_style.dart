@@ -6,11 +6,12 @@ import 'package:material_ui/material_ui.dart';
 /// label fonts, the outline on candy buttons, and the panels' shape. Every
 /// color scheme shares it.
 ///
-/// Boot Camp Mix (#85, owner's pick 2026-11-22): stencil titles and labels,
-/// a 3 px ink outline on every panel and push button, panels on a hard
-/// shadow down and to the right, and no drop under plain headings (the big
-/// titles are outlined instead, `OutlinedText`). The candy finish (#98)
-/// rounds the panels' corners to 15.
+/// Boot Camp Mix (#85, owner's pick 2026-11-22): a 3 px ink outline on
+/// every panel and push button, panels on a hard shadow down and to the
+/// right, and no drop under plain headings (the big titles are outlined
+/// instead, `OutlinedText`). The candy finish (#98) rounds the panels'
+/// corners to 15. Team Shirt (#104) letters it: bubbly titles, the plain
+/// face for labels, and the stencil only on what's stamped on.
 @immutable
 class GumdropStyle extends ThemeExtension<GumdropStyle> {
   const new({
@@ -34,8 +35,8 @@ class GumdropStyle extends ThemeExtension<GumdropStyle> {
     );
   }
 
-  /// Boot Camp Mix (#85): stencil titles and labels, 3 px ink outlines,
-  /// and panels with corners of 15 (the candy finish, #98).
+  /// Boot Camp Mix (#85): 3 px ink outlines, and panels with corners of 15
+  /// (the candy finish, #98), lettered as Team Shirt (#104).
   static const bootCamp = GumdropStyle(accentOutline: 3, panelRadius: 15);
 
   /// The name the look had before Boot Camp Mix; the same as [bootCamp].
@@ -88,21 +89,46 @@ class GumdropStyle extends ThemeExtension<GumdropStyle> {
       ? BorderSide.none
       : BorderSide(color: ink, width: accentOutline);
 
-  /// [style] in [labelFont], for a label styled by hand: stencil, a little
-  /// spaced, as the design sets its labels.
+  /// [style] in [labelFont], for a label styled by hand: the plain face
+  /// (Team Shirt, #104), in Black unless [style] names a weight, with no
+  /// extra spacing.
   TextStyle label(TextStyle style) => style.copyWith(
     fontFamily: labelFont,
+    fontWeight: style.fontWeight ?? AppFonts.heavy,
+    letterSpacing: style.letterSpacing ?? 0,
+  );
+
+  /// [style] in [displayFont], for a heading styled by hand: the bubbly
+  /// letters, which have one weight (a heavier one asked for would be
+  /// faked), a little spaced.
+  TextStyle display(TextStyle style) => style.copyWith(
+    fontFamily: displayFont,
+    fontFamilyFallback: AppFonts.bubblyFallback,
+    fontWeight: AppFonts.displayWeight,
+    letterSpacing:
+        style.letterSpacing ?? AppFonts.bubblySpacing(style.fontSize),
+  );
+
+  /// [style] in the stencil, for what's stamped on (a tag, a stamp, a dog
+  /// tag, a date's weekday): Black, its only weight, 0.05 em apart unless
+  /// [style] says.
+  static TextStyle stamped(TextStyle style) => style.copyWith(
+    fontFamily: AppFonts.stencil,
+    fontWeight: FontWeight.w900,
     letterSpacing: style.letterSpacing ?? stencilSpacing(style.fontSize),
   );
 
-  /// [style] in [displayFont], for a heading styled by hand.
-  TextStyle display(TextStyle style) => style.copyWith(
-    fontFamily: displayFont,
-    letterSpacing: style.letterSpacing ?? stencilSpacing(style.fontSize),
+  /// [style] as a small label in the plain face's capitals ("NEXT UP",
+  /// "OWED IN ALL"): Black, 0.08 em apart. The caller writes the text in
+  /// capitals.
+  static TextStyle caps(TextStyle style) => style.copyWith(
+    fontFamily: AppFonts.plain,
+    fontWeight: AppFonts.heavy,
+    letterSpacing: AppFonts.capsSpacing(style.fontSize),
   );
 
   /// The stencil's letter spacing at [size]: 0.05 em, as the design's
-  /// buttons and labels have it.
+  /// tags and stamps have it.
   static double stencilSpacing(double? size) => (size ?? 14) * 0.05;
 
   /// The hard drop under a title in [color]: none in Boot Camp Mix, whose

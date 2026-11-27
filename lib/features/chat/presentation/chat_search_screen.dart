@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
@@ -274,7 +275,7 @@ class _ResultTile extends ConsumerWidget {
       _ => null,
     };
     final bold = TextStyle(
-      fontWeight: FontWeight.w800,
+      fontWeight: AppFonts.bold,
       color: theme.colorScheme.primary,
     );
     return Semantics(
@@ -320,7 +321,12 @@ class _ResultTile extends ConsumerWidget {
                           message.authorName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.titleSmall,
+                          // A person's name: the plain face's Black, as
+                          // over a message (Team Shirt, #104).
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            fontSize: 14.5,
+                            height: 18 / 14.5,
+                          ),
                         ),
                         Row(
                           mainAxisSize: MainAxisSize.min,
@@ -332,7 +338,9 @@ class _ResultTile extends ConsumerWidget {
                             Flexible(
                               child: Text(
                                 when,
-                                style: theme.textTheme.labelSmall,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  fontSize: 12.5,
+                                ),
                               ),
                             ),
                           ],

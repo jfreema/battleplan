@@ -14,11 +14,12 @@ import 'package:material_ui/material_ui.dart';
 
 /// One event in a schedule list (SCHED-1), as a Boot Camp Mix panel (#85,
 /// SPEC §7.4): the date pennant in the event's color down its left side,
-/// the title in stencil, the time, the place and "7/12 going", my answer
-/// stamped at the top right, and under a rule an answer row for each
-/// person I answer for ("NOAH?" and push buttons); for someone not linked
-/// to a player yet, a line that says how to get them (PLAYER-3). In Your
-/// schedule it names the team beside its color (SCHED-2, PLAYER-9).
+/// the title in the bubbly letters (Team Shirt, #104), the time, the place
+/// and "7/12 going", my answer stamped at the top right, and under a rule
+/// an answer row for each person I answer for ("Noah?" and push buttons);
+/// for someone not linked to a player yet, a line that says how to get
+/// them (PLAYER-3). In Your schedule it names the team beside its color
+/// (SCHED-2, PLAYER-9).
 /// Canceled events are struck through with a badge (SCHED-7).
 class EventRow extends StatelessWidget {
   const new({
@@ -181,7 +182,7 @@ class EventRow extends StatelessWidget {
                                         maxLines: 1,
                                         style: style.label(
                                           TextStyle(
-                                            fontWeight: FontWeight.w900,
+                                            fontWeight: AppFonts.bold,
                                             fontSize: 12.5,
                                             height: 16 / 12.5,
                                             color: card.textMuted,
@@ -199,12 +200,18 @@ class EventRow extends StatelessWidget {
                                       event.title,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
+                                      // The title in the bubbly letters
+                                      // (Team Shirt, #104).
                                       style: TextStyle(
-                                        fontFamily: AppFonts.stencil,
-                                        fontWeight: FontWeight.w900,
+                                        fontFamily: AppFonts.bubbly,
+                                        fontFamilyFallback:
+                                            AppFonts.bubblyFallback,
+                                        fontWeight: AppFonts.displayWeight,
                                         fontSize: 20,
                                         height: 24 / 20,
-                                        letterSpacing: 20 * 0.045,
+                                        letterSpacing: AppFonts.bubblySpacing(
+                                          20,
+                                        ),
                                         color: card.textPrimary,
                                         decoration: canceled
                                             ? TextDecoration.lineThrough
@@ -309,8 +316,10 @@ class CanceledBadge extends StatelessWidget {
       ),
       child: Text(
         AppLocalizations.of(context).eventCanceled,
-        style: Theme.of(context).textTheme.labelSmall
-            ?.copyWith(color: c.inkOn(c.cherry), letterSpacing: 0.4),
+        // A badge: the plain face's Black at 12 (Team Shirt, #104).
+        style: GumdropStyle.of(
+          context,
+        ).label(TextStyle(fontSize: 12, height: 1, color: c.inkOn(c.cherry))),
       ),
     );
   }

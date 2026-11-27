@@ -1,8 +1,9 @@
 // The event page's title (#74, owner's report 2026-11-20: "makes event
 // header too big", with "@ Springfield Isotopes" broken as "Springfie /
-// ld"): the title is the big outlined stencil (51 since Boot Camp Mix,
-// #85), steps down for a long word, and never breaks a word in two; "vs." or "@" stays with the first
-// word; and "Who's going" lets RSVP for a player go under it.
+// ld"): the title is big outlined bubbly letters (46 since Team Shirt,
+// #104; the stencil at 51 from #85), steps down for a long word, and never
+// breaks a word in two; "vs." or "@" stays with the first word; and "Who's
+// going" lets RSVP for a player go under it.
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/widgets/camp_lettering.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
@@ -103,12 +104,15 @@ void main() {
     }
   });
 
-  testWidgets('a short name is the big outlined stencil, 51 (#85)', (
-    tester,
-  ) async {
+  testWidgets('a short name is in big outlined bubbly letters, 46, in their '
+      'one weight (#104)', (tester) async {
     // Wide enough for the test font's 1 em letters.
     await openEvent(tester, 'Eagles', width: 1000);
-    expect(title(tester, 'Eagles').text.style?.fontSize, 51);
+    final style = title(tester, 'Eagles').text.style;
+    expect(style?.fontSize, 46);
+    expect(style?.fontFamily, 'Lilita One');
+    // Never a heavier weight, which the engine would fake.
+    expect(style?.fontWeight, FontWeight.w400);
   });
 
   testWidgets('RSVP for a player goes under "Who\'s going" when both '

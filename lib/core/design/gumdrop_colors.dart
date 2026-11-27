@@ -202,7 +202,7 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
       successOnPage: onCard ? r.cardGoingText : r.goingText,
       ink: r.candyInk,
       headingText: onCard ? r.cardText : r.text,
-      // Headings are plain stencil (#85); the big outlined titles draw
+      // Headings have no drop (#85); the big outlined titles draw
       // their own stroke and drop (`OutlinedText`).
       headingShadow: const Color(0x00000000),
       headingTextOnCard: r.cardText,
@@ -362,13 +362,13 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
   /// Text, icons, and marks on every candy face.
   final Color ink;
 
-  /// stencil titles.
+  /// Titles, in the bubbly letters.
   final Color headingText;
 
-  /// The hard drop under stencil titles, or transparent for none.
+  /// The hard drop under titles, or transparent for none.
   final Color headingShadow;
 
-  /// stencil titles inside a card.
+  /// Titles inside a card.
   final Color headingTextOnCard;
 
   /// No drop inside a card.
@@ -488,7 +488,7 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
     _ => lemon,
   };
 
-  /// The hard text-shadow under a stencil heading: [steps] copies of [color]
+  /// The hard text-shadow under a heading: [steps] copies of [color]
   /// one pixel further down each, or none when [color] is transparent.
   static List<Shadow> stackedShadow(Color color, int steps) => [
     if (color.a > 0)

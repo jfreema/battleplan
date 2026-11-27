@@ -237,8 +237,9 @@ class _FilterSheet extends ConsumerWidget {
   }
 }
 
-/// Upcoming, Past and Calendar (SPEC §7.3; Boot Camp Mix, #85): stencil
-/// 16.5, left-aligned, 24 px apart, muted; the current one in ink on a
+/// Upcoming, Past and Calendar (SPEC §7.3; Boot Camp Mix, #85): the plain
+/// face's Bold at 15.5 (Team Shirt, #104), left-aligned, 24 px apart,
+/// muted; the current one in Black at 14.5, in ink on a
 /// mustard tile in a 2.5 px ink outline on a 2/2 shadow, turned -2°.
 /// Each is at least 48 × 48 to tap, and the space between them is tappable
 /// too. Labels shrink rather than run under the filter at large text sizes.
@@ -334,8 +335,8 @@ class _SegmentsState extends State<_Segments> {
   }
 }
 
-/// One of Upcoming, Past and Calendar: muted stencil, or for the current
-/// one ink stencil on a turned mustard tile (#85).
+/// One of Upcoming, Past and Calendar: muted Bold, or for the current one
+/// ink Black on a turned mustard tile (#85, #104).
 class _ViewLabel extends StatelessWidget {
   const new({
     required this.label,
@@ -357,10 +358,12 @@ class _ViewLabel extends StatelessWidget {
       child: Text(
         label,
         maxLines: 1,
+        // The plain face (Team Shirt, #104): the picked view in Black at
+        // 14.5, the others in Bold at 15.5.
         style: style.label(
           TextStyle(
-            fontSize: 16.5,
-            fontWeight: FontWeight.w900,
+            fontSize: current ? 14.5 : 15.5,
+            fontWeight: current ? AppFonts.heavy : AppFonts.bold,
             height: 1,
             color: current ? c.ink : c.textMutedOnPage,
           ),
@@ -377,7 +380,7 @@ class _ViewLabel extends StatelessWidget {
         radius: 11,
         depth: 5,
         shine: const Rect.fromLTWH(7, 3.5, 12, 3.5),
-        padding: const EdgeInsets.fromLTRB(11, 6, 10, 3),
+        padding: const EdgeInsets.fromLTRB(11, 6, 10, 6),
         child: text,
       ),
     );
@@ -438,7 +441,7 @@ class _SyncRow extends ConsumerWidget {
                       style: GumdropStyle.of(context).label(
                         TextStyle(
                           fontSize: 15,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: AppFonts.bold,
                           color: c.textMutedOnPage,
                         ),
                       ),

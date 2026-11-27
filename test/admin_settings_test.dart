@@ -252,7 +252,7 @@ void main() {
         'Time zone',
         'Manage invite link',
         'Look',
-        'TEAM COLOR',
+        'Team color',
         'Chat look',
         'Team color scheme',
         'Member permissions',
@@ -330,7 +330,7 @@ void main() {
         tester,
         group: testGroup('a', 'Book club').copyWith(kind: GroupKind.group),
       );
-      expect(find.text('COLOR'), findsOneWidget);
+      expect(find.text('Color'), findsOneWidget);
       expect(find.text('Group color scheme'), findsOneWidget);
       expect(find.text('Team color scheme'), findsNothing);
       await tester.tap(find.text('Group color scheme'));

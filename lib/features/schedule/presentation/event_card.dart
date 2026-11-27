@@ -109,10 +109,11 @@ class EventCard extends ConsumerWidget {
     final accent = typeAccent(context, event.type);
     final day = ZonedTime.wallClock(zone, event.startAt);
     final where = event.location?.label;
-    // Boot Camp Mix's event panel (#85, SPEC §5.4): a header in the event's
-    // color under a halftone, with the date on a starburst and the kind on
-    // a mustard tag over the title in outlined stencil; then the time and
-    // place, and the answers.
+    // The event panel (#85, SPEC §5.4): a header in the event's color under
+    // a halftone, with the date on a starburst and the kind on a mustard
+    // tag over the title in outlined bubbly letters; then the time and
+    // place, and the answers. Team Shirt (#104): the weekday and the tag
+    // keep the stencil, the date and the title are bubbly.
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 420),
       child: TapCard(
@@ -194,10 +195,13 @@ class EventCard extends ConsumerWidget {
                                   '${day.day}',
                                   maxLines: 1,
                                   textScaler: TextScaler.noScaling,
-                                  style: stencil.copyWith(
-                                    fontSize: 24.5,
+                                  style: TextStyle(
+                                    fontFamily: AppFonts.bubbly,
+                                    fontWeight: AppFonts.displayWeight,
+                                    fontSize: 23,
                                     height: 1,
-                                    letterSpacing: 24.5 * 0.02,
+                                    letterSpacing: 0,
+                                    color: card.ink,
                                   ),
                                 ),
                               ],
@@ -219,11 +223,9 @@ class EventCard extends ConsumerWidget {
                                   event.title,
                                   maxLines: 1,
                                   style: TextStyle(
-                                    fontFamily: AppFonts.stencil,
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 31.5,
-                                    height: 37 / 31.5,
-                                    letterSpacing: 31.5 * 0.04,
+                                    fontSize: 28,
+                                    height: 37 / 28,
+                                    letterSpacing: AppFonts.bubblySpacing(28),
                                     decoration: event.isCanceled
                                         ? TextDecoration.lineThrough
                                         : null,
@@ -383,9 +385,9 @@ class _CardRsvps extends ConsumerWidget {
       height: 18 / 14,
       color: GumdropColors.of(context).textMuted,
     );
-    // Boot Camp Mix (#85): the question in stencil ("IS NOAH GOING?") with
-    // the count beside it, then push buttons across the panel, a row for
-    // each player I answer for (PLAYER-11).
+    // The question in the bubbly letters ("Is Noah going?", #104) with the
+    // count beside it, then push buttons across the panel, a row for each
+    // player I answer for (PLAYER-11).
     final card = GumdropColors.of(context);
     final ask = mine.isEmpty ? null : rsvpHeading(l10n, mine);
     return Column(
@@ -405,11 +407,12 @@ class _CardRsvps extends ConsumerWidget {
                   Text(
                     ask,
                     style: TextStyle(
-                      fontFamily: AppFonts.stencil,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 16.5,
-                      height: 22 / 16.5,
-                      letterSpacing: 16.5 * 0.045,
+                      fontFamily: AppFonts.bubbly,
+                      fontFamilyFallback: AppFonts.bubblyFallback,
+                      fontWeight: AppFonts.displayWeight,
+                      fontSize: 18,
+                      height: 22 / 18,
+                      letterSpacing: AppFonts.bubblySpacing(18),
                       color: card.textPrimary,
                     ),
                   ),

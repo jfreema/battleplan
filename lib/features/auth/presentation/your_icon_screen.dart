@@ -90,7 +90,7 @@ class _YourIconScreenState extends ConsumerState<YourIconScreen> {
                         l10n.yourIconLede,
                         style: TextStyle(
                           fontFamily: AppFonts.body,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: AppFonts.reading,
                           fontSize: 15,
                           height: 21 / 15,
                           color: c.textMutedOnPage,
@@ -387,19 +387,20 @@ class _ChatPreview extends StatelessWidget {
                           text: '  4:58 PM',
                           style: body(
                             13,
-                            FontWeight.w600,
+                            AppFonts.reading,
                             c.textMutedOnPage,
                             20,
                           ),
                         ),
                       ],
                     ),
-                    style: body(16, FontWeight.w800, c.textOnPage, 20),
+                    // The name as the chat has it: the plain face's Black.
+                    style: body(14.5, AppFonts.heavy, c.textOnPage, 20),
                   ),
                   const SizedBox(height: 1),
                   Text(
                     l10n.iconSampleMessage,
-                    style: body(17, FontWeight.w500, c.textOnPage, 23),
+                    style: body(17, AppFonts.reading, c.textOnPage, 23),
                   ),
                 ],
               ),

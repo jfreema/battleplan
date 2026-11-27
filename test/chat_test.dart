@@ -678,8 +678,12 @@ void main() {
       expect(repo.sentDetails.single.announcement, isTrue);
       // The banner goes with it; the next message is plain.
       expect(find.textContaining('notifies everyone'), findsNothing);
-      // Shown as an announcement in the chat.
-      expect(find.text('Announcement'), findsOneWidget);
+      // Shown as an announcement in the chat: a small label in capitals
+      // (Team Shirt, #104), read in plain case.
+      final label = tester.widget<Text>(find.text('ANNOUNCEMENT'));
+      expect(label.semanticsLabel, 'Announcement');
+      expect(label.style?.fontFamily, 'Battleplan Sans');
+      expect(find.text('Announcement'), findsNothing);
       await tester.enterText(composer(), 'And bring water');
       await send(tester);
       expect(repo.sentDetails.last.announcement, isFalse);

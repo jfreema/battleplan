@@ -152,14 +152,14 @@ void main() {
       find.descendant(of: row, matching: find.byIcon(AppIcons.chevronRight)),
       findsOneWidget,
     );
-    // "2 open", the word in the text color at 800 over an accent-mark line.
+    // "2 open", the word in the text color in bold over an accent-mark line.
     final c = GumdropColors.of(tester.element(row));
     final span = tester.widget<Text>(find.text('2 open')).textSpan! as TextSpan;
     final open = span.children!.last as TextSpan;
     expect(open.text, 'open');
     expect(open.style?.decoration, TextDecoration.underline);
     expect(open.style?.decorationColor, c.accentMark);
-    expect(open.style?.fontWeight, FontWeight.w800);
+    expect(open.style?.fontWeight, FontWeight.w700);
     expect(open.style?.color, c.textOnPage);
   });
 

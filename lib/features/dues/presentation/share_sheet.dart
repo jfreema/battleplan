@@ -222,7 +222,7 @@ class _ShareSheet extends ConsumerWidget {
                       mine ? charge.title : charge.participantName,
                       style: TextStyle(
                         fontFamily: AppFonts.body,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: AppFonts.bold,
                         fontSize: 18,
                         height: 22 / 18,
                         color: c.textPrimary,

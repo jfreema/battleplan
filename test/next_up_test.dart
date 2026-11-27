@@ -221,12 +221,17 @@ void main() {
 
     testWidgets('nothing in the next two weeks, or the next is over: no '
         'strip', (tester) async {
+      // The label is in capitals in the strip's one line (#104).
+      final label = find.textContaining('NEXT UP', findRichText: true);
+      await open(tester, '/g/a/chat', events: [event('e1', 1)]);
+      expect(label, findsOneWidget);
+
       await open(tester, '/g/a/chat', events: [event('e1', 20)]);
-      expect(find.text('Next up'), findsNothing);
+      expect(label, findsNothing);
       expect(find.textContaining('Practice'), findsNothing);
 
       await open(tester, '/g/a/chat', events: [event('e1', -1)]);
-      expect(find.textContaining('Next up'), findsNothing);
+      expect(label, findsNothing);
     });
 
     testWidgets('an archived team has none', (tester) async {

@@ -199,11 +199,11 @@ class ReactionChips extends StatelessWidget {
     final mine = me == null ? null : message.reactions[me];
     final l10n = AppLocalizations.of(context);
     // Pill chips (Boot Camp Mix, #85, SPEC §5.4.6): the emoji and its count
-    // in stencil on the panel color, mine on my own color, in a 2.5 px ink
-    // outline, 6 apart and set in from the message's edge, each in a 48
-    // tall tap area that doesn't move the layout: the areas reach up over
-    // the message's bottom, so the chips overlap its edge, as the design
-    // has them.
+    // in the plain face's Bold on the panel color, mine on my own color, in
+    // a 2.5 px ink outline, 6 apart and set in from the message's edge, each
+    // in a 48 tall tap area that doesn't move the layout: the areas reach
+    // up over the message's bottom, so the chips overlap its edge, as the
+    // design has them.
     final ink = c.ink;
     return _RaisedBy(
       by: _raise,
@@ -281,7 +281,8 @@ class ReactionChips extends StatelessWidget {
   static const double _raise = 23;
 }
 
-/// One reaction chip (#85): the emoji and its count in stencil, on the
+/// One reaction chip (#85): the emoji and its count in the plain face's
+/// Bold (Team Shirt, #104), on the
 /// panel color or, for [mine], my own color, in a 2.5 px ink pill; mine
 /// has the candy finish's white highlight along its top (#98).
 class _Chip extends StatelessWidget {
@@ -322,12 +323,13 @@ class _Chip extends StatelessWidget {
             TextSpan(text: '$count'),
           ],
         ),
+        // The count in the plain face's Bold (Team Shirt, #104).
         style: TextStyle(
-          fontFamily: AppFonts.stencil,
-          fontWeight: FontWeight.w900,
-          fontSize: 13,
-          height: 21 / 13,
-          letterSpacing: 13 * 0.04,
+          fontFamily: AppFonts.label,
+          fontWeight: AppFonts.bold,
+          fontSize: 12.5,
+          height: 21 / 12.5,
+          letterSpacing: 0,
           color: text,
         ),
       ),

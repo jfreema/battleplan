@@ -124,13 +124,9 @@ class Avatar extends StatelessWidget {
           // The circle doesn't grow with the text size, so its initials
           // don't either, or big text would clip them.
           textScaler: TextScaler.noScaling,
-          style: GumdropStyle.of(context).label(
-            TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: size * 0.38,
-              height: 1,
-              color: colors.ink,
-            ),
+          // Initials are stamped on, as on a dog tag: the stencil (#104).
+          style: GumdropStyle.stamped(
+            TextStyle(fontSize: size * 0.38, height: 1, color: colors.ink),
           ),
         ),
       ),

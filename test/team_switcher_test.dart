@@ -140,10 +140,12 @@ void main() {
     // Never the groups' blue, the theme's primary.
     final name = tester.widget<Text>(inList(find.text('Thunder')));
     expect(name.style?.color, c.textPrimary);
-    expect(name.style?.fontWeight, FontWeight.w800);
+    // Black for the team I'm on, Bold for the rest (Team Shirt, #104).
+    expect(name.style?.fontFamily, 'Battleplan Sans');
+    expect(name.style?.fontWeight, FontWeight.w900);
     expect(
       tester.widget<Text>(inList(find.text('Lightning'))).style?.fontWeight,
-      FontWeight.w600,
+      FontWeight.w700,
     );
     expect(
       find.bySemanticsLabel(

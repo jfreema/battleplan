@@ -36,7 +36,7 @@ TEAM CHAT
 
 SCHEDULE AND RSVPS
 • Games, practices, and events with opponents, places, and reminders
-• Going, Maybe, or Not going in one tap, for yourself or for each of your players, right from the schedule
+• Going, Maybe, or Can't go in one tap, for yourself or for each of your players, right from the schedule
 • Assignments like snacks, drinks, and scorekeeper that families volunteer for
 • Coaches see how many players are coming
 • Coaches can email everyone who hasn't answered, and they can answer right from the email
@@ -55,7 +55,7 @@ MORE FOR COACHES
 • Bring your team's messages, photos, files, and schedule over from the app or calendar you use now
 
 MAKE IT YOURS
-• Five color schemes: Army green, Light, Dark, Navy, and Light blue
+• Thirteen color schemes, from Black and Army green to Sky Blue, Navy Steel, Royal & Gold, and Sugar Rush
 • Pick the scheme you see for each team, and a default
 • Pick your icon: a photo, or your initials on a color
 • Coaches pick the chat's message color and background

@@ -18,12 +18,12 @@ String quoteText(AppLocalizations l10n, MessageType type, String text) {
 }
 
 /// A quoted message (CHAT-13): a recessed block with a mint bar on its
-/// left, the author in stencil, and one muted line (Gumdrop Pop §3.14). On
-/// the page (others' replies, and above the composer) it's a `field` well
-/// in the page's text colors. In a bubble ([bubble], with its text color
-/// [bubbleText]: my own, or an announcement) it's the bubble's color mixed
-/// 40% away from its text, in that text color, so it reads on any Chat look
-/// color (CHAT-18).
+/// left, the author in the plain face's Black, and one muted line (Gumdrop
+/// Pop §3.14). On the page (others' replies, and above the composer) it's
+/// a `field` well in the page's text colors. In a bubble ([bubble], with
+/// its text color [bubbleText]: my own, or an announcement) it's the
+/// bubble's color mixed 40% away from its text, in that text color, so it
+/// reads on any Chat look color (CHAT-18).
 class QuoteBlock extends StatelessWidget {
   const new({
     required this.authorName,
@@ -124,13 +124,9 @@ class QuoteBlock extends StatelessWidget {
                     children: [
                       Text(
                         authorName,
+                        // A person's name: the plain face's Black (#104).
                         style: GumdropStyle.of(context).label(
-                          TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                            height: 1.25,
-                            color: author,
-                          ),
+                          TextStyle(fontSize: 13, height: 1.25, color: author),
                         ),
                       ),
                       const SizedBox(height: 1),

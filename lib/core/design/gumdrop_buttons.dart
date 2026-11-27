@@ -1,4 +1,5 @@
 import 'package:battleplan/core/design/candy.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_shape.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
@@ -147,13 +148,13 @@ class GumdropButtons {
       padding: const WidgetStatePropertyAll(
         EdgeInsets.symmetric(horizontal: 8),
       ),
-      // The theme's text button type (stencil 600 15) unless given: a
-      // button's own text style replaces the theme's whole, so without it
-      // the link fell back to the platform's font (#3).
+      // The theme's text button type (the plain face's Bold at 15) unless
+      // given: a button's own text style replaces the theme's whole, so
+      // without it the link fell back to the platform's font (#3).
       textStyle: WidgetStatePropertyAll(
         (textStyle ??
                 style.label(
-                  const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                  const TextStyle(fontSize: 15, fontWeight: AppFonts.bold),
                 ))
             .copyWith(
               decoration: TextDecoration.underline,

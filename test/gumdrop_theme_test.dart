@@ -18,202 +18,203 @@ import 'package:material_ui/material_ui.dart';
 
 /// The design's tokens (#85, #86, #89), by name, in [bootCampSchemes]'
 /// order: Army green, Black, Light, Sky Blue, Royal & Gold (in Candy Pop's
-/// place since #90), Central Wildcats, Geaux Tigahs, Graphite, Teal Wave,
-/// Navy Steel, Forest, Tropic Blue, and Desert Tan.
+/// place since #90), Central Wildcats, Geaux Tigahs, Graphite, Navy Steel,
+/// Forest, Tropic Blue, Desert Tan, and Sugar Rush (Teal Wave left in
+/// #105).
 const _tokens = <String, List<int>>{
   'ink': [
     0xFF1A1A18, 0xFF000000, 0xFF1A1A18, //
     0xFF0B1531, 0xFF050B24, 0xFF0B0B0B, 0xFF170730,
-    0xFF070A0D, 0xFF021214, 0xFF02060F, 0xFF050D09,
+    0xFF070A0D, 0xFF02060F, 0xFF050D09,
     0xFF062033, 0xFF24231B,
     0xFF2B1A4A,
   ],
   'shadow': [
     0xFF1A1A18, 0xFF363A28, 0xFF1A1A18, //
     0xFF0B1531, 0xFF050B24, 0xFF0B0B0B, 0xFF170730,
-    0xFF070A0D, 0xFF021214, 0xFF02060F, 0xFF050D09,
+    0xFF070A0D, 0xFF02060F, 0xFF050D09,
     0xFF062033, 0xFF24231B,
     0xFF2B1A4A,
   ],
   'page': [
     0xFF474C2B, 0xFF0D0D0C, 0xFFF2EBE0, //
     0xFFBCD9F5, 0xFF17307F, 0xFF5E1224, 0xFF461D7C,
-    0xFF2B323B, 0xFF0B3B40, 0xFF101D3A, 0xFF0F2E1F,
+    0xFF2B323B, 0xFF101D3A, 0xFF0F2E1F,
     0xFF0A7EAC, 0xFFE4D6B4,
     0xFFFFF4EA,
   ],
   'pageDots': [
     0x331A1A18, 0x0EF4EAD0, 0x1A1A1A18, //
     0x210B1531, 0x12FFFFFF, 0x1CC0C5CC, 0x1CFDD023,
-    0x0FF1F4F7, 0x12F0FBFA, 0x12F2F6FF, 0x0FFFFFFF,
+    0x0FF1F4F7, 0x12F2F6FF, 0x0FFFFFFF,
     0x21FFFFFF, 0x1F24231B,
     0x24FF5FA8,
   ],
   'panel': [
     0xFF575A3A, 0xFF252522, 0xFFFFFFFF, //
     0xFFFFFFFF, 0xFF22409E, 0xFF701C30, 0xFF55278F,
-    0xFF3A434E, 0xFF135058, 0xFF2B3850, 0xFF183E2C,
+    0xFF3A434E, 0xFF2B3850, 0xFF183E2C,
     0xFFFFFFFF, 0xFFF4ECD8,
     0xFFFFFFFF,
   ],
   'tabBar': [
     0xFF3D4124, 0xFF070707, 0xFFFFFFFF, //
     0xFFFFFFFF, 0xFF0E1E54, 0xFF0B0B0B, 0xFF2E1157,
-    0xFF1E242B, 0xFF062A2E, 0xFF08101F, 0xFF081F14,
+    0xFF1E242B, 0xFF08101F, 0xFF081F14,
     0xFF062A45, 0xFFF4ECD8,
     0xFFFFFFFF,
   ],
   'text': [
     0xFFF4EAD0, 0xFFF4EAD0, 0xFF1A1A18, //
     0xFF0B1531, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFF1F4F7, 0xFFF0FBFA, 0xFFF2F6FF, 0xFFFFFFFF,
+    0xFFF1F4F7, 0xFFF2F6FF, 0xFFFFFFFF,
     0xFFFFFFFF, 0xFF24231B,
     0xFF2B1A4A,
   ],
   'muted': [
     0xFFD3CCAE, 0xFFB5B1A2, 0xFF5E584B, //
     0xFF34476E, 0xFFC9D3F2, 0xFFCDD1D8, 0xFFD5C6F0,
-    0xFFAEB8C4, 0xFFA9D3D0, 0xFFAFBACB, 0xFFB5CFC0,
+    0xFFAEB8C4, 0xFFAFBACB, 0xFFB5CFC0,
     0xFFD8F1FF, 0xFF615A45,
     0xFF6E5F87,
   ],
   'panelText': [
     0xFFF4EAD0, 0xFFF4EAD0, 0xFF1A1A18, //
     0xFF0B1531, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFF1F4F7, 0xFFF0FBFA, 0xFFF2F6FF, 0xFFFFFFFF,
+    0xFFF1F4F7, 0xFFF2F6FF, 0xFFFFFFFF,
     0xFF062033, 0xFF24231B,
     0xFF2B1A4A,
   ],
   'panelMuted': [
     0xFFD3CCAE, 0xFFB5B1A2, 0xFF5E584B, //
     0xFF34476E, 0xFFC9D3F2, 0xFFCDD1D8, 0xFFD5C6F0,
-    0xFFAEB8C4, 0xFFA9D3D0, 0xFFAFBACB, 0xFFB5CFC0,
+    0xFFAEB8C4, 0xFFAFBACB, 0xFFB5CFC0,
     0xFF3D5F7A, 0xFF615A45,
     0xFF6E5F87,
   ],
   'mustard': [
     0xFFF2C230, 0xFFF2C230, 0xFFEFBE2B, //
     0xFFF5C731, 0xFFF5C431, 0xFFC9CED6, 0xFFFDD023,
-    0xFFFF7F66, 0xFF5CE1D3, 0xFFF2F5FA, 0xFFFFFFFF,
+    0xFFFF7F66, 0xFFF2F5FA, 0xFFFFFFFF,
     0xFFFFD23F, 0xFFA3A95A,
     0xFFFF8CC6,
   ],
   'balloon': [
     0xFFF2C230, 0xFF93CFF5, 0xFFEFBE2B, //
     0xFFF5C731, 0xFFF5C431, 0xFFC9CED6, 0xFFFDD023,
-    0xFFFF7F66, 0xFFFF8D75, 0xFFF2F5FA, 0xFFFFFFFF,
+    0xFFFF7F66, 0xFFF2F5FA, 0xFFFFFFFF,
     0xFFFFD23F, 0xFFA3A95A,
     0xFFFF8CC6,
   ],
   'red': [
     0xFFDB442F, 0xFFDB442F, 0xFFD4432C, //
     0xFFE2463A, 0xFFE8473A, 0xFFEE4B37, 0xFFE8473A,
-    0xFFF26A50, 0xFFFF6B57, 0xFFE2463A, 0xFFE5483A,
+    0xFFF26A50, 0xFFE2463A, 0xFFE5483A,
     0xFFFF5A4E, 0xFFC9452E,
     0xFFF2473D,
   ],
   'blue': [
     0xFF5FA3C8, 0xFF4F93B9, 0xFF4A86A8, //
     0xFF4C90E2, 0xFF6FC0FF, 0xFF5FA8E0, 0xFF5AA5EE,
-    0xFF5AA7F0, 0xFF5AA7F0, 0xFF5AA0E0, 0xFF5BA8E0,
+    0xFF5AA7F0, 0xFF5AA0E0, 0xFF5BA8E0,
     0xFF4FCBF7, 0xFF4A86A8,
     0xFF35B0FF,
   ],
   'green': [
     0xFF9AD04A, 0xFF8DC63F, 0xFF86B93B, //
     0xFF7CC84E, 0xFF86D04F, 0xFF86C94A, 0xFF7FCB52,
-    0xFF8DC63F, 0xFF8DD85A, 0xFF7CC84E, 0xFF8BDB5A,
+    0xFF8DC63F, 0xFF7CC84E, 0xFF8BDB5A,
     0xFF4FD38A, 0xFF6DB33F,
     0xFF5ED36A,
   ],
   'orange': [
     0xFFF5A040, 0xFFF2983A, 0xFFEE9230, //
     0xFFF5943A, 0xFFF79A3C, 0xFFF59A3A, 0xFFF79A3C,
-    0xFFF5A93A, 0xFFFFB347, 0xFFF5943A, 0xFFF5A03A,
+    0xFFF5A93A, 0xFFF5943A, 0xFFF5A03A,
     0xFFFF9A2E, 0xFFE08A2E,
     0xFFFF9A2E,
   ],
   'purple': [
     0xFFAD8CD6, 0xFF9B79C4, 0xFF8C68AD, //
     0xFFA98BEB, 0xFFC3A6FF, 0xFFB08AE0, 0xFFC7A6FF,
-    0xFFB49AF0, 0xFFB99AF0, 0xFFA98BEB, 0xFFB794E8,
+    0xFFB49AF0, 0xFFA98BEB, 0xFFB794E8,
     0xFFB58BFF, 0xFF8C68AD,
     0xFFB58BFF,
   ],
   'unansweredTag': [
     0xFF7E8160, 0xFF47473F, 0xFFDCD3C3, //
     0xFFE6F1FC, 0xFF4560B0, 0xFF8A5562, 0xFF7A56AE,
-    0xFF4F5966, 0xFF3D6B70, 0xFF4A5670, 0xFF375A48,
+    0xFF4F5966, 0xFF4A5670, 0xFF375A48,
     0xFFCDE7F2, 0xFFD3C6A6,
     0xFFEDE6F5,
   ],
   'answerRow': [
     0xFF4C5130, 0xFF1B1B19, 0xFFFAEDB2, //
     0xFFFBEFB4, 0xFF13286A, 0xFF5A1525, 0xFF481F7C,
-    0xFF2E2A2D, 0xFF0A3035, 0xFF1A2742, 0xFF0C2619,
+    0xFF2E2A2D, 0xFF1A2742, 0xFF0C2619,
     0xFFFFF1B0, 0xFFE6E2C0,
     0xFFFFF0F7,
   ],
   'toolsRow': [
     0xFF4C5130, 0xFF1A1A18, 0xFFE6DCCB, //
     0xFFA9CBEE, 0xFF1A3486, 0xFF681A2E, 0xFF4E2287,
-    0xFF2F3740, 0xFF10464D, 0xFF22304A, 0xFF14382A,
+    0xFF2F3740, 0xFF22304A, 0xFF14382A,
     0xFF0B76A3, 0xFFD8C9A5,
     0xFFF5E1EE,
   ],
   'disabledIcon': [
     0xFF8E9173, 0xFF64645C, 0xFFB2AB9B, //
     0xFF6F86AB, 0xFF7A8CC4, 0xFFA88892, 0xFF9A86C0,
-    0xFF6F7A87, 0xFF5F8E91, 0xFF6B7790, 0xFF6A897A,
+    0xFF6F7A87, 0xFF6B7790, 0xFF6A897A,
     0xFF9CC3D6, 0xFFA39A80,
     0xFFB6A9C9,
   ],
   'camoGround': [
     0xFF3F4722, 0xFF23241F, 0xFFC7B787, //
     0xFF2F5596, 0xFF1B3690, 0xFF55111F, 0xFF3F1A72,
-    0xFF333B45, 0xFF0E4A50, 0xFF1C2840, 0xFF133524,
+    0xFF333B45, 0xFF1C2840, 0xFF133524,
     0xFF0A6E99, 0xFFA8956A,
     0xFFFFC4DD,
   ],
   'camoBig': [
     0xFF2A3016, 0xFF161713, 0xFFA69468, //
     0xFF1E3A70, 0xFF112468, 0xFF350A14, 0xFF2A0F50,
-    0xFF232A32, 0xFF083338, 0xFF121A2C, 0xFF0B2418,
+    0xFF232A32, 0xFF121A2C, 0xFF0B2418,
     0xFF075478, 0xFF8A7A52,
     0xFFFF9FCB,
   ],
   'camoMid': [
     0xFF7F7A48, 0xFF3A3C33, 0xFFE0D4AC, //
     0xFF6390CC, 0xFF2F52B8, 0xFF8A2E42, 0xFF6C3DB0,
-    0xFF4A5562, 0xFF1F6E73, 0xFF3A4760, 0xFF28543D,
+    0xFF4A5562, 0xFF3A4760, 0xFF28543D,
     0xFF1E9CC8, 0xFFC9B88C,
     0xFFA9DCFF,
   ],
   'camoSmall': [
     0xFF14170B, 0xFF070706, 0xFF6E6143, //
     0xFF0E1D42, 0xFF070F33, 0xFF0B0B0B, 0xFF150628,
-    0xFF12161B, 0xFF03191C, 0xFF060A14, 0xFF05110B,
+    0xFF12161B, 0xFF060A14, 0xFF05110B,
     0xFF04324A, 0xFF5C5236,
     0xFFFFE27D,
   ],
   'headerHalftone': [
     0x33F4EAD0, 0x1FF4EAD0, 0x73FFFFFF, //
     0x57FFFFFF, 0x24FFFFFF, 0x24FFFFFF, 0x29FFFFFF,
-    0x1FFFFFFF, 0x24F0FBFA, 0x21F2F6FF, 0x21FFFFFF,
+    0x1FFFFFFF, 0x21F2F6FF, 0x21FFFFFF,
     0x38FFFFFF, 0x47FFFFFF,
     0x8CFFFFFF,
   ],
   'headerLettering': [
     0xFFF4EAD0, 0xFFF4EAD0, 0xFF1A1A18, //
     0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFF1F4F7, 0xFFF0FBFA, 0xFFF2F6FF, 0xFFFFFFFF,
+    0xFFF1F4F7, 0xFFF2F6FF, 0xFFFFFFFF,
     0xFFFFFFFF, 0xFF24231B,
     0xFF2B1A4A,
   ],
   'ballChain': [
     0xFF1A1A18, 0xFF77786E, 0xFF1A1A18, //
     0xFF0B1531, 0xFFF5C431, 0xFFC0C5CC, 0xFFFDD023,
-    0xFFFF7F66, 0xFF5FE0D6, 0xFF8E9AB4, 0xFFCFE3D6,
+    0xFFFF7F66, 0xFF8E9AB4, 0xFFCFE3D6,
     0xFFFFD23F, 0xFF24231B,
     0xFF2B1A4A,
   ],
@@ -324,7 +325,7 @@ void main() {
       });
     }
 
-    test('the fourteen are offered, and Black is the default', () {
+    test('the thirteen are offered, and Black is the default', () {
       expect(ThemeCatalog.available, [
         TeamScheme.army,
         TeamScheme.dark,
@@ -334,7 +335,6 @@ void main() {
         TeamScheme.wildcat,
         TeamScheme.purplegold,
         TeamScheme.graphite,
-        TeamScheme.tealwave,
         TeamScheme.navy,
         TeamScheme.darkarmy,
         TeamScheme.tropicblue,
@@ -344,7 +344,7 @@ void main() {
       expect(defaultTeamScheme, TeamScheme.dark);
     });
 
-    test('every other stored scheme is drawn in the closest of the fourteen, '
+    test('every other stored scheme is drawn in the closest of the thirteen, '
         'and never rewritten', () {
       const want = {
         TeamScheme.army: TeamScheme.army,
@@ -358,7 +358,9 @@ void main() {
         TeamScheme.dark: TeamScheme.dark,
         TeamScheme.navy: TeamScheme.navy,
         TeamScheme.graphite: TeamScheme.graphite,
-        TeamScheme.tealwave: TeamScheme.tealwave,
+        // Teal Wave left the app (#105): Graphite is the closest, and
+        // keeps its coral.
+        TeamScheme.tealwave: TeamScheme.graphite,
         TeamScheme.tropicblue: TeamScheme.tropicblue,
         TeamScheme.deserttan: TeamScheme.deserttan,
         TeamScheme.sugarrush: TeamScheme.sugarrush,
@@ -653,19 +655,50 @@ void main() {
       );
     });
 
-    test('titles and labels are the stencil, with no drop; body text is '
-        'Nunito SemiBold', () {
+    test('titles are the bubbly letters in their one weight, with no drop; '
+        "labels the plain face's Black; reading text its Regular (Team "
+        'Shirt, #104), in every scheme', () {
       for (final scheme in bootCampSchemes) {
         final t = AppTheme.of(scheme).textTheme;
-        expect(t.headlineMedium!.fontFamily, 'Battleplan Stencil');
-        expect(t.headlineMedium!.fontWeight, FontWeight.w900);
-        expect(t.headlineMedium!.shadows ?? const <Shadow>[], isEmpty);
-        expect(t.labelLarge!.fontFamily, 'Battleplan Stencil');
-        // Reading text is Nunito SemiBold in every scheme (#97).
-        for (final body in [t.bodyLarge!, t.bodyMedium!, t.bodySmall!]) {
-          expect(body.fontFamily, 'Nunito');
-          expect(body.fontWeight, FontWeight.w600);
+        final titles = [
+          t.displayLarge!,
+          t.displayMedium!,
+          t.displaySmall!,
+          t.headlineLarge!,
+          t.headlineMedium!,
+          t.headlineSmall!,
+          t.titleLarge!,
+          t.titleMedium!,
+          t.titleSmall!,
+        ];
+        for (final title in titles) {
+          expect(title.fontFamily, 'Lilita One', reason: scheme.value);
+          // Lilita One has one weight: asked for 600 or more, the engine
+          // would thicken it artificially.
+          expect(title.fontWeight, FontWeight.w400);
+          expect(title.letterSpacing, closeTo(title.fontSize! * 0.01, 1e-9));
+          expect(title.shadows ?? const <Shadow>[], isEmpty);
         }
+        // About a tenth under the stencil's sizes: Lilita One is wider.
+        expect(
+          [for (final title in titles) title.fontSize],
+          [51, 40, 33, 33, 29, 22, 20, 17, 16],
+        );
+        final labels = [t.labelLarge!, t.labelMedium!, t.labelSmall!];
+        for (final label in labels) {
+          expect(label.fontFamily, 'Battleplan Sans');
+          expect(label.fontWeight, FontWeight.w900);
+          expect(label.letterSpacing, 0);
+        }
+        expect([for (final label in labels) label.fontSize], [14, 14, 12]);
+        // Reading text is Lato Regular in every scheme, at the sizes it
+        // had (#97).
+        final reading = [t.bodyLarge!, t.bodyMedium!, t.bodySmall!];
+        for (final body in reading) {
+          expect(body.fontFamily, 'Battleplan Sans');
+          expect(body.fontWeight, FontWeight.w400);
+        }
+        expect([for (final body in reading) body.fontSize], [17, 15, 14]);
       }
       expect(
         GumdropStyle.bootCamp.headingShadow(const Color(0xFF1A1A18)),
@@ -673,6 +706,103 @@ void main() {
       );
       expect(GumdropStyle.bootCamp.accentOutline, 3);
       expect(GumdropStyle.stencilSpacing(20), 1);
+    });
+
+    test('the lettering helpers: a heading never thicker than its one '
+        'weight, a label Black unless it says, a stamp in the stencil, '
+        'small capitals spaced 0.08 em (#104)', () {
+      const style = GumdropStyle.bootCamp;
+      // Whatever weight the caller's style has, a heading is Lilita One's
+      // own.
+      final heading = style.display(
+        const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+      );
+      expect(heading.fontFamily, 'Lilita One');
+      expect(heading.fontWeight, FontWeight.w400);
+      expect(heading.letterSpacing, closeTo(0.2, 1e-9));
+      expect(
+        style
+            .display(const TextStyle(fontSize: 16, letterSpacing: 0.5))
+            .letterSpacing,
+        0.5,
+      );
+      final label = style.label(const TextStyle(fontSize: 14));
+      expect(label.fontFamily, 'Battleplan Sans');
+      expect(label.fontWeight, FontWeight.w900);
+      expect(label.letterSpacing, 0);
+      expect(
+        style.label(const TextStyle(fontWeight: FontWeight.w700)).fontWeight,
+        FontWeight.w700,
+      );
+      final stamp = GumdropStyle.stamped(const TextStyle(fontSize: 20));
+      expect(stamp.fontFamily, 'Battleplan Stencil');
+      expect(stamp.fontWeight, FontWeight.w900);
+      expect(stamp.letterSpacing, 1);
+      final caps = GumdropStyle.caps(const TextStyle(fontSize: 11));
+      expect(caps.fontFamily, 'Battleplan Sans');
+      expect(caps.fontWeight, FontWeight.w900);
+      expect(caps.letterSpacing, closeTo(0.88, 1e-9));
+    });
+
+    test('buttons are Black at 15, links and tabs Bold at 15 with the '
+        'picked one Black at 14.5, chips Bold at 13.5, and counts Black at '
+        '11 (#104)', () {
+      for (final scheme in bootCampSchemes) {
+        final theme = AppTheme.of(scheme);
+        TextStyle at(
+          WidgetStateProperty<TextStyle?>? style, [
+          Set<WidgetState> states = const {},
+        ]) => style!.resolve(states)!;
+        for (final button in [
+          theme.filledButtonTheme.style!,
+          theme.outlinedButtonTheme.style!,
+          theme.elevatedButtonTheme.style!,
+        ]) {
+          final text = at(button.textStyle);
+          expect(text.fontFamily, 'Battleplan Sans', reason: scheme.value);
+          expect(text.fontWeight, FontWeight.w900);
+          expect(text.fontSize, 15);
+          expect(text.letterSpacing, 0);
+        }
+        final link = at(theme.textButtonTheme.style!.textStyle);
+        expect(link.fontWeight, FontWeight.w700);
+        expect(link.fontSize, 15);
+        expect(
+          theme.floatingActionButtonTheme.extendedTextStyle!.fontSize,
+          14.5,
+        );
+        final segments = theme.segmentedButtonTheme.style!.textStyle;
+        expect(at(segments).fontWeight, FontWeight.w700);
+        expect(at(segments).fontSize, 15);
+        expect(
+          at(segments, {WidgetState.selected}).fontWeight,
+          FontWeight.w900,
+        );
+        expect(at(segments, {WidgetState.selected}).fontSize, 14.5);
+        expect(theme.tabBarTheme.labelStyle!.fontWeight, FontWeight.w900);
+        expect(theme.tabBarTheme.labelStyle!.fontSize, 14.5);
+        expect(
+          theme.tabBarTheme.unselectedLabelStyle!.fontWeight,
+          FontWeight.w700,
+        );
+        expect(theme.tabBarTheme.unselectedLabelStyle!.fontSize, 15);
+        expect(theme.chipTheme.labelStyle!.fontWeight, FontWeight.w700);
+        expect(theme.chipTheme.labelStyle!.fontSize, 13.5);
+        expect(theme.badgeTheme.textStyle!.fontWeight, FontWeight.w900);
+        expect(theme.badgeTheme.textStyle!.fontSize, 11);
+        final rail = theme.navigationRailTheme.selectedLabelTextStyle!;
+        expect(rail.fontWeight, FontWeight.w700);
+        expect(rail.fontSize, 12);
+        // A pushed screen's and a dialog's title: the bubbly letters at 23.
+        for (final title in [
+          theme.appBarTheme.titleTextStyle!,
+          theme.dialogTheme.titleTextStyle!,
+        ]) {
+          expect(title.fontFamily, 'Lilita One');
+          expect(title.fontWeight, FontWeight.w400);
+          expect(title.fontSize, 23);
+        }
+      }
     });
 
     test('panels have corners of 15, on a hard shadow down and to the '

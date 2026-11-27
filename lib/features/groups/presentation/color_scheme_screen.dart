@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/design/tokens.dart';
@@ -146,7 +147,7 @@ class ColorSchemeScreen extends ConsumerWidget {
                 style: text.bodyMedium?.copyWith(
                   fontSize: 15,
                   height: 21 / 15,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: AppFonts.reading,
                   color: c.textMutedOnPage,
                 ),
               ),
@@ -187,7 +188,7 @@ class ColorSchemeScreen extends ConsumerWidget {
                 style: text.bodyMedium?.copyWith(
                   fontSize: 14,
                   height: 19 / 14,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: AppFonts.reading,
                   color: c.textMutedOnPage,
                 ),
               ),
@@ -246,7 +247,7 @@ class SchemeRow extends StatelessWidget {
                       style: text.bodyLarge?.copyWith(
                         fontSize: 16,
                         height: 21 / 16,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: AppFonts.bold,
                         color: c.textOnPage,
                       ),
                     ),
@@ -257,7 +258,7 @@ class SchemeRow extends StatelessWidget {
                       style: text.bodyMedium?.copyWith(
                         fontSize: 14,
                         height: 19 / 14,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: AppFonts.reading,
                         color: c.textMutedOnPage,
                       ),
                     ),

@@ -1,9 +1,10 @@
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Icon, one sentence, and at most one action (SPEC §7.5): a 64 px icon
-/// and Nunito SemiBold 15 text, both muted, and one coral button, with at most
+/// and 15 px reading text, both muted, and one coral button, with at most
 /// one quiet link under it ([linkLabel]; the team's empty Schedule has
 /// Import a schedule, #3).
 class EmptyState extends StatelessWidget {
@@ -69,7 +70,7 @@ class EmptyState extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontSize: 15,
                 height: 21 / 15,
-                fontWeight: FontWeight.w600,
+                fontWeight: AppFonts.reading,
                 color: scheme.onSurfaceVariant,
               ),
             ),

@@ -616,7 +616,7 @@ void main() {
       return rich.textSpan?.style?.fontFamily;
     }
 
-    testWidgets('Nunito on every platform, the app as the browser', (
+    testWidgets('the plain face on every platform, the app as the browser', (
       tester,
     ) async {
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
@@ -627,7 +627,7 @@ void main() {
             messages: [from('sam', 'Sam Rivera', 'Field 3 is open')],
             web: web,
           );
-          expect(familyOf(tester, 'Field 3 is open'), AppFonts.body);
+          expect(familyOf(tester, 'Field 3 is open'), 'Battleplan Sans');
         }
       } finally {
         debugDefaultTargetPlatformOverride = null;

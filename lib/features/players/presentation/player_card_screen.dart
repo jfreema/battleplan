@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
@@ -828,7 +829,7 @@ class _UpcomingRow extends StatelessWidget {
             child: Text(
               label,
               style: Theme.of(context).textTheme.bodyLarge
-                  ?.copyWith(fontWeight: FontWeight.w700, color: color),
+                  ?.copyWith(fontWeight: AppFonts.bold, color: color),
             ),
           ),
         ],

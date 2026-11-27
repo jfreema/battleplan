@@ -561,7 +561,7 @@ void main() {
       );
       await scrollToTeamsRows(tester);
       expect(
-        tester.getSemantics(find.text('COLOR SCHEME')),
+        tester.getSemantics(find.text('Color scheme')),
         isSemantics(label: 'Color scheme', isHeader: true, isButton: false),
       );
       handle.dispose();

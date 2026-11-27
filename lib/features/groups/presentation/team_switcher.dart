@@ -1,5 +1,6 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/tokens.dart';
@@ -175,9 +176,8 @@ class _TeamRow extends ConsumerWidget {
               unreadLabel(count),
               style: style.label(
                 TextStyle(
-                  fontSize: 13,
+                  fontSize: 11.5,
                   height: 1,
-                  fontWeight: FontWeight.w700,
                   color: muted ? quiet : c.inkOn(c.you),
                 ),
               ),
@@ -230,15 +230,15 @@ class _TeamRow extends ConsumerWidget {
                                   group.name,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  // stencil, as names are; bold for the
-                                  // one I'm on.
+                                  // The plain face's Bold (Team Shirt,
+                                  // #104); Black for the one I'm on.
                                   style: style.label(
                                     TextStyle(
-                                      fontSize: 17,
-                                      height: 22 / 17,
+                                      fontSize: 16.5,
+                                      height: 22 / 16.5,
                                       fontWeight: current
-                                          ? FontWeight.w800
-                                          : FontWeight.w600,
+                                          ? AppFonts.heavy
+                                          : AppFonts.bold,
                                       color: text,
                                     ),
                                   ),
@@ -264,7 +264,7 @@ class _TeamRow extends ConsumerWidget {
                                   ?.copyWith(
                                     fontSize: 14,
                                     height: 19 / 14,
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight: AppFonts.reading,
                                     color: quiet,
                                   ),
                             ),

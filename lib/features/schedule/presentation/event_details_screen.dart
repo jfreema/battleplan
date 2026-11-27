@@ -440,9 +440,10 @@ class _Details extends ConsumerWidget {
 /// The top of the event (SPEC §7.3; Boot Camp Mix, #85): the kind on a
 /// mustard tag ("GAME · HOME") with how soon on a starburst at the right,
 /// the opponent's initial on a round red badge beside the title in white
-/// stencil in a thick ink outline, turned a little (or the title alone),
-/// and when, in an ink-outlined box. A long word steps the size down, so no
-/// word ever breaks in two (#74).
+/// bubbly letters in a thick ink outline, turned a little (or the title
+/// alone), and when, in an ink-outlined box, bubbly too (Team Shirt, #104;
+/// the tag and the starburst keep the stencil). A long word steps the size
+/// down, so no word ever breaks in two (#74).
 class _Hero extends StatelessWidget {
   const new({required this.event, required this.zone});
 
@@ -450,7 +451,8 @@ class _Hero extends StatelessWidget {
   final String zone;
 
   /// The title's sizes, largest first (#74: no word broken in two).
-  static const titleSizes = [51.0, 44.0, 38.0, 32.0, 27.0];
+  /// Nine tenths of the stencil's, as the bubbly letters are wider (#104).
+  static const titleSizes = [46.0, 40.0, 34.0, 29.0, 24.0];
 
   @override
   Widget build(BuildContext context) {
@@ -480,12 +482,19 @@ class _Hero extends StatelessWidget {
       fontWeight: FontWeight.w900,
       color: c.ink,
     );
+    final bubbly = TextStyle(
+      fontFamily: AppFonts.bubbly,
+      fontFamilyFallback: AppFonts.bubblyFallback,
+      fontWeight: AppFonts.displayWeight,
+      color: c.ink,
+    );
     final title = LayoutBuilder(
       builder: (context, box) {
-        TextStyle titleAt(double size) => stencil.copyWith(
+        TextStyle titleAt(double size) => bubbly.copyWith(
           fontSize: size,
-          height: (size + 3) / size,
-          letterSpacing: size * 0.025,
+          // Room for the small letters' tails under the thick outline.
+          height: (size + 6) / size,
+          letterSpacing: AppFonts.bubblySpacing(size),
           decoration: strike,
           decorationColor: c.ink,
           decorationThickness: 2,
@@ -508,7 +517,7 @@ class _Hero extends StatelessWidget {
             semanticsLabel: event.title,
             header: true,
             stroke: size * 0.12,
-            shadow: size >= 38 ? 4 : 3,
+            shadow: size >= 34 ? 4 : 3,
             style: titleAt(size),
           ),
         );
@@ -581,6 +590,7 @@ class _Hero extends StatelessWidget {
                   child: Text(
                     crestName.characters.first.toUpperCase(),
                     textScaler: TextScaler.noScaling,
+                    // The crest's letter is stamped on: the stencil.
                     style: stencil.copyWith(
                       fontSize: 28,
                       height: 1,
@@ -602,7 +612,7 @@ class _Hero extends StatelessWidget {
           angle: -1.2 * 3.141592653589793 / 180,
           alignment: Alignment.centerLeft,
           child: Container(
-            padding: const EdgeInsets.fromLTRB(12, 5, 11, 2),
+            padding: const EdgeInsets.fromLTRB(12, 3, 11, 4),
             decoration: BoxDecoration(
               color: c.surface,
               borderRadius: BorderRadius.circular(11),
@@ -621,10 +631,11 @@ class _Hero extends StatelessWidget {
                   dayLabel(l10n, ZonedTime.wallClock(zone, event.startAt)),
                 timeRange(l10n, event, zone, withDay: event.allDay),
               ].join(' · '),
-              style: stencil.copyWith(
-                fontSize: 17.5,
-                height: 24 / 17.5,
-                letterSpacing: 17.5 * 0.05,
+              // A date, in the bubbly letters (#104).
+              style: bubbly.copyWith(
+                fontSize: 16,
+                height: 24 / 16,
+                letterSpacing: AppFonts.bubblySpacing(16),
                 color: c.card.textPrimary,
               ),
             ),
@@ -676,8 +687,9 @@ class _EndedBadge extends StatelessWidget {
       ),
       child: Text(
         AppLocalizations.of(context).eventEnded,
-        style: Theme.of(context).textTheme.labelSmall
-            ?.copyWith(color: c.textOnPage, letterSpacing: 0.4),
+        // A badge: the plain face's Black at 12 (Team Shirt, #104).
+        style: GumdropStyle.of(context)
+            .label(TextStyle(fontSize: 12, height: 1, color: c.textOnPage)),
       ),
     );
   }
@@ -813,8 +825,8 @@ class _RsvpSection extends ConsumerWidget {
               child: Text(
                 asking ? rsvpHeading(l10n, mine) : l10n.eventRsvpTitle,
                 style: theme.textTheme.titleLarge?.copyWith(
-                  fontSize: 25,
-                  height: 30 / 25,
+                  fontSize: 23,
+                  height: 28 / 23,
                 ),
               ),
             ),
@@ -933,8 +945,8 @@ class _RsvpSection extends ConsumerWidget {
                           ? l10n.eventWhoSaidGoing
                           : l10n.eventWhosGoing,
                       style: theme.textTheme.titleLarge?.copyWith(
-                        fontSize: 25,
-                        height: 30 / 25,
+                        fontSize: 23,
+                        height: 28 / 23,
                       ),
                     ),
                   ),
@@ -1000,7 +1012,6 @@ class _RsvpSection extends ConsumerWidget {
             style: theme.textTheme.bodyMedium?.copyWith(
               fontSize: 14,
               height: 19 / 14,
-              fontWeight: FontWeight.w600,
               color: c.textMutedOnPage,
             ),
           ),
@@ -1106,7 +1117,8 @@ class RsvpButtons extends ConsumerWidget {
         if (label != null)
           Padding(
             padding: const EdgeInsets.only(top: Space.sm, bottom: Space.xs),
-            child: Text(label!, style: theme.textTheme.titleSmall),
+            // A person's name: the plain face's Black (#104).
+            child: Text(label!, style: theme.textTheme.labelLarge),
           ),
         RsvpChoice(
           statuses: statuses,
@@ -1122,7 +1134,6 @@ class RsvpButtons extends ConsumerWidget {
               '"${answer!.note}"',
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontSize: 15,
-                fontWeight: FontWeight.w600,
                 color: GumdropColors.of(context).textOnPage,
               ),
             ),
@@ -1299,8 +1310,9 @@ Future<void> _restoreRsvp(
   }
 }
 
-/// One count on the event screen (SPEC §7.3; #85): the number in big stencil in
-/// its answer's color, and its label in small capitals under it.
+/// One count on the event screen (SPEC §7.3; #85): the number in big
+/// bubbly letters (Team Shirt, #104) in its answer's color, and its label
+/// in small capitals under it.
 class _Count extends StatelessWidget {
   const new({
     required this.count,
@@ -1333,26 +1345,17 @@ class _Count extends StatelessWidget {
               '$count',
               fill: color,
               stroke: 5,
-              style: const TextStyle(
-                fontFamily: AppFonts.stencil,
-                fontWeight: FontWeight.w900,
-                fontSize: 44,
-                height: 42 / 44,
-                letterSpacing: 44 * 0.03,
-              ),
+              // A count in the bubbly letters (Team Shirt, #104).
+              style: const TextStyle(fontSize: 40, height: 1, letterSpacing: 0),
             ),
           ),
           const SizedBox(height: 3),
+          // A small label in the plain face's capitals (#104).
           Text(
             label.toUpperCase(),
             semanticsLabel: label,
-            style: TextStyle(
-              fontFamily: AppFonts.stencil,
-              fontWeight: FontWeight.w900,
-              fontSize: 13,
-              height: 16 / 13,
-              letterSpacing: 13 * 0.08,
-              color: c.textOnPage,
+            style: GumdropStyle.caps(
+              TextStyle(fontSize: 11, height: 16 / 11, color: c.textOnPage),
             ),
           ),
         ],
@@ -1588,9 +1591,9 @@ class _AttendeeRow extends StatelessWidget {
   }
 }
 
-/// An answer's label over its people (#85): its name and count in stencil
-/// in [color] on an ink block with corners of 8 (#98), with a dot in
-/// [color], turned -1.2°.
+/// An answer's label over its people (#85): its name and count in the
+/// plain face's small capitals (Team Shirt, #104) in [color] on an ink
+/// block with corners of 8 (#98), with a dot in [color], turned -1.2°.
 class _GroupLabel extends StatelessWidget {
   const new({required this.text, required this.color});
 
@@ -1629,13 +1632,9 @@ class _GroupLabel extends StatelessWidget {
                   child: Text(
                     text.toUpperCase(),
                     semanticsLabel: text,
-                    style: TextStyle(
-                      fontFamily: AppFonts.stencil,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 15,
-                      height: 21 / 15,
-                      letterSpacing: 15 * 0.08,
-                      color: color,
+                    // A small capital label: Black at 12 (#104).
+                    style: GumdropStyle.caps(
+                      TextStyle(fontSize: 12, height: 21 / 12, color: color),
                     ),
                   ),
                 ),
@@ -1827,12 +1826,11 @@ class _CardRsvpRow extends StatelessWidget {
     final text = label;
     if (text == null) return choice;
     final c = GumdropColors.of(context);
-    // Boot Camp Mix (#85): "NOAH?" in stencil, mustard on the dark schemes'
-    // answer row and ink on Light's pale one.
+    // "Noah?" in the plain face's Black (Team Shirt, #104), mustard on the
+    // dark schemes' answer row and ink on Light's pale one.
     final style = GumdropStyle.of(context).label(
       TextStyle(
-        fontWeight: FontWeight.w900,
-        fontSize: 15,
+        fontSize: 14,
         height: 1.2,
         color: c.brightness == Brightness.dark
             ? c.roles.palette.mustard

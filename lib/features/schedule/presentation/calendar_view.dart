@@ -135,6 +135,7 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
                               .format(addDays(gridStart, i))
                               .characters
                               .first,
+                          // The plain face's Black at 12 (#104).
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: scheme.onSurfaceVariant,
                           ),

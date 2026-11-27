@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/widgets/load_error.dart';
@@ -97,7 +98,7 @@ class YourScheduleSection extends ConsumerWidget {
               l10n.scheduleEmptyUpcoming,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontSize: 15,
-                fontWeight: FontWeight.w600,
+                fontWeight: AppFonts.reading,
                 color: GumdropColors.of(context).textMutedOnPage,
               ),
             ),

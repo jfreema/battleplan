@@ -97,7 +97,7 @@ describe('unreadableCampParts', () => {
   it('knows every Boot Camp Mix scheme, and each passes as it ships', () => {
     expect([...campSchemeValues].sort()).toEqual([
       'army', 'candypop', 'dark', 'darkarmy', 'deserttan', 'graphite', 'light', 'navy', 'purplegold', 'sky', 'sugarrush',
-      'tealwave', 'tropicblue', 'wildcat',
+      'tropicblue', 'wildcat',
     ]);
     for (const scheme of campSchemeValues) expect(unreadableCampParts(scheme, {})).toEqual([]);
   });

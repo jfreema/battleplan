@@ -97,7 +97,7 @@ class DuesScreen extends ConsumerWidget {
         (ref.watch(myMembershipProvider(groupId))?.isCoach ?? false);
     final lede = TextStyle(
       fontFamily: AppFonts.body,
-      fontWeight: FontWeight.w600,
+      fontWeight: AppFonts.reading,
       fontSize: 15,
       height: 21 / 15,
       color: c.textMutedOnPage,
@@ -303,7 +303,7 @@ String _summary(AppLocalizations l10n, DueTotals totals) => totals.count == 0
           l10n.duesLeft(formatDues(l10n, totals.owedCents)),
       ].join(' · ');
 
-/// The title in Nunito Bold 18 with the amount on the right, or under it
+/// The title in bold 18 with the amount on the right, or under it
 /// when the two don't fit side by side without breaking a word (large
 /// text, SPEC §7.6).
 class _TitleLine extends StatelessWidget {
@@ -317,7 +317,7 @@ class _TitleLine extends StatelessWidget {
     final c = GumdropColors.of(context);
     final style = TextStyle(
       fontFamily: AppFonts.body,
-      fontWeight: FontWeight.w800,
+      fontWeight: AppFonts.bold,
       fontSize: 18,
       height: 22 / 18,
       color: c.textPrimary,
@@ -421,7 +421,7 @@ class _MyDues extends ConsumerWidget {
         );
     final muted = TextStyle(
       fontFamily: AppFonts.body,
-      fontWeight: FontWeight.w600,
+      fontWeight: AppFonts.reading,
       fontSize: 15,
       color: c.textMutedOnPage,
     );
@@ -694,7 +694,7 @@ class _HowToPay extends ConsumerWidget {
               pay.note,
               style: TextStyle(
                 fontFamily: AppFonts.body,
-                fontWeight: FontWeight.w600,
+                fontWeight: AppFonts.reading,
                 fontSize: 15,
                 color: c.textOnPage,
               ),
@@ -908,7 +908,7 @@ class DueDetailScreen extends ConsumerWidget {
                           due.title,
                           style: TextStyle(
                             fontFamily: AppFonts.body,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: AppFonts.bold,
                             fontSize: 18,
                             height: 22 / 18,
                             color: c.textOnPage,
@@ -923,7 +923,7 @@ class DueDetailScreen extends ConsumerWidget {
                       ].join(' · '),
                       style: TextStyle(
                         fontFamily: AppFonts.body,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: AppFonts.bold,
                         fontSize: 17,
                         color: c.textOnPage,
                       ),
@@ -992,7 +992,7 @@ class DueDetailScreen extends ConsumerWidget {
       text: TextSpan(
         text: title,
         style: Theme.of(context).textTheme.headlineMedium
-            ?.copyWith(fontSize: 32, height: 36 / 32),
+            ?.copyWith(fontSize: 29, height: 36 / 29),
       ),
       maxLines: 1,
       textDirection: Directionality.of(context),

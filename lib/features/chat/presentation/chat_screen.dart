@@ -1307,7 +1307,7 @@ class _PinnedRowState extends ConsumerState<_PinnedRow> {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontFamily: AppFonts.body,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: AppFonts.reading,
                           fontSize: 15,
                           height: 20 / 15,
                           color: c.textMutedOnPage,
@@ -1342,7 +1342,7 @@ class _PinnedRowState extends ConsumerState<_PinnedRow> {
 
       final body = TextStyle(
         fontFamily: AppFonts.body,
-        fontWeight: FontWeight.w600,
+        fontWeight: AppFonts.reading,
         fontSize: 15,
         height: 20 / 15,
         color: c.textOnPage,
@@ -1385,7 +1385,7 @@ class _PinnedRowState extends ConsumerState<_PinnedRow> {
                                     text:
                                         '${author == deletedUserName ? author : shortNameOf(author)}: ',
                                     style: const TextStyle(
-                                      fontWeight: FontWeight.w800,
+                                      fontWeight: AppFonts.bold,
                                     ),
                                   ),
                                 TextSpan(text: text),
@@ -1462,7 +1462,7 @@ class _NewMessagesDivider extends StatelessWidget {
     return _RuledLabel(
       child: Container(
         // 23 tall (§3.6), taller with large text.
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5.5),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: c.you.face,
           borderRadius: BorderRadius.circular(11),
@@ -1470,15 +1470,9 @@ class _NewMessagesDivider extends StatelessWidget {
         child: Text(
           AppLocalizations.of(context).newMessages,
           textAlign: TextAlign.center,
-          style: GumdropStyle.of(context).label(
-            TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
-              height: 1,
-              letterSpacing: 0.72,
-              color: c.inkOn(c.you),
-            ),
-          ),
+          // The plain face's Black at 11 (Team Shirt, #104).
+          style: GumdropStyle.of(context)
+              .label(TextStyle(fontSize: 11, height: 1, color: c.inkOn(c.you))),
         ),
       ),
     );
@@ -1534,20 +1528,15 @@ class _DateSeparator extends StatelessWidget {
       ViewerZone.wallClock(context, day),
       ViewerZone.wallClock(context, DateTime.now()),
     );
-    // Small spaced capitals between hairlines (SPEC §7.3).
+    // Small spaced capitals between hairlines (SPEC §7.3), in the plain
+    // face (Team Shirt, #104).
     return _RuledLabel(
       child: Text(
         label.toUpperCase(),
         semanticsLabel: label,
         textAlign: TextAlign.center,
-        style: GumdropStyle.of(context).label(
-          TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 13,
-            height: 16 / 13,
-            letterSpacing: 13 * 0.12,
-            color: c.textMutedOnPage,
-          ),
+        style: GumdropStyle.caps(
+          TextStyle(fontSize: 11, height: 16 / 11, color: c.textMutedOnPage),
         ),
       ),
     );

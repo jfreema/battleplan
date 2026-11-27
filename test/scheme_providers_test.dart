@@ -261,37 +261,40 @@ void main() {
       expect(c.read(teamSchemeProvider(_a)), TeamScheme.army);
     });
 
-    test('a pick the app no longer offers reads as the closest of the '
-        'fourteen, and is never rewritten (#85, #86, #89, #90, #98)', () async {
-      final users = FakeUserRepository()..colorScheme = TeamScheme.dark;
-      final c = await container(
-        users: users,
-        groups: FakeGroupRepository({
-          'a': testGroup('a', 'Thunder'),
-          'b': testGroup(
-            'b',
-            'Comets',
-          ).copyWith(colorScheme: TeamScheme.candypop),
-        }),
-        memberships: [
-          // Scoreboard left in #85.
-          testMembership(
-            'a',
-            'coach',
-          ).copyWith(colorScheme: TeamScheme.scoreboard),
-          testMembership('b', 'coach'),
-        ],
-      );
-      c
-        ..listen(teamSchemeProvider(_a), (_, _) {})
-        ..listen(teamSchemeProvider(_b), (_, _) {});
-      await _settle();
-      expect(c.read(teamSchemeProvider(_a)), TeamScheme.dark);
-      // Candy Pop is a Boot Camp Mix scheme again (#86).
-      expect(c.read(teamSchemeProvider(_b)), TeamScheme.candypop);
-      // Nothing is written back.
-      expect(users.colorScheme, TeamScheme.dark);
-    });
+    test(
+      'a pick the app no longer offers reads as the closest of the '
+      'thirteen, and is never rewritten (#85, #86, #89, #90, #98, #105)',
+      () async {
+        final users = FakeUserRepository()..colorScheme = TeamScheme.dark;
+        final c = await container(
+          users: users,
+          groups: FakeGroupRepository({
+            'a': testGroup('a', 'Thunder'),
+            'b': testGroup(
+              'b',
+              'Comets',
+            ).copyWith(colorScheme: TeamScheme.candypop),
+          }),
+          memberships: [
+            // Scoreboard left in #85.
+            testMembership(
+              'a',
+              'coach',
+            ).copyWith(colorScheme: TeamScheme.scoreboard),
+            testMembership('b', 'coach'),
+          ],
+        );
+        c
+          ..listen(teamSchemeProvider(_a), (_, _) {})
+          ..listen(teamSchemeProvider(_b), (_, _) {});
+        await _settle();
+        expect(c.read(teamSchemeProvider(_a)), TeamScheme.dark);
+        // Candy Pop is a Boot Camp Mix scheme again (#86).
+        expect(c.read(teamSchemeProvider(_b)), TeamScheme.candypop);
+        // Nothing is written back.
+        expect(users.colorScheme, TeamScheme.dark);
+      },
+    );
 
     test("keeps no read of a team I'm not on once nothing shows it", () async {
       final c = await container(

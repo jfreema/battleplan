@@ -1,7 +1,7 @@
 name: battleplan
 description: "Messaging and scheduling for sports teams."
 publish_to: 'none'
-version: 1.4.5+1
+version: 1.4.6+1
 
 environment:
   sdk: ^3.13.7
@@ -75,34 +75,52 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   generate: true
-  # Boot Camp Mix's fonts, bundled so text looks the same on every platform
-  # and offline (SPEC §7.3, ARCH §5.5): Battleplan Stencil (Big Shoulders
-  # Stencil Display Black, its small letters drawn as capitals) for titles,
-  # labels, buttons, tabs and counts, and Nunito for reading text (#97). From
-  # Google Fonts; each is OFL 1.1, whose text ships with it and shows under
-  # Licenses (tools/make_fonts.sh).
+  # The app's fonts, bundled so text looks the same on every platform and
+  # offline (SPEC §7.3, ARCH §5.5; Team Shirt, #104): Battleplan Stencil
+  # (Big Shoulders Stencil Display Black, its small letters drawn as
+  # capitals) where something is stamped on, Lilita One for names and titles,
+  # and Battleplan Sans (Lato, cut and renamed) for the rest. From Google
+  # Fonts; each is OFL 1.1, whose text ships with it and shows under Licenses
+  # (tools/make_fonts.sh).
   assets:
     - assets/fonts/battleplan_stencil/OFL.txt
-    - assets/fonts/nunito/OFL.txt
+    - assets/fonts/lilita_one/OFL.txt
+    - assets/fonts/battleplan_sans/OFL.txt
     # Jared's Venmo card, for Buy Jared a coffee (TEAM-5, About).
     - assets/about/venmo.png
     # Apple's App Store badge, for the web app's invite page (INV-7).
     - assets/store/app-store-badge.png
   fonts:
-    # Boot Camp Mix (#85; tools/make_fonts.sh builds both): the stencil for
-    # titles, labels, buttons, tabs and counts, always in capitals, and
-    # Nunito for reading text (#97): SemiBold, and Bold for bold spans. Any
-    # lighter weight asked for draws in SemiBold, any heavier in Bold.
+    # Team Shirt (#104; tools/make_fonts.sh builds all three): the stencil
+    # only where something is stamped on (tags, stamps, dog tags, the weekday
+    # on a date), always in capitals; Lilita One, Candy Pop's bubbly letters,
+    # for names, titles, dates and questions; and Battleplan Sans, which is
+    # Lato cut to Latin and renamed, for the rest: Regular to read, Bold for
+    # bold spans, tabs and rows, Black for buttons, labels and names. A
+    # weight between two draws as fonts are matched: 500 in the Regular, 600
+    # in the Bold, 800 in the Black.
     - family: Battleplan Stencil
       fonts:
         - asset: assets/fonts/battleplan_stencil/BattleplanStencil-Black.ttf
           weight: 900
-    - family: Nunito
+    - family: Lilita One
       fonts:
-        - asset: assets/fonts/nunito/Nunito-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/nunito/Nunito-Bold.ttf
+        - asset: assets/fonts/lilita_one/LilitaOne-Regular.ttf
+    - family: Battleplan Sans
+      fonts:
+        - asset: assets/fonts/battleplan_sans/BattleplanSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/battleplan_sans/BattleplanSans-Bold.ttf
           weight: 700
+        - asset: assets/fonts/battleplan_sans/BattleplanSans-Black.ttf
+          weight: 900
+    # The Black again, alone under a name of its own: what draws a letter
+    # Lilita One lacks (it has Latin-1 and little else), so that letter is
+    # as heavy as the title around it. A fallback family is asked for the
+    # title's weight, 400, which in Battleplan Sans would be the Regular.
+    - family: Battleplan Sans Black
+      fonts:
+        - asset: assets/fonts/battleplan_sans/BattleplanSans-Black.ttf
 
 # App icons and splash screens from the Sticker Pair on Candy Pop blue (SPEC
 # §7.1). Regenerate with tools/brand_icons.sh.

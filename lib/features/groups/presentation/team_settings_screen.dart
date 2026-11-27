@@ -590,7 +590,7 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
                                         style: text.titleMedium?.copyWith(
-                                          fontSize: 23,
+                                          fontSize: 21,
                                           height: 1.15,
                                           color: card.textPrimary,
                                         ),

@@ -275,9 +275,8 @@ class _TeamCard extends ConsumerWidget {
               unreadLabel(count),
               style: style.label(
                 TextStyle(
-                  fontSize: 13,
+                  fontSize: 11.5,
                   height: 1,
-                  fontWeight: FontWeight.w700,
                   color: muted ? c.textMuted : c.inkOn(c.you),
                 ),
               ),
@@ -346,12 +345,14 @@ class _TeamCard extends ConsumerWidget {
                                         group.name,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          fontFamily: AppFonts.body,
-                                          fontWeight: FontWeight.w800,
-                                          fontSize: 18,
-                                          height: 22 / 18,
-                                          color: c.textPrimary,
+                                        // A team's name is in the bubbly
+                                        // letters (Team Shirt, #104).
+                                        style: style.display(
+                                          TextStyle(
+                                            fontSize: 18,
+                                            height: 22 / 18,
+                                            color: c.textPrimary,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -359,12 +360,10 @@ class _TeamCard extends ConsumerWidget {
                                     Text(
                                       kind.toUpperCase(),
                                       semanticsLabel: kind,
-                                      style: style.label(
+                                      style: GumdropStyle.caps(
                                         TextStyle(
-                                          fontSize: 13,
-                                          height: 16 / 13,
-                                          letterSpacing: 13 * 0.1,
-                                          fontWeight: FontWeight.w600,
+                                          fontSize: 11,
+                                          height: 16 / 11,
                                           color: c.textMuted,
                                         ),
                                       ),
@@ -378,7 +377,7 @@ class _TeamCard extends ConsumerWidget {
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       fontFamily: AppFonts.body,
-                                      fontWeight: FontWeight.w600,
+                                      fontWeight: AppFonts.reading,
                                       fontSize: 15,
                                       height: 19 / 15,
                                       letterSpacing: -0.2,
@@ -460,7 +459,7 @@ class _RequestsButton extends StatelessWidget {
           shape: const StadiumBorder(),
           textStyle: const TextStyle(
             fontFamily: AppFonts.body,
-            fontWeight: FontWeight.w800,
+            fontWeight: AppFonts.bold,
             fontSize: 15,
             height: 19 / 15,
           ),
@@ -503,7 +502,7 @@ class _Welcome extends StatelessWidget {
           Text(
             l10n.welcomeTitle,
             textAlign: TextAlign.center,
-            style: theme.textTheme.titleLarge?.copyWith(fontSize: 25),
+            style: theme.textTheme.titleLarge?.copyWith(fontSize: 23),
           ),
           const SizedBox(height: Space.md),
           Text(
@@ -511,7 +510,7 @@ class _Welcome extends StatelessWidget {
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
               fontSize: 15,
-              fontWeight: FontWeight.w600,
+              fontWeight: AppFonts.reading,
               color: c.textMutedOnPage,
             ),
           ),
@@ -522,7 +521,7 @@ class _Welcome extends StatelessWidget {
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontSize: 14,
-                fontWeight: FontWeight.w600,
+                fontWeight: AppFonts.reading,
                 color: c.textMutedOnPage,
               ),
             ),

@@ -1416,7 +1416,7 @@ void main() {
       await tester.tap(find.text('Emma #7'));
       await tester.pumpAndSettle();
       expect(find.text('Record a payment'), findsNothing);
-      expect(find.text('PAYMENTS'), findsOneWidget);
+      expect(find.text('Payments'), findsOneWidget);
       expect(find.text('Recorded by coach\nVenmo'), findsOneWidget);
       await tester.tap(find.byTooltip(r'Undo the $20 payment'));
       await tester.pumpAndSettle();
@@ -1540,7 +1540,7 @@ void main() {
       await tester.tap(find.text('Emma #7'));
       await tester.pumpAndSettle();
       expect(find.text('Record a payment'), findsNothing);
-      expect(find.text('PAYMENTS'), findsNothing);
+      expect(find.text('Payments'), findsNothing);
       await tester.tap(find.text('Mark not paid'));
       await tester.pumpAndSettle();
       expect(dues.calls, ['status d0_emma owed']);
@@ -1562,7 +1562,7 @@ void main() {
       await go(tester, '/g/a/dues/d0');
       await tester.tap(find.text('Emma #7'));
       await tester.pumpAndSettle();
-      expect(find.text('PAYMENTS'), findsOneWidget);
+      expect(find.text('Payments'), findsOneWidget);
       expect(find.text('Record a payment'), findsNothing);
       expect(find.byTooltip(r'Undo the $20 payment'), findsNothing);
     });
@@ -1721,7 +1721,7 @@ void main() {
         find.text(r'$20 of $45 paid · $25 left · Partly paid'),
         findsOneWidget,
       );
-      expect(find.text('PAYMENTS'), findsOneWidget);
+      expect(find.text('Payments'), findsOneWidget);
       expect(find.text(r'$20 · Nov 1'), findsOneWidget);
       expect(find.text('Recorded by Coach Lee\nVenmo'), findsOneWidget);
       expect(find.text('Record a payment'), findsNothing);

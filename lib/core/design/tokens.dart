@@ -25,9 +25,9 @@ abstract final class Space {
   static const double page = 20;
 }
 
-/// Chat messages' text (CHAT-1): Nunito SemiBold on every platform (#97), a
-/// point bigger (17 px, the owner's request, 2026-10-27) on a 23 px line,
-/// the same in others' bubbles and mine.
+/// Chat messages' text (CHAT-1): the plain face's Regular on every platform
+/// (Lato, #104), a point bigger (17 px, the owner's request, 2026-10-27) on
+/// a 23 px line, the same in others' bubbles and mine.
 abstract final class ChatText {
   static const double size = 17;
   static const double height = 23 / 17;
@@ -99,22 +99,35 @@ abstract final class Motion {
       reduced(context) ? Duration.zero : d;
 }
 
-/// Type scale (Gumdrop Pop design §2): the headings are the stencil, which
-/// the theme's headline and title styles carry.
+/// Type scale (Gumdrop Pop design §2; Team Shirt, #104): the headings are
+/// the bubbly letters, which the theme's headline and title styles carry.
 abstract final class TypeScale {
+  // The bubbly letters' sizes (Team Shirt, #104): Lilita One is wider than
+  // the stencil was, so the big ones are about a tenth under it.
+
   /// The team's name on its tab screens.
-  static const double teamName = 36;
+  static const double teamName = 33;
 
   /// A screen's title.
-  static const double headline = 32;
+  static const double headline = 29;
 
   /// A section heading.
-  static const double section = 24;
-  static const double title = 22;
+  static const double section = 22;
+  static const double title = 20;
+
+  /// A small title: a document's name, a row that names something.
   static const double subtitle = 17;
+
+  /// The smallest title: a section of a form or a sheet.
+  static const double smallTitle = 16;
   // A point over the design's (16, 14, 12), for reading on a phone (the
   // owner's request, 2026-10-27).
   static const double body = 17;
   static const double secondary = 15;
-  static const double label = 13;
+
+  /// A push button's lettering, in the plain face's Black.
+  static const double button = 15;
+
+  /// The smallest label, in the plain face.
+  static const double label = 12;
 }

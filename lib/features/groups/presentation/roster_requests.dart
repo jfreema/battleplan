@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
@@ -286,7 +287,7 @@ class RequestTile extends ConsumerWidget {
     final text = Theme.of(context).textTheme.bodyLarge?.copyWith(
       fontSize: 16,
       height: 21 / 16,
-      fontWeight: FontWeight.w600,
+      fontWeight: AppFonts.reading,
       color: c.textOnPage,
     );
     final (sentence, names) = request.sentence(l10n);
@@ -329,7 +330,7 @@ class RequestTile extends ConsumerWidget {
                         _boldNames(
                           sentence,
                           names,
-                          const TextStyle(fontWeight: FontWeight.w800),
+                          const TextStyle(fontWeight: AppFonts.bold),
                         ),
                         style: text,
                       ),
@@ -537,10 +538,10 @@ class _RequestSheetState extends ConsumerState<RequestSheet> {
                     _boldNames(
                       sentence,
                       names,
-                      const TextStyle(fontWeight: FontWeight.w800),
+                      const TextStyle(fontWeight: AppFonts.bold),
                     ),
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
+                      fontWeight: AppFonts.reading,
                       color: c.textPrimary,
                     ),
                   ),

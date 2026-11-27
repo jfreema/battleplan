@@ -152,6 +152,8 @@ abstract final class AppTheme {
       width: g.surfaceBorderWidth,
     );
     final label = textTheme.labelLarge!;
+    // A push button's lettering: the plain face's Black at 15.
+    final button = label.copyWith(fontSize: TypeScale.button);
 
     final base = ThemeData(
       useMaterial3: true,
@@ -182,10 +184,10 @@ abstract final class AppTheme {
         centerTitle: false,
         // Pushed screens' plain app bars: the 28 px chevron in a 48 px tap
         // area by the edge, as on the pushed-screen bar, and the title in
-        // stencil 25 outlined just after it.
+        // the bubbly letters at 23 just after it.
         leadingWidth: 52,
         titleSpacing: 8,
-        titleTextStyle: textTheme.titleLarge?.copyWith(fontSize: 25),
+        titleTextStyle: textTheme.titleLarge?.copyWith(fontSize: 23),
         iconTheme: IconThemeData(color: text),
         actionsIconTheme: IconThemeData(color: text),
         // The status bar sits on the camouflage (#85), so its icons go by
@@ -229,20 +231,18 @@ abstract final class AppTheme {
       ),
       chipTheme: _chipTheme(g, style, label),
       filledButtonTheme: FilledButtonThemeData(
-        // The coral gumdrop: stencil 700 16 in ink.
-        style: buttons.accent(
-          g.you,
-          textStyle: label.copyWith(fontSize: 16, fontWeight: FontWeight.w700),
-        ),
+        // The coral gumdrop: the plain face's Black at 15, in ink.
+        style: buttons.accent(g.you, textStyle: button),
       ),
-      // The outlined pill: stencil 600 16.
+      // The licorice gumdrop: the same lettering.
       outlinedButtonTheme: OutlinedButtonThemeData(
-        style: buttons.secondary(textStyle: label.copyWith(fontSize: 16)),
+        style: buttons.secondary(textStyle: button),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
-        style: buttons.secondary(textStyle: label.copyWith(fontSize: 16)),
+        style: buttons.secondary(textStyle: button),
       ),
-      // Text buttons are plain text: stencil 600 15 in the text color.
+      // Text buttons are plain text: the plain face's Bold at 15 in the
+      // text color, like a row that's a link.
       textButtonTheme: TextButtonThemeData(
         style: ButtonStyle(
           foregroundColor: WidgetStateProperty.resolveWith(
@@ -262,7 +262,7 @@ abstract final class AppTheme {
                 : null,
           ),
           textStyle: WidgetStatePropertyAll(
-            label.copyWith(fontSize: 15, fontWeight: FontWeight.w600),
+            label.copyWith(fontSize: 15, fontWeight: AppFonts.bold),
           ),
           minimumSize: const WidgetStatePropertyAll(Size(48, 44)),
           padding: const WidgetStatePropertyAll(
@@ -323,7 +323,8 @@ abstract final class AppTheme {
         ),
         // The extended one ("3 new messages") is a 52 px pill on its lip.
         extendedSizeConstraints: const BoxConstraints.tightFor(height: 56),
-        extendedTextStyle: label.copyWith(fontSize: TypeScale.secondary),
+        // Its label ("3 new messages"): Black at 14.5.
+        extendedTextStyle: label.copyWith(fontSize: 14.5),
       ),
       // Boot Camp Mix (#85): the picked choice on a mustard tile in ink.
       segmentedButtonTheme: SegmentedButtonThemeData(
@@ -339,7 +340,13 @@ abstract final class AppTheme {
           iconColor: WidgetStateProperty.resolveWith(
             (s) => s.contains(WidgetState.selected) ? g.ink : muted,
           ),
-          textStyle: WidgetStatePropertyAll(label.copyWith(fontSize: 16)),
+          // Bold at 15, and the picked one Black at 14.5, as the
+          // schedule's views are.
+          textStyle: WidgetStateProperty.resolveWith(
+            (s) => s.contains(WidgetState.selected)
+                ? label.copyWith(fontSize: 14.5)
+                : label.copyWith(fontSize: 15, fontWeight: AppFonts.bold),
+          ),
           shape: const WidgetStatePropertyAll(
             RoundedRectangleBorder(
               borderRadius: BorderRadius.all(Radius.circular(6)),
@@ -379,9 +386,12 @@ abstract final class AppTheme {
             color: s.contains(WidgetState.selected) ? g.you.face : muted,
           ),
         ),
+        // Tab names: the plain face's Bold at 11, a little spaced.
         labelTextStyle: WidgetStateProperty.resolveWith(
           (s) => label.copyWith(
-            fontSize: 13,
+            fontSize: 11,
+            fontWeight: AppFonts.bold,
+            letterSpacing: 0.11,
             color: s.contains(WidgetState.selected) ? text : muted,
           ),
         ),
@@ -396,15 +406,28 @@ abstract final class AppTheme {
         ),
         selectedIconTheme: IconThemeData(color: g.ink, size: 24),
         unselectedIconTheme: IconThemeData(color: muted, size: 24),
-        selectedLabelTextStyle: label.copyWith(fontSize: 13, color: text),
-        unselectedLabelTextStyle: label.copyWith(fontSize: 13, color: muted),
+        selectedLabelTextStyle: label.copyWith(
+          fontSize: 12,
+          fontWeight: AppFonts.bold,
+          color: text,
+        ),
+        unselectedLabelTextStyle: label.copyWith(
+          fontSize: 12,
+          fontWeight: AppFonts.bold,
+          color: muted,
+        ),
         labelType: NavigationRailLabelType.all,
       ),
       tabBarTheme: TabBarThemeData(
         labelColor: text,
         unselectedLabelColor: muted,
-        labelStyle: label.copyWith(fontSize: 16),
-        unselectedLabelStyle: label.copyWith(fontSize: 16),
+        // Bold at 15, and the picked tab Black at 14.5, as the schedule's
+        // views are.
+        labelStyle: label.copyWith(fontSize: 14.5),
+        unselectedLabelStyle: label.copyWith(
+          fontSize: 15,
+          fontWeight: AppFonts.bold,
+        ),
         indicatorColor: g.accentMark,
         dividerColor: Colors.transparent,
       ),
@@ -463,7 +486,6 @@ abstract final class AppTheme {
         ),
         subtitleTextStyle: textTheme.bodyMedium?.copyWith(
           fontSize: 14,
-          fontWeight: FontWeight.w600,
           color: muted,
         ),
       ),
@@ -477,8 +499,8 @@ abstract final class AppTheme {
       badgeTheme: BadgeThemeData(
         backgroundColor: g.cherry.face,
         textColor: g.inkOn(g.cherry),
-        // Nothing under 12 px (SPEC §7.3).
-        textStyle: label.copyWith(fontSize: 12),
+        // A count: the plain face's Black at 11.
+        textStyle: label.copyWith(fontSize: 11),
       ),
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: low,
@@ -496,11 +518,8 @@ abstract final class AppTheme {
         backgroundColor: high,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        titleTextStyle: textTheme.titleLarge?.copyWith(fontSize: 25),
-        contentTextStyle: textTheme.bodyMedium?.copyWith(
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-        ),
+        titleTextStyle: textTheme.titleLarge?.copyWith(fontSize: 23),
+        contentTextStyle: textTheme.bodyMedium?.copyWith(fontSize: 15),
         shape: style.cardShape(22, side: cardSide),
       ),
       popupMenuTheme: PopupMenuThemeData(
@@ -533,25 +552,28 @@ abstract final class AppTheme {
     );
   }
 
-  /// Boot Camp Mix (#85): Nunito SemiBold for reading text (#97), and the
-  /// stencil, always in capitals and a little spaced, for headings, labels,
-  /// buttons, and names.
+  /// Team Shirt (#104): Candy Pop's bubbly letters for headings and titles,
+  /// big and small, and the plain face for the rest, Black for labels and
+  /// Regular to read. The stencil is on no theme style: what's stamped on
+  /// (tags, stamps, dog tags, a date's weekday) asks for it by name.
   static TextTheme _textTheme(GumdropColors g, GumdropStyle style, Color text) {
-    TextStyle heading(double size, double height) => TextStyle(
+    TextStyle heading(double size, double height, {Color? color}) => TextStyle(
       fontFamily: style.displayFont,
-      fontWeight: FontWeight.w900,
+      fontFamilyFallback: AppFonts.bubblyFallback,
+      // Lilita One has one weight: a heavier one asked for would be faked.
+      fontWeight: AppFonts.displayWeight,
       fontSize: size,
       height: height,
-      letterSpacing: size * 0.04,
-      color: g.headingText,
+      letterSpacing: AppFonts.bubblySpacing(size),
+      color: color ?? g.headingText,
       shadows: style.headingShadow(g.headingShadow, big: size > 32),
     );
-    TextStyle fredoka(double size, {double height = 1.2}) => TextStyle(
+    TextStyle label(double size, {double height = 1.2}) => TextStyle(
       fontFamily: style.labelFont,
-      fontWeight: FontWeight.w900,
+      fontWeight: AppFonts.heavy,
       fontSize: size,
       height: height,
-      letterSpacing: GumdropStyle.stencilSpacing(size),
+      letterSpacing: 0,
       color: text,
     );
     TextStyle reading(double size, {double height = 1.35}) => TextStyle(
@@ -563,21 +585,25 @@ abstract final class AppTheme {
       color: text,
     );
     return TextTheme(
-      displayLarge: heading(57, 1),
-      displayMedium: heading(45, 1),
+      displayLarge: heading(51, 1),
+      displayMedium: heading(40, 1),
       displaySmall: heading(TypeScale.teamName, 1),
       headlineLarge: heading(TypeScale.teamName, 1),
       headlineMedium: heading(TypeScale.headline, 1.1),
       headlineSmall: heading(TypeScale.section, 1.1),
       titleLarge: heading(TypeScale.title, 1.1),
-      titleMedium: fredoka(TypeScale.subtitle),
-      titleSmall: fredoka(15),
+      // Small titles (a document's name, a section of a form) are bubbly
+      // too, in the text color they sit in.
+      titleMedium: heading(TypeScale.subtitle, 1.2, color: text),
+      titleSmall: heading(TypeScale.smallTitle, 1.2, color: text),
       bodyLarge: reading(TypeScale.body),
       bodyMedium: reading(TypeScale.secondary),
       bodySmall: reading(14),
-      labelLarge: fredoka(15, height: 1),
-      labelMedium: fredoka(TypeScale.secondary, height: 1),
-      labelSmall: fredoka(TypeScale.label, height: 1),
+      // Labels: Black at 14 and 12. A push button's is 15
+      // ([TypeScale.button]), set on the button themes.
+      labelLarge: label(14, height: 1),
+      labelMedium: label(14, height: 1),
+      labelSmall: label(TypeScale.label, height: 1),
     );
   }
 
@@ -604,13 +630,19 @@ abstract final class AppTheme {
             ? BorderSide(color: g.you.lip, width: 2)
             : BorderSide(color: g.outline, width: 1.5),
       ),
+      // Bold at 13.5; the picked one's ink is the candy's.
       labelStyle: label.copyWith(
-        fontSize: 14,
+        fontSize: 13.5,
+        fontWeight: AppFonts.bold,
         color: WidgetStateColor.resolveWith(
           (s) => selected(s) ? youInk : g.textPrimary,
         ),
       ),
-      secondaryLabelStyle: label.copyWith(color: youInk),
+      secondaryLabelStyle: label.copyWith(
+        fontSize: 13.5,
+        fontWeight: AppFonts.bold,
+        color: youInk,
+      ),
       checkmarkColor: youInk,
       iconTheme: IconThemeData(color: g.textPrimary, size: 18),
       deleteIconColor: g.textMutedOnPage,

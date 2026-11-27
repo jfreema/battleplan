@@ -3,7 +3,6 @@
 // CHAT-18, POLL-3).
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/color_math.dart';
-import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/ids.dart';
@@ -379,7 +378,9 @@ void main() {
 
   group('event cards', () {
     testWidgets("the chat's card asks the question, with the count beside "
-        'it, under the name in stencil (#85)', (tester) async {
+        "it, under the name in the plain face's Black (#85, #104)", (
+      tester,
+    ) async {
       await pumpTeam(
         tester,
         scheme: TeamScheme.army,
@@ -394,15 +395,23 @@ void main() {
       // Its header: the kind on a tag, the title outlined.
       expect(find.text('PRACTICE'), findsWidgets);
       expect(find.byType(OutlinedText), findsWidgets);
-      // Sam's name over it, in stencil, as over others' balloons.
+      // Sam's name over it, in Lato Black, as over others' balloons.
       final head = tester.widget<RichText>(
         find.textContaining('Sam Rivera', findRichText: true).first,
       );
       // Text.rich puts its span under one with the line's style.
       final line = (head.text as TextSpan).children!.first as TextSpan;
       final name = line.children!.first as TextSpan;
-      expect(name.style?.fontFamily, AppFonts.stencil);
+      expect(name.style?.fontFamily, 'Battleplan Sans');
       expect(name.style?.fontWeight, FontWeight.w900);
+      expect(name.style?.fontSize, 14.5);
+      // The question is in the bubbly letters, in their one weight.
+      final question = tester.widget<Text>(find.text('Is Noah going?').first);
+      expect(question.style?.fontFamily, 'Lilita One');
+      expect(question.style?.fontWeight, FontWeight.w400);
+      // And the kind's tag keeps the stencil.
+      final tag = tester.widget<Text>(find.text('PRACTICE').first);
+      expect(tag.style?.fontFamily, 'Battleplan Stencil');
     });
   });
 

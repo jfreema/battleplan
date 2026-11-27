@@ -549,7 +549,7 @@
     }
   },
   "schemeInk": {
-    "$comment": "Each stored scheme's text and what it sits on, as the app draws it (since Boot Camp Mix, #85, #86, #89, #90 and #98, the closest of its fourteen schemes), for the theme editor's server check (#83). test/scheme_ink_test.dart checks they match SchemeRoles.",
+    "$comment": "Each stored scheme's text and what it sits on, as the app draws it (since Boot Camp Mix, #85, #86, #89, #90, #98 and #105, the closest of its thirteen schemes: tealwave has Graphite's), for the theme editor's server check (#83). test/scheme_ink_test.dart checks they match SchemeRoles.",
     "army": {
       "page": "#474C2B",
       "text": "#F4EAD0",
@@ -683,15 +683,15 @@
       "candyInk": "#070A0D"
     },
     "tealwave": {
-      "page": "#0B3B40",
-      "text": "#F0FBFA",
-      "tabbar": "#062A2E",
-      "field": "#135058",
-      "card": "#135058",
-      "cardText": "#F0FBFA",
-      "cardField": "#135058",
-      "popup": "#135058",
-      "candyInk": "#021214"
+      "page": "#2B323B",
+      "text": "#F1F4F7",
+      "tabbar": "#1E242B",
+      "field": "#3A434E",
+      "card": "#3A434E",
+      "cardText": "#F1F4F7",
+      "cardField": "#3A434E",
+      "popup": "#3A434E",
+      "candyInk": "#070A0D"
     },
     "tropicblue": {
       "page": "#0A7EAC",
@@ -952,34 +952,6 @@
       "camoMid": "#4A5562",
       "camoSmall": "#12161B",
       "ballChain": "#FF7F66"
-    },
-    "tealwave": {
-      "page": "#0B3B40",
-      "panel": "#135058",
-      "tabBar": "#062A2E",
-      "ink": "#021214",
-      "shadow": "#021214",
-      "text": "#F0FBFA",
-      "muted": "#A9D3D0",
-      "panelText": "#F0FBFA",
-      "panelMuted": "#A9D3D0",
-      "headerLettering": "#F0FBFA",
-      "mustard": "#5CE1D3",
-      "balloon": "#FF8D75",
-      "red": "#FF6B57",
-      "blue": "#5AA7F0",
-      "green": "#8DD85A",
-      "orange": "#FFB347",
-      "purple": "#B99AF0",
-      "unansweredTag": "#3D6B70",
-      "answerRow": "#0A3035",
-      "toolsRow": "#10464D",
-      "disabledIcon": "#5F8E91",
-      "camoGround": "#0E4A50",
-      "camoBig": "#083338",
-      "camoMid": "#1F6E73",
-      "camoSmall": "#03191C",
-      "ballChain": "#5FE0D6"
     },
     "navy": {
       "page": "#101D3A",

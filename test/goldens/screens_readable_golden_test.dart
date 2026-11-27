@@ -1,7 +1,7 @@
-// The key screens with real fonts (the bundled Lilita One, Fredoka, and
-// Nunito, Material Symbols for icons) in the five color schemes, at a phone
-// size (one at a wide size), at 2x, to look at
-// in review (ARCH §9). Fonts rasterize a little differently on each operating
+// The key screens with real fonts (the bundled Lilita One, Battleplan Sans
+// and Battleplan Stencil, Material Symbols for icons) in every color scheme
+// ([bootCampSchemes]), at a phone size (one at a wide size), at 2x, to look
+// at in review (ARCH §9). Fonts rasterize a little differently on each operating
 // system, so these compare only on the one that made them
 // ([readableGoldensOs]), and CI (Linux) skips them: they're for looking at
 // a change, not for catching one.

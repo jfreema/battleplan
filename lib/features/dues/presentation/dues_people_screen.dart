@@ -53,7 +53,7 @@ class DuesPeopleScreen extends ConsumerWidget {
                 l10n.duesPeopleLede,
                 style: TextStyle(
                   fontFamily: AppFonts.body,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: AppFonts.reading,
                   fontSize: 15,
                   height: 21 / 15,
                   color: c.textMutedOnPage,
@@ -100,14 +100,14 @@ class _Person extends StatelessWidget {
     final t = person.totals;
     final strong = TextStyle(
       fontFamily: AppFonts.body,
-      fontWeight: FontWeight.w800,
+      fontWeight: AppFonts.bold,
       fontSize: 18,
       height: 22 / 18,
       color: c.textOnPage,
     );
     final muted = TextStyle(
       fontFamily: AppFonts.body,
-      fontWeight: FontWeight.w600,
+      fontWeight: AppFonts.reading,
       fontSize: 14,
       height: 19 / 14,
       color: c.textMutedOnPage,
