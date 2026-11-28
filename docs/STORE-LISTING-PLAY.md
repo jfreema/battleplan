@@ -8,7 +8,7 @@ Keep it true to the app: change this page when a feature it names changes. Don't
 
 | Field | Value |
 |---|---|
-| App name (30 characters) | `BattlePlan by Battle Sports` (27 characters; the owner's settled store name, #120). The Main store listing with this name was sent to Google for review on 2026-11-27 and goes live when Google approves (TODO.md). Under the icon the app is `BattlePlan` |
+| App name (30 characters) | `BattlePlan by Battle Sports` (27 characters; the owner's settled store name, #120). The Main store listing with this name is live: Google approved it on 2026-11-27 (TODO.md). Under the icon the app is `BattlePlan` |
 | Package name | `app.getbattleplan` (set by the first App Bundle) |
 | Default language | English (United States), en-US |
 | App or game | App |
@@ -17,13 +17,13 @@ Keep it true to the app: change this page when a feature it names changes. Don't
 
 ## Main store listing
 
-**Short description** (80 characters at most; this one is 67):
+**Short description** (80 characters at most; this one is 72. Google Play allows no price or promotion words here, and the Play Console flagged two in the one before, "Free team chat, schedule, and RSVPs for sports teams. No ads, ever.": "Free" and "No ads, ever." So this one has neither (#124; sent for review 2026-11-27, 8:47 PM Central). Free and no ads stay in the full description, where they're allowed):
 
 ```
-Free team chat, schedule, and RSVPs for sports teams. No ads, ever.
+Team chat, schedule, RSVPs, and a play whiteboard for every sports team.
 ```
 
-**Full description** (4,000 characters at most; this one is about 2,200; the scheme list says Royal & Yellow since #117, 2026-11-27, and the app's name is written BattlePlan since #120. The Play Console still had its text of 2026-11-07, from before Boot Camp Mix ("Five color schemes: Army green, Light, Dark, Navy, and Light blue"); this text was sent to Google for review on 2026-11-27, with the name, the icon and the feature graphic, and replaces it when Google approves (TODO.md). The phone screenshots take #117's coral with their next upload):
+**Full description** (4,000 characters at most; this one is about 2,200; the scheme list says Royal & Yellow since #117, 2026-11-27, and the app's name is written BattlePlan since #120. The Play Console still had its text of 2026-11-07, from before Boot Camp Mix ("Five color schemes: Army green, Light, Dark, Navy, and Light blue"); this text replaced it on 2026-11-27, when Google approved the listing sent that evening with the name, the icon and the feature graphic (TODO.md). The phone screenshots take #117's coral with their next upload):
 
 ```
 BattlePlan is team chat and scheduling for sports teams, free for every team and with no ads. Coaches, players, and parents get the whole team in one app: the chat, the schedule, who's coming, and the team's files.
@@ -75,8 +75,8 @@ Check the counts after any edit: the short description must stay at 80 character
 
 | Asset | File | Size |
 |---|---|---|
-| App icon | `store/google-play/icon-512.png` (from `assets/brand/icon.png`) | 512 × 512 PNG, no transparency |
-| Feature graphic | `store/google-play/feature-graphic.png` (source: `feature-graphic.html` beside it, rendered with headless Chrome; the command is at its top. It draws the logo from `website/logo.svg`, All Sports since 2026-11-27 (with its coral B since #121 that day: only the logo's square was drawn again in the picture), and the name from `website/wordmark.svg`, and its fonts left `assets/fonts/` with #85: take them from git at `15cdd96^`) | 1024 × 500 PNG, no transparency |
+| App icon | `store/google-play/icon-512.png` (from `assets/brand/icon.png`; the one live on Google Play since 2026-11-27 is #119's, with the yellow B, until #121's coral one is uploaded, TODO.md) | 512 × 512 PNG, no transparency |
+| Feature graphic | `store/google-play/feature-graphic.png` (source: `feature-graphic.html` beside it, rendered with headless Chrome; the command is at its top. It draws the logo from `website/logo.svg`, All Sports since 2026-11-27 (with its coral B since #121 that day: only the logo's square was drawn again in the picture), and the name from `website/wordmark.svg`, and its fonts left `assets/fonts/` with #85: take them from git at `15cdd96^`. The one live on Google Play since 2026-11-27 has the yellow B until this one is uploaded, TODO.md) | 1024 × 500 PNG, no transparency |
 | Phone screenshots | `store/google-play/phone/01-chat.jpg` to `07-dues.jpg`, seven in all, in Boot Camp Mix's Black (the scheme for anyone who hasn't picked one) with the Plays board as the mockup draws it, with the candy finish and Team Shirt's lettering (#104), retaken 2026-11-27 (ROADMAP task 480) from `8628e87`: the group Saturday Run Club's chat (only messages and a small photo, no events; scrolled 120 px up from its latest messages, so Rachel's photo post shows whole under her name), Thunder's schedule, its game against the Eagles with the RSVPs, its relay play on the whiteboard, its documents, Cyclone's roster, and Thunder's Dues as the coach (what's owed in all, paid, and left, Who owes what, the dues with one share partly paid, and How to pay, scrolled just past the screen's intro so How to pay fits, with Open as on Android), the same screens as the App Store set. Captures of the web app against the emulators with the seed and `store-shots.ts` (the coach lands in the run club's chat), signed in as `coach@example.com`, as website/README.md describes for the site's screenshots (each screen by its route: `/g/thunder/schedule`, `/g/thunder/schedule/e/thunder-game`, `/g/thunder/plays/thunder-relay-home`, `/g/thunder/documents`, `/g/cyclone/team`, `/g/thunder/dues`; the mouse moved off the page and the focus dropped before each, so no row is lit; the chat and Dues scrolled, by 120 and 125 px, with a `WheelEvent` sent to the page, since puppeteer's wheel doesn't always reach it), at 396 × 704 logical pixels with a device scale of 30 / 11 (at 360 wide the header cuts the group's name short), saved as JPEG at quality 90, with no device frame or status bar | 1080 × 1920 JPEG, 9:16 |
 | Tablet screenshots | Optional (7-inch and 10-inch) | |
 
