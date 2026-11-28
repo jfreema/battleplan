@@ -80,14 +80,17 @@ final class CampPalette {
 
   /// Tags, the current tab's tile, month labels, row badges, starbursts:
   /// mustard, or the scheme's own (Central Wildcat's silver, Geaux Tigahs'
-  /// gold, #86).
+  /// gold, #86), and in Black, Army green and Graphite coral (#121). The
+  /// name is the role's, from when every scheme's was mustard.
   final Color mustard;
 
-  /// Your own speech balloon and the reaction you added: mustard, or light
-  /// blue on Black.
+  /// Your own speech balloon and the reaction you added, and the main
+  /// button's face: the trim, or light blue in Black and Graphite, and yellow
+  /// in Army green (#121).
   final Color balloon;
 
-  /// Games, warnings, the send and + buttons.
+  /// Games, warnings, the send and + buttons: red, coral where the trim
+  /// isn't (#117), and yellow where it is (#121).
   final Color red;
 
   /// Practices, Directions.
@@ -206,7 +209,8 @@ final class CampPalette {
   }
 
   /// Army green: an olive page, panels a shade lighter, cream lettering,
-  /// woodland camouflage.
+  /// woodland camouflage; coral trim, and your balloons, games, send and
+  /// alerts yellow (#121).
   static const army = CampPalette(
     ink: Color(0xFF1A1A18),
     shadow: Color(0xFF1A1A18),
@@ -218,10 +222,14 @@ final class CampPalette {
     muted: Color(0xFFD3CCAE),
     panelText: Color(0xFFF4EAD0),
     panelMuted: Color(0xFFD3CCAE),
-    mustard: Color(0xFFF2C230),
+    // Coral in the mustard's place, and the mustard in red's (#121, owner
+    // 2026-11-27: "the app's color scheme with the yellow-coral swap should
+    // change as well for black, army green, and graphite"): Graphite's coral,
+    // which the logo's B and the website's trim are too.
+    mustard: Color(0xFFFF7F66),
+    // Your own messages stay yellow (#121, owner 2026-11-27: "make the user's chat messages yellow in the army green theme, light blue in the graphite theme.").
     balloon: Color(0xFFF2C230),
-    // Graphite's coral, in place of red (#117).
-    red: Color(0xFFF26A50),
+    red: Color(0xFFF2C230),
     blue: Color(0xFF5FA3C8),
     green: Color(0xFF9AD04A),
     orange: Color(0xFFF5A040),
@@ -240,7 +248,8 @@ final class CampPalette {
   );
 
   /// Black: a black page, charcoal panels, cream lettering, night
-  /// camouflage; olive drab shadows, and your own balloons light blue.
+  /// camouflage; olive drab shadows, your own balloons light blue, coral
+  /// trim, and games, send and alerts yellow (#121).
   static const black = CampPalette(
     ink: Color(0xFF000000),
     shadow: Color(0xFF363A28),
@@ -252,10 +261,11 @@ final class CampPalette {
     muted: Color(0xFFB5B1A2),
     panelText: Color(0xFFF4EAD0),
     panelMuted: Color(0xFFB5B1A2),
-    mustard: Color(0xFFF2C230),
+    // Coral in the mustard's place, and the mustard in red's (#121): as
+    // Army green.
+    mustard: Color(0xFFFF7F66),
     balloon: Color(0xFF93CFF5),
-    // Graphite's coral, in place of red (#117).
-    red: Color(0xFFF26A50),
+    red: Color(0xFFF2C230),
     blue: Color(0xFF4F93B9),
     green: Color(0xFF8DC63F),
     orange: Color(0xFFF2983A),
@@ -460,8 +470,9 @@ final class CampPalette {
 
   /// Graphite (#89, owner's request 2026-11-23: "add Slate & Coral theme but
   /// call it "Graphite""; the mockup's style 47): a slate page, panels a
-  /// shade lighter, coral trim and balloons, and games, send and alerts a
-  /// deeper coral, since a true red clashed with it.
+  /// shade lighter, coral trim, your balloons light blue, and games, send
+  /// and alerts yellow (#121; coral balloons and a deeper coral for games
+  /// before, since a true red clashed with the coral).
   static const graphite = CampPalette(
     ink: Color(0xFF070A0D),
     shadow: Color(0xFF070A0D),
@@ -474,8 +485,10 @@ final class CampPalette {
     panelText: Color(0xFFF1F4F7),
     panelMuted: Color(0xFFAEB8C4),
     mustard: Color(0xFFFF7F66),
-    balloon: Color(0xFFFF7F66),
-    red: Color(0xFFF26A50),
+    // Black's light blue for your own messages (#121).
+    balloon: Color(0xFF93CFF5),
+    // Yellow where it had a deeper coral (#121), as Black and Army green.
+    red: Color(0xFFF2C230),
     blue: Color(0xFF5AA7F0),
     green: Color(0xFF8DC63F),
     orange: Color(0xFFF5A93A),

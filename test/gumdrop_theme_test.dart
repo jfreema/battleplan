@@ -85,7 +85,7 @@ const _tokens = <String, List<int>>{
     0xFF615A45, 0xFF6E5F87,
   ],
   'mustard': [
-    0xFFF2C230, 0xFFF2C230, 0xFFEFBE2B, //
+    0xFFFF7F66, 0xFFFF7F66, 0xFFEFBE2B, //
     0xFFF5C731, 0xFFFFE240, 0xFFC9CED6, 0xFFFDD023,
     0xFFFF7F66, 0xFFF2F5FA, 0xFFFFFFFF,
     0xFFA3A95A, 0xFFFF8CC6,
@@ -93,13 +93,13 @@ const _tokens = <String, List<int>>{
   'balloon': [
     0xFFF2C230, 0xFF93CFF5, 0xFFEFBE2B, //
     0xFFF5C731, 0xFFFFE240, 0xFFC9CED6, 0xFFFDD023,
-    0xFFFF7F66, 0xFFF2F5FA, 0xFFFFFFFF,
+    0xFF93CFF5, 0xFFF2F5FA, 0xFFFFFFFF,
     0xFFA3A95A, 0xFFFF8CC6,
   ],
   'red': [
-    0xFFF26A50, 0xFFF26A50, 0xFFD4432C, //
+    0xFFF2C230, 0xFFF2C230, 0xFFD4432C, //
     0xFFF26A50, 0xFFF26A50, 0xFFEE4B37, 0xFFE8473A,
-    0xFFF26A50, 0xFFE2463A, 0xFFE5483A,
+    0xFFF2C230, 0xFFE2463A, 0xFFE5483A,
     0xFFC9452E, 0xFFF2473D,
   ],
   'blue': [
@@ -545,10 +545,15 @@ void main() {
         expect(c.blueRaspberry.face, p.blue);
         expect(c.bubblegum.face, p.purple);
       }
-      // Your balloon: mustard, but light blue in Black.
+      // Your balloon: yellow in Army green, light blue in Black and
+      // Graphite (#121).
       expect(
         GumdropColors.forScheme(TeamScheme.army).you.face,
         const Color(0xFFF2C230),
+      );
+      expect(
+        GumdropColors.forScheme(TeamScheme.graphite).you.face,
+        const Color(0xFF93CFF5),
       );
       expect(
         GumdropColors.forScheme(TeamScheme.dark).you.face,
@@ -620,17 +625,24 @@ void main() {
       }
     });
 
-    test("coral, Graphite's, is in place of red in Black, Army green, Sky "
-        'Blue and Royal & Yellow (#117); the other schemes keep their red', () {
+    test("coral, Graphite's, is in place of red in Sky Blue and Royal & "
+        'Yellow (#117); Black, Army green and Graphite have coral trim and '
+        'yellow for red (#121); the other schemes keep their red', () {
       const coral = Color(0xFFF26A50);
-      expect(CampPalette.graphite.red, coral);
+      for (final p in [CampPalette.sky, CampPalette.royalYellow]) {
+        expect(p.red, coral);
+      }
+      // The owner, 2026-11-27: "the app's color scheme with the yellow-coral
+      // swap should change as well for black, army green, and graphite". The
+      // trim is Graphite's coral, the logo's; red is the yellow Black and
+      // Army green had as their trim.
       for (final p in [
         CampPalette.black,
         CampPalette.army,
-        CampPalette.sky,
-        CampPalette.royalYellow,
+        CampPalette.graphite,
       ]) {
-        expect(p.red, coral);
+        expect(p.mustard, const Color(0xFFFF7F66));
+        expect(p.red, const Color(0xFFF2C230));
       }
       for (final p in [
         CampPalette.light,

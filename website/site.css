@@ -60,12 +60,12 @@
    black). trim: the color of tags, buttons, the star, and links. The
    bright faces (red, green, ...) carry ink lettering in every place they're
    used.
-   The trim and the red face are the website's own in Black and Army green
-   (#121, owner's go: "Go ahead make the change from yellow to coral. Where
-   it was previously red change it to yellow."): the trim is the app's coral,
-   the logo's, where the app's Black has mustard, and the red face is that
-   mustard, where the app's Black has coral. tools/make_web_schemes.py holds
-   the rule and checks these against it. */
+   In Black, Army green and Graphite the trim is coral, the logo's, and the
+   red face is yellow (#121, owner 2026-11-27: "Go ahead make the change from
+   yellow to coral. Where it was previously red change it to yellow.", then
+   "the app's color scheme with the yellow-coral swap should change as well
+   for black, army green, and graphite"). tools/make_web_schemes.py checks
+   these against the app's Black. */
 :root {
   color-scheme: dark;
   --page: #0d0d0c;
@@ -87,8 +87,8 @@
   /* The trim as words: made to read on the page, the band and a panel,
      so a light scheme has it darker and Army green lighter (#111). */
   --trim-text: #ff7f66;
-  /* The star (.burst) is a picture, so it comes in the trim's color:
-     burst-coral.svg here, burst.svg where the trim is the app's mustard. */
+  /* The star (.burst) is a picture, so it comes in two: burst-coral.svg
+     where the trim is coral, as here, and burst.svg, mustard, elsewhere. */
   --burst: url("/images/burst-coral.svg");
   /* Words set apart with no outline around them (a bold span, a question,
      a card's title): white here, the scheme's lettering elsewhere. */
@@ -105,9 +105,9 @@
   --hero-ground: #23241f;
   --camo: url("/images/camo-black.svg");
 
-  /* Bright faces, as in the app's Black scheme, but for the red one, which
-     is the app's mustard here since the trim took the coral (#121): the
-     closing slab, a card's first stripe, a disc, an app's badge. */
+  /* Bright faces, as in the app's Black scheme. Its red one is yellow, the
+     mustard its trim was, since the trim took the coral (#121): the closing
+     slab, a card's first stripe, a disc, an app's badge. */
   --red: #f2c230;
   --green: #8dc63f;
   --orange: #f2983a;
@@ -469,8 +469,8 @@ section { padding: 64px 0; }
 .project-support p { color: var(--muted); font-size: 0.95rem; margin: 12px 0 0; }
 
 /* Starburst (the app's "IN 5 DAYS!"): decoration, lettered in the stencil.
-   Candy like the app's: the picture (--burst: images/burst-coral.svg, or
-   burst.svg where the trim is mustard) is the star in the trim's color in an
+   Candy like the app's: the picture (--burst: images/burst-coral.svg where
+   the trim is coral, burst.svg, mustard, elsewhere) is the star in an
    ink edge with a shine, sat on a darker copy of itself. The star fills the
    box; the picture reaches past it for the edge and the lip (its viewBox
    is the box with 4% more on three sides and 12% under it). */
@@ -628,7 +628,7 @@ section { padding: 64px 0; }
   position: relative; isolation: isolate; --halftone: rgba(244, 234, 208, 0.2); --drop: #1a1a18;
   background: url("/images/camo-army.svg") center / cover, #3f4722;
   /* Army green's lettering in every scheme, as the band is (#111): its
-     trim as words is the website's coral, lightened to read here (#121). */
+     trim as words is Army green's coral, lightened to read here (#121). */
   --text: #f4ead0; --muted: #d3ccae; --trim-text: #ffbfa1; --strong: #ffffff;
   border-top: 3px solid var(--ink); border-bottom: 3px solid var(--ink);
 }
@@ -1018,15 +1018,15 @@ html[data-scheme="graphite"] {
   --hero-text: #f1f4f7;
   --hero-ground: #333b45;
   --camo: url("/images/camo-graphite.svg");
-  --burst: url("/images/burst.svg");
-  --red: #f26a50;
+  --burst: url("/images/burst-coral.svg");
+  --red: #f2c230;
   --green: #8dc63f;
   --orange: #f5a93a;
   --blue: #5aa7f0;
   --purple: #b49af0;
   --green-lip: #5c7e2e;
   --trim-lip: #da3212;
-  --red-lip: #b8351c;
+  --red-lip: #a78418;
   --orange-lip: #b17217;
   --purple-lip: #6333d1;
   --card-lip: #272c32;
