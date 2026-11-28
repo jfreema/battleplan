@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
 <!-- BattlePlan's maskable web icon: All Sports inside the 80% circle. Made by tools/make_brand.py. -->
-<defs><clipPath id="bp-mask-clip"><rect x="0" y="0" width="1024" height="1024" rx="0"/></clipPath><radialGradient id="bp-mask-glow" gradientUnits="userSpaceOnUse" cx="512" cy="512" r="675.8"><stop offset="0" stop-color="#74803C" stop-opacity="0.85"/><stop offset="1" stop-color="#74803C" stop-opacity="0"/></radialGradient><pattern id="bp-mask-dots" width="64" height="64" patternUnits="userSpaceOnUse"><circle cx="32" cy="32" r="8" fill="#1F2410" fill-opacity="0.3"/></pattern><linearGradient id="bp-mask-blend0" gradientUnits="userSpaceOnUse" x1="0" y1="-34" x2="0" y2="34"><stop offset="0" stop-color="#FFE566"/><stop offset="1" stop-color="#E9A800"/></linearGradient><linearGradient id="bp-mask-blend1" gradientUnits="userSpaceOnUse" x1="0" y1="196" x2="0" y2="696"><stop offset="0" stop-color="#FFE566"/><stop offset="1" stop-color="#F5B800"/></linearGradient><clipPath id="bp-mask-clip1"><path d="M205.3 701.6Q236 676 276 676L752 676Q792 676 822.7 701.6L834 711Q876 746 848.8 799.5L841.7 813.6Q810 876 740 876L292 876Q222 876 188.8 814.4L180.4 798.8Q152 746 194 711Z"/></clipPath><clipPath id="bp-mask-clip2"><rect x="238" y="710" width="136" height="136" rx="68"/></clipPath><clipPath id="bp-mask-clip3"><rect x="446" y="710" width="136" height="136" rx="68"/></clipPath><clipPath id="bp-mask-clip4"><rect x="654" y="710" width="136" height="136" rx="68"/></clipPath></defs>
+<defs><clipPath id="bp-mask-clip"><rect x="0" y="0" width="1024" height="1024" rx="0"/></clipPath><radialGradient id="bp-mask-glow" gradientUnits="userSpaceOnUse" cx="512" cy="512" r="675.8"><stop offset="0" stop-color="#74803C" stop-opacity="0.85"/><stop offset="1" stop-color="#74803C" stop-opacity="0"/></radialGradient><pattern id="bp-mask-dots" width="64" height="64" patternUnits="userSpaceOnUse"><circle cx="32" cy="32" r="8" fill="#1F2410" fill-opacity="0.3"/></pattern><linearGradient id="bp-mask-blend0" gradientUnits="userSpaceOnUse" x1="0" y1="-34" x2="0" y2="34"><stop offset="0" stop-color="#FF9480"/><stop offset="1" stop-color="#E9573F"/></linearGradient><linearGradient id="bp-mask-blend1" gradientUnits="userSpaceOnUse" x1="0" y1="196" x2="0" y2="696"><stop offset="0" stop-color="#FF9480"/><stop offset="1" stop-color="#F2644C"/></linearGradient><clipPath id="bp-mask-clip1"><path d="M205.3 701.6Q236 676 276 676L752 676Q792 676 822.7 701.6L834 711Q876 746 848.8 799.5L841.7 813.6Q810 876 740 876L292 876Q222 876 188.8 814.4L180.4 798.8Q152 746 194 711Z"/></clipPath><clipPath id="bp-mask-clip2"><rect x="238" y="710" width="136" height="136" rx="68"/></clipPath><clipPath id="bp-mask-clip3"><rect x="446" y="710" width="136" height="136" rx="68"/></clipPath><clipPath id="bp-mask-clip4"><rect x="654" y="710" width="136" height="136" rx="68"/></clipPath></defs>
 <g clip-path="url(#bp-mask-clip)">
 <rect x="0" y="0" width="1024" height="1024" rx="0" fill="#4A5327"/>
 <circle cx="512" cy="512" r="675.8" fill="url(#bp-mask-glow)"/>
@@ -19,7 +19,7 @@
 <rect x="0" y="-34" width="300" height="68" rx="8" fill="url(#bp-mask-blend0)"/>
 <path d="M90 -20L260 -20" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" stroke-opacity="0.5"/>
 <rect x="276" y="-50" width="84" height="100" rx="16" fill="#0B0B0A" stroke="#0B0B0A" stroke-width="52" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="276" y="-50" width="84" height="100" rx="16" fill="#F5B800"/>
+<rect x="276" y="-50" width="84" height="100" rx="16" fill="#F2644C"/>
 </g>
 <path d="M183.4 696L289 196L585.5 196Q645.3 196 683 227.1Q720.6 258.1 720.6 308.6Q720.6 324.1 717.5 337.3Q709.8 374.6 691.5 401Q673.3 427.4 648.4 442.9Q669.4 453.8 681.8 469.7Q694.2 485.6 694.2 512.8Q694.2 519.8 693.1 527.9Q691.9 536.1 690.4 544.6Q675.6 615.3 625.5 655.6Q575.4 696 483.1 696ZM424.8 387.8L494.7 387.8Q532 387.8 539 354.4Q539.7 351.3 539.7 346.6Q539.7 323.3 508.7 323.3L438.8 323.3ZM386 568.7L455.9 568.7Q493.1 568.7 500.1 535.3Q500.9 533 500.9 530.6Q500.9 528.3 500.9 526.7Q500.9 504.2 469.9 504.2L400 504.2Z" fill="#0B0B0A" stroke="#0B0B0A" stroke-width="52" stroke-linejoin="round" stroke-linecap="round"/>
 <path d="M183.4 696L289 196L585.5 196Q645.3 196 683 227.1Q720.6 258.1 720.6 308.6Q720.6 324.1 717.5 337.3Q709.8 374.6 691.5 401Q673.3 427.4 648.4 442.9Q669.4 453.8 681.8 469.7Q694.2 485.6 694.2 512.8Q694.2 519.8 693.1 527.9Q691.9 536.1 690.4 544.6Q675.6 615.3 625.5 655.6Q575.4 696 483.1 696ZM424.8 387.8L494.7 387.8Q532 387.8 539 354.4Q539.7 351.3 539.7 346.6Q539.7 323.3 508.7 323.3L438.8 323.3ZM386 568.7L455.9 568.7Q493.1 568.7 500.1 535.3Q500.9 533 500.9 530.6Q500.9 528.3 500.9 526.7Q500.9 504.2 469.9 504.2L400 504.2Z" fill="url(#bp-mask-blend1)"/>
@@ -33,8 +33,8 @@
 <circle cx="306" cy="778" r="68" fill="#0B0B0A" stroke="#0B0B0A" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
 <g>
 <g clip-path="url(#bp-mask-clip2)">
-<circle cx="306" cy="778" r="68" fill="#D5630F"/>
-<circle cx="299.9" cy="771.2" r="68" fill="#F28A2A"/>
+<circle cx="306" cy="778" r="68" fill="#EDAE00"/>
+<circle cx="299.9" cy="771.2" r="68" fill="#FFDD55"/>
 <g transform="rotate(-24 306 778)">
 <path d="M306 710L306 846M238 778L374 778M261.1 723.6Q292.4 778 261.1 832.4M350.9 723.6Q319.6 778 350.9 832.4" fill="none" stroke="#2A1606" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
 </g>

@@ -57,8 +57,15 @@
    page / band: the page and the alternate band (the app's tab bar).
    text / muted: on the page, the band, and panels. card / rim / drop: a
    panel, its ink outline, and its hard shadow (olive: ink wouldn't show on
-   black). trim: the mustard of tags, stars, and links. The bright faces
-   (red, green, ...) carry ink lettering in every place they're used. */
+   black). trim: the color of tags, buttons, the star, and links. The
+   bright faces (red, green, ...) carry ink lettering in every place they're
+   used.
+   The trim and the red face are the website's own in Black and Army green
+   (#121, owner's go: "Go ahead make the change from yellow to coral. Where
+   it was previously red change it to yellow."): the trim is the app's coral,
+   the logo's, where the app's Black has mustard, and the red face is that
+   mustard, where the app's Black has coral. tools/make_web_schemes.py holds
+   the rule and checks these against it. */
 :root {
   color-scheme: dark;
   --page: #0d0d0c;
@@ -75,11 +82,14 @@
   --drop: #363a28;
   --ink: #000000;
   --title: #ffffff;
-  --trim: #f2c230;
+  --trim: #ff7f66;
   --halftone: rgba(244, 234, 208, 0.12);
-  /* Mustard as words: the trim, made to read on the page and the band
-     where a light scheme needs it darker (#111). */
-  --trim-text: #f2c230;
+  /* The trim as words: made to read on the page, the band and a panel,
+     so a light scheme has it darker and Army green lighter (#111). */
+  --trim-text: #ff7f66;
+  /* The star (.burst) is a picture, so it comes in the trim's color:
+     burst-coral.svg here, burst.svg where the trim is the app's mustard. */
+  --burst: url("/images/burst-coral.svg");
   /* Words set apart with no outline around them (a bold span, a question,
      a card's title): white here, the scheme's lettering elsewhere. */
   --strong: #ffffff;
@@ -95,9 +105,10 @@
   --hero-ground: #23241f;
   --camo: url("/images/camo-black.svg");
 
-  /* Bright faces, as in the app's Black scheme: its red is Graphite's
-     coral since #117. */
-  --red: #f26a50;
+  /* Bright faces, as in the app's Black scheme, but for the red one, which
+     is the app's mustard here since the trim took the coral (#121): the
+     closing slab, a card's first stripe, a disc, an app's badge. */
+  --red: #f2c230;
   --green: #8dc63f;
   --orange: #f2983a;
   --blue: #4f93b9;
@@ -110,8 +121,8 @@
      x 0.66 and saturation x 0.85, or lightness x 0.46 under a face darker
      than 0.2). A face that isn't listed here carries its lip beside it. */
   --green-lip: #5c7e2e;
-  --trim-lip: #a78418;
-  --red-lip: #b8351c;
+  --trim-lip: #da3212;
+  --red-lip: #a78418;
   --orange-lip: #ad6519;
   --purple-lip: #65468b;
   --card-lip: #111110;
@@ -144,7 +155,10 @@ strong { font-weight: 700; color: var(--strong); }
 a { color: inherit; text-decoration-color: var(--trim-text); text-decoration-thickness: 2px; text-underline-offset: 0.2em; }
 a:hover { text-decoration-thickness: 3px; }
 
-:focus-visible { outline: 3px solid var(--trim); outline-offset: 3px; border-radius: 6px; }
+/* The keyboard ring is the trim in its readable form: --trim-text is at least
+   4.5:1 on the page, the bands and the panels in every scheme. The trim
+   itself isn't once it's coral (2.9:1 on Army green's panels, #121). */
+:focus-visible { outline: 3px solid var(--trim-text); outline-offset: 3px; border-radius: 6px; }
 
 /* Titles: Lilita One, as written (the stencil set them in capitals), white
    letters outlined in ink with a hard olive shadow, as the app's titles
@@ -436,8 +450,8 @@ section { padding: 64px 0; }
 }
 .faq details > p { color: var(--card-muted); margin: 0; padding: 0 0 18px; max-width: 42em; }
 
-/* Closing call to action: a red slab with halftone, an ink edge, and a
-   mustard button. */
+/* Closing call to action: a slab in the red face (yellow where the trim is
+   coral, #121) with halftone, an ink edge, and a button in the trim. */
 .cta {
   position: relative; text-align: center;
   background: radial-gradient(circle, rgba(0, 0, 0, 0.17) 1.6px, transparent 1.95px) 0 0 / 9px 9px, var(--red);
@@ -455,8 +469,9 @@ section { padding: 64px 0; }
 .project-support p { color: var(--muted); font-size: 0.95rem; margin: 12px 0 0; }
 
 /* Starburst (the app's "IN 5 DAYS!"): decoration, lettered in the stencil.
-   Candy like the app's: images/burst.svg is the mustard star in an ink
-   edge with a shine, sat on a darker copy of itself. The star fills the
+   Candy like the app's: the picture (--burst: images/burst-coral.svg, or
+   burst.svg where the trim is mustard) is the star in the trim's color in an
+   ink edge with a shine, sat on a darker copy of itself. The star fills the
    box; the picture reaches past it for the edge and the lip (its viewBox
    is the box with 4% more on three sides and 12% under it). */
 .burst {
@@ -467,7 +482,7 @@ section { padding: 64px 0; }
 }
 .burst::before {
   content: ""; position: absolute; z-index: -1; inset: -4% -4% -12%;
-  background: url("/images/burst.svg") center / 100% 100% no-repeat;
+  background: var(--burst) center / 100% 100% no-repeat;
 }
 
 /* ---------- The landing page: Camo HQ (#94). The page built like the app:
@@ -612,8 +627,9 @@ section { padding: 64px 0; }
 .home section.lp-board {
   position: relative; isolation: isolate; --halftone: rgba(244, 234, 208, 0.2); --drop: #1a1a18;
   background: url("/images/camo-army.svg") center / cover, #3f4722;
-  /* Army green's lettering in every scheme, as the band is (#111). */
-  --text: #f4ead0; --muted: #d3ccae; --trim-text: #f2c230; --strong: #ffffff;
+  /* Army green's lettering in every scheme, as the band is (#111): its
+     trim as words is the website's coral, lightened to read here (#121). */
+  --text: #f4ead0; --muted: #d3ccae; --trim-text: #ffbfa1; --strong: #ffffff;
   border-top: 3px solid var(--ink); border-bottom: 3px solid var(--ink);
 }
 .lp-board .lp-dog { --page: #3f4722; }
@@ -836,8 +852,8 @@ html[data-scheme="army"] {
   --card-muted: #d6cfb1;
   --drop: #1a1a18;
   --ink: #1a1a18;
-  --trim: #f2c230;
-  --trim-text: #f8c736;
+  --trim: #ff7f66;
+  --trim-text: #ffbfa1;
   --strong: #f4ead0;
   --card-text: #f4ead0;
   --name-filter: none;
@@ -845,14 +861,15 @@ html[data-scheme="army"] {
   --hero-text: #f4ead0;
   --hero-ground: #3f4722;
   --camo: url("/images/camo-army.svg");
-  --red: #f26a50;
+  --burst: url("/images/burst-coral.svg");
+  --red: #f2c230;
   --green: #9ad04a;
   --orange: #f5a040;
   --blue: #5fa3c8;
   --purple: #ad8cd6;
   --green-lip: #668c2f;
-  --trim-lip: #a78418;
-  --red-lip: #b8351c;
+  --trim-lip: #da3212;
+  --red-lip: #a78418;
   --orange-lip: #b46b18;
   --purple-lip: #7046a4;
   --card-lip: #383a28;
@@ -883,6 +900,7 @@ html[data-scheme="light"] {
   --hero-text: #1a1a18;
   --hero-ground: #c7b787;
   --camo: url("/images/camo-light.svg");
+  --burst: url("/images/burst.svg");
   --red: #d4432c;
   --green: #86b93b;
   --orange: #ee9230;
@@ -921,6 +939,7 @@ html[data-scheme="skyblue"] {
   --hero-text: #ffffff;
   --hero-ground: #2f5596;
   --camo: url("/images/camo-skyblue.svg");
+  --burst: url("/images/burst.svg");
   --red: #f26a50;
   --green: #7cc84e;
   --orange: #f5943a;
@@ -959,6 +978,7 @@ html[data-scheme="candypop"] {
   --hero-text: #ffffff;
   --hero-ground: #17307f;
   --camo: none;
+  --burst: url("/images/burst.svg");
   --red: #f26a50;
   --green: #86d04f;
   --orange: #f79a3c;
@@ -998,6 +1018,7 @@ html[data-scheme="graphite"] {
   --hero-text: #f1f4f7;
   --hero-ground: #333b45;
   --camo: url("/images/camo-graphite.svg");
+  --burst: url("/images/burst.svg");
   --red: #f26a50;
   --green: #8dc63f;
   --orange: #f5a93a;
@@ -1036,6 +1057,7 @@ html[data-scheme="navy"] {
   --hero-text: #f2f6ff;
   --hero-ground: #1c2840;
   --camo: url("/images/camo-navy.svg");
+  --burst: url("/images/burst.svg");
   --red: #e2463a;
   --green: #7cc84e;
   --orange: #f5943a;
@@ -1074,6 +1096,7 @@ html[data-scheme="darkarmy"] {
   --hero-text: #ffffff;
   --hero-ground: #133524;
   --camo: url("/images/camo-darkarmy.svg");
+  --burst: url("/images/burst.svg");
   --red: #e5483a;
   --green: #8bdb5a;
   --orange: #f5a03a;
@@ -1112,6 +1135,7 @@ html[data-scheme="wildcat"] {
   --hero-text: #ffffff;
   --hero-ground: #55111f;
   --camo: url("/images/camo-wildcat.svg");
+  --burst: url("/images/burst.svg");
   --red: #ee4b37;
   --green: #86c94a;
   --orange: #f59a3a;
@@ -1150,6 +1174,7 @@ html[data-scheme="purplegold"] {
   --hero-text: #ffffff;
   --hero-ground: #3f1a72;
   --camo: url("/images/camo-purplegold.svg");
+  --burst: url("/images/burst.svg");
   --red: #e8473a;
   --green: #7fcb52;
   --orange: #f79a3c;
@@ -1188,6 +1213,7 @@ html[data-scheme="deserttan"] {
   --hero-text: #24231b;
   --hero-ground: #a8956a;
   --camo: url("/images/camo-deserttan.svg");
+  --burst: url("/images/burst.svg");
   --red: #c9452e;
   --green: #6db33f;
   --orange: #e08a2e;
@@ -1226,6 +1252,7 @@ html[data-scheme="sugarrush"] {
   --hero-text: #2b1a4a;
   --hero-ground: #ffc4dd;
   --camo: url("/images/camo-sugarrush.svg");
+  --burst: url("/images/burst.svg");
   --red: #f2473d;
   --green: #5ed36a;
   --orange: #ff9a2e;

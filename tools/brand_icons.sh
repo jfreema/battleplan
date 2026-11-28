@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Regenerates every icon and splash screen from the brand mark (SPEC §7.1:
-# All Sports, the app's B as a tank: a yellow B on a track whose wheels are
+# All Sports, the app's B as a tank: a coral B on a track whose wheels are
 # a basketball, a soccer ball and a baseball, its gun out to the right, in a
 # thick ink edge on a hard shadow, on an Army green tile under a dot grid).
 #

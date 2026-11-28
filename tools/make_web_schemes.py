@@ -19,6 +19,18 @@ hand):
 It also checks the hand-written :root against the app's Black palette, and
 stops if a color there has fallen out of step.
 
+One thing is the website's own (#121, owner's go on seeing it mocked up: "Go
+ahead make the change from yellow to coral. Where it was previously red
+change it to yellow."): in Black and in Army green, the scheme the site opens
+in, the trim (tags, buttons, the star, links, the word BattlePlan in the
+headline) is the app's coral, SITE_CORAL, where the app's trim is mustard, and
+the red face (the closing slab, a card's stripe, a disc, an app's badge) is
+that mustard, where the app's is coral. The logo's B is the same coral. The
+app's own schemes are untouched, and so are the other ten on the site, which
+still follow the app. The star is a picture, so it comes in two: burst.svg,
+mustard, and burst-coral.svg, written here from it, and each scheme's --burst
+names the one in its trim's color.
+
 The tokens follow the app's roles: the page, the tab bar (the site's band),
 panels, lettering, the trim, the bright faces, and their candy lips worked
 out as Candy.lipOf does. Second lines and colored words are made to read on
@@ -39,6 +51,8 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 PALETTES = ROOT / "lib/core/design/camp_palette.dart"
 CSS = ROOT / "website/site.css"
 CAMO = ROOT / "website/images/camo-black.svg"
+BURST = ROOT / "website/images/burst.svg"
+BURST_CORAL = ROOT / "website/images/burst-coral.svg"
 BEGIN = "/* ---------- GENERATED SCHEMES (tools/make_web_schemes.py): do not edit by hand ---------- */"
 END = "/* ---------- END GENERATED SCHEMES ---------- */"
 
@@ -57,6 +71,13 @@ SCHEMES = [
     ("deserttan", "desertTan", "Desert Tan"),
     ("sugarrush", "sugarRush", "Sugar Rush"),
 ]
+# The website's coral trim (#121): the app's coral, Graphite's trim and the
+# colour the logo's B is drawn round, in the schemes named in SWAPPED (by
+# their palette's name), whose red face is their mustard in turn.
+SITE_CORAL = (255, 0xFF, 0x7F, 0x66)
+SWAPPED = {"black", "army"}
+# burst.svg's two colors: the star's mustard face and its lip.
+BURST_COLORS = ["#f2c230", "#a78418"]
 # camo-black.svg's colors: ground, big, mid, small (Black's camouflage).
 BLACK_CAMO = ["#23241F", "#161713", "#3A3C33", "#070706"]
 
@@ -156,8 +177,22 @@ def lip(face):
     return (255,) + tuple(v * 255 for v in colorsys.hls_to_rgb(h, l, s))
 
 
-def block(value, name, p):
+def faces(key, p):
+    """The website's trim and red face for a scheme: the app's mustard and
+    red, or, in a SWAPPED scheme, the coral and the app's mustard (#121)."""
+    if key in SWAPPED:
+        return SITE_CORAL, p["mustard"]
+    return p["mustard"], p["red"]
+
+
+def burst(key):
+    """The star's picture for a scheme: the one in its trim's color."""
+    return 'url("/images/%s")' % (BURST_CORAL.name if key in SWAPPED else BURST.name)
+
+
+def block(value, key, name, p):
     light_page = lum(p["page"]) > 0.18
+    trim, red = faces(key, p)
     plain = p["plainHeader"]
     field = p["answerRow"]
     lines = [
@@ -177,8 +212,8 @@ def block(value, name, p):
         f"  --card-muted: {hex6(readable(p['panelMuted'], [p['panel']]))};",
         f"  --drop: {hex6(p['shadow'])};",
         f"  --ink: {hex6(p['ink'])};",
-        f"  --trim: {hex6(p['mustard'])};",
-        f"  --trim-text: {hex6(readable(p['mustard'], [p['page'], p['tabBar'], p['panel']]))};",
+        f"  --trim: {hex6(trim)};",
+        f"  --trim-text: {hex6(readable(trim, [p['page'], p['tabBar'], p['panel']]))};",
         f"  --strong: {hex6(p['text'])};",
         f"  --card-text: {hex6(p['panelText'])};",
         f"  --name-filter: {'invert(1) hue-rotate(180deg)' if lum(p['tabBar']) > 0.18 else 'none'};",
@@ -186,14 +221,15 @@ def block(value, name, p):
         f"  --hero-text: {hex6(p['headerLettering'])};",
         f"  --hero-ground: {hex6(p['page'] if plain else p['camoGround'])};",
         "  --camo: none;" if plain else f"  --camo: url(\"/images/camo-{value}.svg\");",
-        f"  --red: {hex6(p['red'])};",
+        f"  --burst: {burst(key)};",
+        f"  --red: {hex6(red)};",
         f"  --green: {hex6(p['green'])};",
         f"  --orange: {hex6(p['orange'])};",
         f"  --blue: {hex6(p['blue'])};",
         f"  --purple: {hex6(p['purple'])};",
         f"  --green-lip: {hex6(lip(p['green']))};",
-        f"  --trim-lip: {hex6(lip(p['mustard']))};",
-        f"  --red-lip: {hex6(lip(p['red']))};",
+        f"  --trim-lip: {hex6(lip(trim))};",
+        f"  --red-lip: {hex6(lip(red))};",
         f"  --orange-lip: {hex6(lip(p['orange']))};",
         f"  --purple-lip: {hex6(lip(p['purple']))};",
         f"  --card-lip: {hex6(lip(p['panel']))};",
@@ -210,16 +246,19 @@ def block(value, name, p):
 
 
 def check_root(black):
-    """The hand-written :root is Black: its colors must be the palette's."""
+    """The hand-written :root is Black: its colors must be the palette's,
+    with the website's own trim and red face (faces)."""
+    trim, red = faces("black", black)
     css = CSS.read_text()
     root = css[css.index(":root {"):css.index("}", css.index(":root {"))]
     want = {
         "--page": hex6(black["page"]), "--band": hex6(black["tabBar"]), "--text": hex6(black["text"]),
-        "--card": hex6(black["panel"]), "--trim": hex6(black["mustard"]), "--drop": hex6(black["shadow"]),
-        "--red": hex6(black["red"]), "--green": hex6(black["green"]), "--orange": hex6(black["orange"]),
+        "--card": hex6(black["panel"]), "--trim": hex6(trim), "--drop": hex6(black["shadow"]),
+        "--trim-text": hex6(readable(trim, [black["page"], black["tabBar"], black["panel"]])),
+        "--red": hex6(red), "--green": hex6(black["green"]), "--orange": hex6(black["orange"]),
         "--blue": hex6(black["blue"]), "--purple": hex6(black["purple"]),
-        "--red-lip": hex6(lip(black["red"])), "--green-lip": hex6(lip(black["green"])),
-        "--trim-lip": hex6(lip(black["mustard"])), "--orange-lip": hex6(lip(black["orange"])),
+        "--red-lip": hex6(lip(red)), "--green-lip": hex6(lip(black["green"])),
+        "--trim-lip": hex6(lip(trim)), "--orange-lip": hex6(lip(black["orange"])),
         "--purple-lip": hex6(lip(black["purple"])),
     }
     wrong = []
@@ -227,15 +266,29 @@ def check_root(black):
         m = re.search(r"%s: (#[0-9a-fA-F]{6});" % re.escape(token), root)
         if not m or m.group(1).lower() != value:
             wrong.append(f"{token} is {m.group(1) if m else 'missing'}, the app's Black has {value}")
+    if burst("black") not in root:
+        wrong.append("--burst is not %s, the star in Black's trim" % burst("black"))
     if wrong:
         raise SystemExit("website/site.css :root is out of step with the app's Black scheme:\n  " + "\n  ".join(wrong))
 
 
+def write_burst():
+    """burst-coral.svg: burst.svg with its mustard and its lip swapped for
+    the coral and the coral's lip."""
+    svg = BURST.read_text()
+    for old, new in zip(BURST_COLORS, [hex6(SITE_CORAL), hex6(lip(SITE_CORAL))]):
+        assert svg.count(old) == 1, f"burst.svg no longer has {old} once"
+        svg = svg.replace(old, new)
+    svg = svg.replace("mustard star", "coral star (burst.svg in the coral trim's colors, written by\n       tools/make_web_schemes.py: #121)")
+    BURST_CORAL.write_text(svg)
+
+
 def main():
     pal = palettes()
-    blocks = [block(v, n, pal[k]) for v, k, n in SCHEMES]
+    blocks = [block(v, k, n, pal[k]) for v, k, n in SCHEMES]
     camo = CAMO.read_text()
     check_root(pal["black"])
+    write_burst()
     for value, key, _ in SCHEMES:
         p = pal[key]
         target = ROOT / f"website/images/camo-{value}.svg"
@@ -260,7 +313,7 @@ def main():
     else:
         css = css.rstrip("\n") + "\n\n" + generated
     CSS.write_text(css)
-    print(f"{len(blocks)} schemes written to {CSS.relative_to(ROOT)} and website/images/camo-*.svg")
+    print(f"{len(blocks)} schemes written to {CSS.relative_to(ROOT)}, website/images/camo-*.svg and burst-coral.svg")
 
 
 if __name__ == "__main__":

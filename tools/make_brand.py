@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """Draws the BattlePlan mark, All Sports (SPEC §7.1), in every form it ships.
 
-All Sports is the app's B as a tank: a heavy leaning yellow B riding a track
+All Sports is the app's B as a tank: a heavy leaning coral B riding a track
 whose three wheels are a basketball, a soccer ball and a baseball, its gun
 pointing up and to the right, every part in a thick ink edge on a hard ink
 shadow, on an Army green tile under a dot grid (the owner's pick, 2026-11-27,
 option 25 of the icon options: "let's do #25 instead."). Three balls, because
-the app is for every sport.
+the app is for every sport. The B and its gun are the app's coral and the
+basketball is yellow: option 25 had them yellow and orange, and the owner
+asked to see it "if the yellow were coral instead and what was coral was
+yellow", then took that ("Go ahead make the change from yellow to coral.").
 
 Run from anywhere; it writes, all on the 1024 grid:
 
@@ -61,7 +64,7 @@ import subprocess
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
-# ---- colors: the app's ink and yellows on Army green, and the three balls' own ----
+# ---- colors: the app's ink and coral on Army green, and the three balls' own ----
 INK = '#0B0B0A'          # every edge, and the hard shadow under the tank
 WHITE = '#FFFFFF'        # the shine on the barrel
 ARMY = '#4A5327'         # the tile: Army green
@@ -70,12 +73,14 @@ GLOW_ALPHA = 0.85        # centre and gone by GLOW_R of its width
 GLOW_R = 0.66
 DOT = '#1F2410'          # the tile's dot grid, at DOT_ALPHA
 DOT_ALPHA = 0.30
-LETTER = ('#FFE566', '#F5B800')            # the B, from its top to its foot
-BARREL = ('#FFE566', '#E9A800')            # the gun's barrel, across it
-MUZZLE = '#F5B800'
+LETTER = ('#FF9480', '#F2644C')            # the B, from its top to its foot: the app's coral (#FF7F66) between them
+BARREL = ('#FF9480', '#E9573F')            # the gun's barrel, across it
+MUZZLE = '#F2644C'
 TRACK, TREAD = '#161612', '#3A3A32'        # on the tile: the track, and the lugs round its inside
 OFF_TILE = dict(track='#4A5327', tread='#2F3619')   # off the tile: the track in Army green, darker lugs
-BASKETBALL = ('#F28A2A', '#D5630F', '#2A1606')   # each ball: its face, its shade, its markings
+# Each ball: its face, its shade, its markings. The basketball is yellow, not a basketball's
+# orange, which is too near the B's coral to tell from it at an icon's size.
+BASKETBALL = ('#FFDD55', '#EDAE00', '#2A1606')
 SOCCER = ('#FFFFFF', '#D9DCE0', '#17181B')
 BASEBALL = ('#FFF8EA', '#E6DAC0', '#D92B2B')
 NAVY = '#0B1640'         # the name's hard drop, and its edge on a light page
@@ -583,7 +588,7 @@ import 'dart:ui' as ui;
 import 'package:material_ui/material_ui.dart';
 
 /// The BattlePlan mark (SPEC §7.1), All Sports: the app's B as a tank, a
-/// heavy leaning yellow B on a track whose three wheels are a basketball, a
+/// heavy leaning coral B on a track whose three wheels are a basketball, a
 /// soccer ball and a baseball, its gun up and to the right, every part in a
 /// thick ink edge on a hard ink shadow, on no tile: the page shows around it,
 /// so the track is Army green here (it's black on the app icon's green tile),

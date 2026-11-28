@@ -7,7 +7,7 @@ import 'dart:ui' as ui;
 import 'package:material_ui/material_ui.dart';
 
 /// The BattlePlan mark (SPEC §7.1), All Sports: the app's B as a tank, a
-/// heavy leaning yellow B on a track whose three wheels are a basketball, a
+/// heavy leaning coral B on a track whose three wheels are a basketball, a
 /// soccer ball and a baseball, its gun up and to the right, every part in a
 /// thick ink edge on a hard ink shadow, on no tile: the page shows around it,
 /// so the track is Army green here (it's black on the app icon's green tile),
@@ -107,8 +107,8 @@ class _MarkPainter extends CustomPainter {
         _blend(
           const Offset(0, -34),
           const Offset(0, 34),
-          const Color(0xFFFFE566),
-          const Color(0xFFE9A800),
+          const Color(0xFFFF9480),
+          const Color(0xFFE9573F),
         ),
       )
       ..drawPath(_p2, _stroke(const Color(0x80FFFFFF), 9))
@@ -117,7 +117,7 @@ class _MarkPainter extends CustomPainter {
         _rrect(276, -50, 84, 100, 16),
         _stroke(const Color(0xFF0B0B0A), 52),
       )
-      ..drawRRect(_rrect(276, -50, 84, 100, 16), _fill(const Color(0xFFF5B800)))
+      ..drawRRect(_rrect(276, -50, 84, 100, 16), _fill(const Color(0xFFF2644C)))
       ..restore()
       ..drawPath(_p0, _fill(const Color(0xFF0B0B0A)))
       ..drawPath(_p0, _stroke(const Color(0xFF0B0B0A), 52))
@@ -126,8 +126,8 @@ class _MarkPainter extends CustomPainter {
         _blend(
           const Offset(0, 196),
           const Offset(0, 696),
-          const Color(0xFFFFE566),
-          const Color(0xFFF5B800),
+          const Color(0xFFFF9480),
+          const Color(0xFFF2644C),
         ),
       )
       ..drawPath(_p1, _fill(const Color(0xFF0B0B0A)))
@@ -145,11 +145,11 @@ class _MarkPainter extends CustomPainter {
       )
       ..save()
       ..clipRRect(_rrect(238, 710, 136, 136, 68))
-      ..drawCircle(const Offset(306, 778), 68, _fill(const Color(0xFFD5630F)))
+      ..drawCircle(const Offset(306, 778), 68, _fill(const Color(0xFFEDAE00)))
       ..drawCircle(
         const Offset(299.9, 771.2),
         68,
-        _fill(const Color(0xFFF28A2A)),
+        _fill(const Color(0xFFFFDD55)),
       )
       ..save()
       ..rotateAbout(-24, 306, 778)
