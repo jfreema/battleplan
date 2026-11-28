@@ -8,7 +8,7 @@ Keep it true to the app: change this page when a feature it names changes. Don't
 
 | Field | Value |
 |---|---|
-| Name | `BattlePlan by Battle Sports` (27 of 30 characters; the owner's settled store name, #120). App Store Connect has `Battleplan` (the old spelling, with which 1.4.6 is in review): a name changes only with a new version, so it goes in with the next one. Under the icon the app is `BattlePlan` |
+| Name | `BattlePlan by Battle Sports` (27 of 30 characters; the owner's settled store name, #120). App Store Connect already has it, and the App Store shows it on 1.4.5 (looked up 2026-11-27). Under the icon the app is `BattlePlan` |
 | Subtitle (30 characters) | `Team chat, schedule, and RSVPs` |
 | Bundle ID | `app.getbattleplan` |
 | SKU | `battleplan` |
@@ -99,7 +99,7 @@ Your schedule: what's next on every team, on the Teams screen.
 Free for every team, with no ads. Chat with the team, schedule games and practices, see who's coming for every player, and keep files and plays in one place.
 ```
 
-**Description** (4,000 characters; for 1.2, so it names Open Field's color schemes and Dues, which 1.1 doesn't have; the scheme list says Royal & Yellow since #117, 2026-11-27, which App Store Connect's 1.4.6, in review, doesn't have yet: its text says Royal & Gold, and the new name goes in with the next version, as does the app's own name written BattlePlan, #120, where 1.4.6's description and review notes have the old spelling, as do screenshots in the new coral, since the 27 store pictures show Black with the red it had):
+**Description** (4,000 characters; for 1.2, so it names Open Field's color schemes and Dues, which 1.1 doesn't have; the scheme list says Royal & Yellow since #117, 2026-11-27, which App Store Connect's 1.4.6, in review, doesn't have yet: its text says Royal & Gold, and the scheme's new name goes in with the next version, as does the app's own name written BattlePlan, #120, in the description, which starts "Battleplan" in 1.4.5 and 1.4.6, and in the review notes, as do screenshots in the new coral, since the 27 store pictures show Black with the red it had):
 
 ```
 BattlePlan is team chat and scheduling for sports teams, free for every team and with no ads. Coaches, players, and parents get the whole team in one app: the chat, the schedule, who's coming, and the team's files.

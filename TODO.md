@@ -218,7 +218,8 @@ Every question in SPEC §12 is decided as of 2026-10-12.
 
 The app, the emails, and the website write it BattlePlan now. These names live in consoles only you can change:
 
-- [ ] **App Store Connect:** with the next version (1.4.7), set the app's Name to `BattlePlan by Battle Sports` and paste the description and review notes from docs/STORE-LISTING.md. 1.4.6 is in review with the old spelling, and a name can't change without a new version.
-- [ ] **Play Console:** Main store listing → App name `BattlePlan by Battle Sports`, the description from docs/STORE-LISTING-PLAY.md, and the new `store/google-play/icon-512.png` and `feature-graphic.png`.
-- [ ] **Google's sign-in screen:** Google Cloud console → Google Auth Platform → Branding (the OAuth consent screen) → App name `BattlePlan`, in the prod and the dev project. It's the name on "Sign in to continue to…"; Google may review the change.
-- [ ] **Firebase's own emails:** Firebase console → Project settings → General → Public-facing name `BattlePlan`, in both projects. Password reset and sign-in link emails use it.
+- [ ] **App Store Connect:** the Name already reads `BattlePlan by Battle Sports` (the App Store shows it on 1.4.5), so there's nothing to do for it. Left for the next version (1.4.7): paste the description, which still starts "Battleplan", and the review notes from docs/STORE-LISTING.md. 1.4.6 is in review with both in the old spelling, and neither can change without a new version.
+- [ ] **Play Console:** Main store listing → App name `BattlePlan by Battle Sports`, the description from docs/STORE-LISTING-PLAY.md, and the new `store/google-play/icon-512.png` and `feature-graphic.png`. *A draft is saved there (2026-11-27) and isn't sent yet: it waits on your answer to the AI-label question.*
+- [x] **Google's sign-in screen:** Google Cloud console → Google Auth Platform → Branding (the OAuth consent screen) → App name `BattlePlan`, in the prod and the dev project. *Done 2026-11-27: the name reads BattlePlan in both.*
+  - Google shows no app name on its sign-in screen until the branding is verified, which has never been done, so the screen still says "continue to battleplan-prod.firebaseapp.com", not BattlePlan.
+- [x] **Firebase's own emails:** Firebase console → Project settings → General → Public-facing name `BattlePlan`, in both projects. Password reset and sign-in link emails use it. *Done 2026-11-27, 7:25 PM Central, in prod and dev.*

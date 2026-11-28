@@ -8,7 +8,7 @@ Keep it true to the app: change this page when a feature it names changes. Don't
 
 | Field | Value |
 |---|---|
-| App name (30 characters) | `BattlePlan by Battle Sports` (27 characters; the owner's settled store name, #120). The Play Console has `Battleplan` (the old spelling) until the owner changes it in Main store listing. Under the icon the app is `BattlePlan` |
+| App name (30 characters) | `BattlePlan by Battle Sports` (27 characters; the owner's settled store name, #120). A draft of the Main store listing is saved in the Play Console (2026-11-27) and isn't sent yet (TODO.md). Under the icon the app is `BattlePlan` |
 | Package name | `app.getbattleplan` (set by the first App Bundle) |
 | Default language | English (United States), en-US |
 | App or game | App |
@@ -23,7 +23,7 @@ Keep it true to the app: change this page when a feature it names changes. Don't
 Free team chat, schedule, and RSVPs for sports teams. No ads, ever.
 ```
 
-**Full description** (4,000 characters at most; this one is about 2,200; the scheme list says Royal & Yellow since #117, 2026-11-27, so the Play Console's copy, which says Royal & Gold, takes it with the next upload, with the app's name written BattlePlan (#120), as the phone screenshots take the new coral):
+**Full description** (4,000 characters at most; this one is about 2,200; the scheme list says Royal & Yellow since #117, 2026-11-27, and the app's name is written BattlePlan since #120. The Play Console still had its text of 2026-11-07, from before Boot Camp Mix ("Five color schemes: Army green, Light, Dark, Navy, and Light blue"); the draft saved there on 2026-11-27 replaces it with this text, and isn't sent yet (TODO.md). The phone screenshots take #117's coral with their next upload):
 
 ```
 BattlePlan is team chat and scheduling for sports teams, free for every team and with no ads. Coaches, players, and parents get the whole team in one app: the chat, the schedule, who's coming, and the team's files.
